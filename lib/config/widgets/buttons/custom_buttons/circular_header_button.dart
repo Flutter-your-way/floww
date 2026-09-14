@@ -8,11 +8,17 @@ class CircularHeaderButton extends StatefulWidget {
     required this.icon,
     this.onPressed,
     this.iconColor,
+    this.backgroundColor,
+    this.size = AppSizes.s40,
+    this.iconSize = AppSizes.s20,
   });
 
   final IconData icon;
   final VoidCallback? onPressed;
   final Color? iconColor;
+  final Color? backgroundColor;
+  final double size;
+  final double iconSize;
 
   @override
   State<CircularHeaderButton> createState() => _CircularHeaderButtonState();
@@ -50,17 +56,17 @@ class _CircularHeaderButtonState extends State<CircularHeaderButton> {
           scale: targetScale,
           duration: const Duration(milliseconds: 120),
           child: Container(
-            height: AppSizes.s40,
-            width: AppSizes.s40,
+            height: widget.size,
+            width: widget.size,
             decoration: BoxDecoration(
-              color: context.colors.backgroundSurface,
+              color: widget.backgroundColor ?? context.colors.backgroundSurface,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Icon(
                 widget.icon,
                 color: widget.iconColor ?? context.colors.textPrimary,
-                size: AppSizes.s20,
+                size: widget.iconSize,
               ),
             ),
           ),

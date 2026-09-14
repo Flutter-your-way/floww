@@ -9,6 +9,10 @@ class AppRouter {
   static const String onboardingQuestion = '/onboardingQuestion';
   static const String connectWearables = '/connect_wearables';
   static const String home = '/home';
+  static const String foodScan = '/food_scan';
+  static const String mealDetails = '/meal_details';
+  static const String weeklyNutritionReport = '/weekly_nutrition_report';
+  static const String dietPlan = '/diet_plan';
 
   static String routeAfterAuth(UserModel user) {
     if (user.onboardingCompleted) return home;

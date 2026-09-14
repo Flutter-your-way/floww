@@ -3,7 +3,8 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
-import 'package:floww/core/home/widgets/home_card.dart';
+import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class FlowScoreBoostCard extends StatelessWidget {
   const FlowScoreBoostCard({super.key, required this.boosts});
@@ -12,8 +13,8 @@ class FlowScoreBoostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
-      variant: HomeCardVariant.highlighted,
+    return AppCard(
+      variant: AppCardVariant.highlighted,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -73,7 +74,7 @@ class _BoostRow extends StatelessWidget {
             horizontal: AppSpacing.md,
             vertical: AppSpacing.xs,
           ),
-          decoration: BoxDecoration(
+          decoration: AppShapes.decoration(
             color: context.colors.tint,
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),

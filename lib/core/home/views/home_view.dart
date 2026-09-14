@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
+import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
 import 'package:floww/core/home/widgets/apple_health_sync_card.dart';
 import 'package:floww/core/home/widgets/flow_score_boost_card.dart';
@@ -15,6 +16,7 @@ import 'package:floww/core/home/widgets/today_habit_card.dart';
 import 'package:floww/core/home/widgets/today_progress_card.dart';
 import 'package:floww/core/home/widgets/today_workout_card.dart';
 import 'package:floww/core/home/widgets/wave_insight_banner.dart';
+import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -22,14 +24,15 @@ class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => HomeProvider(),
+      create: (_) => HomeProvider(NutritionLogService()),
       child: Scaffold(
         body: AppBackground(
           safeAreaTop: false,
+          scrollable: true,
           mode: AppBackgroundMode.flow,
-          child: Consumer<HomeProvider>(
-            builder: (context, home, child) {
-              return SingleChildScrollView(
+          child: Consumer2<HomeProvider, HealthProvider>(
+            builder: (context, home, health, child) {
+              return Padding(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Column(
                   children: [
@@ -71,9 +74,10 @@ class HomeView extends StatelessWidget {
                     ),
                     SizedBox(height: AppSpacing.xl2),
                     AppleHealthSyncCard(
-                      connected: home.healthSyncConnected,
-                      onConnect: () {},
-                      onDisconnect: () {},
+                      connected: health.isConnected,
+                      syncDetail: health.statusLabel,
+                      onConnect: health.connect,
+                      onDisconnect: health.disconnect,
                     ),
                     SizedBox(height: AppSpacing.xl2),
                     TodayProgressCard(progress: home.todayProgress),

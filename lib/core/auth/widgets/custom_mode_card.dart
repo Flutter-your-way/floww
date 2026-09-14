@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/constants/app_sizes.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class CustomModeCard extends StatefulWidget {
   final String iconPath;
@@ -67,10 +68,10 @@ class _CustomModeCardState extends State<CustomModeCard> {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(AppSpacing.xl),
-          decoration: BoxDecoration(
+          decoration: AppShapes.decoration(
             color: widget.color.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
+            side: BorderSide(
               color: widget.color.withValues(alpha: 0.24),
               width: 1,
             ),

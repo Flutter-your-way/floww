@@ -8,6 +8,7 @@ class AppRadius {
   static const double xl = 24.0;
   static const double xl2 = 26.0;
   static const double xl3 = 42.0;
+  static const double xl4 = 32.0;
   static const double full = 100.0;
 }
 
@@ -37,5 +38,12 @@ class AppSizes {
   static const double s72 = 72.0;
   static const double s80 = 80.0;
   static const double s96 = 96.0;
+  static const double s120 = 120.0;
   static const double s128 = 128.0;
+}
+
+class AppLayoutSizes {
+  const AppLayoutSizes();
+
+  final double screenHorizontalPadding = AppSizes.s16;
 }

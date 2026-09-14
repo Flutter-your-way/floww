@@ -5,6 +5,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/custom_outlined_button.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class FlowScoreCard extends StatelessWidget {
   const FlowScoreCard({
@@ -24,10 +25,9 @@ class FlowScoreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: context.colors.bgTinted,
+      decoration: AppShapes.decoration(
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: context.colors.borderGlow, width: 1),
+        side: BorderSide(color: context.colors.borderGlow, width: 1),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -182,7 +182,7 @@ class _FlowScoreBar extends StatelessWidget {
             children: [
               Container(
                 height: _trackHeight,
-                decoration: BoxDecoration(
+                decoration: AppShapes.decoration(
                   color: context.colors.backgroundSurface,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
@@ -190,7 +190,7 @@ class _FlowScoreBar extends StatelessWidget {
               Container(
                 height: _trackHeight,
                 width: fillWidth,
-                decoration: BoxDecoration(
+                decoration: AppShapes.decoration(
                   gradient: LinearGradient(
                     stops: [0.1, 0.5, 1.0],
                     colors: [
@@ -211,14 +211,14 @@ class _FlowScoreBar extends StatelessWidget {
                   child: Container(
                     width: _thumbSize / 5,
                     height: _thumbSize,
-                    decoration: BoxDecoration(
+                    decoration: AppShapes.decoration(
                       color: context.colors.primary,
-                      border: Border.all(
+                      side: BorderSide(
                         color: context.colors.textPrimary,
                         width: 1.5,
                       ),
                       borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
+                      shadows: [
                         BoxShadow(
                           color: context.colors.textPrimary.withValues(
                             alpha: 0.6,

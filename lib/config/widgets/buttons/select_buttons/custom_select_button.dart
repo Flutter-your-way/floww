@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class CustomSelectButton extends StatelessWidget {
   final String text;
@@ -41,10 +42,10 @@ class CustomSelectButton extends StatelessWidget {
         width: width,
         height: 45,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        decoration: BoxDecoration(
+        decoration: AppShapes.decoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor, width: 1),
+          side: BorderSide(color: borderColor, width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

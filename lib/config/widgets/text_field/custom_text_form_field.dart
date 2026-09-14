@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/theme/app_typography.dart';
+import 'package:flutter/material.dart';
+import 'package:floww/config/widgets/text_field/smooth_input_border.dart';
 
 class CustomTextFormField extends StatelessWidget {
   final String? hintText;
@@ -77,22 +77,22 @@ class CustomTextFormField extends StatelessWidget {
       letterSpacing: 0,
     );
 
-    final enabledBorder = OutlineInputBorder(
+    final enabledBorder = SmoothInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: const BorderSide(color: Color(0xFF0A0A0A), width: 0.5),
     );
 
-    final focusedBorder = OutlineInputBorder(
+    final focusedBorder = SmoothInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: BorderSide(color: colors.primary, width: 0.5),
     );
 
-    final errorBorder = OutlineInputBorder(
+    final errorBorder = SmoothInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: BorderSide(color: colors.destructive, width: 0.5),
     );
 
-    final disabledBorder = OutlineInputBorder(
+    final disabledBorder = SmoothInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: const BorderSide(color: Color(0xFF0A0A0A), width: 0.5),
     );
@@ -100,6 +100,7 @@ class CustomTextFormField extends StatelessWidget {
     return SizedBox(
       height: maxLines == 1 ? 62 : null,
       child: TextFormField(
+        onTapOutside: (event) => primaryFocus?.unfocus(),
         initialValue: initialValue,
         controller: controller,
         focusNode: focusNode,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import '../buttons/custom_buttons/circular_header_button.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class CustomHeader extends StatelessWidget {
   const CustomHeader({
@@ -32,7 +33,7 @@ class CustomHeader extends StatelessWidget {
             Container(
               height: AppSizes.s36,
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.s12),
-              decoration: BoxDecoration(
+              decoration: AppShapes.decoration(
                 color: context.colors.backgroundSurface,
                 borderRadius: BorderRadius.circular(AppRadius.full),
               ),

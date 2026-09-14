@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class CustomProgressWidget extends StatefulWidget {
   final double value;
@@ -167,7 +168,7 @@ class _CustomPillSliderState extends State<CustomPillSlider> {
                 Container(
                   height: trackHeight,
                   width: trackWidth,
-                  decoration: BoxDecoration(
+                  decoration: AppShapes.decoration(
                     color: const Color(0xFF23221A),
                     borderRadius: BorderRadius.circular(3),
                   ),
@@ -176,7 +177,7 @@ class _CustomPillSliderState extends State<CustomPillSlider> {
                 Container(
                   height: trackHeight,
                   width: thumbX + (thumbWidth / 2),
-                  decoration: BoxDecoration(
+                  decoration: AppShapes.decoration(
                     gradient: LinearGradient(
                       colors: [
                         const Color(0xFF84CC16),
@@ -194,7 +195,7 @@ class _CustomPillSliderState extends State<CustomPillSlider> {
                   child: Container(
                     width: thumbWidth,
                     height: thumbHeight,
-                    decoration: BoxDecoration(
+                    decoration: AppShapes.decoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                     ),

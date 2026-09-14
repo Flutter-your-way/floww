@@ -3,9 +3,9 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
-import 'package:floww/core/home/widgets/home_card.dart';
+import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/home/widgets/home_card_empty_state.dart';
-import 'package:floww/core/home/widgets/home_card_header.dart';
+import 'package:floww/config/widgets/headers/card_header.dart';
 
 class TodayHabitCard extends StatelessWidget {
   const TodayHabitCard({
@@ -22,11 +22,11 @@ class TodayHabitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final completedCount = habits.where((h) => h.completed).length;
-    return HomeCard(
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HomeCardHeader(
+          CardHeader(
             title: "Today's Habit",
             trailingText: '$completedCount/${habits.length}',
             showChevron: true,

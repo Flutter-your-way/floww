@@ -4,9 +4,10 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
-import 'package:floww/core/home/widgets/home_card.dart';
+import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/home/widgets/home_card_empty_state.dart';
-import 'package:floww/core/home/widgets/home_card_header.dart';
+import 'package:floww/config/widgets/headers/card_header.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class TodayWorkoutCard extends StatelessWidget {
   const TodayWorkoutCard({super.key, this.workout, this.onStartWorkout});
@@ -17,11 +18,11 @@ class TodayWorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final workout = this.workout;
-    return HomeCard(
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const HomeCardHeader(title: "Today's Workout"),
+          const CardHeader(title: "Today's Workout"),
           SizedBox(height: AppSpacing.xl),
           if (workout == null)
             HomeCardEmptyState(
@@ -39,7 +40,7 @@ class TodayWorkoutCard extends StatelessWidget {
                 Container(
                   height: AppSizes.s40,
                   width: AppSizes.s40,
-                  decoration: BoxDecoration(
+                  decoration: AppShapes.decoration(
                     color: context.colors.backgroundElevated,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
@@ -94,10 +95,10 @@ class TodayWorkoutCard extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
+              decoration: AppShapes.decoration(
                 color: context.colors.tint,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: context.colors.borderGlow, width: 1),
+                side: BorderSide(color: context.colors.borderGlow, width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

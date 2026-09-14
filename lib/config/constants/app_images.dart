@@ -14,6 +14,7 @@ class AppImages {
 
   static const String appleHealthIcon = '$_iconsBase/apple_health_icon.svg';
   static const String googleIcon = '$_iconsBase/google_icon.svg';
+  static const String foodScanIcon = '$_iconsBase/food_scan_icon.svg';
 
   // Tab Bar
   static const String tab_1 = '$_iconsBase/tab_1.svg';

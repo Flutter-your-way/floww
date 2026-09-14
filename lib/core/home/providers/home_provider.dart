@@ -1,6 +1,13 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:floww/config/theme/app_mode.dart';
-import 'package:flutter/material.dart';
-import 'package:floww/config/theme/app_theme.dart';
+import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/config/utils/dates/day_rollover_timer.dart';
+import 'package:floww/core/nutrition/models/nutrition_day.dart';
+import 'package:floww/core/nutrition/models/nutrition_goal.dart';
+import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
+import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
 
 class FlowScoreBoost {
   const FlowScoreBoost({
@@ -98,9 +105,13 @@ class MuscleRecoveryData {
 }
 
 class HomeProvider extends ChangeNotifier {
-  HomeProvider() {
+  HomeProvider(this._logService) {
     _greeting = _greetingForHour(DateTime.now().hour);
+    _watchToday();
+    _dayRollover = DayRolloverTimer(_onNewDay);
   }
+
+  static const double _nutritionGoalRatio = 0.9;
 
   static String _greetingForHour(int hour) {
     if (hour < 12) return 'Good morning';
@@ -108,7 +119,14 @@ class HomeProvider extends ChangeNotifier {
     return 'Good evening';
   }
 
-  late final String _greeting;
+  final NutritionLogService _logService;
+  final NutritionGoal _goal = NutritionGoal.defaults;
+  late NutritionDay _today;
+  StreamSubscription<NutritionLogs>? _todaySubscription;
+  late final DayRolloverTimer _dayRollover;
+  bool _disposed = false;
+
+  late String _greeting;
   String get greeting => _greeting;
 
   final String userName = 'Sarah Mitchell';
@@ -126,18 +144,20 @@ class HomeProvider extends ChangeNotifier {
     FlowScoreBoost(label: 'Sleep Goal', points: 5, completed: false),
   ];
 
-  final List<HabitItem> habits = const [
+  List<HabitItem> get habits => [
     HabitItem(
       title: 'Water Intake',
-      valueLabel: '2.5L / 3L Target',
-      completed: true,
+      valueLabel:
+          '${NutritionLabels.liters(_today.waterMl)}L / '
+          '${NutritionLabels.liters(_goal.waterMl.toDouble())}L Target',
+      completed: _today.waterMl >= _goal.waterMl,
     ),
-    HabitItem(
+    const HabitItem(
       title: 'Sleep Quality',
       valueLabel: '8h 12m logged',
       completed: false,
     ),
-    HabitItem(
+    const HabitItem(
       title: 'Daily Steps',
       valueLabel: '8,432 / 10,000',
       completed: false,
@@ -151,26 +171,44 @@ class HomeProvider extends ChangeNotifier {
     reasons: ['Recovery is High', 'Last workout 48h ago', 'FLOW mode active'],
   );
 
-  final NutritionSummary nutrition = const NutritionSummary(
-    totalCalories: 1842,
-    calorieGoal: 2450,
-    proteinG: 115,
-    carbsG: 155,
-    fatsG: 70,
+  NutritionSummary get nutrition => NutritionSummary(
+    totalCalories: _today.calories.round(),
+    calorieGoal: _goal.calories,
+    proteinG: _today.proteinG.round(),
+    carbsG: _today.carbsG.round(),
+    fatsG: _today.fatG.round(),
   );
 
-  final bool healthSyncConnected = true;
+  bool get _nutritionGoalMet =>
+      _today.calories >= _goal.calories * _nutritionGoalRatio;
 
-  final TodayProgress todayProgress = const TodayProgress(
-    completedCount: 2,
-    totalCount: 6,
-    items: [
-      ProgressItem(label: 'Habits', fraction: '1/3', isComplete: false),
-      ProgressItem(label: 'Workout', fraction: '0/1', isComplete: false),
-      ProgressItem(label: 'Nutrition', fraction: '1/1', isComplete: true),
-      ProgressItem(label: 'Sleep Goal', fraction: '0/1', isComplete: false),
-    ],
-  );
+  TodayProgress get todayProgress {
+    final habitItems = habits;
+    final habitsDone = habitItems.where((habit) => habit.completed).length;
+    final nutritionDone = _nutritionGoalMet ? 1 : 0;
+    return TodayProgress(
+      completedCount: habitsDone + nutritionDone,
+      totalCount: habitItems.length + 3,
+      items: [
+        ProgressItem(
+          label: 'Habits',
+          fraction: '$habitsDone/${habitItems.length}',
+          isComplete: habitsDone == habitItems.length,
+        ),
+        const ProgressItem(label: 'Workout', fraction: '0/1', isComplete: false),
+        ProgressItem(
+          label: 'Nutrition',
+          fraction: '$nutritionDone/1',
+          isComplete: _nutritionGoalMet,
+        ),
+        const ProgressItem(
+          label: 'Sleep Goal',
+          fraction: '0/1',
+          isComplete: false,
+        ),
+      ],
+    );
+  }
 
   final String? waveInsight =
       'Recovery is high. Neural fatigue minimal — prime window for a push session PB.';
@@ -181,4 +219,44 @@ class HomeProvider extends ChangeNotifier {
     readyMusclesCount: 7,
     fatiguedMusclesCount: 2,
   );
+
+  void _onNewDay() {
+    _greeting = _greetingForHour(DateTime.now().hour);
+    _watchToday();
+  }
+
+  void _watchToday() {
+    _todaySubscription?.cancel();
+    final date = AppDateUtils.dateOnly(DateTime.now());
+    _today = NutritionDay(date: date, goal: _goal);
+    notifyListeners();
+    _todaySubscription = _logService
+        .watchLogs(date, AppDateUtils.addDays(date, 1))
+        .listen(
+          (logs) {
+            _today = NutritionDay(
+              date: date,
+              goal: _goal,
+              foodLogs: logs.foods,
+              waterLogs: logs.waters,
+            );
+            notifyListeners();
+          },
+          onError: (Object error) =>
+              debugPrint('home nutrition watch failed: $error'),
+        );
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _dayRollover.cancel();
+    _todaySubscription?.cancel();
+    super.dispose();
+  }
 }

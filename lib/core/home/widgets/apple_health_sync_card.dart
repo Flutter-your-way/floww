@@ -2,30 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/core/home/widgets/home_card.dart';
+import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class AppleHealthSyncCard extends StatelessWidget {
   const AppleHealthSyncCard({
     super.key,
     required this.connected,
+    this.syncDetail,
     this.onConnect,
     this.onDisconnect,
   });
 
   final bool connected;
+  final String? syncDetail;
   final VoidCallback? onConnect;
   final VoidCallback? onDisconnect;
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
-      variant: HomeCardVariant.tinted,
+    return AppCard(
+      variant: AppCardVariant.tinted,
       child: Row(
         children: [
           Container(
             height: AppSizes.s40,
             width: AppSizes.s40,
-            decoration: BoxDecoration(
+            decoration: AppShapes.decoration(
               color: context.colors.textPrimary,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
@@ -44,8 +47,10 @@ class AppleHealthSyncCard extends StatelessWidget {
                 SizedBox(height: AppSpacing.xs),
                 Text(
                   connected
-                      ? 'Syncing steps, sleep & heart rate'
+                      ? (syncDetail ?? 'Syncing steps, sleep & heart rate')
                       : 'Better recovery predictions',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodySmall?.copyWith(
                     color: context.colors.textSecondary,
                   ),
@@ -116,9 +121,9 @@ class _SyncActionButton extends StatelessWidget {
       child: Container(
         height: AppSizes.s32,
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        decoration: BoxDecoration(
+        decoration: AppShapes.decoration(
           borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(color: color, width: 1),
+          side: BorderSide(color: color, width: 1),
         ),
         child: Center(
           child: Text(

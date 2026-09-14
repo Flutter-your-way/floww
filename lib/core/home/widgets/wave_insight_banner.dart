@@ -4,7 +4,9 @@ import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/core/home/widgets/home_card.dart';
+import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/theme/app_shapes.dart';
+import 'package:smooth_corner/smooth_corner.dart';
 
 class WaveInsightBanner extends StatelessWidget {
   const WaveInsightBanner({super.key, required this.message});
@@ -13,8 +15,8 @@ class WaveInsightBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
-      variant: HomeCardVariant.tinted,
+    return AppCard(
+      variant: AppCardVariant.tinted,
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.lg,
@@ -22,8 +24,9 @@ class WaveInsightBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadiusGeometry.circular(999),
+          SmoothClipRRect(
+            smoothness: AppShapes.smoothness,
+            borderRadius: BorderRadius.circular(999),
             child: SvgPicture.asset(AppImages.appIconSvg),
           ),
           SizedBox(width: AppSpacing.md),

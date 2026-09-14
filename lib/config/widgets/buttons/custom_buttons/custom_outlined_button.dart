@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class CustomOutlinedButton extends StatefulWidget {
   const CustomOutlinedButton({
@@ -60,10 +61,10 @@ class _CustomOutlinedButtonState extends State<CustomOutlinedButton> {
           child: Container(
             height: 55,
             width: widget.width ?? double.infinity,
-            decoration: BoxDecoration(
+            decoration: AppShapes.decoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(27.5),
-              border: Border.all(
+              side: BorderSide(
                 color: context.colors.borderMedium,
                 width: 1.5,
               ),

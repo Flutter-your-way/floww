@@ -1,3 +1,4 @@
+import 'package:floww/config/constants/app_sizes.dart';
 import 'package:flutter/material.dart';
 
 extension FlowwThemeContext on BuildContext {
@@ -10,6 +11,8 @@ extension FlowwThemeContext on BuildContext {
   AppColorTokens get colors => theme.extension<AppColorTokens>()!;
 
   AppGradientTokens get gradients => theme.extension<AppGradientTokens>()!;
+
+  AppLayoutSizes get sizes => const AppLayoutSizes();
 }
 
 class _AppPalette {
@@ -30,6 +33,53 @@ class _AppPalette {
 
   static const destructive = Color(0xFFDC2626);
   static const destructiveBorder = Color(0xFFEF4444);
+
+  static const macroTrackEnd = Color(0xFF1A1A1A);
+
+  static const scrim = Color(0x990A0A0A);
+  static const proteinAccent = Color(0xFF2563EB);
+  static const fatAccent = Color(0xFFF87171);
+}
+
+class _MacroGradients {
+  const _MacroGradients._();
+
+  static const protein = LinearGradient(
+    colors: [
+      _AppPalette.proteinAccent,
+      Color(0xFF1E40AF),
+      _AppPalette.macroTrackEnd,
+    ],
+    stops: [0.0, 0.45, 0.95],
+  );
+
+  static const carbs = LinearGradient(
+    colors: [
+      Color(0xFFF97316),
+      Color(0xFFC2410C),
+      _AppPalette.macroTrackEnd,
+    ],
+    stops: [0.0, 0.45, 0.95],
+  );
+
+  static const fats = LinearGradient(
+    colors: [
+      _AppPalette.fatAccent,
+      Color(0xFFB91C1C),
+      _AppPalette.macroTrackEnd,
+    ],
+    stops: [0.0, 0.4, 0.95],
+  );
+}
+
+class _OverlayGradients {
+  const _OverlayGradients._();
+
+  static const cameraScrim = LinearGradient(
+    colors: [Color(0x800A0A0A), _AppPalette.backgroundPrimary],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 }
 
 @immutable
@@ -41,6 +91,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     required this.tint,
     required this.tintStrong,
     required this.borderGlow,
+    required this.borderAccent,
     required this.bgTinted,
     required this.bgWarm,
     required this.accentOrange,
@@ -57,6 +108,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     this.destructive = _AppPalette.destructive,
     this.destructiveBorder = _AppPalette.destructiveBorder,
     this.glassSurface = _AppPalette.textSecondary,
+    this.scrim = _AppPalette.scrim,
+    this.proteinAccent = _AppPalette.proteinAccent,
+    this.fatAccent = _AppPalette.fatAccent,
   });
 
   final Color primary;
@@ -65,6 +119,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color tint;
   final Color tintStrong;
   final Color borderGlow;
+  final Color borderAccent;
   final Color bgTinted;
   final Color bgWarm;
   final Color accentOrange;
@@ -82,6 +137,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color destructive;
   final Color destructiveBorder;
   final Color glassSurface;
+  final Color scrim;
+  final Color proteinAccent;
+  final Color fatAccent;
 
   static const flow = AppColorTokens(
     primary: Color(0xFFC3FF3D),
@@ -90,6 +148,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     tint: Color(0x14C3FF3D),
     tintStrong: Color(0x14C3FF3D),
     borderGlow: Color(0x3DC3FF3D),
+    borderAccent: Color(0x80C3FF3D),
     bgTinted: Color(0xFF1F2218),
     bgWarm: Color(0xFF23221A),
     accentOrange: Color(0xFFF97316),
@@ -102,6 +161,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     tint: Color(0x14F97316),
     tintStrong: Color(0x14F97316),
     borderGlow: Color(0x3DF59E0B),
+    borderAccent: Color(0x80F97316),
     bgTinted: Color(0xFF221C18),
     bgWarm: Color(0xFF23221A),
     accentOrange: Color(0xFFF97316),
@@ -114,6 +174,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     tint: Color(0x1422CDE6),
     tintStrong: Color(0x1728D5E6),
     borderGlow: Color(0x3D22CDE6),
+    borderAccent: Color(0x8028D5E6),
     bgTinted: Color(0xFF182122),
     bgWarm: Color(0xFF182122),
     accentOrange: Color(0xFFF97316),
@@ -127,6 +188,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? tint,
     Color? tintStrong,
     Color? borderGlow,
+    Color? borderAccent,
     Color? bgTinted,
     Color? bgWarm,
     Color? accentOrange,
@@ -143,6 +205,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? destructive,
     Color? destructiveBorder,
     Color? glassSurface,
+    Color? scrim,
+    Color? proteinAccent,
+    Color? fatAccent,
   }) {
     return AppColorTokens(
       primary: primary ?? this.primary,
@@ -151,6 +216,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       tint: tint ?? this.tint,
       tintStrong: tintStrong ?? this.tintStrong,
       borderGlow: borderGlow ?? this.borderGlow,
+      borderAccent: borderAccent ?? this.borderAccent,
       bgTinted: bgTinted ?? this.bgTinted,
       bgWarm: bgWarm ?? this.bgWarm,
       accentOrange: accentOrange ?? this.accentOrange,
@@ -167,6 +233,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       destructive: destructive ?? this.destructive,
       destructiveBorder: destructiveBorder ?? this.destructiveBorder,
       glassSurface: glassSurface ?? this.glassSurface,
+      scrim: scrim ?? this.scrim,
+      proteinAccent: proteinAccent ?? this.proteinAccent,
+      fatAccent: fatAccent ?? this.fatAccent,
     );
   }
 
@@ -180,6 +249,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       tint: Color.lerp(tint, other.tint, t)!,
       tintStrong: Color.lerp(tintStrong, other.tintStrong, t)!,
       borderGlow: Color.lerp(borderGlow, other.borderGlow, t)!,
+      borderAccent: Color.lerp(borderAccent, other.borderAccent, t)!,
       bgTinted: Color.lerp(bgTinted, other.bgTinted, t)!,
       bgWarm: Color.lerp(bgWarm, other.bgWarm, t)!,
       accentOrange: Color.lerp(accentOrange, other.accentOrange, t)!,
@@ -216,6 +286,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
         t,
       )!,
       glassSurface: Color.lerp(glassSurface, other.glassSurface, t)!,
+      scrim: Color.lerp(scrim, other.scrim, t)!,
+      proteinAccent: Color.lerp(proteinAccent, other.proteinAccent, t)!,
+      fatAccent: Color.lerp(fatAccent, other.fatAccent, t)!,
     );
   }
 }
@@ -235,6 +308,11 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     required this.glowRadial,
     required this.mainBackground,
     required this.innerBackground,
+    required this.glowCard,
+    this.macroProtein = _MacroGradients.protein,
+    this.macroCarbs = _MacroGradients.carbs,
+    this.macroFats = _MacroGradients.fats,
+    this.cameraScrim = _OverlayGradients.cameraScrim,
   });
 
   final Gradient primary;
@@ -249,6 +327,11 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient glowRadial;
   final Gradient mainBackground;
   final Gradient innerBackground;
+  final Gradient glowCard;
+  final Gradient macroProtein;
+  final Gradient macroCarbs;
+  final Gradient macroFats;
+  final Gradient cameraScrim;
 
   static const defaultBackground = LinearGradient(
     colors: [Color(0xFF14110B), _AppPalette.backgroundPrimary],
@@ -288,6 +371,12 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       end: Alignment.bottomCenter,
       stops: [0.0, 0.5, 1.0],
     ),
+    glowCard: LinearGradient(
+      colors: [_AppPalette.backgroundSurface, Color(0xFF55722A)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.3, 1.0],
+    ),
   );
 
   static const steady = AppGradientTokens(
@@ -319,6 +408,12 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       stops: [0.0, 0.5, 1.0],
+    ),
+    glowCard: LinearGradient(
+      colors: [_AppPalette.backgroundSurface, Color(0xFF7A4418)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.3, 1.0],
     ),
   );
 
@@ -352,6 +447,12 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       end: Alignment.bottomCenter,
       stops: [0.0, 0.5, 1.0],
     ),
+    glowCard: LinearGradient(
+      colors: [_AppPalette.backgroundSurface, Color(0xFF1F6670)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.3, 1.0],
+    ),
   );
 
   @override
@@ -368,6 +469,11 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? glowRadial,
     Gradient? mainBackground,
     Gradient? innerBackground,
+    Gradient? glowCard,
+    Gradient? macroProtein,
+    Gradient? macroCarbs,
+    Gradient? macroFats,
+    Gradient? cameraScrim,
   }) {
     return AppGradientTokens(
       primary: primary ?? this.primary,
@@ -382,6 +488,11 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       glowRadial: glowRadial ?? this.glowRadial,
       mainBackground: mainBackground ?? this.mainBackground,
       innerBackground: innerBackground ?? this.innerBackground,
+      glowCard: glowCard ?? this.glowCard,
+      macroProtein: macroProtein ?? this.macroProtein,
+      macroCarbs: macroCarbs ?? this.macroCarbs,
+      macroFats: macroFats ?? this.macroFats,
+      cameraScrim: cameraScrim ?? this.cameraScrim,
     );
   }
 
@@ -401,6 +512,11 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       glowRadial: Gradient.lerp(glowRadial, other.glowRadial, t)!,
       mainBackground: Gradient.lerp(mainBackground, other.mainBackground, t)!,
       innerBackground: Gradient.lerp(innerBackground, other.innerBackground, t)!,
+      glowCard: Gradient.lerp(glowCard, other.glowCard, t)!,
+      macroProtein: Gradient.lerp(macroProtein, other.macroProtein, t)!,
+      macroCarbs: Gradient.lerp(macroCarbs, other.macroCarbs, t)!,
+      macroFats: Gradient.lerp(macroFats, other.macroFats, t)!,
+      cameraScrim: Gradient.lerp(cameraScrim, other.cameraScrim, t)!,
     );
   }
 }

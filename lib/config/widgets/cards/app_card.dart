@@ -2,33 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
-enum HomeCardVariant { plain, highlighted, tinted }
+enum AppCardVariant { plain, highlighted, tinted, glow }
 
-class HomeCard extends StatelessWidget {
-  const HomeCard({
+class AppCard extends StatelessWidget {
+  const AppCard({
     super.key,
     required this.child,
-    this.variant = HomeCardVariant.plain,
+    this.variant = AppCardVariant.plain,
     this.padding,
   });
 
   final Widget child;
-  final HomeCardVariant variant;
+  final AppCardVariant variant;
   final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
-    final Color backgroundColor;
+    Color? backgroundColor;
+    Gradient? gradient;
     final Color borderColor;
     switch (variant) {
-      case HomeCardVariant.highlighted:
+      case AppCardVariant.highlighted:
         backgroundColor = context.colors.bgTinted;
         borderColor = context.colors.borderGlow;
-      case HomeCardVariant.tinted:
+      case AppCardVariant.tinted:
         backgroundColor = context.colors.tint;
         borderColor = context.colors.borderGlow;
-      case HomeCardVariant.plain:
+      case AppCardVariant.glow:
+        gradient = context.gradients.glowCard;
+        borderColor = context.colors.borderSubtle;
+      case AppCardVariant.plain:
         backgroundColor = context.colors.backgroundSurface;
         borderColor = context.colors.borderSubtle;
     }
@@ -36,10 +41,11 @@ class HomeCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: padding ?? const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
+      decoration: AppShapes.decoration(
         color: backgroundColor,
+        gradient: gradient,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: borderColor, width: 1),
+        side: BorderSide(color: borderColor, width: 1),
       ),
       child: child,
     );

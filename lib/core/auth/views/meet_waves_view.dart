@@ -14,6 +14,7 @@ import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 Animation<double> _staggeredPresence(
   AnimationController controller, {
@@ -247,9 +248,9 @@ class _StepOneContent extends StatelessWidget {
                               vertical: AppSpacing.xl,
                               horizontal: AppSpacing.xl4,
                             ),
-                            decoration: BoxDecoration(
+                            decoration: AppShapes.decoration(
                               color: Colors.white.withValues(alpha: 0.5),
-                              border: Border.all(
+                              side: BorderSide(
                                 color: Colors.white.withValues(alpha: 0.5),
                                 width: 1,
                               ),

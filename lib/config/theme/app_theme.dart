@@ -53,6 +53,7 @@ class AppTheme {
             displayLarge: AppTypography.heading1,
             displayMedium: AppTypography.heading2Bold,
             displaySmall: AppTypography.heading3Bold,
+            headlineSmall: AppTypography.heading3Medium,
             titleLarge: AppTypography.heading4,
             titleMedium: AppTypography.bodyLargeMedium,
             titleSmall: AppTypography.bodyLargeMedium,

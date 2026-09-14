@@ -2,6 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/core/auth/services/auth_service.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
+import 'package:floww/core/health/providers/health_provider.dart';
+import 'package:floww/core/health/services/health_service.dart';
 import 'package:floww/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -35,6 +37,9 @@ class MainApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeModeController(initialMode)),
         ChangeNotifierProvider(create: (_) => AuthViewModel(AuthService())),
+        ChangeNotifierProvider(
+          create: (_) => HealthProvider(HealthService())..restore(),
+        ),
       ],
       child: Consumer<ThemeModeController>(
         builder: (context, controller, _) => MaterialApp(

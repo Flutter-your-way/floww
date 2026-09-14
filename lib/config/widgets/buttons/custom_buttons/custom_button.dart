@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class CustomButton extends StatefulWidget {
   const CustomButton({
@@ -67,7 +68,7 @@ class _CustomButtonState extends State<CustomButton> {
           child: Container(
             height: 55,
             width: widget.width ?? double.infinity,
-            decoration: BoxDecoration(
+            decoration: AppShapes.decoration(
               color: widget.backgroundColor,
               gradient: widget.backgroundColor == null
                   ? LinearGradient(
@@ -82,7 +83,7 @@ class _CustomButtonState extends State<CustomButton> {
                     )
                   : null,
               borderRadius: BorderRadius.circular(27.5),
-              border: Border.all(
+              side: BorderSide(
                 color: context.scheme.onPrimary.withValues(alpha: 0.2),
                 width: 1.5,
               ),

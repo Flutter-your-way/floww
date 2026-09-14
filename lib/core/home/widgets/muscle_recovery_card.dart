@@ -5,8 +5,8 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
-import 'package:floww/core/home/widgets/home_card.dart';
-import 'package:floww/core/home/widgets/home_card_header.dart';
+import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/widgets/headers/card_header.dart';
 
 class MuscleRecoveryCard extends StatelessWidget {
   const MuscleRecoveryCard({super.key, required this.data, this.onTap});
@@ -16,11 +16,11 @@ class MuscleRecoveryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HomeCardHeader(
+          CardHeader(
             title: 'Muscle Recovery',
             showChevron: true,
             onTap: onTap,

@@ -1,18 +1,22 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
-
+import 'package:animations/animations.dart';
 import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/activity/views/activity_view.dart';
 import 'package:floww/core/home/views/home_view.dart';
+import 'package:floww/core/nutrition/services/diet_plan_service.dart';
+import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
+import 'package:floww/core/nutrition/view_models/nutrition_view_model.dart';
 import 'package:floww/core/nutrition/views/nutrition_view.dart';
 import 'package:floww/core/plans/views/plans_view.dart';
 import 'package:floww/core/stats/views/stats_view.dart';
 import 'package:floww/navigation/widgets/app_bottom_nav_bar.dart';
 import 'package:floww/navigation/widgets/wave_orb_button.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class MainTabView extends StatefulWidget {
   const MainTabView({super.key});
@@ -22,6 +26,8 @@ class MainTabView extends StatefulWidget {
 }
 
 class _MainTabViewState extends State<MainTabView> {
+  static const _tabTransitionDuration = Duration(milliseconds: 300);
+
   int _selectedIndex = 0;
 
   static const _tabs = [
@@ -32,9 +38,15 @@ class _MainTabViewState extends State<MainTabView> {
     NavTabItem(iconAsset: AppImages.tab_5, semanticLabel: 'Stats'),
   ];
 
-  static const _screens = [
+  static final _screens = [
     HomeView(),
-    NutritionView(),
+    ChangeNotifierProvider(
+      create: (context) => NutritionViewModel(
+        NutritionLogService(),
+        DietPlanService(NutritionLogService()),
+      ),
+      child: NutritionView(),
+    ),
     ActivityView(),
     PlansView(),
     StatsView(),
@@ -46,7 +58,23 @@ class _MainTabViewState extends State<MainTabView> {
       backgroundColor: context.colors.backgroundPrimary,
       body: Stack(
         children: [
-          IndexedStack(index: _selectedIndex, children: _screens),
+          Positioned.fill(
+            child: PageTransitionSwitcher(
+              duration: _tabTransitionDuration,
+              transitionBuilder:
+                  (child, primaryAnimation, secondaryAnimation) =>
+                      FadeThroughTransition(
+                        animation: primaryAnimation,
+                        secondaryAnimation: secondaryAnimation,
+                        fillColor: context.colors.backgroundPrimary,
+                        child: child,
+                      ),
+              child: KeyedSubtree(
+                key: ValueKey(_selectedIndex),
+                child: _screens[_selectedIndex],
+              ),
+            ),
+          ),
           Positioned(
             left: 0,
             right: 0,

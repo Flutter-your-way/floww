@@ -1,0 +1,98 @@
+{
+  "name": "Grilled chicken rice bowl",
+  "description": "Grilled chicken breast over white rice with sauteed vegetables.",
+  "servingDescription": "1 bowl (~420 g)",
+  "servingWeightG": 420,
+  "confidence": 0.83,
+  "healthScore": 8,
+  "ingredients": [
+    {
+      "name": "Grilled chicken breast",
+      "quantity": "150 g",
+      "weightG": 150,
+      "calories": 247,
+      "proteinG": 46.5,
+      "carbsG": 0,
+      "fatG": 5.4
+    },
+    {
+      "name": "White rice",
+      "quantity": "1 cup",
+      "weightG": 180,
+      "calories": 234,
+      "proteinG": 4.9,
+      "carbsG": 51.3,
+      "fatG": 0.5
+    },
+    {
+      "name": "Sauteed vegetables",
+      "quantity": "1/2 cup",
+      "weightG": 80,
+      "calories": 46,
+      "proteinG": 1.6,
+      "carbsG": 6.9,
+      "fatG": 1.5
+    },
+    {
+      "name": "Cooking oil",
+      "quantity": "1 tsp",
+      "weightG": 4.5,
+      "calories": 40,
+      "proteinG": 0,
+      "carbsG": 0,
+      "fatG": 4.5
+    }
+  ],
+  "nutrition": {
+    "macros": {
+      "calories": 567,
+      "proteinG": 53,
+      "carbsG": 58.2,
+      "fatG": 11.9,
+      "fiberG": 3.2,
+      "sugarG": 3.1,
+      "addedSugarG": 0,
+      "saturatedFatG": 2.1,
+      "transFatG": 0,
+      "monounsaturatedFatG": 4.8,
+      "polyunsaturatedFatG": 3.1,
+      "cholesterolMg": 125.3,
+      "waterMl": 271.4
+    },
+    "vitamins": {
+      "vitaminAMcg": 210,
+      "vitaminB1Mg": 0.3,
+      "vitaminB2Mg": 0.3,
+      "vitaminB3Mg": 21.4,
+      "vitaminB5Mg": 2.1,
+      "vitaminB6Mg": 1.3,
+      "vitaminB7Mcg": 4.2,
+      "vitaminB9Mcg": 96,
+      "vitaminB12Mcg": 0.5,
+      "vitaminCMg": 18.7,
+      "vitaminDMcg": 0.2,
+      "vitaminEMg": 1.6,
+      "vitaminKMcg": 42.1,
+      "cholineMg": 132
+    },
+    "minerals": {
+      "calciumMg": 48,
+      "ironMg": 2.4,
+      "magnesiumMg": 76,
+      "phosphorusMg": 470,
+      "potassiumMg": 690,
+      "sodiumMg": 0,
+      "zincMg": 2.3,
+      "copperMg": 0.2,
+      "manganeseMg": 0.9,
+      "seleniumMcg": 52.4,
+      "iodineMcg": 12
+    }
+  },
+  "id": "sampleFoodId123",
+  "userId": "sampleUserId456",
+  "source": "scan",
+  "aiModel": "gpt-5.4-mini",
+  "promptVersion": "food-scan-v2",
+  "createdAt": "2026-09-10T13:05:00.000Z"
+}

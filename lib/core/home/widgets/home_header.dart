@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/headers/screen_title.dart';
+import 'package:floww/config/theme/app_shapes.dart';
+import 'package:smooth_corner/smooth_corner.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({
@@ -25,25 +28,7 @@ class HomeHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$greeting,',
-                style: context.textTheme.titleMedium?.copyWith(
-                  color: context.colors.backgroundPrimary,
-                ),
-              ),
-              Text(
-                userName,
-                style: context.textTheme.displaySmall?.copyWith(
-                  color: context.colors.backgroundPrimary,
-                  fontWeight: FontWeight.w800,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
+          child: ScreenTitle(eyebrow: '$greeting,', title: userName),
         ),
         SizedBox(width: AppSpacing.lg),
         _StreakBadge(count: streakCount),
@@ -61,17 +46,18 @@ class _StreakBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
+    return SmoothClipRRect(
+      smoothness: AppShapes.smoothness,
       borderRadius: BorderRadius.circular(AppRadius.full),
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           height: AppSizes.s40,
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          decoration: BoxDecoration(
+          decoration: AppShapes.decoration(
             color: Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(
+            side: BorderSide(
               color: Colors.white.withValues(alpha: 0.3),
               width: 1,
             ),

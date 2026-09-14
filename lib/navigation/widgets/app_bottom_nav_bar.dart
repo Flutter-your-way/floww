@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({
@@ -22,10 +23,10 @@ class AppBottomNavBar extends StatelessWidget {
     return Container(
       height: AppSizes.s64,
       // padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      decoration: BoxDecoration(
+      decoration: AppShapes.decoration(
         color: context.colors.backgroundSurface,
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: context.colors.borderSubtle, width: 1),
+        side: BorderSide(color: context.colors.borderSubtle, width: 1),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {

@@ -56,6 +56,14 @@ class AppTypography {
     letterSpacing: 0,
   );
 
+  static const TextStyle heading3Medium = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+    letterSpacing: 0,
+  );
+
   static const TextStyle heading4 = TextStyle(
     fontFamily: _fontHeading,
     fontSize: 18,

@@ -3,7 +3,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
-import 'package:floww/core/home/widgets/home_card.dart';
+import 'package:floww/config/widgets/cards/app_card.dart';
 
 class TodayProgressCard extends StatelessWidget {
   const TodayProgressCard({super.key, required this.progress});
@@ -12,7 +12,7 @@ class TodayProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

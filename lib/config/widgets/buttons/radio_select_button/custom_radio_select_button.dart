@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class CustomRadioSelectButton extends StatelessWidget {
   final String title;
@@ -35,10 +36,10 @@ class CustomRadioSelectButton extends StatelessWidget {
         curve: Curves.easeOut,
         width: width ?? double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        decoration: BoxDecoration(
+        decoration: AppShapes.decoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: 1),
+          side: BorderSide(color: borderColor, width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,

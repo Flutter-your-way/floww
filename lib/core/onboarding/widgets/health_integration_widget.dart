@@ -1,127 +1,163 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:floww/config/theme/app_theme_tokens.dart';
+
 import 'package:floww/config/constants/app_images.dart';
-import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/constants/app_sizes.dart';
+import 'package:floww/config/constants/app_spacing.dart';
+import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_shapes.dart';
+import 'package:smooth_corner/smooth_corner.dart';
 
 class HealthIntegrationWidget extends StatelessWidget {
-  final bool isConnected;
-  final VoidCallback onToggle;
-
   const HealthIntegrationWidget({
     super.key,
     required this.isConnected,
-    required this.onToggle,
+    required this.isConnecting,
+    required this.onConnect,
+    this.statusLabel,
   });
+
+  final bool isConnected;
+  final bool isConnecting;
+  final VoidCallback onConnect;
+  final String? statusLabel;
 
   @override
   Widget build(BuildContext context) {
-    final themeColors = context.colors;
-
-    final borderColor = isConnected
-        ? themeColors.primary
-        : const Color(0xFF181818);
-    const backgroundColor = Color(0xFF1F1F1F);
+    final colors = context.colors;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 24),
-        // App Icon
         Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            color: themeColors.primary,
+          width: AppSizes.s120,
+          height: AppSizes.s120,
+          decoration: AppShapes.decoration(
+            borderRadius: BorderRadius.circular(AppRadius.xl4),
+            color: colors.primary,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
+          child: SmoothClipRRect(
+            smoothness: AppShapes.smoothness,
+            borderRadius: BorderRadius.circular(AppRadius.xl4),
             child: Image.asset(AppImages.appIcon, fit: BoxFit.cover),
           ),
         ),
-        const SizedBox(height: 16),
-        // Link Icon
-        const Icon(Icons.link, color: Colors.white, size: 28),
-        const SizedBox(height: 16),
-        // Apple Health Card
+        SizedBox(height: AppSpacing.xl),
+        Icon(Icons.link, color: colors.textPrimary, size: AppSizes.s28),
+        SizedBox(height: AppSpacing.xl),
         GestureDetector(
-          onTap: onToggle,
+          onTap: isConnected || isConnecting ? null : onConnect,
           behavior: HitTestBehavior.opaque,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: borderColor, width: 1),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl2,
+              vertical: AppSpacing.xl,
+            ),
+            decoration: AppShapes.decoration(
+              color: colors.backgroundSurface,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              side: BorderSide(
+                color: isConnected ? colors.primary : colors.backgroundSecondary,
+              ),
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Apple Health Icon Box
                 Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                  width: AppSizes.s48,
+                  height: AppSizes.s48,
+                  decoration: AppShapes.decoration(
+                    color: colors.textPrimary,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Center(
                     child: SvgPicture.asset(
                       AppImages.appleHealthIcon,
-                      width: 24,
-                      height: 24,
+                      width: AppSizes.s24,
+                      height: AppSizes.s24,
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                // Title
+                SizedBox(width: AppSpacing.xl),
                 Expanded(
-                  child: Text(
-                    'Apple Health',
-                    style: AppTypography.bodyLargeMedium.copyWith(
-                      color: Colors.white,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Apple Health',
+                        style: context.textTheme.titleMedium?.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      if (statusLabel != null) ...[
+                        SizedBox(height: AppSpacing.xs),
+                        Text(
+                          statusLabel!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                // Connect Button Pill
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isConnected
-                        ? themeColors.primary.withValues(alpha: 0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(
-                      color: isConnected
-                          ? themeColors.primary
-                          : const Color(0xFF333333),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    isConnected ? 'Connected' : 'Connect',
-                    style: TextStyle(
-                      color: isConnected ? themeColors.primary : Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'HankenGrotesk',
-                    ),
-                  ),
+                SizedBox(width: AppSpacing.lg),
+                _ConnectPill(
+                  isConnected: isConnected,
+                  isConnecting: isConnecting,
                 ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ConnectPill extends StatelessWidget {
+  const _ConnectPill({required this.isConnected, required this.isConnecting});
+
+  final bool isConnected;
+  final bool isConnecting;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.md,
+      ),
+      decoration: AppShapes.decoration(
+        color: isConnected ? colors.tintStrong : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        side: BorderSide(
+          color: isConnected ? colors.primary : colors.borderMedium,
+        ),
+      ),
+      child: isConnecting
+          ? SizedBox(
+              width: AppSizes.s16,
+              height: AppSizes.s16,
+              child: CircularProgressIndicator(
+                strokeWidth: AppSizes.s2,
+                color: colors.primary,
+              ),
+            )
+          : Text(
+              isConnected ? 'Connected' : 'Connect',
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: isConnected ? colors.primary : colors.textPrimary,
+              ),
+            ),
     );
   }
 }

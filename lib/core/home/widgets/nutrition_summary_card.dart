@@ -3,8 +3,11 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
-import 'package:floww/core/home/widgets/home_card.dart';
-import 'package:floww/core/home/widgets/home_card_header.dart';
+import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/widgets/nutrition/macro_value_label.dart';
+import 'package:floww/config/widgets/headers/card_header.dart';
+import 'package:floww/config/theme/app_shapes.dart';
+import 'package:smooth_corner/smooth_corner.dart';
 
 class NutritionSummaryCard extends StatelessWidget {
   const NutritionSummaryCard({super.key, required this.nutrition, this.onTap});
@@ -20,11 +23,11 @@ class NutritionSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HomeCardHeader(
+          CardHeader(
             title: 'Nutrition Summary',
             showChevron: true,
             onTap: onTap,
@@ -59,12 +62,24 @@ class NutritionSummaryCard extends StatelessWidget {
           SizedBox(height: AppSpacing.lg),
           Row(
             children: [
-              _MacroLabel(
-                label: 'Protein',
-                value: '${nutrition.proteinG}g',
+              Expanded(
+                child: MacroValueLabel(
+                  label: 'Protein',
+                  value: '${nutrition.proteinG}g',
+                ),
               ),
-              _MacroLabel(label: 'Carbs', value: '${nutrition.carbsG}g'),
-              _MacroLabel(label: 'Fats', value: '${nutrition.fatsG}g'),
+              Expanded(
+                child: MacroValueLabel(
+                  label: 'Carbs',
+                  value: '${nutrition.carbsG}g',
+                ),
+              ),
+              Expanded(
+                child: MacroValueLabel(
+                  label: 'Fats',
+                  value: '${nutrition.fatsG}g',
+                ),
+              ),
             ],
           ),
           if (!_hasData) ...[
@@ -90,7 +105,8 @@ class _MacroBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!hasData) {
-      return ClipRRect(
+      return SmoothClipRRect(
+        smoothness: AppShapes.smoothness,
         borderRadius: BorderRadius.circular(AppRadius.full),
         child: Container(
           height: AppSizes.s8,
@@ -99,7 +115,8 @@ class _MacroBar extends StatelessWidget {
       );
     }
 
-    return ClipRRect(
+    return SmoothClipRRect(
+      smoothness: AppShapes.smoothness,
       borderRadius: BorderRadius.circular(AppRadius.full),
       child: Container(
         height: AppSizes.s8,
@@ -112,37 +129,6 @@ class _MacroBar extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _MacroLabel extends StatelessWidget {
-  const _MacroLabel({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: context.colors.textSecondary,
-            ),
-          ),
-          SizedBox(height: AppSpacing.xs),
-          Text(
-            value,
-            style: context.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
       ),
     );
   }

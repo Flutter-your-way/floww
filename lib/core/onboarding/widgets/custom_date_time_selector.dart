@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 
 class CustomDateTimeSelector extends StatelessWidget {
   final String title;
@@ -64,10 +65,10 @@ class CustomDateTimeSelector extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        decoration: BoxDecoration(
+        decoration: AppShapes.decoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF181818), width: 1),
+          side: BorderSide(color: const Color(0xFF181818), width: 1),
         ),
         child: Row(
           children: [
@@ -75,7 +76,7 @@ class CustomDateTimeSelector extends StatelessWidget {
             Container(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(
+              decoration: AppShapes.decoration(
                 color: themeColors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -101,10 +102,10 @@ class CustomDateTimeSelector extends StatelessWidget {
             // Value Box
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
+              decoration: AppShapes.decoration(
                 color: const Color(0xFF131313),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF181818), width: 1),
+                side: BorderSide(color: const Color(0xFF181818), width: 1),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -135,7 +136,7 @@ class CustomDateTimeSelector extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: context.colors.backgroundSurface,
-      shape: const RoundedRectangleBorder(
+      shape: AppShapes.border(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (BuildContext ctx) {

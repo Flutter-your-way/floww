@@ -22,8 +22,6 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -35,8 +33,18 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Floww uses your camera to scan your meals so WAVE can estimate their calories and nutrition.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Floww lets you pick a photo of your meal from your library so WAVE can estimate its calories and nutrition.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Floww reads your steps, workouts, sleep and heart rate from Apple Health to personalise your recovery and training plan.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Floww writes your logged workouts back to Apple Health so all your activity stays in one place.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
