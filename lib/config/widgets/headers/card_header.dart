@@ -8,6 +8,10 @@ class CardHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.icon,
+    this.iconColor,
+    this.iconSize,
+    this.titleStyle,
+    this.titleTrailing,
     this.trailingText,
     this.trailing,
     this.showChevron = false,
@@ -16,6 +20,10 @@ class CardHeader extends StatelessWidget {
 
   final String title;
   final IconData? icon;
+  final Color? iconColor;
+  final double? iconSize;
+  final TextStyle? titleStyle;
+  final Widget? titleTrailing;
   final String? trailingText;
   final Widget? trailing;
   final bool showChevron;
@@ -24,6 +32,7 @@ class CardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = this.icon;
+    final titleTrailing = this.titleTrailing;
     final trailingText = this.trailingText;
     final trailing = this.trailing;
     final titleRow = Row(
@@ -33,9 +42,13 @@ class CardHeader extends StatelessWidget {
           child: Text(
             title,
             overflow: TextOverflow.ellipsis,
-            style: context.textTheme.titleLarge,
+            style: titleStyle ?? context.textTheme.titleLarge,
           ),
         ),
+        if (titleTrailing != null) ...[
+          SizedBox(width: AppSpacing.md),
+          titleTrailing,
+        ],
         if (trailingText != null) ...[
           SizedBox(width: AppSpacing.sm),
           Text(
@@ -54,7 +67,11 @@ class CardHeader extends StatelessWidget {
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, color: context.colors.primary, size: AppSizes.s20),
+            Icon(
+              icon,
+              color: iconColor ?? context.colors.primary,
+              size: iconSize ?? AppSizes.s20,
+            ),
             SizedBox(width: AppSpacing.sm),
           ],
           if (trailing != null || showChevron)

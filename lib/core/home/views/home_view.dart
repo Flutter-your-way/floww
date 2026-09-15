@@ -17,6 +17,8 @@ import 'package:floww/core/home/widgets/today_progress_card.dart';
 import 'package:floww/core/home/widgets/today_workout_card.dart';
 import 'package:floww/core/home/widgets/wave_insight_banner.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
+import 'package:floww/navigation/app_router.dart';
+import 'package:floww/navigation/services/navigation_service.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -65,7 +67,9 @@ class HomeView extends StatelessWidget {
                     SizedBox(height: AppSpacing.xl2),
                     TodayWorkoutCard(
                       workout: home.workout,
-                      onStartWorkout: () {},
+                      onStartWorkout: () => NavigationService.instance.push(
+                        AppRouter.todaysWorkout,
+                      ),
                     ),
                     SizedBox(height: AppSpacing.xl2),
                     NutritionSummaryCard(

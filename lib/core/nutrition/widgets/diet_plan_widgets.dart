@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
@@ -78,16 +80,14 @@ class DietPlanDayCard extends StatelessWidget {
     final captionStyle = context.textTheme.labelSmall?.copyWith(
       color: colors.textSecondary,
     );
-    final divider = Divider(height: 1, thickness: 1, color: colors.borderSubtle);
-
-    return GestureDetector(
+    return PressScale(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: AppCard(
         variant: day.isToday || day.isExpanded
             ? AppCardVariant.highlighted
             : AppCardVariant.plain,
         padding: const EdgeInsets.all(AppSpacing.lg),
+        transitionDuration: AppMotion.expand,
         child: Column(
           children: [
             Row(
@@ -132,35 +132,72 @@ class DietPlanDayCard extends StatelessWidget {
                   size: AppSizes.s20,
                 ),
                 SizedBox(width: AppSpacing.sm),
-                Icon(
-                  day.isExpanded
-                      ? Icons.expand_more_rounded
-                      : Icons.chevron_right_rounded,
-                  color: colors.textSecondary,
-                  size: AppSizes.s20,
+                AnimatedRotation(
+                  turns: day.isExpanded ? 0.25 : 0,
+                  duration: AppMotion.expand,
+                  curve: AppMotion.expandCurve,
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: colors.textSecondary,
+                    size: AppSizes.s20,
+                  ),
                 ),
               ],
             ),
-            if (day.isExpanded) ...[
-              SizedBox(height: AppSpacing.md),
-              divider,
-              for (final meal in day.meals) _PlanMealRow(meal: meal),
-              divider,
-              SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Expanded(child: Text('Daily totals', style: captionStyle)),
-                  _TotalLabel(label: 'Protein', value: day.proteinLabel),
-                  SizedBox(width: AppSpacing.md),
-                  _TotalLabel(label: 'Carbs', value: day.carbsLabel),
-                  SizedBox(width: AppSpacing.md),
-                  _TotalLabel(label: 'Fat', value: day.fatLabel),
-                ],
-              ),
-            ],
+            AnimatedCrossFade(
+              alignment: Alignment.topCenter,
+              firstChild: const SizedBox(width: double.infinity),
+              secondChild: _PlanDayDetails(day: day),
+              crossFadeState: day.isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: AppMotion.expand,
+              sizeCurve: AppMotion.expandCurve,
+              firstCurve: AppMotion.collapseCurve,
+              secondCurve: AppMotion.expandCurve,
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PlanDayDetails extends StatelessWidget {
+  const _PlanDayDetails({required this.day});
+
+  final DietPlanDayItem day;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final captionStyle = context.textTheme.labelSmall?.copyWith(
+      color: colors.textSecondary,
+    );
+    final divider = Divider(
+      height: AppSizes.s1,
+      thickness: AppSizes.s1,
+      color: colors.borderSubtle,
+    );
+
+    return Column(
+      children: [
+        SizedBox(height: AppSpacing.md),
+        divider,
+        for (final meal in day.meals) _PlanMealRow(meal: meal),
+        divider,
+        SizedBox(height: AppSpacing.md),
+        Row(
+          children: [
+            Expanded(child: Text('Daily totals', style: captionStyle)),
+            _TotalLabel(label: 'Protein', value: day.proteinLabel),
+            SizedBox(width: AppSpacing.md),
+            _TotalLabel(label: 'Carbs', value: day.carbsLabel),
+            SizedBox(width: AppSpacing.md),
+            _TotalLabel(label: 'Fat', value: day.fatLabel),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -57,23 +57,28 @@ class _Chip extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: AppSizes.s36,
         alignment: Alignment.center,
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
         decoration: AppShapes.decoration(
-          color: isSelected ? colors.tint : colors.backgroundSurface,
+          color: isSelected ? colors.tint : colors.backgroundPrimary,
           borderRadius: BorderRadius.circular(AppRadius.full),
           side: BorderSide(
-            color: isSelected ? colors.primary : colors.borderSubtle,
+            color: isSelected ? colors.primary : colors.backgroundSecondary,
+            width: AppSizes.hairline,
           ),
         ),
         child: Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.textTheme.bodySmall?.copyWith(
-            color: isSelected ? colors.primary : colors.textSecondary,
-          ),
+          style: isSelected
+              ? context.textTheme.labelMedium?.copyWith(color: colors.primary)
+              : context.textTheme.bodySmall?.copyWith(
+                  color: colors.textSecondary,
+                ),
         ),
       ),
     );

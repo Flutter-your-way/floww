@@ -46,13 +46,14 @@ dependencies:
   sign_in_with_apple: ^8.1.0
   crypto: ^3.0.7
   health: ^13.3.2
-  liquid_glass_easy:
-    path: /Volumes/T7/code/liquid_glass_easy
   animations: ^2.2.0
   smooth_corner: ^1.1.1
   camera: ^0.12.1
   image_picker: ^1.2.3
   progressive_blur: ^0.0.2
+  share_plus: ^13.3.0
+  gal: ^2.3.3
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

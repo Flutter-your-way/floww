@@ -80,7 +80,6 @@ class AppFloatingSheet extends StatelessWidget {
             decoration: AppShapes.decoration(
               color: context.colors.backgroundSecondary,
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              side: BorderSide(color: context.colors.borderSubtle),
             ),
             child: AnimatedSize(
               duration: _resizeDuration,

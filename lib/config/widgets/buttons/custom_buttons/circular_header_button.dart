@@ -9,6 +9,7 @@ class CircularHeaderButton extends StatefulWidget {
     this.onPressed,
     this.iconColor,
     this.backgroundColor,
+    this.borderColor,
     this.size = AppSizes.s40,
     this.iconSize = AppSizes.s20,
   });
@@ -17,6 +18,7 @@ class CircularHeaderButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final Color? iconColor;
   final Color? backgroundColor;
+  final Color? borderColor;
   final double size;
   final double iconSize;
 
@@ -61,6 +63,12 @@ class _CircularHeaderButtonState extends State<CircularHeaderButton> {
             decoration: BoxDecoration(
               color: widget.backgroundColor ?? context.colors.backgroundSurface,
               shape: BoxShape.circle,
+              border: widget.borderColor == null
+                  ? null
+                  : Border.all(
+                      color: widget.borderColor!,
+                      width: AppSizes.s1,
+                    ),
             ),
             child: Center(
               child: Icon(

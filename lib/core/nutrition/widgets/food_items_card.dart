@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
@@ -68,9 +69,12 @@ class FoodItemsCard extends StatelessWidget {
           if (onAdd != null) ...[
             SizedBox(height: AppSpacing.lg),
             PillButton(
-              variant: PillButtonVariant.neutral,
-              label: 'Add Food Item',
-              icon: Icons.add_rounded,
+              variant: PillButtonVariant.bright,
+              height: AppSizes.s36,
+              label: 'ADD FOOD ITEM',
+              icon: Icons.add_circle,
+              iconColor: context.colors.onSurfaceBright,
+              labelStyle: AppTypography.labelSmallSemiBold,
               onPressed: onAdd,
             ),
           ],

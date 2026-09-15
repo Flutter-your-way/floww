@@ -11,17 +11,20 @@ class MacroSegmentBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: AppSizes.s12,
+      padding: const EdgeInsets.all(AppSpacing.xxs),
       decoration: AppShapes.decoration(
+        color: context.colors.glassSurface,
         borderRadius: BorderRadius.circular(AppRadius.full),
-        side: BorderSide(color: context.colors.borderMedium, width: 1.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: _MacroSegment(gradient: context.gradients.macroProtein)),
-          SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: _MacroSegment(gradient: context.gradients.macroProtein),
+          ),
+          SizedBox(width: AppSpacing.xxs),
           Expanded(child: _MacroSegment(gradient: context.gradients.macroCarbs)),
-          SizedBox(width: AppSpacing.xs),
+          SizedBox(width: AppSpacing.xxs),
           Expanded(child: _MacroSegment(gradient: context.gradients.macroFats)),
         ],
       ),

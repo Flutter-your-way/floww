@@ -45,7 +45,9 @@ class GoalRingSummary extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: AppSpacing.xl),
+              SizedBox(height: AppSpacing.lg),
+              Divider(height: 1, thickness: 1, color: colors.borderSubtle),
+              SizedBox(height: AppSpacing.lg),
               Row(
                 children: [
                   Container(

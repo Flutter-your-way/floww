@@ -1,4 +1,5 @@
 import 'package:floww/config/theme/app_mode.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_typography.dart';
@@ -27,6 +28,13 @@ class AppTheme {
       brightness: Brightness.dark,
       fontFamily: 'HankenGrotesk',
       scaffoldBackgroundColor: colorTokens.backgroundPrimary,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: ColorScheme.dark(
         primary: colorTokens.primary,
         onPrimary: colorTokens.backgroundPrimary,

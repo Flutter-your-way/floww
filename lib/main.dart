@@ -6,6 +6,7 @@ import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/health/services/health_service.dart';
 import 'package:floww/firebase_options.dart';
 import 'package:flutter/material.dart';
+import 'package:progressive_blur/progressive_blur.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,6 +19,7 @@ import 'navigation/router_config.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await ProgressiveBlurWidget.precache();
   final prefs = await SharedPreferences.getInstance();
   final saved = AppThemeMode.values.firstWhere(
     (e) => e.name == (prefs.getString('app_theme_mode') ?? 'flow'),

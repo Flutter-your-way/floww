@@ -4,7 +4,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/nutrition/models/micronutrient_progress.dart';
 import 'package:floww/core/nutrition/widgets/micronutrient_progress_list.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_section_label.dart';
+import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
 class DetectedMealCard extends StatelessWidget {
@@ -56,7 +56,7 @@ class DetectedMealCard extends StatelessWidget {
           SizedBox(height: AppSpacing.xl),
           _CaloriesSummary(calories: calories, dailyGoal: dailyGoal),
           SizedBox(height: AppSpacing.xl3),
-          const NutritionSectionLabel(label: 'Macronutrients'),
+          const SectionLabel(label: 'Macronutrients'),
           SizedBox(height: AppSpacing.lg),
           Row(
             children: [
@@ -86,7 +86,7 @@ class DetectedMealCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppSpacing.xl3),
-          const NutritionSectionLabel(label: 'Micronutrients'),
+          const SectionLabel(label: 'Micronutrients'),
           MicronutrientProgressList(items: micronutrients),
         ],
       ),

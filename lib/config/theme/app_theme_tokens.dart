@@ -26,7 +26,12 @@ class _AppPalette {
   static const textPrimary = Color(0xFFFFFFFF);
   static const textSecondary = Color(0x80FFFFFF);
   static const textTertiary = Color(0x33FFFFFF);
+  static const textFaint = Color(0x59FFFFFF);
   static const textMuted = Color(0xFF999999);
+  static const textQuiet = Color(0xFF919191);
+  static const textDim = Color(0xFF767676);
+  static const textSubtle = Color(0x99FFFFFF);
+  static const surfaceTranslucent = Color(0x331D1E1D);
 
   static const borderSubtle = Color(0x1AFFFFFF);
   static const borderMedium = Color(0x33FFFFFF);
@@ -34,41 +39,37 @@ class _AppPalette {
   static const destructive = Color(0xFFDC2626);
   static const destructiveBorder = Color(0xFFEF4444);
 
-  static const macroTrackEnd = Color(0xFF1A1A1A);
-
   static const scrim = Color(0x990A0A0A);
-  static const proteinAccent = Color(0xFF2563EB);
-  static const fatAccent = Color(0xFFF87171);
+  static const proteinAccent = Color(0xFFC3FF3D);
+  static const carbsAccent = Color(0xFFF97316);
+  static const fatAccent = Color(0xFF28D5E6);
+  static const fiberAccent = Color(0xFF4ADE80);
+  static const accentOrangeMuted = Color(0x80F97316);
+  static const accentOrangeDeep = Color(0xFFEA580C);
+  static const accentOrangeLight = Color(0xFFFB923C);
+  static const amberBorder = Color(0x3DF59E0B);
+  static const amberSurface = Color(0x10F59E0B);
+  static const accentViolet = Color(0xFF8B5CF6);
 }
 
 class _MacroGradients {
   const _MacroGradients._();
 
+  static const _trackEnd = Color(0xFF0F0E0B);
+
   static const protein = LinearGradient(
-    colors: [
-      _AppPalette.proteinAccent,
-      Color(0xFF1E40AF),
-      _AppPalette.macroTrackEnd,
-    ],
-    stops: [0.0, 0.45, 0.95],
+    colors: [Color(0xFFF43F5E), Color(0xFFEC4899), _trackEnd],
+    stops: [0.0, 0.3371, 0.6742],
   );
 
   static const carbs = LinearGradient(
-    colors: [
-      Color(0xFFF97316),
-      Color(0xFFC2410C),
-      _AppPalette.macroTrackEnd,
-    ],
-    stops: [0.0, 0.45, 0.95],
+    colors: [Color(0xFF2E90FA), Color(0xFF0EA5E9), _trackEnd],
+    stops: [0.0, 0.2735, 0.547],
   );
 
   static const fats = LinearGradient(
-    colors: [
-      _AppPalette.fatAccent,
-      Color(0xFFB91C1C),
-      _AppPalette.macroTrackEnd,
-    ],
-    stops: [0.0, 0.4, 0.95],
+    colors: [Color(0xFFEF6820), Color(0xFFFAC515), _trackEnd],
+    stops: [0.0, 0.3746, 0.7491],
   );
 }
 
@@ -77,6 +78,23 @@ class _OverlayGradients {
 
   static const cameraScrim = LinearGradient(
     colors: [Color(0x800A0A0A), _AppPalette.backgroundPrimary],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const cardSheen = RadialGradient(
+    colors: [Color(0xFF1D1D1D), Color(0x001D1D1D)],
+    center: Alignment.topRight,
+    radius: 1.6,
+  );
+
+  static const actionScrim = LinearGradient(
+    colors: [
+      Color(0x000A0A0A),
+      Color(0xCC0A0A0A),
+      _AppPalette.backgroundPrimary,
+    ],
+    stops: [0.0, 0.55, 1.0],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
@@ -95,6 +113,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     required this.bgTinted,
     required this.bgWarm,
     required this.accentOrange,
+    required this.surfaceBright,
+    required this.onSurfaceBright,
     this.backgroundPrimary = _AppPalette.backgroundPrimary,
     this.backgroundSecondary = _AppPalette.backgroundSecondary,
     this.backgroundSurface = _AppPalette.backgroundSurface,
@@ -102,7 +122,12 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     this.textPrimary = _AppPalette.textPrimary,
     this.textSecondary = _AppPalette.textSecondary,
     this.textTertiary = _AppPalette.textTertiary,
+    this.textFaint = _AppPalette.textFaint,
     this.textMuted = _AppPalette.textMuted,
+    this.textQuiet = _AppPalette.textQuiet,
+    this.textDim = _AppPalette.textDim,
+    this.textSubtle = _AppPalette.textSubtle,
+    this.surfaceTranslucent = _AppPalette.surfaceTranslucent,
     this.borderSubtle = _AppPalette.borderSubtle,
     this.borderMedium = _AppPalette.borderMedium,
     this.destructive = _AppPalette.destructive,
@@ -110,7 +135,15 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     this.glassSurface = _AppPalette.textSecondary,
     this.scrim = _AppPalette.scrim,
     this.proteinAccent = _AppPalette.proteinAccent,
+    this.carbsAccent = _AppPalette.carbsAccent,
     this.fatAccent = _AppPalette.fatAccent,
+    this.fiberAccent = _AppPalette.fiberAccent,
+    this.accentOrangeMuted = _AppPalette.accentOrangeMuted,
+    this.accentOrangeDeep = _AppPalette.accentOrangeDeep,
+    this.accentOrangeLight = _AppPalette.accentOrangeLight,
+    this.amberBorder = _AppPalette.amberBorder,
+    this.amberSurface = _AppPalette.amberSurface,
+    this.accentViolet = _AppPalette.accentViolet,
   });
 
   final Color primary;
@@ -123,6 +156,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color bgTinted;
   final Color bgWarm;
   final Color accentOrange;
+  final Color surfaceBright;
+  final Color onSurfaceBright;
 
   final Color backgroundPrimary;
   final Color backgroundSecondary;
@@ -131,7 +166,12 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color textPrimary;
   final Color textSecondary;
   final Color textTertiary;
+  final Color textFaint;
   final Color textMuted;
+  final Color textQuiet;
+  final Color textDim;
+  final Color textSubtle;
+  final Color surfaceTranslucent;
   final Color borderSubtle;
   final Color borderMedium;
   final Color destructive;
@@ -139,7 +179,15 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color glassSurface;
   final Color scrim;
   final Color proteinAccent;
+  final Color carbsAccent;
   final Color fatAccent;
+  final Color fiberAccent;
+  final Color accentOrangeMuted;
+  final Color accentOrangeDeep;
+  final Color accentOrangeLight;
+  final Color amberBorder;
+  final Color amberSurface;
+  final Color accentViolet;
 
   static const flow = AppColorTokens(
     primary: Color(0xFFC3FF3D),
@@ -152,6 +200,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     bgTinted: Color(0xFF1F2218),
     bgWarm: Color(0xFF23221A),
     accentOrange: Color(0xFFF97316),
+    surfaceBright: Color(0xFFE0EBE2),
+    onSurfaceBright: Color(0xFF659100),
   );
 
   static const steady = AppColorTokens(
@@ -165,6 +215,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     bgTinted: Color(0xFF221C18),
     bgWarm: Color(0xFF23221A),
     accentOrange: Color(0xFFF97316),
+    surfaceBright: Color(0xFFEBE4E0),
+    onSurfaceBright: Color(0xFF8C3F00),
   );
 
   static const restore = AppColorTokens(
@@ -178,6 +230,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     bgTinted: Color(0xFF182122),
     bgWarm: Color(0xFF182122),
     accentOrange: Color(0xFFF97316),
+    surfaceBright: Color(0xFFE0EAEB),
+    onSurfaceBright: Color(0xFF00697A),
   );
 
   @override
@@ -192,6 +246,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? bgTinted,
     Color? bgWarm,
     Color? accentOrange,
+    Color? surfaceBright,
+    Color? onSurfaceBright,
     Color? backgroundPrimary,
     Color? backgroundSecondary,
     Color? backgroundSurface,
@@ -199,7 +255,12 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? textPrimary,
     Color? textSecondary,
     Color? textTertiary,
+    Color? textFaint,
     Color? textMuted,
+    Color? textQuiet,
+    Color? textDim,
+    Color? textSubtle,
+    Color? surfaceTranslucent,
     Color? borderSubtle,
     Color? borderMedium,
     Color? destructive,
@@ -207,7 +268,15 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? glassSurface,
     Color? scrim,
     Color? proteinAccent,
+    Color? carbsAccent,
     Color? fatAccent,
+    Color? fiberAccent,
+    Color? accentOrangeMuted,
+    Color? accentOrangeDeep,
+    Color? accentOrangeLight,
+    Color? amberBorder,
+    Color? amberSurface,
+    Color? accentViolet,
   }) {
     return AppColorTokens(
       primary: primary ?? this.primary,
@@ -220,6 +289,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       bgTinted: bgTinted ?? this.bgTinted,
       bgWarm: bgWarm ?? this.bgWarm,
       accentOrange: accentOrange ?? this.accentOrange,
+      surfaceBright: surfaceBright ?? this.surfaceBright,
+      onSurfaceBright: onSurfaceBright ?? this.onSurfaceBright,
       backgroundPrimary: backgroundPrimary ?? this.backgroundPrimary,
       backgroundSecondary: backgroundSecondary ?? this.backgroundSecondary,
       backgroundSurface: backgroundSurface ?? this.backgroundSurface,
@@ -227,7 +298,12 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
       textTertiary: textTertiary ?? this.textTertiary,
+      textFaint: textFaint ?? this.textFaint,
       textMuted: textMuted ?? this.textMuted,
+      textQuiet: textQuiet ?? this.textQuiet,
+      textDim: textDim ?? this.textDim,
+      textSubtle: textSubtle ?? this.textSubtle,
+      surfaceTranslucent: surfaceTranslucent ?? this.surfaceTranslucent,
       borderSubtle: borderSubtle ?? this.borderSubtle,
       borderMedium: borderMedium ?? this.borderMedium,
       destructive: destructive ?? this.destructive,
@@ -235,7 +311,15 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       glassSurface: glassSurface ?? this.glassSurface,
       scrim: scrim ?? this.scrim,
       proteinAccent: proteinAccent ?? this.proteinAccent,
+      carbsAccent: carbsAccent ?? this.carbsAccent,
       fatAccent: fatAccent ?? this.fatAccent,
+      fiberAccent: fiberAccent ?? this.fiberAccent,
+      accentOrangeMuted: accentOrangeMuted ?? this.accentOrangeMuted,
+      accentOrangeDeep: accentOrangeDeep ?? this.accentOrangeDeep,
+      accentOrangeLight: accentOrangeLight ?? this.accentOrangeLight,
+      amberBorder: amberBorder ?? this.amberBorder,
+      amberSurface: amberSurface ?? this.amberSurface,
+      accentViolet: accentViolet ?? this.accentViolet,
     );
   }
 
@@ -253,6 +337,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       bgTinted: Color.lerp(bgTinted, other.bgTinted, t)!,
       bgWarm: Color.lerp(bgWarm, other.bgWarm, t)!,
       accentOrange: Color.lerp(accentOrange, other.accentOrange, t)!,
+      surfaceBright: Color.lerp(surfaceBright, other.surfaceBright, t)!,
+      onSurfaceBright: Color.lerp(onSurfaceBright, other.onSurfaceBright, t)!,
       backgroundPrimary: Color.lerp(
         backgroundPrimary,
         other.backgroundPrimary,
@@ -276,7 +362,16 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
+      textFaint: Color.lerp(textFaint, other.textFaint, t)!,
       textMuted: Color.lerp(textMuted, other.textMuted, t)!,
+      textQuiet: Color.lerp(textQuiet, other.textQuiet, t)!,
+      textDim: Color.lerp(textDim, other.textDim, t)!,
+      textSubtle: Color.lerp(textSubtle, other.textSubtle, t)!,
+      surfaceTranslucent: Color.lerp(
+        surfaceTranslucent,
+        other.surfaceTranslucent,
+        t,
+      )!,
       borderSubtle: Color.lerp(borderSubtle, other.borderSubtle, t)!,
       borderMedium: Color.lerp(borderMedium, other.borderMedium, t)!,
       destructive: Color.lerp(destructive, other.destructive, t)!,
@@ -288,7 +383,27 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       glassSurface: Color.lerp(glassSurface, other.glassSurface, t)!,
       scrim: Color.lerp(scrim, other.scrim, t)!,
       proteinAccent: Color.lerp(proteinAccent, other.proteinAccent, t)!,
+      carbsAccent: Color.lerp(carbsAccent, other.carbsAccent, t)!,
       fatAccent: Color.lerp(fatAccent, other.fatAccent, t)!,
+      fiberAccent: Color.lerp(fiberAccent, other.fiberAccent, t)!,
+      accentOrangeMuted: Color.lerp(
+        accentOrangeMuted,
+        other.accentOrangeMuted,
+        t,
+      )!,
+      accentOrangeDeep: Color.lerp(
+        accentOrangeDeep,
+        other.accentOrangeDeep,
+        t,
+      )!,
+      accentOrangeLight: Color.lerp(
+        accentOrangeLight,
+        other.accentOrangeLight,
+        t,
+      )!,
+      amberBorder: Color.lerp(amberBorder, other.amberBorder, t)!,
+      amberSurface: Color.lerp(amberSurface, other.amberSurface, t)!,
+      accentViolet: Color.lerp(accentViolet, other.accentViolet, t)!,
     );
   }
 }
@@ -296,6 +411,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
 @immutable
 class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   const AppGradientTokens({
+    required this.primaryButton,
     required this.primary,
     required this.bright,
     required this.ramp,
@@ -309,12 +425,17 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     required this.mainBackground,
     required this.innerBackground,
     required this.glowCard,
+    required this.chartArea,
+    required this.shareSheen,
     this.macroProtein = _MacroGradients.protein,
     this.macroCarbs = _MacroGradients.carbs,
     this.macroFats = _MacroGradients.fats,
     this.cameraScrim = _OverlayGradients.cameraScrim,
+    this.cardSheen = _OverlayGradients.cardSheen,
+    this.actionScrim = _OverlayGradients.actionScrim,
   });
 
+  final Gradient primaryButton;
   final Gradient primary;
   final Gradient bright;
   final Gradient ramp;
@@ -328,10 +449,14 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient mainBackground;
   final Gradient innerBackground;
   final Gradient glowCard;
+  final Gradient chartArea;
+  final Gradient shareSheen;
   final Gradient macroProtein;
   final Gradient macroCarbs;
   final Gradient macroFats;
   final Gradient cameraScrim;
+  final Gradient cardSheen;
+  final Gradient actionScrim;
 
   static const defaultBackground = LinearGradient(
     colors: [Color(0xFF14110B), _AppPalette.backgroundPrimary],
@@ -340,6 +465,12 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   );
 
   static const flow = AppGradientTokens(
+    primaryButton: LinearGradient(
+      colors: [Color(0xFFC3FF3D), Color(0xFFC3FF3D), Color(0xFF87B26B)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.0, 0.5, 1.0],
+    ),
     primary: LinearGradient(colors: [Color(0xFFC3FF3D), Color(0xFF87B26B)]),
     bright: LinearGradient(colors: [Color(0xFFC3FF3D), Color(0xFFA9F500)]),
     ramp: LinearGradient(colors: [Color(0xFF84CC16), Color(0xFFC3FF3D)]),
@@ -348,8 +479,8 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     ),
     darkGlow: LinearGradient(
       colors: [Color(0xFF1C2218), Color(0xFF93D500)],
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
     ),
     reversed: LinearGradient(colors: [Color(0xFF87B26B), Color(0xFFC3FF3D)]),
     amber: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF59E0B)]),
@@ -377,17 +508,40 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       end: Alignment.bottomCenter,
       stops: [0.3, 1.0],
     ),
+    chartArea: LinearGradient(
+      colors: [Color(0x59C3FF3D), Color(0x00C3FF3D)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ),
+    shareSheen: LinearGradient(
+      colors: [
+        Color(0xFF1C2609),
+        Color(0xFF47690C),
+        Color(0xFFA9D63F),
+        Color(0xFF3E5A11),
+        Color(0xFF16200D),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      stops: [0.0, 0.32, 0.5, 0.68, 1.0],
+    ),
   );
 
   static const steady = AppGradientTokens(
+    primaryButton: LinearGradient(
+      colors: [Color(0xFFF97316), Color(0xFFF97316), Color(0xFFD55900)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.0, 0.5, 1.0],
+    ),
     primary: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFD55900)]),
     bright: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF97316)]),
     ramp: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF97316)]),
     full: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF97316)]),
     darkGlow: LinearGradient(
       colors: [Color(0xFF221C18), Color(0xFFD55900)],
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
     ),
     reversed: LinearGradient(colors: [Color(0xFFD55900), Color(0xFFF97316)]),
     amber: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF59E0B)]),
@@ -415,17 +569,40 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       end: Alignment.bottomCenter,
       stops: [0.3, 1.0],
     ),
+    chartArea: LinearGradient(
+      colors: [Color(0x59F97316), Color(0x00F97316)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ),
+    shareSheen: LinearGradient(
+      colors: [
+        Color(0xFF261807),
+        Color(0xFF6B3A0A),
+        Color(0xFFF0A24A),
+        Color(0xFF5B330C),
+        Color(0xFF201405),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      stops: [0.0, 0.32, 0.5, 0.68, 1.0],
+    ),
   );
 
   static const restore = AppGradientTokens(
+    primaryButton: LinearGradient(
+      colors: [Color(0xFF28D5E6), Color(0xFF28D5E6), Color(0xFF00C4D5)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.0, 0.5, 1.0],
+    ),
     primary: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF00C4D5)]),
     bright: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
     ramp: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
     full: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
     darkGlow: LinearGradient(
       colors: [Color(0xFF182122), Color(0xFF00C4D5)],
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
     ),
     reversed: LinearGradient(colors: [Color(0xFF00C4D5), Color(0xFF28D5E6)]),
     amber: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF59E0B)]),
@@ -453,10 +630,28 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       end: Alignment.bottomCenter,
       stops: [0.3, 1.0],
     ),
+    chartArea: LinearGradient(
+      colors: [Color(0x5928D5E6), Color(0x0028D5E6)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ),
+    shareSheen: LinearGradient(
+      colors: [
+        Color(0xFF071E24),
+        Color(0xFF0A5C6B),
+        Color(0xFF4FD3E6),
+        Color(0xFF0B4D5A),
+        Color(0xFF06181D),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      stops: [0.0, 0.32, 0.5, 0.68, 1.0],
+    ),
   );
 
   @override
   AppGradientTokens copyWith({
+    Gradient? primaryButton,
     Gradient? primary,
     Gradient? bright,
     Gradient? ramp,
@@ -470,12 +665,17 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? mainBackground,
     Gradient? innerBackground,
     Gradient? glowCard,
+    Gradient? chartArea,
+    Gradient? shareSheen,
     Gradient? macroProtein,
     Gradient? macroCarbs,
     Gradient? macroFats,
     Gradient? cameraScrim,
+    Gradient? cardSheen,
+    Gradient? actionScrim,
   }) {
     return AppGradientTokens(
+      primaryButton: primaryButton ?? this.primaryButton,
       primary: primary ?? this.primary,
       bright: bright ?? this.bright,
       ramp: ramp ?? this.ramp,
@@ -489,10 +689,14 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       mainBackground: mainBackground ?? this.mainBackground,
       innerBackground: innerBackground ?? this.innerBackground,
       glowCard: glowCard ?? this.glowCard,
+      chartArea: chartArea ?? this.chartArea,
+      shareSheen: shareSheen ?? this.shareSheen,
       macroProtein: macroProtein ?? this.macroProtein,
       macroCarbs: macroCarbs ?? this.macroCarbs,
       macroFats: macroFats ?? this.macroFats,
       cameraScrim: cameraScrim ?? this.cameraScrim,
+      cardSheen: cardSheen ?? this.cardSheen,
+      actionScrim: actionScrim ?? this.actionScrim,
     );
   }
 
@@ -500,6 +704,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   AppGradientTokens lerp(ThemeExtension<AppGradientTokens>? other, double t) {
     if (other is! AppGradientTokens) return this;
     return AppGradientTokens(
+      primaryButton: Gradient.lerp(primaryButton, other.primaryButton, t)!,
       primary: Gradient.lerp(primary, other.primary, t)!,
       bright: Gradient.lerp(bright, other.bright, t)!,
       ramp: Gradient.lerp(ramp, other.ramp, t)!,
@@ -513,10 +718,14 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       mainBackground: Gradient.lerp(mainBackground, other.mainBackground, t)!,
       innerBackground: Gradient.lerp(innerBackground, other.innerBackground, t)!,
       glowCard: Gradient.lerp(glowCard, other.glowCard, t)!,
+      chartArea: Gradient.lerp(chartArea, other.chartArea, t)!,
+      shareSheen: Gradient.lerp(shareSheen, other.shareSheen, t)!,
       macroProtein: Gradient.lerp(macroProtein, other.macroProtein, t)!,
       macroCarbs: Gradient.lerp(macroCarbs, other.macroCarbs, t)!,
       macroFats: Gradient.lerp(macroFats, other.macroFats, t)!,
       cameraScrim: Gradient.lerp(cameraScrim, other.cameraScrim, t)!,
+      cardSheen: Gradient.lerp(cardSheen, other.cardSheen, t)!,
+      actionScrim: Gradient.lerp(actionScrim, other.actionScrim, t)!,
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 
 class WeeklyReportCard extends StatelessWidget {
@@ -16,7 +17,7 @@ class WeeklyReportCard extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AppCard(
-        variant: AppCardVariant.highlighted,
+        variant: AppCardVariant.tinted,
         child: Row(
           children: [
             Expanded(
@@ -25,23 +26,22 @@ class WeeklyReportCard extends StatelessWidget {
                 children: [
                   Text(
                     'Weekly Nutrition Report',
-                    style: context.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
+                    style: AppTypography.bodyLargeSemiBoldTall.copyWith(
+                      color: context.colors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: AppSpacing.sm),
                   Row(
                     children: [
                       Icon(
                         Icons.calendar_today_rounded,
                         color: context.colors.textSecondary,
-                        size: AppSizes.s16,
+                        size: AppSizes.s12,
                       ),
-                      SizedBox(width: AppSpacing.sm),
+                      SizedBox(width: AppSpacing.xs),
                       Text(
                         rangeLabel,
-                        style: context.textTheme.bodyMedium?.copyWith(
-                          color: context.colors.textSecondary,
+                        style: AppTypography.bodySmallMediumTight.copyWith(
+                          color: context.colors.textSubtle,
                         ),
                       ),
                     ],
@@ -49,11 +49,11 @@ class WeeklyReportCard extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(width: AppSpacing.lg),
+            SizedBox(width: AppSpacing.xl),
             Icon(
               Icons.chevron_right_rounded,
               color: context.colors.textSecondary,
-              size: AppSizes.s24,
+              size: AppSizes.s16,
             ),
           ],
         ),

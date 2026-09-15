@@ -15,6 +15,13 @@ import 'package:floww/core/nutrition/views/food_scan_view.dart';
 import 'package:floww/core/nutrition/views/meal_details_view.dart';
 import 'package:floww/core/nutrition/views/weekly_report_view.dart';
 import 'package:floww/core/onboarding/views/connect_wearables_view.dart';
+import 'package:floww/core/workout/services/workout_service.dart';
+import 'package:floww/core/workout/view_models/active_workout_view_model.dart';
+import 'package:floww/core/workout/view_models/todays_workout_view_model.dart';
+import 'package:floww/core/workout/view_models/workout_details_view_model.dart';
+import 'package:floww/core/workout/views/active_workout_view.dart';
+import 'package:floww/core/workout/views/todays_workout_view.dart';
+import 'package:floww/core/workout/views/workout_details_view.dart';
 import 'package:floww/core/onboarding/views/onboarding_question_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -85,6 +92,29 @@ class AppRouterConfig {
               NutritionGoal.defaults,
             ),
             child: const DietPlanView(),
+          ),
+        );
+      case AppRouter.todaysWorkout:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => TodaysWorkoutViewModel(const WorkoutService()),
+            child: const TodaysWorkoutView(),
+          ),
+        );
+      case AppRouter.activeWorkout:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => ActiveWorkoutViewModel(const WorkoutService()),
+            child: const ActiveWorkoutView(),
+          ),
+        );
+      case AppRouter.workoutDetails:
+        final workoutId = settings.arguments! as String;
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) =>
+                WorkoutDetailsViewModel(const WorkoutService(), workoutId),
+            child: const WorkoutDetailsView(),
           ),
         );
       default:

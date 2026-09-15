@@ -9,7 +9,7 @@ import 'package:floww/core/nutrition/models/weekly_metric.dart';
 extension MacroNutrientStyle on MacroNutrient {
   Color colorOf(BuildContext context) => switch (this) {
     MacroNutrient.protein => context.colors.proteinAccent,
-    MacroNutrient.carbs => context.colors.accentOrange,
+    MacroNutrient.carbs => context.colors.carbsAccent,
     MacroNutrient.fats => context.colors.fatAccent,
   };
 
@@ -37,15 +37,15 @@ extension MealTypeStyle on MealType {
 extension WeeklyMetricStyle on WeeklyMetric {
   Color colorOf(BuildContext context) => switch (this) {
     WeeklyMetric.calories => context.colors.accentOrange,
-    WeeklyMetric.protein => context.colors.proteinAccent,
-    WeeklyMetric.fiber => context.colors.primary,
+    WeeklyMetric.protein => context.colors.primary,
+    WeeklyMetric.fiber => context.colors.fiberAccent,
   };
 }
 
 extension DayLogStatusStyle on DayLogStatus {
   Color colorOf(BuildContext context) => switch (this) {
     DayLogStatus.full => context.colors.primary,
-    DayLogStatus.partial => context.colors.accentOrange,
+    DayLogStatus.partial => context.colors.accentOrangeMuted,
     DayLogStatus.none => context.colors.backgroundElevated,
   };
 

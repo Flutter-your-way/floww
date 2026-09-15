@@ -5,7 +5,7 @@ import 'package:floww/core/nutrition/models/nutrient_input.dart';
 import 'package:floww/core/nutrition/widgets/food_sheet_actions.dart';
 import 'package:floww/core/nutrition/widgets/meal_name_field.dart';
 import 'package:floww/core/nutrition/widgets/nutrient_input_grid.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_section_label.dart';
+import 'package:floww/config/widgets/headers/section_label.dart';
 
 class FoodMealEditPanel extends StatelessWidget {
   const FoodMealEditPanel({
@@ -42,11 +42,11 @@ class FoodMealEditPanel extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const NutritionSectionLabel(label: 'Meal name'),
+          const SectionLabel(label: 'Meal name'),
           SizedBox(height: AppSpacing.md),
           MealNameField(initialValue: mealName, onChanged: onNameChanged),
           SizedBox(height: AppSpacing.xl3),
-          const NutritionSectionLabel(label: 'Macronutrients'),
+          const SectionLabel(label: 'Macronutrients'),
           SizedBox(height: AppSpacing.md),
           NutrientInputGrid(
             inputs: macroInputs,
@@ -54,7 +54,7 @@ class FoodMealEditPanel extends StatelessWidget {
             onChanged: onNutrientChanged,
           ),
           SizedBox(height: AppSpacing.xl3),
-          const NutritionSectionLabel(label: 'Micronutrients'),
+          const SectionLabel(label: 'Micronutrients'),
           SizedBox(height: AppSpacing.md),
           NutrientInputGrid(
             inputs: microInputs,

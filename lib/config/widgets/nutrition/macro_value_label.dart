@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 
 class MacroValueLabel extends StatelessWidget {
   const MacroValueLabel({super.key, required this.label, required this.value});
@@ -16,15 +17,15 @@ class MacroValueLabel extends StatelessWidget {
       children: [
         Text(
           label,
-          style: context.textTheme.bodySmall?.copyWith(
-            color: context.colors.textSecondary,
+          style: AppTypography.captionMedium.copyWith(
+            color: context.colors.textDim,
           ),
         ),
-        SizedBox(height: AppSpacing.xs),
+        SizedBox(height: AppSpacing.xxs),
         Text(
           value,
-          style: context.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w700,
+          style: AppTypography.bodySmallBoldTight.copyWith(
+            color: context.colors.textPrimary,
           ),
         ),
       ],

@@ -71,42 +71,68 @@ class MealSummaryCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppSpacing.xl),
+          _MacroLegendRow(shares: shares),
+          SizedBox(height: AppSpacing.sm),
           MacroSplitBar(shares: shares, height: AppSizes.s10),
-          SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              for (final item in shares)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.macro.label,
-                        style: context.textTheme.labelSmall?.copyWith(
-                          color: item.macro.colorOf(context),
-                        ),
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            item.amountLabel,
-                            style: context.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          SizedBox(width: AppSpacing.xs),
-                          Text(item.shareLabel, style: captionStyle),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+          SizedBox(height: AppSpacing.sm),
+          _MacroValuesRow(shares: shares, captionStyle: captionStyle),
         ],
       ),
+    );
+  }
+}
+
+class _MacroLegendRow extends StatelessWidget {
+  const _MacroLegendRow({required this.shares});
+
+  final List<MacroShare> shares;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final item in shares)
+          Expanded(
+            child: Text(
+              item.macro.label,
+              style: context.textTheme.labelSmall?.copyWith(
+                color: item.macro.colorOf(context),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _MacroValuesRow extends StatelessWidget {
+  const _MacroValuesRow({required this.shares, required this.captionStyle});
+
+  final List<MacroShare> shares;
+  final TextStyle? captionStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final item in shares)
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  item.amountLabel,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(width: AppSpacing.xs),
+                Text(item.shareLabel, style: captionStyle),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

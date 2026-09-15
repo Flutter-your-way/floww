@@ -14,18 +14,22 @@ import 'package:floww/core/nutrition/widgets/compact_text_field.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 class LogFoodSheet extends StatelessWidget {
-  const LogFoodSheet({super.key});
+  const LogFoodSheet({super.key, this.query = ''});
+
+  final String query;
 
   static Future<void> show(
     BuildContext context, {
     required DateTime date,
     required MealType meal,
+    String query = '',
   }) {
     return showAppFloatingSheet<void>(
       context: context,
       builder: (_) => ChangeNotifierProvider(
-        create: (_) => LogFoodViewModel(NutritionLogService(), date, meal),
-        child: const LogFoodSheet(),
+        create: (_) =>
+            LogFoodViewModel(NutritionLogService(), date, meal, query),
+        child: LogFoodSheet(query: query),
       ),
     );
   }
@@ -46,6 +50,7 @@ class LogFoodSheet extends StatelessWidget {
               children: [
                 CompactTextField(
                   hintText: 'Search foods...',
+                  initialText: query,
                   icon: Icons.search_rounded,
                   onChanged: viewModel.search,
                 ),

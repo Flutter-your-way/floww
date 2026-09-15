@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -21,6 +22,7 @@ class MacroSplitCard extends StatelessWidget {
     return AppCard(
       variant: AppCardVariant.highlighted,
       padding: const EdgeInsets.all(AppSpacing.lg),
+      radius: AppRadius.lg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -75,6 +77,8 @@ class MacroDetailCard extends StatelessWidget {
     );
 
     return AppCard(
+      variant: AppCardVariant.sunken,
+      borderColor: color.withValues(alpha: AppOpacity.tintBorder),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -84,8 +88,11 @@ class MacroDetailCard extends StatelessWidget {
                 width: AppSizes.s40,
                 height: AppSizes.s40,
                 decoration: AppShapes.decoration(
-                  color: colors.backgroundElevated,
+                  color: colors.backgroundSecondary,
                   borderRadius: BorderRadius.circular(AppRadius.md),
+                  side: BorderSide(
+                    color: color.withValues(alpha: AppOpacity.tintBorder),
+                  ),
                 ),
                 child: Icon(macro.icon, color: color, size: AppSizes.s20),
               ),
@@ -146,7 +153,7 @@ class MacroDetailCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: AppShapes.decoration(
-              color: colors.backgroundPrimary,
+              color: colors.backgroundSecondary,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Column(
@@ -190,6 +197,7 @@ class MacroDetailCard extends StatelessWidget {
               vertical: AppSpacing.md,
             ),
             decoration: AppShapes.decoration(
+              color: color.withValues(alpha: AppOpacity.tintFill),
               borderRadius: BorderRadius.circular(AppRadius.full),
               side: BorderSide(color: color),
             ),

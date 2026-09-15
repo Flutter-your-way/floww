@@ -32,6 +32,8 @@ class WaterLogCard extends StatelessWidget {
     );
 
     return AppCard(
+      variant: AppCardVariant.sunken,
+      borderColor: context.colors.borderSubtle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 
 class ScreenTitle extends StatelessWidget {
   const ScreenTitle({super.key, required this.eyebrow, required this.title});
@@ -15,16 +16,14 @@ class ScreenTitle extends StatelessWidget {
       children: [
         Text(
           eyebrow,
-          style: context.textTheme.titleMedium?.copyWith(
-            color: context.colors.backgroundPrimary,
+          style: AppTypography.heading4SemiBold.copyWith(
+            color: context.colors.backgroundSecondary,
           ),
         ),
         Text(
           title,
-          style: context.textTheme.displaySmall?.copyWith(
-            color: context.colors.backgroundPrimary,
-            fontWeight: FontWeight.w800,
-            fontStyle: FontStyle.italic,
+          style: AppTypography.heading3ExtraBoldItalic.copyWith(
+            color: context.colors.backgroundSecondary,
           ),
         ),
       ],

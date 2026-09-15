@@ -9,7 +9,7 @@ import 'package:floww/core/nutrition/views/log_food_sheet.dart';
 import 'package:floww/core/nutrition/widgets/food_items_card.dart';
 import 'package:floww/core/nutrition/widgets/meal_summary_card.dart';
 import 'package:floww/core/nutrition/widgets/meal_timeline_card.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_tip_card.dart';
+import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 class MealDetailsView extends StatelessWidget {
@@ -55,7 +55,7 @@ class MealDetailsView extends StatelessWidget {
               ),
             ],
             SizedBox(height: AppSpacing.lg),
-            NutritionTipCard(
+            TipCard(
               title: 'Nutrition Insight',
               message: viewModel.insightMessage,
               icon: Icons.graphic_eq_rounded,

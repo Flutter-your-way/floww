@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
@@ -26,8 +27,8 @@ class NutritionEmptyStateCard extends StatelessWidget {
             width: AppSizes.s64,
             height: AppSizes.s64,
             decoration: AppShapes.decoration(
-              color: context.colors.backgroundElevated,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+              color: context.colors.bgTinted,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               side: BorderSide(color: context.colors.borderSubtle),
             ),
             child: Icon(
@@ -41,11 +42,16 @@ class NutritionEmptyStateCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: context.textTheme.headlineSmall),
-                SizedBox(height: AppSpacing.sm),
+                Text(
+                  title,
+                  style: AppTypography.heading4SemiBold.copyWith(
+                    color: context.colors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.md),
                 Text(
                   message,
-                  style: context.textTheme.bodyMedium?.copyWith(
+                  style: AppTypography.labelSmallMedium.copyWith(
                     color: context.colors.textSecondary,
                   ),
                 ),

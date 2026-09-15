@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/config/utils/dates/date_change_direction.dart';
 import 'package:floww/config/utils/dates/day_rollover_timer.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/nutrition/models/diet_plan.dart';
@@ -45,6 +46,7 @@ class NutritionViewModel extends ChangeNotifier {
   final NutritionGoal goal = NutritionGoal.defaults;
 
   DateTime _selectedDate;
+  DateChangeDirection _dateDirection = DateChangeDirection.forward;
   late NutritionDay _day;
   bool _isLoading = true;
   String? _errorMessage;
@@ -56,6 +58,8 @@ class NutritionViewModel extends ChangeNotifier {
   bool _disposed = false;
 
   DateTime get selectedDate => _selectedDate;
+
+  DateChangeDirection get dateDirection => _dateDirection;
 
   DateTime get _today => AppDateUtils.dateOnly(DateTime.now());
 
@@ -94,7 +98,7 @@ class NutritionViewModel extends ChangeNotifier {
   bool get showStartTracking =>
       dayStatus == NutritionDayStatus.today && !_day.hasFood;
 
-  bool get showFlowImpact => !canLog && _day.hasLogs;
+  bool get showFlowImpact => dayStatus == NutritionDayStatus.past;
 
   bool get showDietPlan =>
       dayStatus == NutritionDayStatus.today && _day.hasFood;
@@ -123,8 +127,15 @@ class NutritionViewModel extends ChangeNotifier {
         : AppDateUtils.dayMonth(_selectedDate);
   }
 
-  String get readOnlyLabel =>
-      '${AppDateUtils.relativeDay(_selectedDate)} · Historical data (read-only)';
+  String get readOnlyLabel {
+    final isYesterday = AppDateUtils.isSameDay(
+      _selectedDate,
+      AppDateUtils.addDays(_today, -1),
+    );
+    final reference = AppDateUtils.relativeDay(_selectedDate);
+    return '${isYesterday ? '$reference\'s' : reference} — historical data '
+        '(read-only)';
+  }
 
   String get emptyTitle => dayStatus == NutritionDayStatus.past
       ? 'Nothing logged'
@@ -279,24 +290,37 @@ class NutritionViewModel extends ChangeNotifier {
     return 'Every meal you log adds more flow points.';
   }
 
-  String get flowImpactMaxLabel => '+${FlowCategory.dailyMax} Flow per day';
+  String get flowImpactMaxLabel => '+${FlowCategory.dailyMax} Flow';
 
   String get flowPointsInfoMessage =>
       'Your nutrition log earns Flow Points ($flowPoints/$flowPointsMax). '
-      'Every meal you log brings you closer to your daily Flow Score goal. '
+      'Every meal you log brings you closer to your daily Flow Score goal.\n'
       'Above $_excellentPoints is excellent — keep it up!';
 
   String get flowPointsTotalLabel => NutritionLabels.points(flowPoints);
 
   List<FlowPointRow> get flowPointRows => [
     for (final category in FlowCategory.values)
-      FlowPointRow(
-        label: category.label,
-        detail: _flowDetail(category),
-        pointsLabel: NutritionLabels.points(_day.pointsFor(category)),
-        progress: _day.pointsFor(category) / category.maxPerDay,
-      ),
+      if (_hasFlowData(category))
+        FlowPointRow(
+          label: category.label,
+          detail: _flowDetail(category),
+          pointsLabel: NutritionLabels.points(_day.pointsFor(category)),
+          progress: _day.pointsFor(category) / category.maxPerDay,
+        ),
   ];
+
+  bool _hasFlowData(FlowCategory category) => switch (category) {
+    FlowCategory.calories => _day.calories > 0,
+    FlowCategory.protein => _day.proteinG > 0,
+    FlowCategory.carbs => _day.carbsG > 0,
+    FlowCategory.fats => _day.fatG > 0,
+    FlowCategory.water => _day.waterMl > 0,
+    FlowCategory.fiber => _day.fiberG > 0,
+    FlowCategory.mealTiming => _day.loggedMeals.isNotEmpty,
+    FlowCategory.sugar => _day.sugarG > 0,
+    FlowCategory.sodium => _day.sodiumMg > 0,
+  };
 
   String _flowDetail(FlowCategory category) => switch (category) {
     FlowCategory.calories =>
@@ -428,6 +452,9 @@ class NutritionViewModel extends ChangeNotifier {
 
   void _setDate(DateTime date) {
     if (AppDateUtils.isSameDay(date, _selectedDate)) return;
+    _dateDirection = date.isAfter(_selectedDate)
+        ? DateChangeDirection.forward
+        : DateChangeDirection.backward;
     _selectedDate = date;
     _watchSelectedDay();
     notifyListeners();

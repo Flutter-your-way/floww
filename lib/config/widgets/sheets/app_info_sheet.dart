@@ -2,33 +2,51 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
-class NutritionPointsSheet extends StatelessWidget {
-  const NutritionPointsSheet({super.key, required this.message});
+class AppInfoSheet extends StatelessWidget {
+  const AppInfoSheet({
+    super.key,
+    required this.title,
+    required this.message,
+    this.confirmLabel = 'Got it',
+  });
 
-  static Future<void> show(BuildContext context, {required String message}) {
+  static Future<void> show(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) {
     return showAppFloatingSheet<void>(
       context: context,
-      builder: (_) => NutritionPointsSheet(message: message),
+      builder: (_) => AppInfoSheet(title: title, message: message),
     );
   }
 
+  final String title;
   final String message;
+  final String confirmLabel;
 
   @override
   Widget build(BuildContext context) {
     return AppFloatingSheet(
       child: AppSheetPanel(
-        title: 'Nutrition',
+        title: title,
+        icon: Icons.question_mark_rounded,
         onClose: () => NavigationService.instance.pop(),
-        body: Text(message, style: context.textTheme.bodyMedium),
+        body: Text(
+          message,
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: context.colors.textPrimary,
+          ),
+        ),
         footer: Center(
           child: PillButton(
-            label: 'Got it',
+            label: confirmLabel,
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl4),
             onPressed: () => NavigationService.instance.pop(),
           ),

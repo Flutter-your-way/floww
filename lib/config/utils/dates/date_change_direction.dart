@@ -1,0 +1,1 @@
+enum DateChangeDirection { forward, backward }

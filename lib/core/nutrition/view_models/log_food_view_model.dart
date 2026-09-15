@@ -9,7 +9,12 @@ import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
 
 class LogFoodViewModel extends ChangeNotifier {
-  LogFoodViewModel(this._logService, this._date, this._meal) {
+  LogFoodViewModel(
+    this._logService,
+    this._date,
+    this._meal, [
+    this._query = '',
+  ]) {
     _subscription = _logService
         .watchLogs(_date, AppDateUtils.addDays(_date, 1))
         .listen(
@@ -17,14 +22,15 @@ class LogFoodViewModel extends ChangeNotifier {
             _dayLogs = logs.foods;
             notifyListeners();
           },
-          onError: (Object error) => debugPrint('log food watch failed: $error'),
+          onError: (Object error) =>
+              debugPrint('log food watch failed: $error'),
         );
   }
 
   final NutritionLogService _logService;
   final DateTime _date;
   MealType _meal;
-  String _query = '';
+  String _query;
   List<FoodLog> _dayLogs = const [];
   final Set<String> _saving = {};
   String? _errorMessage;
@@ -41,9 +47,8 @@ class LogFoodViewModel extends ChangeNotifier {
 
   String get emptyMessage => 'No foods match "${_query.trim()}".';
 
-  bool isAdded(CatalogFood food) => _dayLogs.any(
-    (log) => log.mealType == _meal && food.matches(log.food),
-  );
+  bool isAdded(CatalogFood food) =>
+      _dayLogs.any((log) => log.mealType == _meal && food.matches(log.food));
 
   bool isSaving(CatalogFood food) => _saving.contains(food.displayName);
 

@@ -16,6 +16,9 @@ class AppImages {
   static const String googleIcon = '$_iconsBase/google_icon.svg';
   static const String foodScanIcon = '$_iconsBase/food_scan_icon.svg';
 
+  static const String instagramIcon = '$_iconsBase/instagram_icon.svg';
+  static const String stravaIcon = '$_iconsBase/strava_icon.svg';
+
   // Tab Bar
   static const String tab_1 = '$_iconsBase/tab_1.svg';
   static const String tab_2 = '$_iconsBase/tab_2.svg';
@@ -26,4 +29,21 @@ class AppImages {
   // Muscle Image
   static const String muscleFront = '$_imagesBase/muscle_front.svg';
   static const String muscleBack = '$_imagesBase/muscle_back.svg';
+
+  // Exercise Photos
+  static const String _photoBase = 'https://images.unsplash.com/photo-';
+  static const String _photoQuery = '?auto=format&fit=crop&w=900&q=70';
+
+  static const String barbellBackSquat =
+      '${_photoBase}1646072508462-a802209a16f3$_photoQuery';
+  static const String romanianDeadlift =
+      '${_photoBase}1741478551868-a17b1644228d$_photoQuery';
+  static const String legPress =
+      '${_photoBase}1744551612249-655d096b9f95$_photoQuery';
+  static const String walkingLunges =
+      '${_photoBase}1666979290238-2d862b573345$_photoQuery';
+  static const String legExtension =
+      '${_photoBase}1646495001290-39103b31873a$_photoQuery';
+  static const String standingCalfRaise =
+      '${_photoBase}1534438327276-14e5300c3a48$_photoQuery';
 }

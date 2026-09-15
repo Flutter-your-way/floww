@@ -7,7 +7,7 @@ import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/widgets/compact_text_field.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_section_label.dart';
+import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
 class WaterQuickAddCard extends StatelessWidget {
@@ -37,13 +37,14 @@ class WaterQuickAddCard extends StatelessWidget {
     final colors = context.colors;
 
     return AppCard(
+      variant: AppCardVariant.subtle,
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Expanded(child: NutritionSectionLabel(label: 'Quick add')),
+              const Expanded(child: SectionLabel(label: 'Quick add')),
               GestureDetector(
                 onTap: onToggleCustom,
                 behavior: HitTestBehavior.opaque,
@@ -116,7 +117,7 @@ class _QuickAmountButton extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
         decoration: AppShapes.decoration(
-          color: colors.backgroundSurface,
+          color: colors.backgroundPrimary,
           borderRadius: BorderRadius.circular(AppRadius.md),
           side: BorderSide(color: colors.borderSubtle),
         ),

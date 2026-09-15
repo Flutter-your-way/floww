@@ -36,11 +36,13 @@ class AuthService {
         _googleSignInInitialized = true;
       }
       final googleUser = await _googleSignIn.authenticate();
-      final credential = GoogleAuthProvider.credential(
-        idToken: googleUser.authentication.idToken,
-      );
+      final idToken = googleUser.authentication.idToken;
+      if (idToken == null) {
+        throw AuthException('Could not sign in with Google. Please try again.');
+      }
+      final credential = GoogleAuthProvider.credential(idToken: idToken);
       final userCredential = await _auth.signInWithCredential(credential);
-      return _findOrCreateUser(
+      return await _findOrCreateUser(
         userCredential.user!,
         provider: AuthProvider.google,
         displayName: googleUser.displayName ?? '',
@@ -52,6 +54,10 @@ class AuthService {
       throw AuthException('Could not sign in with Google. Please try again.');
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapFirebaseAuthError(e));
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw AuthException('Could not sign in with Google. Please try again.');
     }
   }
 
@@ -81,7 +87,7 @@ class AuthService {
       final name =
           '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
               .trim();
-      return _findOrCreateUser(
+      return await _findOrCreateUser(
         userCredential.user!,
         provider: AuthProvider.apple,
         displayName: name,
@@ -93,6 +99,10 @@ class AuthService {
       throw AuthException('Could not sign in with Apple. Please try again.');
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapFirebaseAuthError(e));
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw AuthException('Could not sign in with Apple. Please try again.');
     }
   }
 

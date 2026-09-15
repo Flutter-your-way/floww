@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
@@ -9,7 +11,7 @@ import 'package:floww/core/nutrition/models/nutrition_day.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/widgets/flow_points_row.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_tip_card.dart';
+import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/core/nutrition/widgets/weekly_bar_chart.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
@@ -37,13 +39,14 @@ class FlowContributionCard extends StatelessWidget {
     );
 
     return AppCard(
-      variant: AppCardVariant.glow,
+      variant: AppCardVariant.accentOutline,
+      radius: AppRadius.lg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.bolt_rounded, color: colors.primary, size: AppSizes.s20),
+              Text('⚡', style: context.textTheme.titleLarge),
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
@@ -51,13 +54,18 @@ class FlowContributionCard extends StatelessWidget {
                   children: [
                     Text(
                       'FLOW Contribution',
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.textTheme.titleLarge,
                     ),
+                    SizedBox(height: AppSpacing.xxs),
                     Text('This week\'s nutrition impact', style: captionStyle),
                   ],
                 ),
+              ),
+              Container(
+                width: AppSizes.s1,
+                height: AppSizes.s36,
+                margin: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                color: colors.borderMedium,
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -92,14 +100,15 @@ class FlowContributionCard extends StatelessWidget {
               Text(maxLabel, style: captionStyle),
             ],
           ),
-          SizedBox(height: AppSpacing.xl),
-          Text(
-            'Daily Breakdown',
-            style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+          SizedBox(height: AppSpacing.xl2),
+          Divider(
+            height: AppSizes.s1,
+            thickness: AppSizes.s1,
+            color: colors.borderSubtle,
           ),
-          SizedBox(height: AppSpacing.md),
+          SizedBox(height: AppSpacing.xl2),
+          Text('Daily Breakdown', style: context.textTheme.titleLarge),
+          SizedBox(height: AppSpacing.xl),
           WeeklyBarChart(
             bars: dailyBars,
             color: colors.primary,
@@ -130,6 +139,7 @@ class ConsistencyCard extends StatelessWidget {
     final colors = context.colors;
 
     return AppCard(
+      variant: AppCardVariant.subtle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -160,50 +170,60 @@ class ConsistencyCard extends StatelessWidget {
                   value: proteinStreak,
                   label: 'Protein Streak',
                   caption: '≥70% protein goal',
-                  color: colors.proteinAccent,
+                  color: colors.accentViolet,
                 ),
               ),
             ],
           ),
           SizedBox(height: AppSpacing.xl),
+          Divider(
+            height: AppSizes.s1,
+            thickness: AppSizes.s1,
+            color: colors.borderSubtle,
+          ),
+          SizedBox(height: AppSpacing.xl),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               for (final item in statuses)
-                Column(
-                  children: [
-                    _StatusDot(status: item.status),
-                    SizedBox(height: AppSpacing.xs),
-                    Text(
-                      item.label,
-                      style: context.textTheme.labelSmall?.copyWith(
-                        color: colors.textSecondary,
+                Expanded(
+                  child: Column(
+                    children: [
+                      _StatusDot(status: item.status),
+                      SizedBox(height: AppSpacing.md),
+                      Text(
+                        item.label,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
             ],
           ),
-          SizedBox(height: AppSpacing.lg),
-          Wrap(
-            spacing: AppSpacing.lg,
-            runSpacing: AppSpacing.xs,
-            children: [
-              for (final status in DayLogStatus.values)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _StatusDot(status: status, size: AppSizes.s8),
-                    SizedBox(width: AppSpacing.xs),
-                    Text(
-                      status.label,
-                      style: context.textTheme.labelSmall?.copyWith(
-                        color: colors.textSecondary,
+          SizedBox(height: AppSpacing.xl),
+          Center(
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.xs,
+              children: [
+                for (final status in DayLogStatus.values)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _StatusDot(status: status, size: AppSizes.s10),
+                      SizedBox(width: AppSpacing.sm),
+                      Text(
+                        status.label,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-            ],
+                    ],
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -229,18 +249,23 @@ class _StatTile extends StatelessWidget {
     final colors = context.colors;
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xl,
+      ),
       decoration: AppShapes.decoration(
         color: colors.backgroundSurface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
         children: [
           Text(
             value,
-            style: context.textTheme.headlineSmall?.copyWith(color: color),
+            style: context.textTheme.displaySmall?.copyWith(color: color),
           ),
+          SizedBox(height: AppSpacing.xs),
           Text(label, style: context.textTheme.labelMedium),
+          SizedBox(height: AppSpacing.xs),
           Text(
             caption,
             textAlign: TextAlign.center,
@@ -301,27 +326,30 @@ class WeeklyMetricCard extends StatelessWidget {
       color: context.colors.textSecondary,
     );
 
-    return AppCard(
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
+      decoration: AppShapes.decoration(
+        color: context.colors.backgroundPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(
+          color: color.withValues(alpha: AppOpacity.tintBorder),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              Expanded(child: Text(title, style: context.textTheme.titleLarge)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     averageLabel,
-                    style: context.textTheme.labelLarge?.copyWith(color: color),
+                    style: AppTypography.bodyLargeBold.copyWith(color: color),
                   ),
                   Text(goalLabel, style: captionStyle),
                 ],
@@ -329,7 +357,11 @@ class WeeklyMetricCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppSpacing.lg),
-          WeeklyBarChart(bars: bars, color: color),
+          WeeklyBarChart(
+            bars: bars,
+            color: color,
+            barAreaHeight: AppSizes.s160,
+          ),
           SizedBox(height: AppSpacing.lg),
           Row(
             children: [
@@ -337,12 +369,7 @@ class WeeklyMetricCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      totalLabel,
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    Text(totalLabel, style: AppTypography.bodyLargeBold),
                     Text('weekly total', style: captionStyle),
                   ],
                 ),
@@ -352,18 +379,19 @@ class WeeklyMetricCard extends StatelessWidget {
                 children: [
                   Text(
                     weeklyGoalLabel,
-                    style: context.textTheme.titleMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppTypography.bodyLargeBold.copyWith(color: color),
                   ),
                   Text('weekly goal', style: captionStyle),
                 ],
               ),
             ],
           ),
-          SizedBox(height: AppSpacing.sm),
-          AppProgressBar(progress: progress, color: color),
+          SizedBox(height: AppSpacing.md),
+          AppProgressBar(
+            progress: progress,
+            color: color,
+            height: AppSizes.s8,
+          ),
         ],
       ),
     );
@@ -389,19 +417,18 @@ class FlowPointsBreakdownCard extends StatelessWidget {
     final colors = context.colors;
 
     return AppCard(
+      variant: AppCardVariant.accentOutline,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(Icons.bolt_rounded, color: colors.primary, size: AppSizes.s20),
+              Text('⚡', style: context.textTheme.titleLarge),
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'Nutrition FLOW Points',
-                  style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.textTheme.titleLarge,
                 ),
               ),
               Column(
@@ -410,13 +437,12 @@ class FlowPointsBreakdownCard extends StatelessWidget {
                   Text.rich(
                     TextSpan(
                       text: totalLabel,
-                      style: context.textTheme.titleMedium?.copyWith(
+                      style: AppTypography.bodyLargeBold.copyWith(
                         color: colors.primary,
-                        fontWeight: FontWeight.w700,
                       ),
                       children: [
                         TextSpan(
-                          text: ' / $maxLabel',
+                          text: ' /$maxLabel',
                           style: context.textTheme.labelSmall?.copyWith(
                             color: colors.textSecondary,
                           ),
@@ -434,10 +460,10 @@ class FlowPointsBreakdownCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: AppSpacing.sm),
-          FlowPointsRowList(rows: rows),
-          SizedBox(height: AppSpacing.md),
-          NutritionTipCard(title: 'Tip', message: tip),
+          SizedBox(height: AppSpacing.xl),
+          FlowPointsRowList(rows: rows, showDividers: true),
+          SizedBox(height: AppSpacing.xl),
+          TipCard.inline(title: 'Tip', message: tip),
         ],
       ),
     );

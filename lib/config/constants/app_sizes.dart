@@ -15,6 +15,8 @@ class AppRadius {
 class AppSizes {
   AppSizes._();
 
+  static const double hairline = 0.5;
+  static const double s1 = 1.0;
   static const double s2 = 2.0;
   static const double s4 = 4.0;
   static const double s6 = 6.0;
@@ -30,6 +32,7 @@ class AppSizes {
   static const double s36 = 36.0;
   static const double s40 = 40.0;
   static const double s44 = 44.0;
+  static const double s46 = 46.0;
   static const double s48 = 48.0;
   static const double s52 = 52.0;
   static const double s56 = 56.0;
@@ -38,12 +41,21 @@ class AppSizes {
   static const double s72 = 72.0;
   static const double s80 = 80.0;
   static const double s96 = 96.0;
+  static const double s108 = 108.0;
   static const double s120 = 120.0;
   static const double s128 = 128.0;
+  static const double s160 = 160.0;
 }
 
 class AppLayoutSizes {
   const AppLayoutSizes();
 
   final double screenHorizontalPadding = AppSizes.s16;
+  final double topBlurSigma = AppSizes.s24;
+  final double topBlurBandExtra = AppSizes.s4;
+  final double topBlurEdgeFade = AppSizes.s10;
+  final double topDividerOffset = AppSizes.s1;
+  final int topBlurTextureSize = 1024;
+  final double bottomScrimExtra = AppSizes.s20;
+  final double bottomScrimSigma = AppSizes.s6;
 }

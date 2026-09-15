@@ -5,7 +5,11 @@ import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/core/activity/views/activity_view.dart';
+import 'package:floww/core/workout/services/workout_service.dart';
+import 'package:floww/core/workout/services/exercise_service.dart';
+import 'package:floww/core/workout/view_models/workout_view_model.dart';
+import 'package:floww/core/workout/view_models/exercise_library_view_model.dart';
+import 'package:floww/core/workout/views/workout_view.dart';
 import 'package:floww/core/home/views/home_view.dart';
 import 'package:floww/core/nutrition/services/diet_plan_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
@@ -28,7 +32,7 @@ class MainTabView extends StatefulWidget {
 class _MainTabViewState extends State<MainTabView> {
   static const _tabTransitionDuration = Duration(milliseconds: 300);
 
-  int _selectedIndex = 0;
+  int _selectedIndex = 2;
 
   static const _tabs = [
     NavTabItem(iconAsset: AppImages.tab_1, semanticLabel: 'Home'),
@@ -47,7 +51,18 @@ class _MainTabViewState extends State<MainTabView> {
       ),
       child: NutritionView(),
     ),
-    ActivityView(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => WorkoutViewModel(const WorkoutService()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) =>
+              ExerciseLibraryViewModel(const ExerciseService()),
+        ),
+      ],
+      child: WorkoutView(),
+    ),
     PlansView(),
     StatsView(),
   ];

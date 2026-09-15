@@ -47,21 +47,21 @@ class WeeklyReportView extends StatelessWidget {
               progressLabel: viewModel.contributionLabel,
               dailyBars: viewModel.dailyPointBars,
             ),
-            SizedBox(height: AppSpacing.lg),
+            SizedBox(height: AppSpacing.xl),
             ConsistencyCard(
               daysLogged: viewModel.daysLoggedLabel,
               calorieStreak: viewModel.calorieStreakLabel,
               proteinStreak: viewModel.proteinStreakLabel,
               statuses: viewModel.dayStatuses,
             ),
-            SizedBox(height: AppSpacing.lg),
+            SizedBox(height: AppSpacing.xl),
             AppChipTabs<WeeklyMetric>(
               items: WeeklyMetric.values,
               selected: viewModel.metric,
               labelOf: (metric) => metric.label,
               onSelected: viewModel.selectMetric,
             ),
-            SizedBox(height: AppSpacing.lg),
+            SizedBox(height: AppSpacing.xl),
             WeeklyMetricCard(
               title: viewModel.metric.label,
               averageLabel: viewModel.metricAverageLabel,
@@ -72,7 +72,7 @@ class WeeklyReportView extends StatelessWidget {
               weeklyGoalLabel: viewModel.metricWeeklyGoalLabel,
               progress: viewModel.metricProgress,
             ),
-            SizedBox(height: AppSpacing.lg),
+            SizedBox(height: AppSpacing.xl),
             FlowPointsBreakdownCard(
               totalLabel: '${viewModel.totalPoints}',
               maxLabel: '${viewModel.maxPoints}',

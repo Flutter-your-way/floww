@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
@@ -28,6 +29,7 @@ class MealBreakdownCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onAddMeal = this.onAddMeal;
+    final onAddToMeal = this.onAddToMeal;
 
     return AppCard(
       child: Column(
@@ -47,15 +49,18 @@ class MealBreakdownCard extends StatelessWidget {
               onOpen: () => onOpenMeal(items[i].meal),
               onAdd: onAddToMeal == null
                   ? null
-                  : () => onAddToMeal!(items[i].meal),
+                  : () => onAddToMeal(items[i].meal),
             ),
           ],
           if (onAddMeal != null) ...[
             SizedBox(height: AppSpacing.lg),
             PillButton(
-              variant: PillButtonVariant.neutral,
-              label: 'Add Meal',
-              icon: Icons.add_rounded,
+              variant: PillButtonVariant.bright,
+              height: AppSizes.s36,
+              label: 'ADD MEAL',
+              icon: Icons.add_circle,
+              iconColor: context.colors.primary,
+              labelStyle: AppTypography.labelSmallSemiBold,
               onPressed: onAddMeal,
             ),
           ],

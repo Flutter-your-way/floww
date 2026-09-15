@@ -10,7 +10,7 @@ import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/water_intake_view_model.dart';
 import 'package:floww/core/nutrition/widgets/goal_ring_summary.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_tip_card.dart';
+import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/core/nutrition/widgets/water_log_card.dart';
 import 'package:floww/core/nutrition/widgets/water_quick_add_card.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
@@ -47,6 +47,7 @@ class WaterIntakeSheet extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AppCard(
+                  variant: AppCardVariant.sunken,
                   child: GoalRingSummary(
                     goalValue: viewModel.goalLabel,
                     remainingValue: viewModel.remainingLabel,
@@ -89,7 +90,7 @@ class WaterIntakeSheet extends StatelessWidget {
                   onDelete: viewModel.canEdit ? viewModel.delete : null,
                 ),
                 SizedBox(height: AppSpacing.lg),
-                NutritionTipCard(
+                TipCard.stacked(
                   title: 'Hydration Tip',
                   message: viewModel.tipMessage,
                 ),

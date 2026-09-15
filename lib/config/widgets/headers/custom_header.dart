@@ -13,6 +13,7 @@ class CustomHeader extends StatelessWidget {
     this.isTimerMode = false,
     this.onBackPressed,
     this.onClosePressed,
+    this.onMorePressed,
   });
 
   final String? title;
@@ -20,6 +21,7 @@ class CustomHeader extends StatelessWidget {
   final bool isTimerMode;
   final VoidCallback? onBackPressed;
   final VoidCallback? onClosePressed;
+  final VoidCallback? onMorePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +85,14 @@ class CustomHeader extends StatelessWidget {
                 icon: Icons.close,
                 iconColor: context.colors.destructive,
                 onPressed: onClosePressed,
+              ),
+            )
+          else if (onMorePressed != null)
+            Positioned(
+              right: 0,
+              child: CircularHeaderButton(
+                icon: Icons.more_horiz,
+                onPressed: onMorePressed,
               ),
             ),
         ],

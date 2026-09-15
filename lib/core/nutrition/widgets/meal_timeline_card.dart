@@ -26,7 +26,7 @@ class MealTimelineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardHeader(title: 'Meal Timeline'),
+          const CardHeader(title: 'Meal Timeline', showChevron: true),
           SizedBox(height: AppSpacing.lg),
           Row(
             children: [
@@ -36,9 +36,11 @@ class MealTimelineCard extends StatelessWidget {
                     onTap: () => onSelect(entry.meal),
                     behavior: HitTestBehavior.opaque,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               entry.meal.icon,
@@ -60,6 +62,8 @@ class MealTimelineCard extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               entry.caloriesLabel,

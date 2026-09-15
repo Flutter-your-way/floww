@@ -4,6 +4,7 @@ import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 
 class NutritionActionButtons extends StatelessWidget {
@@ -14,35 +15,39 @@ class NutritionActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = context.colors.primary;
+    final accent = context.colors.primaryAlt;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         PillButton(
           onPressed: onScanFood,
-          width: AppSizes.s48,
+          width: AppSizes.s46,
+          height: AppSizes.s46,
           child: SvgPicture.asset(
             AppImages.foodScanIcon,
-            width: AppSizes.s24,
-            height: AppSizes.s24,
+            width: AppSizes.s20,
+            height: AppSizes.s20,
             colorFilter: ColorFilter.mode(accent, BlendMode.srcIn),
           ),
         ),
         SizedBox(width: AppSpacing.md),
         PillButton(
           onPressed: onLogFood,
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl2),
+          height: AppSizes.s46,
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl2,
+            vertical: AppSpacing.lg,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_rounded, color: accent, size: AppSizes.s24),
-              SizedBox(width: AppSpacing.sm),
+              Icon(Icons.add_rounded, color: accent, size: AppSizes.s20),
+              SizedBox(width: AppSpacing.xs),
               Text(
                 'Log Food',
-                style: context.textTheme.titleLarge?.copyWith(
+                style: AppTypography.labelMediumSemiBold.copyWith(
                   color: accent,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

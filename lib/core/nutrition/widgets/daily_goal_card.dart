@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/nutrition/macro_value_label.dart';
 import 'package:floww/core/nutrition/widgets/macro_segment_bar.dart';
@@ -21,32 +22,38 @@ class DailyGoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = context.textTheme.titleLarge?.copyWith(
-      fontWeight: FontWeight.w500,
-    );
-
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Daily Goal', style: titleStyle),
+          Text(
+            'Daily Goal',
+            style: AppTypography.labelLargeSemiBold.copyWith(
+              color: context.colors.textPrimary,
+            ),
+          ),
           SizedBox(height: AppSpacing.xl),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text('Calories', style: titleStyle),
+              Text(
+                'Calories',
+                style: AppTypography.labelLargeMedium.copyWith(
+                  color: context.colors.textPrimary,
+                ),
+              ),
               const Spacer(),
               Text(
                 calories,
-                style: context.textTheme.displaySmall?.copyWith(
-                  color: context.colors.primary,
+                style: AppTypography.bodyXLargeBold.copyWith(
+                  color: context.colors.primaryAlt,
                 ),
               ),
               SizedBox(width: AppSpacing.xs),
               Text(
                 'kcal',
-                style: context.textTheme.bodyMedium?.copyWith(
+                style: context.textTheme.bodySmall?.copyWith(
                   color: context.colors.textSecondary,
                 ),
               ),
@@ -60,9 +67,11 @@ class DailyGoalCard extends StatelessWidget {
               Expanded(
                 child: MacroValueLabel(label: 'Protein', value: protein),
               ),
+              SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: MacroValueLabel(label: 'Carbs', value: carbs),
               ),
+              SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: MacroValueLabel(label: 'Fats', value: fats),
               ),
