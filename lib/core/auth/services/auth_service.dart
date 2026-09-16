@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/entities/user_model.dart';
 import 'package:floww/config/theme/app_mode.dart';
@@ -20,9 +21,11 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
+
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+
+  GoogleSignIn get _googleSignIn => GoogleSignIn.instance;
 
   bool _googleSignInInitialized = false;
 
@@ -114,6 +117,27 @@ class AuthService {
     if (!doc.exists) return null;
 
     return UserModel.fromJson(doc.data()!);
+  }
+
+  Future<void> signOut() async {
+    try {
+      final uid = _auth.currentUser?.uid;
+      final token = await FirebaseMessaging.instance.getToken();
+      if (uid != null && token != null) {
+        await _usersCollection.doc(uid).update({
+          'fcmToken': FieldValue.arrayRemove([token]),
+        });
+      }
+    } catch (_) {
+      debugPrint('signOut token cleanup skipped');
+    }
+
+    try {
+      if (_googleSignInInitialized) await _googleSignIn.signOut();
+      await _auth.signOut();
+    } catch (_) {
+      throw AuthException('Could not sign you out. Please try again.');
+    }
   }
 
   Future<void> registerFcmToken(String uid) async {

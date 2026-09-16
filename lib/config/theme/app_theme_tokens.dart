@@ -38,6 +38,12 @@ class _AppPalette {
 
   static const destructive = Color(0xFFDC2626);
   static const destructiveBorder = Color(0xFFEF4444);
+  static const destructiveOutline = Color(0x66EF4444);
+  static const destructiveTint = Color(0x1FDC2626);
+  static const success = Color(0xFF4ADE80);
+  static const warning = Color(0xFFFACC15);
+  static const brandLight = Color(0xFFFFFFFF);
+  static const onBrandLight = Color(0xFF0A0A0A);
 
   static const scrim = Color(0x990A0A0A);
   static const proteinAccent = Color(0xFFC3FF3D);
@@ -132,6 +138,12 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     this.borderMedium = _AppPalette.borderMedium,
     this.destructive = _AppPalette.destructive,
     this.destructiveBorder = _AppPalette.destructiveBorder,
+    this.destructiveOutline = _AppPalette.destructiveOutline,
+    this.destructiveTint = _AppPalette.destructiveTint,
+    this.success = _AppPalette.success,
+    this.warning = _AppPalette.warning,
+    this.brandLight = _AppPalette.brandLight,
+    this.onBrandLight = _AppPalette.onBrandLight,
     this.glassSurface = _AppPalette.textSecondary,
     this.scrim = _AppPalette.scrim,
     this.proteinAccent = _AppPalette.proteinAccent,
@@ -176,6 +188,12 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color borderMedium;
   final Color destructive;
   final Color destructiveBorder;
+  final Color destructiveOutline;
+  final Color destructiveTint;
+  final Color success;
+  final Color warning;
+  final Color brandLight;
+  final Color onBrandLight;
   final Color glassSurface;
   final Color scrim;
   final Color proteinAccent;
@@ -265,6 +283,12 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? borderMedium,
     Color? destructive,
     Color? destructiveBorder,
+    Color? destructiveOutline,
+    Color? destructiveTint,
+    Color? success,
+    Color? warning,
+    Color? brandLight,
+    Color? onBrandLight,
     Color? glassSurface,
     Color? scrim,
     Color? proteinAccent,
@@ -308,6 +332,12 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       borderMedium: borderMedium ?? this.borderMedium,
       destructive: destructive ?? this.destructive,
       destructiveBorder: destructiveBorder ?? this.destructiveBorder,
+      destructiveOutline: destructiveOutline ?? this.destructiveOutline,
+      destructiveTint: destructiveTint ?? this.destructiveTint,
+      success: success ?? this.success,
+      warning: warning ?? this.warning,
+      brandLight: brandLight ?? this.brandLight,
+      onBrandLight: onBrandLight ?? this.onBrandLight,
       glassSurface: glassSurface ?? this.glassSurface,
       scrim: scrim ?? this.scrim,
       proteinAccent: proteinAccent ?? this.proteinAccent,
@@ -380,6 +410,16 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
         other.destructiveBorder,
         t,
       )!,
+      destructiveOutline: Color.lerp(
+        destructiveOutline,
+        other.destructiveOutline,
+        t,
+      )!,
+      destructiveTint: Color.lerp(destructiveTint, other.destructiveTint, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      brandLight: Color.lerp(brandLight, other.brandLight, t)!,
+      onBrandLight: Color.lerp(onBrandLight, other.onBrandLight, t)!,
       glassSurface: Color.lerp(glassSurface, other.glassSurface, t)!,
       scrim: Color.lerp(scrim, other.scrim, t)!,
       proteinAccent: Color.lerp(proteinAccent, other.proteinAccent, t)!,
@@ -416,6 +456,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     required this.bright,
     required this.ramp,
     required this.full,
+    required this.barFill,
     required this.darkGlow,
     required this.reversed,
     required this.amber,
@@ -440,6 +481,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient bright;
   final Gradient ramp;
   final Gradient full;
+  final Gradient barFill;
   final Gradient darkGlow;
   final Gradient reversed;
   final Gradient amber;
@@ -476,6 +518,12 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     ramp: LinearGradient(colors: [Color(0xFF84CC16), Color(0xFFC3FF3D)]),
     full: LinearGradient(
       colors: [Color(0xFF84B814), Color(0xFFC3FF3D), Color(0xFFFFFFFF)],
+    ),
+    barFill: LinearGradient(
+      colors: [Color(0xFFFFFFFF), Color(0xFFC3FF3D), Color(0xFF84B814)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.0, 0.5, 1.0],
     ),
     darkGlow: LinearGradient(
       colors: [Color(0xFF1C2218), Color(0xFF93D500)],
@@ -538,6 +586,12 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     bright: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF97316)]),
     ramp: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF97316)]),
     full: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF97316)]),
+    barFill: LinearGradient(
+      colors: [Color(0xFFFFFFFF), Color(0xFFF97316), Color(0xFFD55900)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.0, 0.5, 1.0],
+    ),
     darkGlow: LinearGradient(
       colors: [Color(0xFF221C18), Color(0xFFD55900)],
       begin: Alignment.topCenter,
@@ -599,6 +653,12 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     bright: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
     ramp: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
     full: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
+    barFill: LinearGradient(
+      colors: [Color(0xFFFFFFFF), Color(0xFF28D5E6), Color(0xFF00C4D5)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [0.0, 0.5, 1.0],
+    ),
     darkGlow: LinearGradient(
       colors: [Color(0xFF182122), Color(0xFF00C4D5)],
       begin: Alignment.topCenter,
@@ -656,6 +716,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? bright,
     Gradient? ramp,
     Gradient? full,
+    Gradient? barFill,
     Gradient? darkGlow,
     Gradient? reversed,
     Gradient? amber,
@@ -680,6 +741,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       bright: bright ?? this.bright,
       ramp: ramp ?? this.ramp,
       full: full ?? this.full,
+      barFill: barFill ?? this.barFill,
       darkGlow: darkGlow ?? this.darkGlow,
       reversed: reversed ?? this.reversed,
       amber: amber ?? this.amber,
@@ -709,6 +771,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       bright: Gradient.lerp(bright, other.bright, t)!,
       ramp: Gradient.lerp(ramp, other.ramp, t)!,
       full: Gradient.lerp(full, other.full, t)!,
+      barFill: Gradient.lerp(barFill, other.barFill, t)!,
       darkGlow: Gradient.lerp(darkGlow, other.darkGlow, t)!,
       reversed: Gradient.lerp(reversed, other.reversed, t)!,
       amber: Gradient.lerp(amber, other.amber, t)!,

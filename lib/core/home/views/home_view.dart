@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
+import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
 import 'package:floww/core/home/widgets/apple_health_sync_card.dart';
@@ -22,6 +23,11 @@ import 'package:floww/navigation/services/navigation_service.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
+
+  void _openProfile() {
+    HapticManager.light();
+    NavigationService.instance.push(AppRouter.profile);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +52,7 @@ class HomeView extends StatelessWidget {
                       userName: home.userName,
                       streakCount: home.streakCount,
                       avatarUrl: home.avatarUrl,
+                      onAvatarTap: _openProfile,
                     ),
                     SizedBox(height: AppSpacing.xl2),
                     FlowScoreCard(

@@ -242,6 +242,22 @@ class AppTypography {
     letterSpacing: -0.3,
   );
 
+  static const TextStyle bodyXXXLargeBold = TextStyle(
+    fontFamily: _fontBody,
+    fontSize: 48,
+    fontWeight: FontWeight.w700,
+    height: 58 / 48,
+    letterSpacing: -0.4,
+  );
+
+  static const TextStyle bodyHeadlineBoldTight = TextStyle(
+    fontFamily: _fontBody,
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    height: 30 / 24,
+    letterSpacing: -0.15,
+  );
+
   static const TextStyle bodyMediumMediumTight = TextStyle(
     fontFamily: _fontBody,
     fontSize: 14,
@@ -263,6 +279,30 @@ class AppTypography {
     fontSize: 10,
     fontWeight: FontWeight.w600,
     height: 12 / 10,
+    letterSpacing: 0,
+  );
+
+  static const TextStyle captionMediumSmall = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 10,
+    fontWeight: FontWeight.w500,
+    height: 12 / 10,
+    letterSpacing: 0,
+  );
+
+  static const TextStyle captionSemiBoldMicro = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 9,
+    fontWeight: FontWeight.w600,
+    height: 10 / 9,
+    letterSpacing: 0,
+  );
+
+  static const TextStyle captionMediumMicro = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 9,
+    fontWeight: FontWeight.w500,
+    height: 10 / 9,
     letterSpacing: 0,
   );
 
@@ -310,6 +350,14 @@ class AppTypography {
     fontFamily: _fontHeading,
     fontSize: 14,
     fontWeight: FontWeight.w600,
+    height: 20 / 14,
+    letterSpacing: -0.16,
+  );
+
+  static const TextStyle labelMediumRegular = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
     height: 20 / 14,
     letterSpacing: -0.16,
   );

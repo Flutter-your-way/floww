@@ -1,0 +1,91 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function planPrice(planId) {
+      return {
+        'floww_premium_monthly': 499,
+        'floww_premium_yearly': 3999
+      }[planId];
+    }
+
+    function isKnownPlan(planId, price, currency) {
+      return planId in ['floww_premium_monthly', 'floww_premium_yearly']
+        && price == planPrice(planId)
+        && currency == 'INR';
+    }
+
+    function hasSubscription(data) {
+      return 'subscription' in data
+        && data.subscription.status != 'none';
+    }
+
+    function isValidSubscription(data) {
+      return data.subscription.status in ['active', 'cancelled']
+        && data.subscription.term in ['monthly', 'yearly']
+        && data.isPremium is bool
+        && data.planName is string
+        && isKnownPlan(
+          data.subscription.planId,
+          data.subscription.price,
+          data.subscription.currency
+        );
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid)
+        && (
+          !hasSubscription(request.resource.data)
+          || isValidSubscription(request.resource.data)
+        );
+
+      match /invoices/{invoiceId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && isKnownPlan(
+            request.resource.data.planId,
+            request.resource.data.amount,
+            request.resource.data.currency
+          );
+        allow update, delete: if false;
+      }
+
+      match /food_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /water_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /weight_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /workout_sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /habit_logs/{dayId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /daily_flow/{dayId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /progress/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    match /onboarding_details/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+  }
+}

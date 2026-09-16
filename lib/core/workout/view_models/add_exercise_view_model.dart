@@ -12,7 +12,8 @@ class AddExerciseViewModel extends ChangeNotifier {
     String? initialSectionId,
   }) : _sections = sections {
     _catalog = service.loadCatalog();
-    _sectionId = initialSectionId ?? (sections.isEmpty ? '' : sections.first.id);
+    _sectionId =
+        initialSectionId ?? (sections.isEmpty ? '' : sections.first.id);
   }
 
   static const int _secondsPerMinute = 60;
@@ -78,7 +79,8 @@ class AddExerciseViewModel extends ChangeNotifier {
           AddExercisePickerItem(
             id: exercise.id,
             name: exercise.name,
-            detailLabel: '${exercise.group.label} · ${exercise.equipment.label}',
+            detailLabel:
+                '${exercise.group.label} · ${exercise.equipment.label}',
             isCustom: exercise.isCustom,
             isSelected: exercise.id == _exerciseId,
           ),

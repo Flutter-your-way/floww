@@ -15,8 +15,13 @@ import 'package:floww/core/nutrition/services/diet_plan_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_view_model.dart';
 import 'package:floww/core/nutrition/views/nutrition_view.dart';
-import 'package:floww/core/plans/views/plans_view.dart';
-import 'package:floww/core/stats/views/stats_view.dart';
+import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/core/habits/services/habit_log_service.dart';
+import 'package:floww/core/habits/view_models/habits_view_model.dart';
+import 'package:floww/core/habits/views/habits_view.dart';
+import 'package:floww/core/progress/services/progress_service.dart';
+import 'package:floww/core/progress/view_models/progress_view_model.dart';
+import 'package:floww/core/progress/views/progress_view.dart';
 import 'package:floww/navigation/widgets/app_bottom_nav_bar.dart';
 import 'package:floww/navigation/widgets/wave_orb_button.dart';
 import 'package:flutter/material.dart';
@@ -38,8 +43,8 @@ class _MainTabViewState extends State<MainTabView> {
     NavTabItem(iconAsset: AppImages.tab_1, semanticLabel: 'Home'),
     NavTabItem(iconAsset: AppImages.tab_2, semanticLabel: 'Nutrition'),
     NavTabItem(iconAsset: AppImages.tab_3, semanticLabel: 'Activity'),
-    NavTabItem(iconAsset: AppImages.tab_4, semanticLabel: 'Plans'),
-    NavTabItem(iconAsset: AppImages.tab_5, semanticLabel: 'Stats'),
+    NavTabItem(iconAsset: AppImages.tab_4, semanticLabel: 'Habits'),
+    NavTabItem(iconAsset: AppImages.tab_5, semanticLabel: 'Progress'),
   ];
 
   static final _screens = [
@@ -63,8 +68,14 @@ class _MainTabViewState extends State<MainTabView> {
       ],
       child: WorkoutView(),
     ),
-    PlansView(),
-    StatsView(),
+    ChangeNotifierProvider(
+      create: (context) => HabitsViewModel(HabitService(), HabitLogService()),
+      child: HabitsView(),
+    ),
+    ChangeNotifierProvider(
+      create: (context) => ProgressViewModel(ProgressService()),
+      child: ProgressView(),
+    ),
   ];
 
   @override

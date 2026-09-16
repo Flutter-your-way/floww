@@ -49,6 +49,11 @@ class AppDateUtils {
     isUtc: true,
   ).toIso8601String();
 
+  static String dateKey(DateTime date) =>
+      '${date.year}-${_padded(date.month)}-${_padded(date.day)}';
+
+  static String _padded(int value) => value.toString().padLeft(2, '0');
+
   static Duration untilNextDay(DateTime now) =>
       DateTime(now.year, now.month, now.day + 1).difference(now);
 
@@ -100,6 +105,12 @@ class AppDateUtils {
   static DateTime endOfWeek(DateTime date) => addDays(startOfWeek(date), 6);
 
   static String weekdayName(DateTime date) => _weekdays[date.weekday - 1];
+
+  static String monthYear(DateTime date) =>
+      '${_months[date.month - 1]} ${date.year}';
+
+  static String shortMonthYear(DateTime date) =>
+      '${_shortMonths[date.month - 1]} ${date.year}';
 
   static String monthDay(DateTime date) =>
       '${_months[date.month - 1]} ${date.day}';

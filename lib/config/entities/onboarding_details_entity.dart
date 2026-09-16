@@ -118,20 +118,24 @@ class OnboardingTrainingSetupDetails {
   const OnboardingTrainingSetupDetails({
     required this.wantsPersonalizedPlan,
     required this.trainingType,
+    this.experienceLevel,
   });
 
   final bool wantsPersonalizedPlan;
   final String trainingType;
+  final String? experienceLevel;
 
   factory OnboardingTrainingSetupDetails.fromJson(Map<String, dynamic> json) =>
       OnboardingTrainingSetupDetails(
         wantsPersonalizedPlan: json['wantsPersonalizedPlan'] as bool,
         trainingType: json['trainingType'] as String,
+        experienceLevel: json['experienceLevel'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
     'wantsPersonalizedPlan': wantsPersonalizedPlan,
     'trainingType': trainingType,
+    'experienceLevel': experienceLevel,
   };
 }
 
@@ -447,6 +451,12 @@ class OnboardingDetailsEntity {
       trainingSetup = OnboardingTrainingSetupDetails(
         wantsPersonalizedPlan: answers['create_plan'] == 'Yes',
         trainingType: answers['training_type'] as String,
+        experienceLevel: switch (answers['training_type']) {
+          'Gym' => answers['gym_experience'] as String?,
+          'Calisthenics' => answers['cal_experience'] as String?,
+          'Yoga' => answers['yoga_experience'] as String?,
+          _ => null,
+        },
       );
     }
 

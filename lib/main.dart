@@ -4,6 +4,8 @@ import 'package:floww/core/auth/services/auth_service.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/health/services/health_service.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
+import 'package:floww/core/premium/services/premium_service.dart';
 import 'package:floww/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:progressive_blur/progressive_blur.dart';
@@ -41,6 +43,9 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel(AuthService())),
         ChangeNotifierProvider(
           create: (_) => HealthProvider(HealthService())..restore(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PremiumAccessProvider(PremiumService())..start(),
         ),
       ],
       child: Consumer<ThemeModeController>(

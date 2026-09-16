@@ -45,7 +45,9 @@ class ExercisePickerRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.bodyLargeSemiBoldTight.copyWith(
-                      color: isSelected ? colors.primaryAlt : colors.textPrimary,
+                      color: isSelected
+                          ? colors.primaryAlt
+                          : colors.textPrimary,
                     ),
                   ),
                   SizedBox(height: AppSpacing.xxs),
@@ -93,11 +95,7 @@ class ExercisePickerRow extends StatelessWidget {
                 ),
               ),
               child: isSelected
-                  ? Icon(
-                      Icons.check,
-                      size: AppSizes.s14,
-                      color: colors.primary,
-                    )
+                  ? Icon(Icons.check, size: AppSizes.s14, color: colors.primary)
                   : null,
             ),
           ],

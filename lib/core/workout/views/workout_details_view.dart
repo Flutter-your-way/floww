@@ -19,10 +19,7 @@ class WorkoutDetailsView extends StatelessWidget {
 
   void _placeholderAction() => HapticManager.light();
 
-  void _openEditNotes(
-    BuildContext context,
-    WorkoutDetailsViewModel viewModel,
-  ) {
+  void _openEditNotes(BuildContext context, WorkoutDetailsViewModel viewModel) {
     HapticManager.light();
     EditNotesSheet.show(
       context: context,

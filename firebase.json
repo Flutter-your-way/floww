@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"floww-fitness","appId":"1:328901179784:android:6e39d87ff9d1b2f691a23d","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"floww-fitness","appId":"1:328901179784:ios:1f3e0d4128fd440e91a23d","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"floww-fitness","configurations":{"android":"1:328901179784:android:6e39d87ff9d1b2f691a23d","ios":"1:328901179784:ios:1f3e0d4128fd440e91a23d"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "floww-fitness",
+          "appId": "1:328901179784:android:6e39d87ff9d1b2f691a23d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "floww-fitness",
+          "appId": "1:328901179784:ios:1f3e0d4128fd440e91a23d",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "floww-fitness",
+          "configurations": {
+            "android": "1:328901179784:android:6e39d87ff9d1b2f691a23d",
+            "ios": "1:328901179784:ios:1f3e0d4128fd440e91a23d"
+          }
+        }
+      }
+    }
+  }
+}

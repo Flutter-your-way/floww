@@ -121,10 +121,7 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
   }
 
   WorkoutSectionItem _sectionOf(WorkoutSectionGroup section) {
-    final exercises = [
-      ...section.exercises,
-      ...?_addedExercises[section.id],
-    ];
+    final exercises = [...section.exercises, ...?_addedExercises[section.id]];
     return WorkoutSectionItem(
       id: section.id,
       glyph: section.glyph,

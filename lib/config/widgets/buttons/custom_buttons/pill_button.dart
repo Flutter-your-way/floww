@@ -7,7 +7,7 @@ import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/effects/inner_glow.dart';
 
-enum PillButtonVariant { accent, neutral, bright, primary, outline }
+enum PillButtonVariant { accent, neutral, bright, primary, outline, glass }
 
 class PillButton extends StatefulWidget {
   const PillButton({
@@ -22,6 +22,7 @@ class PillButton extends StatefulWidget {
     this.height,
     this.padding,
     this.labelStyle,
+    this.labelColor,
     this.isLoading = false,
   });
 
@@ -35,6 +36,7 @@ class PillButton extends StatefulWidget {
   final double? height;
   final EdgeInsetsGeometry? padding;
   final TextStyle? labelStyle;
+  final Color? labelColor;
   final bool isLoading;
 
   @override
@@ -78,6 +80,12 @@ class _PillButtonState extends State<PillButton> {
         background = colors.backgroundElevated;
         gradient = null;
         foreground = colors.textPrimary;
+        borderColor = colors.borderMedium;
+        shadows = null;
+      case PillButtonVariant.glass:
+        background = colors.borderSubtle;
+        gradient = null;
+        foreground = colors.primaryAlt;
         borderColor = colors.borderMedium;
         shadows = null;
       case PillButtonVariant.outline:
@@ -173,7 +181,7 @@ class _PillButtonState extends State<PillButton> {
                           _PillButtonLabel(
                             label: widget.label,
                             icon: widget.icon,
-                            color: foreground,
+                            color: widget.labelColor ?? foreground,
                             iconColor: widget.iconColor,
                             labelStyle: widget.labelStyle,
                             defaultStyle: isPrimary

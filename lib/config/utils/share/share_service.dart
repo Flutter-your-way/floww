@@ -24,41 +24,72 @@ class ShareService {
   static const String _fileExtension = '.png';
   static const String _mimeType = 'image/png';
 
-  Future<File> writeTempImage(Uint8List bytes, {required String name}) async {
+  Future<File> writeTempFile(
+    Uint8List bytes, {
+    required String name,
+    required String extension,
+    String failureMessage = 'Could not prepare your file. Please try again.',
+  }) async {
     try {
       final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/$name$_fileExtension');
+      final file = File('${directory.path}/$name$extension');
       return await file.writeAsBytes(bytes, flush: true);
     } catch (e, stackTrace) {
-      debugPrint('writeTempImage failed: $e\n$stackTrace');
-      throw const ShareException(
-        ShareErrorCode.shareFailed,
-        'Could not prepare your card. Please try again.',
-      );
+      debugPrint('writeTempFile failed: $e\n$stackTrace');
+      throw ShareException(ShareErrorCode.saveFailed, failureMessage);
     }
   }
 
-  Future<void> shareImage(
+  Future<void> shareFile(
     Uint8List bytes, {
     required String name,
+    required String extension,
+    required String mimeType,
     String? text,
+    String failureMessage = 'Could not prepare your file. Please try again.',
   }) async {
-    final file = await writeTempImage(bytes, name: name);
+    final file = await writeTempFile(
+      bytes,
+      name: name,
+      extension: extension,
+      failureMessage: failureMessage,
+    );
     try {
       await SharePlus.instance.share(
         ShareParams(
           text: text,
-          files: [XFile(file.path, mimeType: _mimeType)],
+          files: [XFile(file.path, mimeType: mimeType)],
         ),
       );
     } catch (e, stackTrace) {
-      debugPrint('shareImage failed: $e\n$stackTrace');
+      debugPrint('shareFile failed: $e\n$stackTrace');
       throw const ShareException(
         ShareErrorCode.shareFailed,
         'Could not open the share sheet. Please try again.',
       );
     }
   }
+
+  Future<File> writeTempImage(Uint8List bytes, {required String name}) =>
+      writeTempFile(
+        bytes,
+        name: name,
+        extension: _fileExtension,
+        failureMessage: 'Could not prepare your card. Please try again.',
+      );
+
+  Future<void> shareImage(
+    Uint8List bytes, {
+    required String name,
+    String? text,
+  }) => shareFile(
+    bytes,
+    name: name,
+    extension: _fileExtension,
+    mimeType: _mimeType,
+    text: text,
+    failureMessage: 'Could not prepare your card. Please try again.',
+  );
 
   Future<void> saveImageToGallery(Uint8List bytes, {required String name}) async {
     try {

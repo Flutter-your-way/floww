@@ -7,12 +7,17 @@ class AppImages {
   static const String appIconSvg = '$_iconsBase/app_icon_svg.svg';
   static const String waveIcon = '$_iconsBase/wave_icon.svg';
   static const String sparkel = '$_iconsBase/sparkel_icon.svg';
+  static const String crownIcon = '$_iconsBase/crown_icon.svg';
 
   static const String welcome1 = '$_iconsBase/welcome_1.svg';
   static const String welcome2 = '$_iconsBase/welcome_2.svg';
   static const String welcome3 = '$_iconsBase/welcome_3.svg';
 
   static const String appleHealthIcon = '$_iconsBase/apple_health_icon.svg';
+  static const String whoopIcon = '$_iconsBase/whoop_icon.svg';
+  static const String ouraIcon = '$_iconsBase/oura_icon.svg';
+  static const String fitbitIcon = '$_iconsBase/fitbit_icon.svg';
+  static const String healthConnectIcon = '$_iconsBase/health_connect_icon.svg';
   static const String googleIcon = '$_iconsBase/google_icon.svg';
   static const String foodScanIcon = '$_iconsBase/food_scan_icon.svg';
 

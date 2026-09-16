@@ -6,10 +6,11 @@ import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/today_workout.dart';
 import 'package:floww/core/workout/services/workout_service.dart';
+import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/view_models/workout_completion_view_model.dart';
 
 class ActiveWorkoutViewModel extends ChangeNotifier {
-  ActiveWorkoutViewModel(this._service) {
+  ActiveWorkoutViewModel(this._service, this._sessionService) {
     _workout = _service.todayWorkout();
     _startTicker();
   }
@@ -18,10 +19,15 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   static const int _secondsPerMinute = 60;
 
   final WorkoutService _service;
+  final WorkoutSessionService _sessionService;
 
   late final TodayWorkout _workout;
 
+  final Set<String> _completedExercises = {};
+
   Timer? _timer;
+  int _completedSets = 0;
+  double _completedVolumeKg = 0;
   int _elapsedSeconds = 0;
   int _exerciseIndex = 0;
   int _setIndex = 0;
@@ -100,6 +106,9 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   }
 
   void _advance() {
+    _completedSets++;
+    _completedVolumeKg += (_exercise.weightKg ?? 0) * _exercise.reps;
+    _completedExercises.add(_exercise.id);
     if (_setIndex + 1 < _exercise.sets) {
       _setIndex++;
       return;
@@ -116,6 +125,17 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   void _finish() {
     _isFinished = true;
     _timer?.cancel();
+    unawaited(
+      _sessionService.logSession(
+        workoutId: _workout.id,
+        name: _workout.name,
+        completedAt: DateTime.now(),
+        durationSeconds: _elapsedSeconds,
+        exerciseCount: _completedExercises.length,
+        totalSets: _completedSets,
+        volumeKg: _completedVolumeKg,
+      ),
+    );
   }
 
   ActiveWorkoutItem get session => ActiveWorkoutItem(
