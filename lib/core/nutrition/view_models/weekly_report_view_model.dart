@@ -8,13 +8,22 @@ import 'package:floww/core/nutrition/models/nutrition_day.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/models/weekly_metric.dart';
+import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
 
 class WeeklyReportViewModel extends ChangeNotifier {
-  WeeklyReportViewModel(this._logService, DateTime date, this._goal)
+  WeeklyReportViewModel(this._logService, DateTime date, this._goalService)
     : _weekStart = AppDateUtils.startOfWeek(date) {
     _days = _buildWeek(const NutritionLogs(foods: [], waters: []));
+    _goalSubscription = _goalService.watch().listen(
+      (goal) {
+        _goal = goal;
+        _days = [for (final day in _days) day.copyWithGoal(goal)];
+        notifyListeners();
+      },
+      onError: (Object error) => debugPrint('weekly goal failed: $error'),
+    );
     _subscription = _logService
         .watchLogs(_weekStart, AppDateUtils.addDays(_weekStart, _daysInWeek))
         .listen(
@@ -35,12 +44,14 @@ class WeeklyReportViewModel extends ChangeNotifier {
   static const double _streakThreshold = 0.7;
 
   final NutritionLogService _logService;
-  final NutritionGoal _goal;
+  final NutritionGoalService _goalService;
+  NutritionGoal _goal = NutritionGoal.defaults;
   final DateTime _weekStart;
   late List<NutritionDay> _days;
   bool _isLoading = true;
   WeeklyMetric _metric = WeeklyMetric.calories;
   StreamSubscription<NutritionLogs>? _subscription;
+  StreamSubscription<NutritionGoal>? _goalSubscription;
   bool _disposed = false;
 
   bool get isLoading => _isLoading;
@@ -218,6 +229,7 @@ class WeeklyReportViewModel extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _subscription?.cancel();
+    _goalSubscription?.cancel();
     super.dispose();
   }
 }

@@ -5,12 +5,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/config/entities/habit_day_log_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/theme/app_theme.dart';
-import 'package:floww/core/habits/services/habit_log_service.dart';
-import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_definition.dart';
 import 'package:floww/core/habits/view_models/habits_view_model.dart';
 import 'package:floww/core/habits/views/habits_view.dart';
+
+import 'fakes/fake_habit_service.dart';
 
 Future<void> _loadFont(String family, String path) async {
   final loader = FontLoader(family)
@@ -19,6 +23,25 @@ Future<void> _loadFont(String family, String path) async {
     );
   await loader.load();
 }
+
+HabitDefinition _definition(
+  String id,
+  String title,
+  double target,
+  HabitMetric metric, {
+  int createdDaysAgo = 30,
+}) => HabitDefinition(
+  id: id,
+  title: title,
+  target: target,
+  metric: metric,
+  icon: HabitIconKind.clipboard,
+  createdAt: AppDateUtils.addDays(
+    AppDateUtils.dateOnly(DateTime.now()),
+    -createdDaysAgo,
+  ),
+  sortOrder: 0,
+);
 
 void main() {
   setUpAll(() async {
@@ -32,12 +55,49 @@ void main() {
     );
   });
 
-  testWidgets('habits view renders and toggles a habit', (tester) async {
+  final habits = [
+    _definition(
+      'workout_training',
+      'Workout Training',
+      45,
+      HabitMetric.minutes,
+    ),
+    _definition('outdoor_walk', 'Outdoor Walk', 10000, HabitMetric.steps),
+    _definition('water_intake', 'Water Intake', 3, HabitMetric.liters),
+    _definition('meditation', 'Meditation', 10, HabitMetric.minutes),
+    _definition('screen_free', 'Screen Free', 1, HabitMetric.hours),
+  ];
+
+  HabitDayLog todayLog() => HabitDayLog(
+    date: AppDateUtils.dateOnly(DateTime.now()),
+    entries: const [
+      HabitLogEntry(
+        id: 'workout_training',
+        title: 'Workout Training',
+        value: 45,
+        target: 45,
+        metric: 'minutes',
+      ),
+      HabitLogEntry(
+        id: 'outdoor_walk',
+        title: 'Outdoor Walk',
+        value: 8432,
+        target: 10000,
+        metric: 'steps',
+      ),
+    ],
+  );
+
+  Future<HabitsViewModel> pumpHabits(
+    WidgetTester tester,
+    FakeHabitService service,
+  ) async {
     tester.view.physicalSize = const Size(390 * 3, 1600 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
+    addTearDown(service.dispose);
 
-    final viewModel = HabitsViewModel(HabitService(), HabitLogService());
+    final viewModel = HabitsViewModel(service);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -49,17 +109,27 @@ void main() {
       ),
     );
     await tester.pump();
+    return viewModel;
+  }
+
+  testWidgets('habits view renders logged habits and toggles one', (
+    tester,
+  ) async {
+    final service = FakeHabitService(habits: habits, days: [todayLog()]);
+    final viewModel = await pumpHabits(tester, service);
 
     expect(find.text('Habits'), findsOneWidget);
     expect(find.text('Habit Score'), findsOneWidget);
     expect(find.text('Weekly Progress'), findsOneWidget);
     expect(find.text('Meditation'), findsOneWidget);
+    expect(find.text('8,432 / 10,000 Steps'), findsOneWidget);
+    expect(viewModel.completedCount, 1);
 
-    final completedBefore = viewModel.completedCount;
-    viewModel.toggleHabit('meditation');
+    await viewModel.toggleHabit('meditation');
     await tester.pump();
 
-    expect(viewModel.completedCount, completedBefore + 1);
+    expect(viewModel.completedCount, 2);
+    expect(service.savedDays.last.entryOf('meditation')?.value, 10);
 
     await tester.pumpWidget(const SizedBox.shrink());
     viewModel.dispose();
@@ -68,25 +138,8 @@ void main() {
   testWidgets('add habit sheet suggests, rotates and creates a custom habit', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390 * 3, 1600 * 3);
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-
-    final viewModel = HabitsViewModel(
-      HabitService(seedSampleHabits: false),
-      HabitLogService(),
-    );
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.buildTheme(AppThemeMode.flow),
-        home: ChangeNotifierProvider.value(
-          value: viewModel,
-          child: const HabitsView(),
-        ),
-      ),
-    );
-    await tester.pump();
+    final service = FakeHabitService();
+    final viewModel = await pumpHabits(tester, service);
 
     await tester.tap(find.text('CREATE FIRST HABIT'));
     await tester.pumpAndSettle();
@@ -126,25 +179,8 @@ void main() {
   testWidgets('habits view renders the empty state for a new user', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390 * 3, 1600 * 3);
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-
-    final viewModel = HabitsViewModel(
-      HabitService(seedSampleHabits: false),
-      HabitLogService(),
-    );
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.buildTheme(AppThemeMode.flow),
-        home: ChangeNotifierProvider.value(
-          value: viewModel,
-          child: const HabitsView(),
-        ),
-      ),
-    );
-    await tester.pump();
+    final service = FakeHabitService();
+    final viewModel = await pumpHabits(tester, service);
 
     expect(find.text('No habits yet'), findsOneWidget);
     expect(find.text('CREATE FIRST HABIT'), findsOneWidget);
@@ -152,7 +188,7 @@ void main() {
     expect(find.text('Reading'), findsOneWidget);
 
     await tester.tap(find.text('Reading'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(viewModel.showEmptyState, isFalse);
     expect(find.text('Habit Score'), findsOneWidget);
@@ -164,21 +200,8 @@ void main() {
   testWidgets('a past date renders read-only and cannot be edited', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390 * 3, 1600 * 3);
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-
-    final viewModel = HabitsViewModel(HabitService(), HabitLogService());
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.buildTheme(AppThemeMode.flow),
-        home: ChangeNotifierProvider.value(
-          value: viewModel,
-          child: const HabitsView(),
-        ),
-      ),
-    );
+    final service = FakeHabitService(habits: habits, days: [todayLog()]);
+    final viewModel = await pumpHabits(tester, service);
 
     viewModel.previousDay();
     await tester.pump();
@@ -190,10 +213,11 @@ void main() {
     expect(find.text('Add a Habit'), findsNothing);
 
     final completedBefore = viewModel.completedCount;
-    viewModel.toggleHabit('meditation');
+    await viewModel.toggleHabit('meditation');
     await tester.pump();
 
     expect(viewModel.completedCount, completedBefore);
+    expect(service.savedDays, isEmpty);
 
     await tester.pumpWidget(const SizedBox.shrink());
     viewModel.dispose();

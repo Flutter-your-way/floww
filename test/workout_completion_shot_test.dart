@@ -9,16 +9,17 @@ import 'package:provider/provider.dart';
 
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/theme/app_theme.dart';
-import 'package:floww/core/workout/services/workout_service.dart';
+import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/view_models/workout_completion_view_model.dart';
 import 'package:floww/core/workout/views/recovery_check_in_sheet.dart';
 import 'package:floww/core/workout/views/workout_complete_sheet.dart';
 import 'package:floww/core/workout/views/workout_share_sheet.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
+import 'fakes/fake_workout_session_service.dart';
+
 const _out =
-    '/private/tmp/claude-501/-Users-shobhit-FlutterYourWay-floww/'
-    '6fdcb842-3069-4819-91e5-fc0a0876ba7b/scratchpad';
+    '/private/tmp/claude-501/-Users-shobhit-FlutterYourWay-floww/82d895d7-8538-4206-bbac-1be805e42e00/scratchpad';
 
 Future<void> _loadFonts() async {
   for (final entry in const {
@@ -47,10 +48,14 @@ Future<void> _shot(WidgetTester tester, String name) async {
 }
 
 WorkoutCompletionViewModel _viewModel() {
-  const service = WorkoutService();
+  final session = WorkoutFixtures.session();
   return WorkoutCompletionViewModel(
-    service,
-    service.completionFor('leg-day-today'),
+    FakeWorkoutSessionService(session),
+    WorkoutCompletionResult(
+      session: session,
+      flowScoreBefore: session.flowScoreBefore,
+      flowScoreAfter: session.flowScoreAfter,
+    ),
   );
 }
 

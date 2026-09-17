@@ -7,7 +7,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
-import 'package:floww/core/workout/models/today_workout.dart';
+import 'package:floww/core/workout/models/exercise_info.dart';
 
 class ExerciseInfoSectionCard extends StatelessWidget {
   const ExerciseInfoSectionCard({

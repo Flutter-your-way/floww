@@ -1,8 +1,8 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/nutrition/models/diet_plan.dart';
 import 'package:floww/core/nutrition/models/food_log.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
+import 'package:floww/core/settings/services/settings_service.dart';
 
 class DietPlanProgress {
   const DietPlanProgress({
@@ -21,12 +21,13 @@ class DietPlanProgress {
 }
 
 class DietPlanService {
-  DietPlanService(this._logService);
+  DietPlanService(this._logService, {SettingsService? settingsService})
+    : _settingsService = settingsService ?? SettingsService();
 
-  static const String _startedAtKey = 'diet_plan_started_at';
   static const double _completionThreshold = 0.8;
 
   final NutritionLogService _logService;
+  final SettingsService _settingsService;
 
   Future<DietPlanProgress?> loadProgress({
     required int targetCalories,
@@ -35,14 +36,12 @@ class DietPlanService {
     final uid = _logService.userId;
     if (uid == null) return null;
 
-    final prefs = await SharedPreferences.getInstance();
-    final key = '${_startedAtKey}_$uid';
     final today = AppDateUtils.dateOnly(DateTime.now());
-    var startedAt = DateTime.tryParse(prefs.getString(key) ?? '');
+    var startedAt = await _settingsService.dietPlanStartedAt();
     if (startedAt == null) {
       if (!startIfMissing) return null;
       startedAt = today;
-      await prefs.setString(key, today.toIso8601String());
+      await _settingsService.setDietPlanStartedAt(today);
     }
 
     final plan = DietPlan.generate(

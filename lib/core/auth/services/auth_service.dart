@@ -116,7 +116,13 @@ class AuthService {
     final doc = await _usersCollection.doc(firebaseUser.uid).get();
     if (!doc.exists) return null;
 
-    return UserModel.fromJson(doc.data()!);
+    final data = doc.data()!;
+    final storedAvatarUrl = data['avatarUrl'] as String?;
+    if (storedAvatarUrl == null && firebaseUser.photoURL != null) {
+      return UserModel.fromJson({...data, 'avatarUrl': firebaseUser.photoURL});
+    }
+
+    return UserModel.fromJson(data);
   }
 
   Future<void> signOut() async {
@@ -197,6 +203,8 @@ class AuthService {
     final updatedFields = {
       'lastLoginAt': now.toIso8601String(),
       'updatedAt': now.toIso8601String(),
+      if (doc.data()?['avatarUrl'] == null && firebaseUser.photoURL != null)
+        'avatarUrl': firebaseUser.photoURL,
     };
     await docRef.update(updatedFields);
     return UserModel.fromJson({...doc.data()!, ...updatedFields});

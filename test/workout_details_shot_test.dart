@@ -9,14 +9,15 @@ import 'package:provider/provider.dart';
 
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/theme/app_theme.dart';
-import 'package:floww/core/workout/services/workout_service.dart';
+import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/view_models/workout_details_view_model.dart';
 import 'package:floww/core/workout/views/workout_details_view.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
+import 'fakes/fake_workout_session_service.dart';
+
 const _out =
-    '/private/tmp/claude-501/-Users-shobhit-FlutterYourWay-floww/'
-    '529a5049-5385-47d2-9715-2e073997fa5a/scratchpad';
+    '/private/tmp/claude-501/-Users-shobhit-FlutterYourWay-floww/82d895d7-8538-4206-bbac-1be805e42e00/scratchpad';
 
 Future<void> _loadFonts() async {
   for (final entry in const {
@@ -57,8 +58,8 @@ void main() {
         home: RepaintBoundary(
           child: ChangeNotifierProvider(
             create: (_) => WorkoutDetailsViewModel(
-              const WorkoutService(),
-              'leg-day-today',
+              FakeWorkoutSessionService(WorkoutFixtures.session()),
+              'session-1',
             ),
             child: const WorkoutDetailsView(),
           ),

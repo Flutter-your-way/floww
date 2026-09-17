@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:floww/core/settings/models/settings_view_data.dart';
@@ -5,11 +7,15 @@ import 'package:floww/core/settings/services/settings_service.dart';
 
 class NotificationSettingsViewModel extends ChangeNotifier {
   NotificationSettingsViewModel(this._service)
-    : _settings = _service.notifications();
+    : _settings = _service.defaultNotifications() {
+    _watch();
+  }
 
   final SettingsService _service;
 
   NotificationSettings _settings;
+  StreamSubscription<NotificationSettings>? _subscription;
+  bool _disposed = false;
 
   String get title => 'Notifications';
 
@@ -19,15 +25,16 @@ class NotificationSettingsViewModel extends ChangeNotifier {
 
   bool get areTogglesEnabled => _settings.master.isEnabled;
 
-  void setMasterEnabled(bool value) {
+  Future<void> setMasterEnabled(bool value) async {
     if (_settings.master.isEnabled == value) return;
     _settings = _settings.copyWith(
       master: _settings.master.copyWith(isEnabled: value),
     );
     notifyListeners();
+    await _service.setNotificationEnabled(_settings.master.id, value);
   }
 
-  void setToggleEnabled(String id, bool value) {
+  Future<void> setToggleEnabled(String id, bool value) async {
     if (!areTogglesEnabled) return;
     _settings = _settings.copyWith(
       sections: [
@@ -41,10 +48,29 @@ class NotificationSettingsViewModel extends ChangeNotifier {
       ],
     );
     notifyListeners();
+    await _service.setNotificationEnabled(id, value);
   }
 
-  void refresh() {
-    _settings = _service.notifications();
-    notifyListeners();
+  void _watch() {
+    _subscription = _service.watchNotifications().listen(
+      (settings) {
+        _settings = settings;
+        notifyListeners();
+      },
+      onError: (Object error) =>
+          debugPrint('notification settings failed: $error'),
+    );
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _subscription?.cancel();
+    super.dispose();
   }
 }

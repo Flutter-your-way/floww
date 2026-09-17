@@ -8,9 +8,13 @@ import 'package:provider/provider.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/theme/app_theme.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
-import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/config/entities/habit_day_log_entity.dart';
+import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_definition.dart';
 import 'package:floww/core/habits/view_models/habit_calendar_view_model.dart';
 import 'package:floww/core/habits/views/habit_calendar_view.dart';
+
+import 'fakes/fake_habit_service.dart';
 
 Future<void> _loadFont(String family, String path) async {
   final loader = FontLoader(family)
@@ -38,7 +42,37 @@ void main() {
     addTearDown(tester.view.reset);
 
     final now = DateTime.now();
-    final viewModel = HabitCalendarViewModel(HabitService(), now);
+    final today = AppDateUtils.dateOnly(now);
+    final service = FakeHabitService(
+      habits: [
+        HabitDefinition(
+          id: 'meditation',
+          title: 'Meditation',
+          target: 10,
+          metric: HabitMetric.minutes,
+          icon: HabitIconKind.meditation,
+          createdAt: AppDateUtils.addDays(today, -20),
+          sortOrder: 0,
+        ),
+      ],
+      days: [
+        HabitDayLog(
+          date: today,
+          entries: const [
+            HabitLogEntry(
+              id: 'meditation',
+              title: 'Meditation',
+              value: 10,
+              target: 10,
+              metric: 'minutes',
+            ),
+          ],
+        ),
+      ],
+    );
+    addTearDown(service.dispose);
+
+    final viewModel = HabitCalendarViewModel(service, now);
     addTearDown(viewModel.dispose);
 
     await tester.pumpWidget(

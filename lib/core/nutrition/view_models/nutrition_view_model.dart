@@ -15,14 +15,16 @@ import 'package:floww/core/nutrition/models/nutrition_day.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/services/diet_plan_service.dart';
+import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
 
 enum NutritionDayStatus { past, today, future }
 
 class NutritionViewModel extends ChangeNotifier {
-  NutritionViewModel(this._logService, this._dietPlanService)
+  NutritionViewModel(this._logService, this._dietPlanService, this._goalService)
     : _selectedDate = AppDateUtils.dateOnly(DateTime.now()) {
+    _watchGoal();
     _watchSelectedDay();
     _recentSubscription = _logService.watchRecentFoodLogs().listen(
       (logs) {
@@ -43,7 +45,9 @@ class NutritionViewModel extends ChangeNotifier {
 
   final NutritionLogService _logService;
   final DietPlanService _dietPlanService;
-  final NutritionGoal goal = NutritionGoal.defaults;
+  final NutritionGoalService _goalService;
+
+  NutritionGoal _goal = NutritionGoal.defaults;
 
   DateTime _selectedDate;
   DateChangeDirection _dateDirection = DateChangeDirection.forward;
@@ -54,8 +58,11 @@ class NutritionViewModel extends ChangeNotifier {
   DietPlanProgress? _dietPlan;
   StreamSubscription<NutritionLogs>? _daySubscription;
   StreamSubscription<List<FoodLog>>? _recentSubscription;
+  StreamSubscription<NutritionGoal>? _goalSubscription;
   late final DayRolloverTimer _dayRollover;
   bool _disposed = false;
+
+  NutritionGoal get goal => _goal;
 
   DateTime get selectedDate => _selectedDate;
 
@@ -460,6 +467,23 @@ class NutritionViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _watchGoal() {
+    _goalSubscription = _goalService.watch().listen(
+      (goal) {
+        if (goal.calories == _goal.calories &&
+            goal.proteinG == _goal.proteinG &&
+            goal.waterMl == _goal.waterMl) {
+          return;
+        }
+        _goal = goal;
+        _watchSelectedDay();
+        loadDietPlan();
+        notifyListeners();
+      },
+      onError: (Object error) => debugPrint('nutrition goal failed: $error'),
+    );
+  }
+
   void _watchSelectedDay() {
     _daySubscription?.cancel();
     final date = _selectedDate;
@@ -498,6 +522,7 @@ class NutritionViewModel extends ChangeNotifier {
     _dayRollover.cancel();
     _daySubscription?.cancel();
     _recentSubscription?.cancel();
+    _goalSubscription?.cancel();
     super.dispose();
   }
 }

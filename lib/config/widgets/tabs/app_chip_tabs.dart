@@ -11,26 +11,36 @@ class AppChipTabs<T> extends StatelessWidget {
     required this.selected,
     required this.labelOf,
     required this.onSelected,
+    this.isExpanded = true,
   });
 
   final List<T> items;
   final T selected;
   final String Function(T item) labelOf;
   final ValueChanged<T> onSelected;
+  final bool isExpanded;
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: isExpanded ? MainAxisSize.max : MainAxisSize.min,
       children: [
         for (var i = 0; i < items.length; i++) ...[
           if (i > 0) SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: _Chip(
+          if (isExpanded)
+            Expanded(
+              child: _Chip(
+                label: labelOf(items[i]),
+                isSelected: items[i] == selected,
+                onTap: () => onSelected(items[i]),
+              ),
+            )
+          else
+            _Chip(
               label: labelOf(items[i]),
               isSelected: items[i] == selected,
               onTap: () => onSelected(items[i]),
             ),
-          ),
         ],
       ],
     );

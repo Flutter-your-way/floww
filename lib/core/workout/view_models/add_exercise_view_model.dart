@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/entities/workout_exercise_entity.dart';
+import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/core/workout/models/add_exercise_view_data.dart';
 import 'package:floww/core/workout/models/exercise.dart';
-import 'package:floww/core/workout/models/workout_detail.dart';
-import 'package:floww/core/workout/services/exercise_service.dart';
+import 'package:floww/core/workout/models/workout_section_kind.dart';
+import 'package:floww/core/workout/services/workout_catalog_service.dart';
+import 'package:floww/core/workout/services/workout_firestore.dart';
 
 class AddExerciseViewModel extends ChangeNotifier {
   AddExerciseViewModel({
-    required ExerciseService service,
+    required WorkoutCatalogService service,
     required List<AddExerciseSectionOption> sections,
     String? initialSectionId,
-  }) : _sections = sections {
-    _catalog = service.loadCatalog();
+  }) : _service = service,
+       _sections = sections {
     _sectionId =
         initialSectionId ?? (sections.isEmpty ? '' : sections.first.id);
   }
@@ -28,9 +31,14 @@ class AddExerciseViewModel extends ChangeNotifier {
   static const double _maxWeightKg = 300;
   static const double _weightStepKg = 2.5;
 
+  static const String _loadFailure = 'Could not load your exercises.';
+
+  final WorkoutCatalogService _service;
   final List<AddExerciseSectionOption> _sections;
 
-  late final List<Exercise> _catalog;
+  List<ExerciseCatalogEntry> _catalog = const [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   late String _sectionId;
   String _query = '';
@@ -40,6 +48,25 @@ class AddExerciseViewModel extends ChangeNotifier {
   int _restSeconds = 60;
   bool _isBodyweight = false;
   double _weightKg = 20;
+
+  bool get isLoading => _isLoading;
+
+  String? get errorMessage => _errorMessage;
+
+  Future<void> load() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      _catalog = await _service.loadExercises();
+    } on WorkoutException catch (error) {
+      _errorMessage = error.message;
+    } catch (_) {
+      _errorMessage = _loadFailure;
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
 
   String get title => 'Add Exercise';
 
@@ -190,14 +217,15 @@ class AddExerciseViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  WorkoutExercise? buildExercise() {
+  WorkoutEntryEntity? buildExercise() {
     final id = _exerciseId;
     if (id == null) return null;
     final exercise = _exerciseById(id);
     if (exercise == null) return null;
-    return WorkoutExercise(
+    return WorkoutEntryEntity.fromCatalog(
+      exercise,
       id: '$id-${DateTime.now().microsecondsSinceEpoch}',
-      name: exercise.name,
+      section: WorkoutSectionKind.fromId(_sectionId),
       sets: _sets,
       reps: _reps,
       restSeconds: _restSeconds,
@@ -205,7 +233,7 @@ class AddExerciseViewModel extends ChangeNotifier {
     );
   }
 
-  Exercise? _exerciseById(String id) {
+  ExerciseCatalogEntry? _exerciseById(String id) {
     for (final exercise in _catalog) {
       if (exercise.id == id) return exercise;
     }

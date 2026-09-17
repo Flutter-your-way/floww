@@ -38,22 +38,42 @@ class FlowScoreCalculator {
   DailyFlowEntry scoreOf(FlowScoreInputs inputs) {
     if (inputs.isEmpty) return DailyFlowEntry.empty(inputs.date);
 
-    final workout = _percent(inputs.workoutSets / targetSetsPerSession);
-    final habit = _percent(inputs.habitCompletion);
-    final nutrition = _percent(
-      (inputs.mealCount / targetMealsPerDay).clamp(0.0, 1.0) *
-              mealShareOfNutrition +
-          (inputs.waterMl / targetWaterMl).clamp(0.0, 1.0) *
-              waterShareOfNutrition,
+    return _entryOf(
+      date: inputs.date,
+      workout: workoutPercentOf(inputs.workoutSets),
+      habit: _percent(inputs.habitCompletion),
+      nutrition: _percent(
+        (inputs.mealCount / targetMealsPerDay).clamp(0.0, 1.0) *
+                mealShareOfNutrition +
+            (inputs.waterMl / targetWaterMl).clamp(0.0, 1.0) *
+                waterShareOfNutrition,
+      ),
     );
+  }
 
+  DailyFlowEntry withWorkoutSets(DailyFlowEntry entry, int sets) => _entryOf(
+    date: entry.date,
+    workout: workoutPercentOf(sets),
+    habit: entry.habitScore.toDouble(),
+    nutrition: entry.nutritionScore.toDouble(),
+  );
+
+  static double workoutPercentOf(int sets) =>
+      _percent(sets / targetSetsPerSession);
+
+  DailyFlowEntry _entryOf({
+    required DateTime date,
+    required double workout,
+    required double habit,
+    required double nutrition,
+  }) {
     final score =
         workout * workoutWeight +
         habit * habitWeight +
         nutrition * nutritionWeight;
 
     return DailyFlowEntry(
-      date: inputs.date,
+      date: date,
       score: score.round(),
       workoutScore: workout.round(),
       habitScore: habit.round(),
@@ -61,5 +81,5 @@ class FlowScoreCalculator {
     );
   }
 
-  double _percent(double ratio) => (ratio.clamp(0.0, 1.0)) * 100;
+  static double _percent(double ratio) => (ratio.clamp(0.0, 1.0)) * 100;
 }

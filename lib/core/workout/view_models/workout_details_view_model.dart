@@ -1,95 +1,133 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/entities/workout_plan_entity.dart';
+import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/workout/models/add_exercise_view_data.dart';
-import 'package:floww/core/workout/models/workout_detail.dart';
+import 'package:floww/core/workout/models/workout_section_kind.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
-import 'package:floww/core/workout/services/workout_service.dart';
+import 'package:floww/core/workout/services/workout_firestore.dart';
+import 'package:floww/core/workout/services/workout_session_service.dart';
 
 class WorkoutDetailsViewModel extends ChangeNotifier {
-  WorkoutDetailsViewModel(this._service, this._workoutId) {
-    _detail = _service.detailFor(_workoutId);
-    final sections = _detail?.sections;
-    if (sections != null && sections.isNotEmpty) {
-      _expandedSectionId = sections.first.id;
-    }
+  WorkoutDetailsViewModel(this._service, this._sessionId) {
+    _start();
   }
 
   static const int _secondsPerMinute = 60;
+  static const String _loadFailure = 'Could not load this workout.';
 
-  final WorkoutService _service;
-  final String _workoutId;
+  final WorkoutSessionService _service;
+  final String _sessionId;
 
-  WorkoutDetail? _detail;
+  StreamSubscription<WorkoutSessionEntity?>? _subscription;
+  WorkoutSessionEntity? _session;
+  List<WorkoutSessionEntity> _history = const [];
   String? _expandedSectionId;
-  String? _notes;
-  final Map<String, List<WorkoutExercise>> _addedExercises = {};
+  bool _isLoading = true;
+  bool _disposed = false;
+  String? _errorMessage;
 
-  bool get hasDetail => _detail != null;
+  bool get isLoading => _isLoading;
+
+  String? get errorMessage => _errorMessage;
+
+  bool get hasDetail => _session != null;
 
   String get title => 'Workout Details';
 
-  List<AddExerciseSectionOption> get sectionOptions {
-    final sections = _detail?.sections;
-    if (sections == null) return const [];
+  void _start() {
+    _subscription = _service.watchSession(_sessionId).listen((session) {
+      _session = session;
+      _isLoading = false;
+      _errorMessage = null;
+      _expandedSectionId ??= _sections.isEmpty ? null : _sections.first.id;
+      notifyListeners();
+    }, onError: _onError);
+    unawaited(_loadHistory());
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      _history = await _service.loadRecentSessions();
+      notifyListeners();
+    } on WorkoutException catch (error) {
+      _onError(error);
+    }
+  }
+
+  void _onError(Object error) {
+    _isLoading = false;
+    _errorMessage = error is WorkoutException ? error.message : _loadFailure;
+    notifyListeners();
+  }
+
+  List<WorkoutSectionKind> get _sections {
+    final session = _session;
+    if (session == null) return const [];
     return [
-      for (final section in sections)
-        AddExerciseSectionOption(
-          id: section.id,
-          glyph: section.glyph,
-          title: section.title,
-        ),
+      for (final kind in WorkoutSectionKind.values)
+        if (session.exercises.any((entry) => entry.section == kind)) kind,
     ];
   }
+
+  List<AddExerciseSectionOption> get sectionOptions => [
+    for (final kind in WorkoutSectionKind.values)
+      AddExerciseSectionOption(id: kind.id, glyph: kind.glyph, title: kind.title),
+  ];
 
   String? get expandedSectionId => _expandedSectionId;
 
   WorkoutDetailItem? get detail {
-    final detail = _detail;
-    if (detail == null) return null;
+    final session = _session;
+    if (session == null) return null;
     return WorkoutDetailItem(
-      name: detail.name,
+      name: session.name,
       dateLabel:
-          '${AppDateUtils.monthDayYear(detail.performedAt)} at '
-          '${AppDateUtils.time(detail.performedAt)}',
-      statusLabel: detail.isCompleted ? 'Completed' : 'In Progress',
-      isCompleted: detail.isCompleted,
+          '${AppDateUtils.monthDayYear(session.startedAt)} at '
+          '${AppDateUtils.time(session.startedAt)}',
+      statusLabel: session.isCompleted ? 'Completed' : 'In Progress',
+      isCompleted: session.isCompleted,
       stats: [
         WorkoutStatItem(
           icon: Icons.schedule,
           title: 'DURATION',
-          value: _durationLabel(detail.durationSeconds),
+          value: _durationLabel(session.durationSeconds),
           unit: 'min',
         ),
         WorkoutStatItem(
           icon: Icons.bar_chart,
           title: 'VOLUME',
-          value: NumberFormatter.grouped(detail.volumeKg + _addedVolumeKg),
+          value: NumberFormatter.grouped(session.volumeKg.round()),
           unit: 'kg',
         ),
         WorkoutStatItem(
           icon: Icons.local_fire_department,
           title: 'CALORIES',
-          value: NumberFormatter.grouped(detail.calories),
+          value: NumberFormatter.grouped(session.caloriesKcal),
           unit: 'kcal',
         ),
         WorkoutStatItem(
           icon: Icons.monitor_heart,
           title: 'AVG HEART RATE',
-          value: '${detail.averageHeartRate}',
-          unit: 'bpm',
+          value: session.averageHeartRate == null
+              ? '—'
+              : '${session.averageHeartRate}',
+          unit: session.averageHeartRate == null ? '' : 'bpm',
         ),
       ],
-      exerciseCountLabel: '${detail.exerciseCount + _addedCount} exercises',
-      sections: [for (final section in detail.sections) _sectionOf(section)],
+      exerciseCountLabel: '${session.exercises.length} exercises',
+      sections: [for (final kind in _sections) _sectionOf(kind, session)],
       insightTitle: 'WAVE Insight',
-      insightMessage: detail.insight,
-      notes: notes,
+      insightMessage: _insightOf(session),
+      notes: session.notes,
     );
   }
 
-  String get notes => _notes ?? _detail?.notes ?? '';
+  String get notes => _session?.notes ?? '';
 
   String get notesEmptyMessage => 'No notes for this session yet.';
 
@@ -102,49 +140,81 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
 
   String get notesSheetSubmitLabel => 'Save Notes';
 
-  int get _addedCount {
-    var count = 0;
-    for (final exercises in _addedExercises.values) {
-      count += exercises.length;
+  String _insightOf(WorkoutSessionEntity session) {
+    final previous = _previousOf(session);
+    if (previous == null) {
+      return 'First ${session.name} logged. WAVE will compare your next one '
+          'against this session.';
     }
-    return count;
+    if (previous.volumeKg == 0) {
+      return 'You logged ${NumberFormatter.grouped(session.volumeKg.round())} '
+          'kg of volume across ${session.totalSets} sets.';
+    }
+    final change =
+        ((session.volumeKg - previous.volumeKg) / previous.volumeKg) * 100;
+    if (change.abs() < 1) {
+      return 'Volume held steady against your last ${session.name}. '
+          'Consistency is progress.';
+    }
+    final direction = change > 0 ? 'increased' : 'dropped';
+    return 'Your ${session.name} volume $direction '
+        '${change.abs().round()}% against the previous session.';
   }
 
-  int get _addedVolumeKg {
-    var volume = 0;
-    for (final exercises in _addedExercises.values) {
-      for (final exercise in exercises) {
-        volume += exercise.volumeKg;
-      }
+  WorkoutSessionEntity? _previousOf(WorkoutSessionEntity session) {
+    for (final entry in _history) {
+      if (entry.id == session.id) continue;
+      if (!entry.isCompleted) continue;
+      if (entry.name != session.name) continue;
+      if (entry.startedAt.isBefore(session.startedAt)) return entry;
     }
-    return volume;
+    return null;
   }
 
-  WorkoutSectionItem _sectionOf(WorkoutSectionGroup section) {
-    final exercises = [...section.exercises, ...?_addedExercises[section.id]];
+  WorkoutSectionItem _sectionOf(
+    WorkoutSectionKind kind,
+    WorkoutSessionEntity session,
+  ) {
+    final exercises = [
+      for (final entry in session.exercises)
+        if (entry.section == kind) entry,
+    ];
     return WorkoutSectionItem(
-      id: section.id,
-      glyph: section.glyph,
-      title: section.title,
+      id: kind.id,
+      glyph: kind.glyph,
+      title: kind.title,
       countLabel: '${exercises.length} exercises',
-      status: section.status,
-      isExpanded: section.id == _expandedSectionId,
+      status: _statusOf(exercises),
+      isExpanded: kind.id == _expandedSectionId,
       exercises: [for (final exercise in exercises) _exerciseOf(exercise)],
     );
   }
 
-  WorkoutExerciseItem _exerciseOf(WorkoutExercise exercise) {
+  WorkoutSectionStatus _statusOf(List<WorkoutEntryEntity> exercises) {
+    if (exercises.every((exercise) => exercise.isComplete)) {
+      return WorkoutSectionStatus.completed;
+    }
+    if (exercises.any((exercise) => exercise.sets.isNotEmpty)) {
+      return WorkoutSectionStatus.active;
+    }
+    return WorkoutSectionStatus.pending;
+  }
+
+  WorkoutExerciseItem _exerciseOf(WorkoutEntryEntity exercise) {
+    final logged = exercise.sets.length;
     return WorkoutExerciseItem(
       id: exercise.id,
       name: exercise.name,
-      setsLabel: '${exercise.sets} sets x ${exercise.reps} reps',
+      imageUrl: exercise.imageUrl,
+      setsLabel:
+          '$logged/${exercise.targetSets} sets x ${exercise.targetReps} reps',
       weightLabel: exercise.isBodyweight
           ? 'BW'
-          : '${_weightLabel(exercise.weightKg!)} kg',
+          : '${_weightLabel(exercise.targetWeightKg!)} kg',
       restLabel: _durationLabel(exercise.restSeconds),
-      volumeLabel: exercise.isBodyweight
+      volumeLabel: exercise.completedVolumeKg == 0
           ? '—'
-          : NumberFormatter.grouped(exercise.volumeKg),
+          : NumberFormatter.grouped(exercise.completedVolumeKg.round()),
     );
   }
 
@@ -164,14 +234,33 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateNotes(String value) {
-    _notes = value.trim();
-    notifyListeners();
+  Future<void> updateNotes(String value) async {
+    try {
+      await _service.updateNotes(_sessionId, value.trim());
+    } on WorkoutException catch (error) {
+      _onError(error);
+    }
   }
 
-  void addExercise(String sectionId, WorkoutExercise exercise) {
-    _addedExercises.putIfAbsent(sectionId, () => []).add(exercise);
-    _expandedSectionId = sectionId;
-    notifyListeners();
+  Future<void> addExercise(String sectionId, WorkoutEntryEntity entry) async {
+    try {
+      await _service.addExercise(_sessionId, entry);
+      _expandedSectionId = sectionId;
+      notifyListeners();
+    } on WorkoutException catch (error) {
+      _onError(error);
+    }
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _subscription?.cancel();
+    super.dispose();
   }
 }

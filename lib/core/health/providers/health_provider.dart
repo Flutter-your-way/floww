@@ -2,16 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/health_snapshot.dart';
+import '../services/health_log_service.dart';
 import '../services/health_service.dart';
 
 enum HealthConnectionStatus { disconnected, connecting, connected, unavailable }
 
 class HealthProvider extends ChangeNotifier {
-  HealthProvider(this._service);
+  HealthProvider(this._service, {HealthLogService? logService})
+    : _logService = logService ?? HealthLogService();
 
   static const String connectedKey = 'health_connected';
 
   final HealthService _service;
+  final HealthLogService _logService;
 
   HealthConnectionStatus _status = HealthConnectionStatus.disconnected;
   HealthSnapshot _snapshot = HealthSnapshot.empty;
@@ -101,6 +104,7 @@ class HealthProvider extends ChangeNotifier {
     try {
       _snapshot = await _service.fetchTodaySnapshot();
       _errorMessage = null;
+      await _logService.saveSnapshot(_snapshot);
     } on HealthServiceException catch (e) {
       _errorMessage = e.message;
     } finally {

@@ -1,19 +1,54 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/habits/models/habit_day.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 
 class HabitCalendarViewModel extends ChangeNotifier {
   HabitCalendarViewModel(this._service, DateTime date)
-    : _month = DateTime(date.year, date.month);
+    : _month = DateTime(date.year, date.month) {
+    start();
+  }
 
   static const int _monthRangeMonths = 12;
 
   final HabitService _service;
 
+  StreamSubscription<HabitRecords>? _subscription;
+  HabitSnapshot _snapshot = HabitSnapshot.empty;
   DateTime _month;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  bool get isLoading => _isLoading;
+
+  String? get errorMessage => _errorMessage;
+
+  void start() {
+    _subscription?.cancel();
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    _subscription = _service.watchRecords().listen(
+      (records) {
+        _snapshot = HabitSnapshot.of(records);
+        _isLoading = false;
+        _errorMessage = null;
+        notifyListeners();
+      },
+      onError: (Object error) {
+        _isLoading = false;
+        _errorMessage = 'Could not load your calendar. Please try again.';
+        notifyListeners();
+      },
+    );
+  }
+
+  Future<void> retry() async => start();
 
   DateTime get month => _month;
 
@@ -41,7 +76,7 @@ class HabitCalendarViewModel extends ChangeNotifier {
     ];
   }
 
-  List<HabitDay> get _days => _service.monthFor(_month);
+  List<HabitDay> get _days => _snapshot.monthFor(_month);
 
   List<CalendarDayItem?> get days {
     final days = _days;
@@ -78,13 +113,12 @@ class HabitCalendarViewModel extends ChangeNotifier {
     ];
   }
 
-  String get bestStreakValue =>
-      '${_service.statsFor(_today).longestStreakDays}';
+  String get bestStreakValue => '${_snapshot.stats.longestStreakDays}';
 
   String get bestStreakUnit => 'days';
 
   String get topHabitTitle {
-    final streaks = _service.habitStreaks();
+    final streaks = _snapshot.habitStreaks();
     if (streaks.isEmpty) return '—';
     return streaks
         .reduce((best, streak) => streak.days > best.days ? streak : best)
@@ -92,7 +126,7 @@ class HabitCalendarViewModel extends ChangeNotifier {
   }
 
   List<HabitStreakItem> get streaks => [
-    for (final streak in _service.habitStreaks())
+    for (final streak in _snapshot.habitStreaks())
       HabitStreakItem(title: streak.title, daysLabel: '${streak.days}'),
   ];
 
@@ -106,5 +140,11 @@ class HabitCalendarViewModel extends ChangeNotifier {
     if (!canGoNext) return;
     _month = DateTime(_month.year, _month.month + 1);
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }

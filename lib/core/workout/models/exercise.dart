@@ -26,30 +26,3 @@ enum Equipment {
 
   final String label;
 }
-
-class Exercise {
-  const Exercise({
-    required this.id,
-    required this.name,
-    required this.group,
-    required this.equipment,
-    this.isCustom = false,
-    this.isAdded = false,
-  });
-
-  final String id;
-  final String name;
-  final MuscleGroup group;
-  final Equipment equipment;
-  final bool isCustom;
-  final bool isAdded;
-
-  Exercise copyWith({bool? isAdded}) => Exercise(
-    id: id,
-    name: name,
-    group: group,
-    equipment: equipment,
-    isCustom: isCustom,
-    isAdded: isAdded ?? this.isAdded,
-  );
-}

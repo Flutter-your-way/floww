@@ -12,23 +12,33 @@ class AppSheetPanel extends StatelessWidget {
     this.footer,
     this.subtitle,
     this.icon,
+    this.leading,
+    this.titleContent,
     this.onClose,
     this.titleStyle,
+    this.closeButtonSize = AppSizes.s28,
+    this.closeIconSize = AppSizes.s16,
   });
 
   final String title;
   final TextStyle? titleStyle;
   final String? subtitle;
   final IconData? icon;
+  final Widget? leading;
+  final Widget? titleContent;
   final Widget body;
   final Widget? footer;
   final VoidCallback? onClose;
+  final double closeButtonSize;
+  final double closeIconSize;
 
   @override
   Widget build(BuildContext context) {
     final subtitle = this.subtitle;
     final footer = this.footer;
     final icon = this.icon;
+    final leading = this.leading;
+    final titleContent = this.titleContent;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
@@ -39,30 +49,35 @@ class AppSheetPanel extends StatelessWidget {
           SizedBox(height: AppSpacing.xl2),
           Row(
             children: [
-              if (icon != null) ...[
+              if (leading != null) ...[
+                leading,
+                SizedBox(width: AppSpacing.lg),
+              ] else if (icon != null) ...[
                 _SheetTitleBadge(icon: icon),
                 SizedBox(width: AppSpacing.md),
               ],
               Expanded(
-                child: Text(
-                  title,
-                  style:
-                      titleStyle ??
-                      context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
+                child:
+                    titleContent ??
+                    Text(
+                      title,
+                      style:
+                          titleStyle ??
+                          context.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
               ),
               CircularHeaderButton(
                 icon: Icons.close_rounded,
-                size: AppSizes.s28,
-                iconSize: AppSizes.s16,
+                size: closeButtonSize,
+                iconSize: closeIconSize,
                 backgroundColor: context.colors.backgroundPrimary,
                 onPressed: onClose,
               ),
             ],
           ),
-          if (subtitle != null) ...[
+          if (subtitle != null && titleContent == null) ...[
             SizedBox(height: AppSpacing.xxs),
             Text(
               subtitle,

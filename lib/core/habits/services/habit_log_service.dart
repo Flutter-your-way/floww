@@ -10,6 +10,8 @@ import 'package:floww/core/habits/models/habit.dart';
 class HabitLogService {
   HabitLogService();
 
+  static const String _dateField = 'date';
+
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
@@ -18,7 +20,7 @@ class HabitLogService {
     try {
       return _auth.currentUser?.uid;
     } catch (e) {
-      debugPrint('Firebase unavailable, skipping log: $e');
+      debugPrint('Firebase unavailable, skipping habit logs: $e');
       return null;
     }
   }
@@ -27,6 +29,16 @@ class HabitLogService {
       .collection(AppCollection.users)
       .doc(uid)
       .collection(AppCollection.habitLogs);
+
+  Stream<List<HabitDayLog>> watchDays(DateTime from) {
+    final uid = userId;
+    if (uid == null) return Stream.value(const []);
+    return _logs(uid)
+        .where(_dateField, isGreaterThanOrEqualTo: AppDateUtils.dateKey(from))
+        .orderBy(_dateField)
+        .snapshots()
+        .map((snapshot) => _parseAll(snapshot.docs.map((doc) => doc.data())));
+  }
 
   Future<void> saveDay(DateTime date, List<Habit> habits) async {
     final uid = userId;
@@ -42,14 +54,23 @@ class HabitLogService {
             title: habit.title,
             value: habit.value,
             target: habit.target,
+            metric: habit.metric.name,
           ),
       ],
     );
 
-    try {
-      await _logs(uid).doc(AppDateUtils.dateKey(day)).set(log.toJson());
-    } catch (e, stackTrace) {
-      debugPrint('saveDay failed: $e\n$stackTrace');
+    await _logs(uid).doc(AppDateUtils.dateKey(day)).set(log.toJson());
+  }
+
+  List<HabitDayLog> _parseAll(Iterable<Map<String, dynamic>> documents) {
+    final logs = <HabitDayLog>[];
+    for (final json in documents) {
+      try {
+        logs.add(HabitDayLog.fromJson(json));
+      } catch (e) {
+        debugPrint('Skipped unreadable habit log ${json['date']}: $e');
+      }
     }
+    return logs;
   }
 }

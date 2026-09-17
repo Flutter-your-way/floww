@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:floww/config/utils/dates/app_date_utils.dart';
@@ -8,17 +10,53 @@ import 'package:floww/core/habits/models/habit_draft.dart';
 import 'package:floww/core/habits/models/habit_period.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
 
 class HabitDetailsViewModel extends ChangeNotifier {
-  HabitDetailsViewModel(this._service, this._habitId);
+  HabitDetailsViewModel(this._service, this._habitId) {
+    start();
+  }
 
   final HabitService _service;
   final String _habitId;
 
+  StreamSubscription<HabitRecords>? _subscription;
+  HabitSnapshot _snapshot = HabitSnapshot.empty;
   HabitPeriod _period = HabitPeriod.thisMonth;
+  bool _isLoading = true;
+  String? _errorMessage;
+  String? _actionMessage;
 
-  HabitDetail? get _detail => _service.detailFor(_habitId);
+  bool get isLoading => _isLoading;
+
+  String? get errorMessage => _errorMessage;
+
+  String? get actionMessage => _actionMessage;
+
+  void start() {
+    _subscription?.cancel();
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    _subscription = _service.watchRecords().listen(
+      (records) {
+        _snapshot = HabitSnapshot.of(records);
+        _isLoading = false;
+        _errorMessage = null;
+        notifyListeners();
+      },
+      onError: (Object error) {
+        _isLoading = false;
+        _errorMessage = 'Could not load this habit. Please try again.';
+        notifyListeners();
+      },
+    );
+  }
+
+  Future<void> retry() async => start();
+
+  HabitDetail? get _detail => _snapshot.detailFor(_habitId);
 
   DateTime get _today => AppDateUtils.dateOnly(DateTime.now());
 
@@ -41,6 +79,10 @@ class HabitDetailsViewModel extends ChangeNotifier {
 
   String get editLabel => 'Edit';
 
+  String get deleteLabel => 'Delete Habit';
+
+  String get logLabel => 'Log Progress';
+
   String get progressTitle => 'Habit Progress';
 
   String get aboutTitle => 'About This Habit';
@@ -50,6 +92,31 @@ class HabitDetailsViewModel extends ChangeNotifier {
   String get periodSheetTitle => 'Habit Progress';
 
   String get periodSheetSubtitle => 'Choose the range you want to review';
+
+  String get logSheetTitle => 'Log Progress';
+
+  String get logSheetSubtitle => 'Record what you have done today';
+
+  String get logValueLabel => 'Today\'s Progress';
+
+  String get logValueHint => 'e.g. 30';
+
+  String get logSubmitLabel => 'Save Progress';
+
+  String get todayProgressLabel {
+    final habit = _todayHabit;
+    return habit == null ? '' : HabitLabels.progress(habit);
+  }
+
+  String get initialLogValue => HabitLabels.decimal(_todayHabit?.value ?? 0);
+
+  String get logUnitLabel =>
+      HabitLabels.unit(_detail?.metric ?? HabitMetric.minutes);
+
+  Habit? get _todayHabit => _snapshot
+      .habitsFor(_today)
+      .where((habit) => habit.id == _habitId)
+      .firstOrNull;
 
   HabitPeriod get period => _period;
 
@@ -104,7 +171,17 @@ class HabitDetailsViewModel extends ChangeNotifier {
     ];
   }
 
-  List<HabitDay> get _days => _service.daysFor(_period);
+  List<HabitDay> get _days => switch (_period) {
+    HabitPeriod.thisWeek => _snapshot.weekFor(_today, habitId: _habitId),
+    HabitPeriod.thisMonth => _snapshot.monthFor(
+      DateTime(_today.year, _today.month),
+      habitId: _habitId,
+    ),
+    HabitPeriod.lastMonth => _snapshot.monthFor(
+      DateTime(_today.year, _today.month - 1),
+      habitId: _habitId,
+    ),
+  };
 
   List<CalendarDayItem?> get days {
     final days = _days;
@@ -175,8 +252,41 @@ class HabitDetailsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void saveHabit(HabitDraft draft) {
-    _service.updateHabit(_habitId, draft);
+  Future<void> saveHabit(HabitDraft draft) =>
+      _run(() => _service.updateHabit(_habitId, draft));
+
+  Future<void> deleteHabit() => _run(() async {
+    await _service.deleteHabit(_habitId);
+    await _service.saveDay(_today, [
+      for (final habit in _snapshot.habitsFor(_today))
+        if (habit.id != _habitId) habit,
+    ]);
+  });
+
+  Future<void> logProgress(double value) => _run(() {
+    final habits = [
+      for (final habit in _snapshot.habitsFor(_today))
+        if (habit.id == _habitId)
+          habit.copyWith(value: value < 0 ? 0 : value)
+        else
+          habit,
+    ];
+    return _service.saveDay(_today, habits);
+  });
+
+  Future<void> _run(Future<void> Function() action) async {
+    _actionMessage = null;
+    try {
+      await action();
+    } on HabitException catch (e) {
+      _actionMessage = e.message;
+    }
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }

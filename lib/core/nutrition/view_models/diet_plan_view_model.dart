@@ -5,15 +5,17 @@ import 'package:floww/core/nutrition/models/diet_plan.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/services/diet_plan_service.dart';
+import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
 
 class DietPlanViewModel extends ChangeNotifier {
-  DietPlanViewModel(this._planService, this._goal) {
+  DietPlanViewModel(this._planService, this._goalService) {
     load();
   }
 
   final DietPlanService _planService;
-  final NutritionGoal _goal;
+  final NutritionGoalService _goalService;
+  NutritionGoal _goal = NutritionGoal.defaults;
   DietPlanProgress? _progress;
   bool _isLoading = true;
   String? _errorMessage;
@@ -73,6 +75,7 @@ class DietPlanViewModel extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
+      _goal = await _goalService.load();
       _progress = await _planService.loadProgress(
         targetCalories: _goal.calories,
         startIfMissing: true,

@@ -79,7 +79,14 @@ class ProfileService {
 
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
-  String? get userId => _auth.currentUser?.uid;
+  String? get userId {
+    try {
+      return _auth.currentUser?.uid;
+    } catch (e) {
+      debugPrint('Firebase unavailable, skipping profile: $e');
+      return null;
+    }
+  }
 
   String get _requireUserId {
     final uid = userId;
@@ -225,6 +232,10 @@ class ProfileService {
       avatarUrl: _string(user, 'avatarUrl'),
       heightCm: _number(profile, 'heightCm'),
       weightKg: _number(profile, 'weightKg'),
+      dateOfBirth: _dateTime(profile, 'dateOfBirth'),
+      biologicalSex: _string(profile, 'biologicalSex'),
+      activityLevel: _string(goalsActivity, 'activityLevel'),
+      targetWeightKg: _number(goalsActivity, 'targetWeightKg'),
       unitSystem: MeasurementSystem.fromLabel(_string(profile, 'unitSystem')),
       goal: _string(goalsActivity, 'primaryGoal'),
       diet: _string(healthDiet, 'preferredDiet'),
@@ -232,6 +243,7 @@ class ProfileService {
           _string(trainingSetup, 'experienceLevel') ??
           _specialisedExperience(onboarding, trainingType),
       trainingType: trainingType,
+      trainingDaysPerWeek: _trainingDaysOf(onboarding, trainingType),
       stepsTarget: _number(targets, 'stepsTarget'),
       sleepTargetHours: _number(targets, 'sleepTargetHours'),
       waterTargetLiters: _number(targets, 'waterTargetLiters'),
@@ -293,6 +305,21 @@ class ProfileService {
     };
     if (section == null) return null;
     return _string(_section(onboarding, section), 'experienceLevel');
+  }
+
+  static int? _trainingDaysOf(
+    Map<String, dynamic>? onboarding,
+    String? trainingType,
+  ) {
+    final section = switch (trainingType) {
+      'Gym' => _section(onboarding, 'gymDetails'),
+      'Calisthenics' => _section(onboarding, 'calisthenicsDetails'),
+      'Yoga' => _section(onboarding, 'yogaDetails'),
+      _ => null,
+    };
+    if (section == null) return null;
+    final days = section['trainingDays'] ?? section['practiceDays'];
+    return days is List && days.isNotEmpty ? days.length : null;
   }
 
   static SubscriptionEntity? _subscriptionOf(Map<String, dynamic>? user) {

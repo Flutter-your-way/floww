@@ -59,7 +59,7 @@ void main() {
   });
 
   testWidgets('connected apps view lists every integration', (tester) async {
-    final viewModel = ConnectedAppsViewModel(const SettingsService());
+    final viewModel = ConnectedAppsViewModel(SettingsService());
     await _pumpView(tester, viewModel, const ConnectedAppsView());
 
     expect(find.text('Connected Apps & Devices'), findsOneWidget);
@@ -82,7 +82,7 @@ void main() {
   });
 
   testWidgets('notification view renders sections and toggles', (tester) async {
-    final viewModel = NotificationSettingsViewModel(const SettingsService());
+    final viewModel = NotificationSettingsViewModel(SettingsService());
     await _pumpView(tester, viewModel, const NotificationSettingsView());
 
     expect(find.text('Fitness'), findsOneWidget);
@@ -108,7 +108,7 @@ void main() {
     final profileService = FakeProfileService(
       account: buildAccount(unitSystem: MeasurementSystem.imperial),
     );
-    final viewModel = UnitsViewModel(const SettingsService(), profileService);
+    final viewModel = UnitsViewModel(SettingsService(), profileService);
     await _pumpView(tester, viewModel, const UnitsView());
     await tester.pumpAndSettle();
 
@@ -131,7 +131,7 @@ void main() {
   });
 
   testWidgets('privacy view renders the danger zone', (tester) async {
-    final viewModel = PrivacyDataViewModel(const SettingsService());
+    final viewModel = PrivacyDataViewModel(SettingsService());
     await _pumpView(tester, viewModel, const PrivacyDataView());
 
     expect(find.text('Your Data is Safe'), findsOneWidget);

@@ -9,6 +9,7 @@ class HomeHeader extends StatelessWidget {
     required this.streakCount,
     this.avatarUrl,
     this.onAvatarTap,
+    this.onStreakTap,
   });
 
   final String greeting;
@@ -16,6 +17,7 @@ class HomeHeader extends StatelessWidget {
   final int streakCount;
   final String? avatarUrl;
   final VoidCallback? onAvatarTap;
+  final VoidCallback? onStreakTap;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +27,7 @@ class HomeHeader extends StatelessWidget {
       streakCount: streakCount,
       avatarUrl: avatarUrl,
       onAvatarTap: onAvatarTap,
+      onStreakTap: onStreakTap,
     );
   }
 }

@@ -26,6 +26,13 @@ class NutritionDay {
   final List<FoodLog> foodLogs;
   final List<WaterLog> waterLogs;
 
+  NutritionDay copyWithGoal(NutritionGoal goal) => NutritionDay(
+    date: date,
+    goal: goal,
+    foodLogs: foodLogs,
+    waterLogs: waterLogs,
+  );
+
   double _sum(double Function(MacroNutrients macros) pick) =>
       foodLogs.fold(0, (total, log) => total + pick(log.macros));
 

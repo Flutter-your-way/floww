@@ -1,13 +1,11 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_glass.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
+import 'package:floww/config/widgets/effects/liquid_glass.dart';
 import 'package:floww/config/widgets/headers/screen_title.dart';
-import 'package:smooth_corner/smooth_corner.dart';
 
 class ProfileTitleHeader extends StatelessWidget {
   const ProfileTitleHeader({
@@ -17,6 +15,7 @@ class ProfileTitleHeader extends StatelessWidget {
     required this.streakCount,
     this.avatarUrl,
     this.onAvatarTap,
+    this.onStreakTap,
   });
 
   final String eyebrow;
@@ -24,15 +23,21 @@ class ProfileTitleHeader extends StatelessWidget {
   final int streakCount;
   final String? avatarUrl;
   final VoidCallback? onAvatarTap;
+  final VoidCallback? onStreakTap;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: ScreenTitle(eyebrow: eyebrow, title: title)),
+        Expanded(
+          child: ScreenTitle(eyebrow: eyebrow, title: title),
+        ),
         SizedBox(width: AppSpacing.lg),
-        _StreakBadge(count: streakCount),
+        PressScale(
+          onTap: onStreakTap,
+          child: _StreakBadge(count: streakCount),
+        ),
         SizedBox(width: AppSpacing.md),
         PressScale(
           onTap: onAvatarTap,
@@ -46,34 +51,19 @@ class ProfileTitleHeader extends StatelessWidget {
 class _StreakBadge extends StatelessWidget {
   const _StreakBadge({required this.count});
 
-  static const double _blurSigma = AppSizes.s12;
-  static const double _backgroundOpacity = 0.15;
-  static const double _borderOpacity = 0.3;
-
   final int count;
 
   @override
   Widget build(BuildContext context) {
-    return SmoothClipRRect(
-      smoothness: AppShapes.smoothness,
+    return LiquidGlass(
       borderRadius: BorderRadius.circular(AppRadius.full),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: _blurSigma, sigmaY: _blurSigma),
-        child: Container(
+      blurSigma: AppGlass.blurSigmaLight,
+      refraction: AppGlass.refractionSoft,
+      thickness: AppGlass.edgeThicknessTight,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: SizedBox(
           height: AppSizes.s40,
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          decoration: AppShapes.decoration(
-            color: context.colors.textPrimary.withValues(
-              alpha: _backgroundOpacity,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            side: BorderSide(
-              color: context.colors.textPrimary.withValues(
-                alpha: _borderOpacity,
-              ),
-              width: AppSizes.s1,
-            ),
-          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -126,21 +116,31 @@ class _UserAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: avatarUrl == null
-            ? Icon(
-                Icons.person,
-                color: context.colors.textPrimary,
-                size: AppSizes.s24,
-              )
+            ? const _AvatarFallback()
             : Image.network(
                 avatarUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.person,
-                  color: context.colors.textPrimary,
-                  size: AppSizes.s24,
-                ),
+                width: AppSizes.s40,
+                height: AppSizes.s40,
+                loadingBuilder: (context, child, progress) =>
+                    progress == null ? child : const _AvatarFallback(),
+                errorBuilder: (context, error, stackTrace) =>
+                    const _AvatarFallback(),
               ),
       ),
+    );
+  }
+}
+
+class _AvatarFallback extends StatelessWidget {
+  const _AvatarFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.person,
+      color: context.colors.textPrimary,
+      size: AppSizes.s24,
     );
   }
 }

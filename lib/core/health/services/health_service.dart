@@ -21,16 +21,21 @@ class HealthService {
 
   bool _configured = false;
 
-  static const List<HealthDataType> readTypes = <HealthDataType>[
+  static HealthDataType get hrvType => Platform.isIOS
+      ? HealthDataType.HEART_RATE_VARIABILITY_SDNN
+      : HealthDataType.HEART_RATE_VARIABILITY_RMSSD;
+
+  static List<HealthDataType> get readTypes => <HealthDataType>[
     HealthDataType.STEPS,
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.HEART_RATE,
     HealthDataType.RESTING_HEART_RATE,
     HealthDataType.SLEEP_ASLEEP,
     HealthDataType.WORKOUT,
+    hrvType,
   ];
 
-  static const List<HealthDataType> _dailyTypes = <HealthDataType>[
+  static List<HealthDataType> get _dailyTypes => <HealthDataType>[
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.RESTING_HEART_RATE,
     HealthDataType.WORKOUT,
@@ -106,6 +111,12 @@ class HealthService {
         endTime: now,
       );
 
+      final hrvPoints = await _health.getHealthDataFromTypes(
+        types: [hrvType],
+        startTime: sleepWindowStart,
+        endTime: now,
+      );
+
       var activeCalories = 0.0;
       var sleepMinutes = 0.0;
       var workoutCount = 0;
@@ -131,6 +142,16 @@ class HealthService {
         }
       }
 
+      var hrvTotal = 0.0;
+      var hrvCount = 0;
+      for (final point in hrvPoints) {
+        final value = point.value;
+        if (value is NumericHealthValue) {
+          hrvTotal += value.numericValue;
+          hrvCount++;
+        }
+      }
+
       return HealthSnapshot(
         steps: steps,
         activeCaloriesKcal: activeCalories.round(),
@@ -138,10 +159,35 @@ class HealthService {
         sleepMinutes: sleepMinutes.round(),
         workoutCount: workoutCount,
         syncedAt: now,
+        hrvMs: hrvCount == 0 ? null : hrvTotal / hrvCount,
       );
     } catch (e, stackTrace) {
       debugPrint('fetchTodaySnapshot failed: $e\n$stackTrace');
       throw HealthServiceException('Could not read your Apple Health data.');
+    }
+  }
+
+  Future<List<int>> fetchHeartRateSamples(DateTime from, DateTime to) async {
+    if (!to.isAfter(from)) return const [];
+    try {
+      await configure();
+      if (!await hasPermissions()) return const [];
+      final points = await _health.getHealthDataFromTypes(
+        types: const [HealthDataType.HEART_RATE],
+        startTime: from,
+        endTime: to,
+      );
+      final samples = <int>[];
+      for (final point in points) {
+        final value = point.value;
+        if (value is NumericHealthValue) {
+          samples.add(value.numericValue.round());
+        }
+      }
+      return samples;
+    } catch (e, stackTrace) {
+      debugPrint('fetchHeartRateSamples failed: $e\n$stackTrace');
+      return const [];
     }
   }
 }

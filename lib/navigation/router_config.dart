@@ -1,3 +1,6 @@
+import 'package:floww/core/achievements/services/achievements_service.dart';
+import 'package:floww/core/achievements/view_models/achievements_view_model.dart';
+import 'package:floww/core/achievements/views/achievements_view.dart';
 import 'package:floww/core/auth/services/auth_service.dart';
 import 'package:floww/core/auth/views/splash_view.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
@@ -6,8 +9,8 @@ import 'package:floww/core/habits/view_models/habit_details_view_model.dart';
 import 'package:floww/core/habits/views/habit_calendar_view.dart';
 import 'package:floww/core/habits/views/habit_details_view.dart';
 import 'package:floww/core/nutrition/models/meal_details_args.dart';
-import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/services/diet_plan_service.dart';
+import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
 import 'package:floww/core/nutrition/services/food_camera_service.dart';
 import 'package:floww/core/nutrition/services/food_scan_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
@@ -31,6 +34,10 @@ import 'package:floww/core/premium/view_models/premium_view_model.dart';
 import 'package:floww/core/premium/views/premium_upgrade_view.dart';
 import 'package:floww/core/premium/views/premium_view.dart';
 import 'package:floww/core/profile/services/profile_service.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
+import 'package:floww/core/recovery/services/muscle_recovery_service.dart';
+import 'package:floww/core/recovery/view_models/muscle_recovery_view_model.dart';
+import 'package:floww/core/recovery/views/muscle_recovery_view.dart';
 import 'package:floww/core/profile/view_models/profile_view_model.dart';
 import 'package:floww/core/profile/views/profile_view.dart';
 import 'package:floww/core/settings/services/settings_service.dart';
@@ -42,7 +49,9 @@ import 'package:floww/core/settings/views/connected_apps_view.dart';
 import 'package:floww/core/settings/views/notification_settings_view.dart';
 import 'package:floww/core/settings/views/privacy_data_view.dart';
 import 'package:floww/core/settings/views/units_view.dart';
-import 'package:floww/core/workout/services/workout_service.dart';
+import 'package:floww/core/workout/services/workout_catalog_service.dart';
+import 'package:floww/core/workout/services/workout_plan_service.dart';
+import 'package:floww/core/workout/services/workout_program_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/view_models/active_workout_view_model.dart';
 import 'package:floww/core/workout/view_models/todays_workout_view_model.dart';
@@ -95,7 +104,7 @@ class AppRouterConfig {
               NutritionLogService(),
               args.date,
               args.meal,
-              NutritionGoal.defaults,
+              NutritionGoalService(),
             ),
             child: const MealDetailsView(),
           ),
@@ -107,7 +116,7 @@ class AppRouterConfig {
             create: (_) => WeeklyReportViewModel(
               NutritionLogService(),
               date,
-              NutritionGoal.defaults,
+              NutritionGoalService(),
             ),
             child: const WeeklyReportView(),
           ),
@@ -117,7 +126,7 @@ class AppRouterConfig {
           builder: (_) => ChangeNotifierProvider(
             create: (_) => DietPlanViewModel(
               DietPlanService(NutritionLogService()),
-              NutritionGoal.defaults,
+              NutritionGoalService(),
             ),
             child: const DietPlanView(),
           ),
@@ -139,20 +148,45 @@ class AppRouterConfig {
           ),
         );
       case AppRouter.todaysWorkout:
+        final date = settings.arguments as DateTime? ?? DateTime.now();
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => TodaysWorkoutViewModel(const WorkoutService()),
+            create: (_) => TodaysWorkoutViewModel(
+              WorkoutPlanService(WorkoutCatalogService()),
+              WorkoutProgramService(),
+              date,
+            )..load(),
             child: const TodaysWorkoutView(),
           ),
         );
       case AppRouter.activeWorkout:
+        final date = settings.arguments as DateTime? ?? DateTime.now();
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
             create: (_) => ActiveWorkoutViewModel(
-              const WorkoutService(),
               WorkoutSessionService(),
-            ),
+              WorkoutPlanService(WorkoutCatalogService()),
+              WorkoutProgramService(),
+              date,
+            )..load(),
             child: const ActiveWorkoutView(),
+          ),
+        );
+      case AppRouter.muscleRecovery:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => MuscleRecoveryViewModel(
+              MuscleRecoveryService(),
+              MuscleMapService(),
+            ),
+            child: const MuscleRecoveryView(),
+          ),
+        );
+      case AppRouter.achievements:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => AchievementsViewModel(AchievementsService()),
+            child: const AchievementsView(),
           ),
         );
       case AppRouter.profile:
@@ -179,7 +213,7 @@ class AppRouterConfig {
       case AppRouter.connectedApps:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => ConnectedAppsViewModel(const SettingsService()),
+            create: (_) => ConnectedAppsViewModel(SettingsService()),
             child: const ConnectedAppsView(),
           ),
         );
@@ -187,7 +221,7 @@ class AppRouterConfig {
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
             create: (_) =>
-                NotificationSettingsViewModel(const SettingsService()),
+                NotificationSettingsViewModel(SettingsService()),
             child: const NotificationSettingsView(),
           ),
         );
@@ -195,14 +229,14 @@ class AppRouterConfig {
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
             create: (_) =>
-                UnitsViewModel(const SettingsService(), ProfileService()),
+                UnitsViewModel(SettingsService(), ProfileService()),
             child: const UnitsView(),
           ),
         );
       case AppRouter.privacyData:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => PrivacyDataViewModel(const SettingsService()),
+            create: (_) => PrivacyDataViewModel(SettingsService()),
             child: const PrivacyDataView(),
           ),
         );
@@ -225,7 +259,7 @@ class AppRouterConfig {
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
             create: (_) =>
-                WorkoutDetailsViewModel(const WorkoutService(), workoutId),
+                WorkoutDetailsViewModel(WorkoutSessionService(), workoutId),
             child: const WorkoutDetailsView(),
           ),
         );

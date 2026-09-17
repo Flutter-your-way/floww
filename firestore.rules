@@ -71,7 +71,31 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      match /workout_state/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /workout_exercises/{exerciseId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /workout_programs/{programId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /workout_plans/{planId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /habits/{habitId} {
+        allow read, write: if isOwner(uid);
+      }
+
       match /habit_logs/{dayId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /health_logs/{dayId} {
         allow read, write: if isOwner(uid);
       }
 
@@ -80,6 +104,14 @@ service cloud.firestore {
       }
 
       match /progress/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /wave_messages/{messageId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /settings/{docId} {
         allow read, write: if isOwner(uid);
       }
     }

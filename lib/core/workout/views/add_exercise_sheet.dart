@@ -10,8 +10,8 @@ import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_butt
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/core/workout/models/add_exercise_view_data.dart';
-import 'package:floww/core/workout/models/workout_detail.dart';
-import 'package:floww/core/workout/services/exercise_service.dart';
+import 'package:floww/config/entities/workout_plan_entity.dart';
+import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/view_models/add_exercise_view_model.dart';
 import 'package:floww/core/workout/widgets/exercise_picker_row.dart';
 import 'package:floww/core/workout/widgets/exercise_search_bar.dart';
@@ -19,7 +19,7 @@ import 'package:floww/core/workout/widgets/selectable_chip.dart';
 import 'package:floww/core/workout/widgets/value_stepper.dart';
 
 typedef AddExerciseCallback =
-    void Function(String sectionId, WorkoutExercise exercise);
+    void Function(String sectionId, WorkoutEntryEntity exercise);
 
 class AddExerciseSheet extends StatelessWidget {
   const AddExerciseSheet({super.key, required this.onAdd});
@@ -38,10 +38,10 @@ class AddExerciseSheet extends StatelessWidget {
       context: context,
       builder: (_) => ChangeNotifierProvider(
         create: (_) => AddExerciseViewModel(
-          service: const ExerciseService(),
+          service: WorkoutCatalogService(),
           sections: sections,
           initialSectionId: initialSectionId,
-        ),
+        )..load(),
         child: AddExerciseSheet(onAdd: onAdd),
       ),
     );

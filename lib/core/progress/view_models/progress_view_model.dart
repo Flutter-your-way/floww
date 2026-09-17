@@ -3,8 +3,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/progress_state_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/achievements/models/streak_summary.dart';
+import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/progress/models/progress_view_data.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
 import 'package:floww/core/progress/services/progress_snapshot_builder.dart';
@@ -13,7 +16,8 @@ class ProgressViewModel extends ChangeNotifier {
   ProgressViewModel(
     this._service, {
     this._builder = const ProgressSnapshotBuilder(),
-  }) {
+    AchievementsService? achievementsService,
+  }) : _achievementsService = achievementsService ?? AchievementsService() {
     start();
   }
 
@@ -22,10 +26,12 @@ class ProgressViewModel extends ChangeNotifier {
 
   final ProgressService _service;
   final ProgressSnapshotBuilder _builder;
+  final AchievementsService _achievementsService;
 
   StreamSubscription<ProgressRecords>? _subscription;
   ProgressRecords _records = ProgressRecords.empty;
   ProgressSnapshot _snapshot = ProgressSnapshot.empty;
+  List<DailyFlowEntry> _flowHistory = const [];
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -54,6 +60,7 @@ class ProgressViewModel extends ChangeNotifier {
     _records = records;
     final result = _builder.build(records);
     _snapshot = result.snapshot;
+    _flowHistory = result.flowHistory;
     _isLoading = false;
     _errorMessage = null;
     notifyListeners();
@@ -67,6 +74,9 @@ class ProgressViewModel extends ChangeNotifier {
   String get title => 'Progress';
 
   int get streakDays => _snapshot.streakDays;
+
+  StreakSummary get streakSummary =>
+      _achievementsService.streakSummaryOf(_flowHistory);
 
   bool get isNewUser => !_snapshot.flowScore.hasScores;
 

@@ -1,117 +1,31 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+
+import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/dates/day_rollover_timer.dart';
-import 'package:floww/core/nutrition/models/nutrition_day.dart';
-import 'package:floww/core/nutrition/models/nutrition_goal.dart';
-import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
-import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
-
-class FlowScoreBoost {
-  const FlowScoreBoost({
-    required this.label,
-    required this.points,
-    required this.completed,
-  });
-
-  final String label;
-  final int points;
-  final bool completed;
-}
-
-class HabitItem {
-  const HabitItem({
-    required this.title,
-    required this.valueLabel,
-    required this.completed,
-  });
-
-  final String title;
-  final String valueLabel;
-  final bool completed;
-}
-
-class WorkoutRecommendation {
-  const WorkoutRecommendation({
-    required this.title,
-    required this.durationLabel,
-    required this.intensityLabel,
-    required this.reasons,
-  });
-
-  final String title;
-  final String durationLabel;
-  final String intensityLabel;
-  final List<String> reasons;
-}
-
-class NutritionSummary {
-  const NutritionSummary({
-    required this.totalCalories,
-    required this.calorieGoal,
-    required this.proteinG,
-    required this.carbsG,
-    required this.fatsG,
-  });
-
-  final int totalCalories;
-  final int calorieGoal;
-  final int proteinG;
-  final int carbsG;
-  final int fatsG;
-}
-
-class ProgressItem {
-  const ProgressItem({
-    required this.label,
-    required this.fraction,
-    required this.isComplete,
-  });
-
-  final String label;
-  final String fraction;
-  final bool isComplete;
-}
-
-class TodayProgress {
-  const TodayProgress({
-    required this.completedCount,
-    required this.totalCount,
-    required this.items,
-  });
-
-  final int completedCount;
-  final int totalCount;
-  final List<ProgressItem> items;
-
-  int get percent =>
-      totalCount == 0 ? 0 : ((completedCount / totalCount) * 100).round();
-}
-
-class MuscleRecoveryData {
-  const MuscleRecoveryData({
-    required this.daysSinceLastWorkout,
-    required this.inRecoveryCount,
-    required this.readyMusclesCount,
-    required this.fatiguedMusclesCount,
-  });
-
-  final int daysSinceLastWorkout;
-  final int inRecoveryCount;
-  final int readyMusclesCount;
-  final int fatiguedMusclesCount;
-}
+import 'package:floww/core/achievements/models/streak_summary.dart';
+import 'package:floww/core/achievements/services/achievements_service.dart';
+import 'package:floww/core/home/models/home_view_data.dart';
+import 'package:floww/core/home/services/home_service.dart';
+import 'package:floww/core/home/services/home_snapshot_builder.dart';
+import 'package:floww/core/recovery/models/muscle_body_side.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
 
 class HomeProvider extends ChangeNotifier {
-  HomeProvider(this._logService) {
+  HomeProvider(
+    this._service,
+    this._builder,
+    this._achievementsService, {
+    MuscleMapService? muscleMapService,
+  }) : _muscleMapService = muscleMapService ?? MuscleMapService() {
     _greeting = _greetingForHour(DateTime.now().hour);
     _watchToday();
+    _loadMuscleMap();
     _dayRollover = DayRolloverTimer(_onNewDay);
   }
-
-  static const double _nutritionGoalRatio = 0.9;
 
   static String _greetingForHour(int hour) {
     if (hour < 12) return 'Good morning';
@@ -119,106 +33,73 @@ class HomeProvider extends ChangeNotifier {
     return 'Good evening';
   }
 
-  final NutritionLogService _logService;
-  final NutritionGoal _goal = NutritionGoal.defaults;
-  late NutritionDay _today;
-  StreamSubscription<NutritionLogs>? _todaySubscription;
+  final HomeService _service;
+  final HomeSnapshotBuilder _builder;
+  final AchievementsService _achievementsService;
+  final MuscleMapService _muscleMapService;
+
   late final DayRolloverTimer _dayRollover;
+  StreamSubscription<HomeRecords>? _subscription;
+  HomeRecords _records = HomeRecords.empty;
+  HomeSnapshot _snapshot = HomeSnapshot.empty;
+  DailyFlowEntry? _savedFlow;
+  DateTime _date = AppDateUtils.dateOnly(DateTime.now());
+  bool _isReady = false;
   bool _disposed = false;
 
   late String _greeting;
+
   String get greeting => _greeting;
 
-  final String userName = 'Sarah Mitchell';
-  final int streakCount = 29;
-  final String? avatarUrl = null;
+  bool get isReady => _isReady;
 
-  final int flowScorePercent = 74;
-  final String? recoveryLevel = 'High';
-  final AppThemeMode? todayMode = AppThemeMode.flow;
+  String get userName => _snapshot.userName;
 
-  final List<FlowScoreBoost> flowScoreBoosts = const [
-    FlowScoreBoost(label: 'Workout', points: 8, completed: true),
-    FlowScoreBoost(label: 'Protein Goal', points: 3, completed: false),
-    FlowScoreBoost(label: 'Water Goal', points: 2, completed: false),
-    FlowScoreBoost(label: 'Sleep Goal', points: 5, completed: false),
-  ];
+  int get streakCount => _snapshot.streakCount;
 
-  List<HabitItem> get habits => [
-    HabitItem(
-      title: 'Water Intake',
-      valueLabel:
-          '${NutritionLabels.liters(_today.waterMl)}L / '
-          '${NutritionLabels.liters(_goal.waterMl.toDouble())}L Target',
-      completed: _today.waterMl >= _goal.waterMl,
-    ),
-    const HabitItem(
-      title: 'Sleep Quality',
-      valueLabel: '8h 12m logged',
-      completed: false,
-    ),
-    const HabitItem(
-      title: 'Daily Steps',
-      valueLabel: '8,432 / 10,000',
-      completed: false,
-    ),
-  ];
+  int get flowScorePercent => _snapshot.flowScorePercent;
 
-  final WorkoutRecommendation? workout = const WorkoutRecommendation(
-    title: 'Push Day: Chest & Triceps',
-    durationLabel: '60m',
-    intensityLabel: 'High Intensity',
-    reasons: ['Recovery is High', 'Last workout 48h ago', 'FLOW mode active'],
+  String? get recoveryLevel =>
+      _snapshot.recovery.hasData ? _snapshot.recovery.levelLabel : null;
+
+  AppThemeMode? get todayMode => _snapshot.flowMode?.mode;
+
+  FlowScoreBreakdown get flowScoreBreakdown => _snapshot.flowScoreBreakdown;
+
+  List<FlowScoreBoost> get flowScoreBoosts => _snapshot.flowScoreBoosts;
+
+  FlowModeDetail? get flowModeDetail => _snapshot.flowMode;
+
+  RecoveryDetail get recoveryDetail => _snapshot.recovery;
+
+  List<HabitItem> get habits => _snapshot.habits;
+
+  WorkoutRecommendation? get workout => _snapshot.workout;
+
+  NutritionSummary get nutrition => _snapshot.nutrition;
+
+  TodayProgress get todayProgress => _snapshot.todayProgress;
+
+  MuscleRecoveryData get muscleRecovery => _snapshot.muscleRecovery;
+
+  MuscleMapTemplate? muscleMapOf(MuscleBodySide side) =>
+      _muscleMapService.templateOf(side);
+
+  String? get waveInsight => _snapshot.waveInsight;
+
+  StreakSummary get streakSummary => _achievementsService.streakSummaryOf(
+    _records.flowHistory,
+    date: _date,
   );
 
-  NutritionSummary get nutrition => NutritionSummary(
-    totalCalories: _today.calories.round(),
-    calorieGoal: _goal.calories,
-    proteinG: _today.proteinG.round(),
-    carbsG: _today.carbsG.round(),
-    fatsG: _today.fatG.round(),
-  );
-
-  bool get _nutritionGoalMet =>
-      _today.calories >= _goal.calories * _nutritionGoalRatio;
-
-  TodayProgress get todayProgress {
-    final habitItems = habits;
-    final habitsDone = habitItems.where((habit) => habit.completed).length;
-    final nutritionDone = _nutritionGoalMet ? 1 : 0;
-    return TodayProgress(
-      completedCount: habitsDone + nutritionDone,
-      totalCount: habitItems.length + 3,
-      items: [
-        ProgressItem(
-          label: 'Habits',
-          fraction: '$habitsDone/${habitItems.length}',
-          isComplete: habitsDone == habitItems.length,
-        ),
-        const ProgressItem(label: 'Workout', fraction: '0/1', isComplete: false),
-        ProgressItem(
-          label: 'Nutrition',
-          fraction: '$nutritionDone/1',
-          isComplete: _nutritionGoalMet,
-        ),
-        const ProgressItem(
-          label: 'Sleep Goal',
-          fraction: '0/1',
-          isComplete: false,
-        ),
-      ],
-    );
+  Future<void> _loadMuscleMap() async {
+    try {
+      await _muscleMapService.load();
+      notifyListeners();
+    } catch (e, stackTrace) {
+      debugPrint('muscle map load failed: $e\n$stackTrace');
+    }
   }
-
-  final String? waveInsight =
-      'Recovery is high. Neural fatigue minimal — prime window for a push session PB.';
-
-  final MuscleRecoveryData muscleRecovery = const MuscleRecoveryData(
-    daysSinceLastWorkout: 0,
-    inRecoveryCount: 3,
-    readyMusclesCount: 7,
-    fatiguedMusclesCount: 2,
-  );
 
   void _onNewDay() {
     _greeting = _greetingForHour(DateTime.now().hour);
@@ -226,25 +107,43 @@ class HomeProvider extends ChangeNotifier {
   }
 
   void _watchToday() {
-    _todaySubscription?.cancel();
-    final date = AppDateUtils.dateOnly(DateTime.now());
-    _today = NutritionDay(date: date, goal: _goal);
-    notifyListeners();
-    _todaySubscription = _logService
-        .watchLogs(date, AppDateUtils.addDays(date, 1))
+    _subscription?.cancel();
+    _date = AppDateUtils.dateOnly(DateTime.now());
+    _savedFlow = null;
+    _subscription = _service
+        .watchRecords(_date)
         .listen(
-          (logs) {
-            _today = NutritionDay(
-              date: date,
-              goal: _goal,
-              foodLogs: logs.foods,
-              waterLogs: logs.waters,
-            );
-            notifyListeners();
-          },
-          onError: (Object error) =>
-              debugPrint('home nutrition watch failed: $error'),
+          _apply,
+          onError: (Object error) => debugPrint('home watch failed: $error'),
         );
+  }
+
+  void _apply(HomeRecords records) {
+    _records = records;
+    _snapshot = _builder.build(records, date: _date);
+    _isReady = true;
+    notifyListeners();
+    unawaited(_persistFlow(_snapshot.todayFlowEntry));
+  }
+
+  Future<void> _persistFlow(DailyFlowEntry? entry) async {
+    if (entry == null || !entry.hasActivity) return;
+
+    final stored = _storedFlowFor(_date);
+    if (stored != null && stored.sameValuesAs(entry)) return;
+
+    final saved = _savedFlow;
+    if (saved != null && saved.sameValuesAs(entry)) return;
+
+    _savedFlow = entry;
+    await _service.saveDailyFlow(entry);
+  }
+
+  DailyFlowEntry? _storedFlowFor(DateTime date) {
+    for (final entry in _records.flowHistory) {
+      if (AppDateUtils.isSameDay(entry.date, date)) return entry;
+    }
+    return null;
   }
 
   @override
@@ -256,7 +155,7 @@ class HomeProvider extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _dayRollover.cancel();
-    _todaySubscription?.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 }

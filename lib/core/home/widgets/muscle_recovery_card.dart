@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/core/home/providers/home_provider.dart';
+import 'package:floww/core/home/models/home_view_data.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
+import 'package:floww/core/recovery/models/muscle_group.dart';
+import 'package:floww/core/recovery/models/muscle_recovery_status.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
+import 'package:floww/core/recovery/widgets/muscle_status_palette.dart';
 
 class MuscleRecoveryCard extends StatelessWidget {
-  const MuscleRecoveryCard({super.key, required this.data, this.onTap});
+  const MuscleRecoveryCard({
+    super.key,
+    required this.data,
+    required this.frontTemplate,
+    required this.backTemplate,
+    this.onTap,
+  });
 
   final MuscleRecoveryData data;
+  final MuscleMapTemplate? frontTemplate;
+  final MuscleMapTemplate? backTemplate;
   final VoidCallback? onTap;
 
   @override
@@ -31,13 +42,15 @@ class MuscleRecoveryCard extends StatelessWidget {
               Expanded(
                 child: _MuscleDiagram(
                   label: 'FRONT',
-                  asset: AppImages.muscleFront,
+                  template: frontTemplate,
+                  statuses: data.statuses,
                 ),
               ),
               Expanded(
                 child: _MuscleDiagram(
                   label: 'BACK',
-                  asset: AppImages.muscleBack,
+                  template: backTemplate,
+                  statuses: data.statuses,
                 ),
               ),
             ],
@@ -77,23 +90,42 @@ class MuscleRecoveryCard extends StatelessWidget {
 }
 
 class _MuscleDiagram extends StatelessWidget {
-  const _MuscleDiagram({required this.label, required this.asset});
+  const _MuscleDiagram({
+    required this.label,
+    required this.template,
+    required this.statuses,
+  });
 
   final String label;
-  final String asset;
+  final MuscleMapTemplate? template;
+  final Map<MuscleGroup, MuscleRecoveryStatus> statuses;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final template = this.template;
+
     return Column(
       children: [
         Text(
           label,
           style: context.textTheme.bodySmall?.copyWith(
-            color: context.colors.textSecondary,
+            color: colors.textSecondary,
           ),
         ),
         SizedBox(height: AppSpacing.md),
-        SvgPicture.asset(asset, height: AppSizes.s128),
+        SizedBox(
+          height: AppSizes.s128,
+          child: template == null
+              ? const SizedBox.shrink()
+              : SvgPicture.string(
+                  template.paint({
+                    for (final entry in statuses.entries)
+                      entry.key: entry.value.mapColor(colors),
+                  }),
+                  fit: BoxFit.contain,
+                ),
+        ),
       ],
     );
   }

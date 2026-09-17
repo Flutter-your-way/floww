@@ -92,7 +92,14 @@ class ProgressService {
 
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
-  String? get userId => _auth.currentUser?.uid;
+  String? get userId {
+    try {
+      return _auth.currentUser?.uid;
+    } catch (e) {
+      debugPrint('Firebase unavailable, skipping progress: $e');
+      return null;
+    }
+  }
 
   String get _requireUserId {
     final uid = userId;
@@ -188,6 +195,12 @@ class ProgressService {
           .orderBy(_dateField)
           .snapshots()
           .map((snapshot) => _parse(snapshot, HabitDayLog.fromJson));
+
+  Stream<List<DailyFlowEntry>> watchDailyFlow(DateTime from) {
+    final uid = userId;
+    if (uid == null) return Stream.value(const []);
+    return _flowStream(uid, from);
+  }
 
   Stream<List<DailyFlowEntry>> _flowStream(String uid, DateTime from) =>
       _dailyFlow(uid)

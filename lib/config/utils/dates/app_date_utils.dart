@@ -72,10 +72,11 @@ class AppDateUtils {
   static String monthDayYear(DateTime date) =>
       '${_shortMonths[date.month - 1]} ${date.day}, ${date.year}';
 
-  static String time(DateTime date) {
+  static String time(DateTime date, {bool padHour = false}) {
     final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+    final hourLabel = padHour ? _padded(hour) : hour.toString();
     final minute = date.minute.toString().padLeft(2, '0');
-    return '$hour:$minute ${date.hour < 12 ? 'AM' : 'PM'}';
+    return '$hourLabel:$minute ${date.hour < 12 ? 'AM' : 'PM'}';
   }
 
   static String relativeDay(DateTime date, {DateTime? now}) {

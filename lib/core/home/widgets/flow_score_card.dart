@@ -14,15 +14,29 @@ class FlowScoreCard extends StatelessWidget {
     this.recoveryLevel,
     this.todayMode,
     this.onStartWorkout,
+    this.onBreakdownTap,
+    this.onRecoveryTap,
+    this.onModeTap,
   });
 
   final int percent;
   final String? recoveryLevel;
   final AppThemeMode? todayMode;
   final VoidCallback? onStartWorkout;
+  final VoidCallback? onBreakdownTap;
+  final VoidCallback? onRecoveryTap;
+  final VoidCallback? onModeTap;
 
   @override
   Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onBreakdownTap,
+      child: _buildCard(context),
+    );
+  }
+
+  Widget _buildCard(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: AppShapes.decoration(
@@ -97,6 +111,7 @@ class FlowScoreCard extends StatelessWidget {
                           label: 'RECOVERY',
                           value: recoveryLevel!,
                           showDot: true,
+                          onTap: onRecoveryTap,
                         ),
                       if (recoveryLevel != null && todayMode != null)
                         Padding(
@@ -114,6 +129,7 @@ class FlowScoreCard extends StatelessWidget {
                           label: "TODAY'S MODE",
                           value: todayMode!.name.toUpperCase(),
                           showDot: false,
+                          onTap: onModeTap,
                         ),
                     ],
                   ),
@@ -243,14 +259,24 @@ class _StatColumn extends StatelessWidget {
     required this.label,
     required this.value,
     required this.showDot,
+    this.onTap,
   });
 
   final String label;
   final String value;
   final bool showDot;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

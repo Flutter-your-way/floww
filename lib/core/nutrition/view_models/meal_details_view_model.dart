@@ -9,12 +9,25 @@ import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_day.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
+import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
 
 class MealDetailsViewModel extends ChangeNotifier {
-  MealDetailsViewModel(this._logService, this._date, this._meal, this._goal)
-    : _day = NutritionDay(date: _date, goal: _goal) {
+  MealDetailsViewModel(
+    this._logService,
+    this._date,
+    this._meal,
+    this._goalService,
+  ) : _day = NutritionDay(date: _date, goal: NutritionGoal.defaults) {
+    _goalSubscription = _goalService.watch().listen(
+      (goal) {
+        _goal = goal;
+        _day = _day.copyWithGoal(goal);
+        notifyListeners();
+      },
+      onError: (Object error) => debugPrint('meal goal failed: $error'),
+    );
     _subscription = _logService
         .watchLogs(_date, AppDateUtils.addDays(_date, 1))
         .listen(
@@ -42,12 +55,14 @@ class MealDetailsViewModel extends ChangeNotifier {
 
   final NutritionLogService _logService;
   final DateTime _date;
-  final NutritionGoal _goal;
+  final NutritionGoalService _goalService;
+  NutritionGoal _goal = NutritionGoal.defaults;
   MealType _meal;
   NutritionDay _day;
   bool _isLoading = true;
   String? _errorMessage;
   StreamSubscription<NutritionLogs>? _subscription;
+  StreamSubscription<NutritionGoal>? _goalSubscription;
   bool _disposed = false;
 
   DateTime get date => _date;
@@ -172,6 +187,7 @@ class MealDetailsViewModel extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _subscription?.cancel();
+    _goalSubscription?.cancel();
     super.dispose();
   }
 }

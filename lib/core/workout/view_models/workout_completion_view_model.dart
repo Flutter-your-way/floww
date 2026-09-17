@@ -7,20 +7,23 @@ import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/config/utils/share/share_service.dart';
 import 'package:floww/core/nutrition/services/food_camera_service.dart';
 import 'package:floww/core/nutrition/services/photo_library_service.dart';
+import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/core/workout/models/workout_completion.dart';
 import 'package:floww/core/workout/models/workout_completion_view_data.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
-import 'package:floww/core/workout/services/workout_service.dart';
+import 'package:floww/core/workout/services/workout_metrics.dart';
+import 'package:floww/core/workout/services/workout_session_service.dart';
 
 typedef ShareCardCapture = Future<Uint8List> Function();
 
 class WorkoutCompletionViewModel extends ChangeNotifier {
   WorkoutCompletionViewModel(
     this._service,
-    this._completion, {
-    this._shareService = const ShareService(),
+    this._result, {
+    ShareService shareService = const ShareService(),
     PhotoLibraryService? photoLibraryService,
-  }) : _photoLibraryService = photoLibraryService ?? PhotoLibraryService();
+  }) : _shareService = shareService,
+       _photoLibraryService = photoLibraryService ?? PhotoLibraryService();
 
   static const int _secondsPerMinute = 60;
   static const int _photoCardIndex = 1;
@@ -28,9 +31,12 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
   static const String _savedMessage = 'Saved to your photos.';
   static const String _genericErrorMessage =
       'Something went wrong. Please try again.';
+  static const String _siteLabel = 'flowwapp.com';
+  static const String _handleLabel = '@flowwapp_';
+  static const int _maxMuscleTags = 3;
 
-  final WorkoutService _service;
-  final WorkoutCompletion _completion;
+  final WorkoutSessionService _service;
+  final WorkoutCompletionResult _result;
   final ShareService _shareService;
   final PhotoLibraryService _photoLibraryService;
 
@@ -54,20 +60,48 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
 
   bool get canSaveRecovery => _selectedMood != null;
 
-  int get _durationMinutes => _completion.durationSeconds ~/ _secondsPerMinute;
+  WorkoutSessionEntity get _session => _result.session;
+
+  int get _flowScoreGain => _result.flowScoreAfter - _result.flowScoreBefore;
+
+  List<String> get _muscleTags {
+    final muscles = _session.muscleActivation;
+    final count = muscles.length < _maxMuscleTags
+        ? muscles.length
+        : _maxMuscleTags;
+    return [for (var i = 0; i < count; i++) muscles[i].name];
+  }
+
+  String get _modeLabel =>
+      _session.focus.isEmpty ? 'FLOW MODE' : _session.focus.toUpperCase();
+
+  String get _headline {
+    final effect = _session.trainingEffect;
+    if (effect >= 4.5) return 'Absolute machine! 💪';
+    if (effect >= 3.5) return 'Strong session! 🔥';
+    if (effect >= 2.5) return 'Solid work today.';
+    return 'Movement logged. 👏';
+  }
+
+  String get _caption =>
+      '${WorkoutMetrics.effectRatingOf(_session.trainingEffect)} training '
+      'effect · ${_session.totalSets} sets';
+
+  int get _durationMinutes => _session.durationSeconds ~/ _secondsPerMinute;
 
   String get _durationValue => '$_durationMinutes';
 
-  String get _volumeValue => NumberFormatter.grouped(_completion.volumeKg);
+  String get _volumeValue =>
+      NumberFormatter.grouped(_session.volumeKg.round());
 
   WorkoutCompleteItem get summary => WorkoutCompleteItem(
     glyph: '🎉',
     title: 'Workout Complete!',
     message: 'Outstanding effort. Your Flow Score has been updated.',
     scoreLabel: 'Flow Score',
-    previousScoreLabel: '${_completion.flowScoreBefore}',
-    newScoreLabel: '${_completion.flowScoreAfter}',
-    gainLabel: '+${_completion.flowScoreGain} pts',
+    previousScoreLabel: '${_result.flowScoreBefore}',
+    newScoreLabel: '${_result.flowScoreAfter}',
+    gainLabel: '+$_flowScoreGain pts',
     gainCaption: 'from workout',
     stats: [
       WorkoutStatItem(
@@ -79,7 +113,7 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
       WorkoutStatItem(
         icon: Icons.local_fire_department,
         title: 'Calories',
-        value: '~ ${NumberFormatter.grouped(_completion.calories)}',
+        value: '~ ${NumberFormatter.grouped(_session.caloriesKcal)}',
         unit: 'kcal',
       ),
     ],
@@ -121,14 +155,14 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
 
   WorkoutShareCardItem get _heroCard => WorkoutShareCardItem(
     brandLabel: 'Floww',
-    sessionLabel: _completion.name,
-    modeLabel: _completion.modeLabel,
-    caption: _completion.caption,
-    headline: _completion.headline,
+    sessionLabel: _session.name,
+    modeLabel: _modeLabel,
+    caption: _caption,
+    headline: _headline,
     stats: [_timeStat, _volumeStat],
-    tags: _completion.muscleTags,
-    siteLabel: _completion.siteLabel,
-    handleLabel: _completion.handleLabel,
+    tags: _muscleTags,
+    siteLabel: _siteLabel,
+    handleLabel: _handleLabel,
     hasPhotoSlot: false,
     photoHint: '',
     photoHintSuffix: '',
@@ -136,7 +170,7 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
 
   WorkoutShareCardItem get _statsCard => WorkoutShareCardItem(
     brandLabel: 'Floww',
-    sessionLabel: _completion.name,
+    sessionLabel: _session.name,
     modeLabel: null,
     caption: null,
     headline: null,
@@ -144,20 +178,20 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
       _timeStat,
       ShareStatItem(
         label: 'Records',
-        value: '${_completion.personalRecords}',
+        value: '${_session.personalRecords.length}',
         unit: '',
         glyph: '🏆',
       ),
       ShareStatItem(
         label: 'Calories',
-        value: NumberFormatter.grouped(_completion.calories),
+        value: NumberFormatter.grouped(_session.caloriesKcal),
         unit: 'kcal',
       ),
       _volumeStat,
     ],
-    tags: _completion.muscleTags,
-    siteLabel: _completion.siteLabel,
-    handleLabel: _completion.handleLabel,
+    tags: _muscleTags,
+    siteLabel: _siteLabel,
+    handleLabel: _handleLabel,
     hasPhotoSlot: true,
     photoHint: 'Add a photo and share\nyour progress',
     photoHintSuffix: ' (Optional)',
@@ -184,7 +218,7 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
   );
 
   String get _shareFileName {
-    final slug = _completion.name
+    final slug = _session.name
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
@@ -192,8 +226,8 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
   }
 
   String get _shareText =>
-      '${_completion.name} · $_durationValue min · $_volumeValue kg '
-      '${_completion.siteLabel}';
+      '${_session.name} · $_durationValue min · $_volumeValue kg '
+      '$_siteLabel';
 
   void selectSharePage(int index) {
     if (index == _sharePageIndex) return;
@@ -264,9 +298,6 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
   Future<void> saveRecovery() async {
     final mood = _selectedMood;
     if (mood == null) return;
-    await _service.saveRecoveryCheckIn(
-      workoutId: _completion.workoutId,
-      mood: mood,
-    );
+    await _service.saveRecoveryMood(_session.id, mood);
   }
 }

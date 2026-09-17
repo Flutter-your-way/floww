@@ -6,6 +6,7 @@ class HealthSnapshot {
     required this.sleepMinutes,
     required this.workoutCount,
     required this.syncedAt,
+    this.hrvMs,
   });
 
   final int steps;
@@ -14,6 +15,7 @@ class HealthSnapshot {
   final int sleepMinutes;
   final int workoutCount;
   final DateTime? syncedAt;
+  final double? hrvMs;
 
   static const HealthSnapshot empty = HealthSnapshot(
     steps: 0,
@@ -29,7 +31,8 @@ class HealthSnapshot {
       activeCaloriesKcal > 0 ||
       sleepMinutes > 0 ||
       workoutCount > 0 ||
-      restingHeartRate != null;
+      restingHeartRate != null ||
+      hrvMs != null;
 
   String get stepsLabel => _grouped(steps);
 
@@ -37,6 +40,11 @@ class HealthSnapshot {
     final hours = sleepMinutes ~/ 60;
     final minutes = sleepMinutes % 60;
     return hours == 0 ? '${minutes}m' : '${hours}h ${minutes}m';
+  }
+
+  String get hrvLabel {
+    final hrv = hrvMs;
+    return hrv == null ? '—' : '${hrv.round()}ms';
   }
 
   String get summaryLabel {

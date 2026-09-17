@@ -10,6 +10,8 @@ import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/config/widgets/headers/profile_title_header.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
+import 'package:floww/core/achievements/views/streak_achievements_sheet.dart';
+import 'package:floww/core/auth/view_models/auth_view_model.dart';
 import 'package:floww/core/progress/view_models/progress_view_model.dart';
 import 'package:floww/core/progress/views/log_weight_sheet.dart';
 import 'package:floww/core/progress/widgets/flow_score_summary_card.dart';
@@ -31,9 +33,15 @@ class ProgressView extends StatelessWidget {
     NavigationService.instance.push(AppRouter.profile);
   }
 
+  void _openStreak(BuildContext context, ProgressViewModel viewModel) {
+    HapticManager.light();
+    StreakAchievementsSheet.show(context, summary: viewModel.streakSummary);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final avatarUrl = context.watch<AuthViewModel>().avatarUrl;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -60,7 +68,9 @@ class ProgressView extends StatelessWidget {
                     eyebrow: viewModel.eyebrow,
                     title: viewModel.title,
                     streakCount: viewModel.streakDays,
+                    avatarUrl: avatarUrl,
                     onAvatarTap: _openProfile,
+                    onStreakTap: () => _openStreak(context, viewModel),
                   ),
                   SizedBox(height: AppSpacing.xl3),
                   if (viewModel.isLoading)

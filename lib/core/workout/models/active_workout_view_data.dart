@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:floww/core/workout/models/today_workout.dart';
+import 'package:floww/core/workout/models/exercise_info.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 
 enum ActiveSetStatus { completed, current, pending }

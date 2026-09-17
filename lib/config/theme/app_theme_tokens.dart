@@ -94,6 +94,26 @@ class _OverlayGradients {
     radius: 1.6,
   );
 
+  static const glassFill = LinearGradient(
+    colors: [Color(0x26FFFFFF), Color(0x0DFFFFFF), Color(0x1AFFFFFF)],
+    stops: [0.0, 0.55, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const glassRim = LinearGradient(
+    colors: [Color(0x8CFFFFFF), Color(0x14FFFFFF), Color(0x59FFFFFF)],
+    stops: [0.0, 0.5, 1.0],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const glassIndicator = LinearGradient(
+    colors: [Color(0x3DFFFFFF), Color(0x14FFFFFF)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
   static const actionScrim = LinearGradient(
     colors: [
       Color(0x000A0A0A),
@@ -474,6 +494,9 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     this.cameraScrim = _OverlayGradients.cameraScrim,
     this.cardSheen = _OverlayGradients.cardSheen,
     this.actionScrim = _OverlayGradients.actionScrim,
+    this.glassFill = _OverlayGradients.glassFill,
+    this.glassRim = _OverlayGradients.glassRim,
+    this.glassIndicator = _OverlayGradients.glassIndicator,
   });
 
   final Gradient primaryButton;
@@ -499,6 +522,9 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient cameraScrim;
   final Gradient cardSheen;
   final Gradient actionScrim;
+  final Gradient glassFill;
+  final Gradient glassRim;
+  final Gradient glassIndicator;
 
   static const defaultBackground = LinearGradient(
     colors: [Color(0xFF14110B), _AppPalette.backgroundPrimary],
@@ -734,6 +760,9 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? cameraScrim,
     Gradient? cardSheen,
     Gradient? actionScrim,
+    Gradient? glassFill,
+    Gradient? glassRim,
+    Gradient? glassIndicator,
   }) {
     return AppGradientTokens(
       primaryButton: primaryButton ?? this.primaryButton,
@@ -759,6 +788,9 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       cameraScrim: cameraScrim ?? this.cameraScrim,
       cardSheen: cardSheen ?? this.cardSheen,
       actionScrim: actionScrim ?? this.actionScrim,
+      glassFill: glassFill ?? this.glassFill,
+      glassRim: glassRim ?? this.glassRim,
+      glassIndicator: glassIndicator ?? this.glassIndicator,
     );
   }
 
@@ -789,6 +821,9 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       cameraScrim: Gradient.lerp(cameraScrim, other.cameraScrim, t)!,
       cardSheen: Gradient.lerp(cardSheen, other.cardSheen, t)!,
       actionScrim: Gradient.lerp(actionScrim, other.actionScrim, t)!,
+      glassFill: Gradient.lerp(glassFill, other.glassFill, t)!,
+      glassRim: Gradient.lerp(glassRim, other.glassRim, t)!,
+      glassIndicator: Gradient.lerp(glassIndicator, other.glassIndicator, t)!,
     );
   }
 }

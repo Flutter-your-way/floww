@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/core/home/providers/home_provider.dart';
+import 'package:floww/core/home/models/home_view_data.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/home/widgets/home_card_empty_state.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';

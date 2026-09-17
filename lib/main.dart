@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/config/utils/effects/liquid_glass_shader.dart';
 import 'package:floww/core/auth/services/auth_service.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await ProgressiveBlurWidget.precache();
+  await LiquidGlassShader.preload();
   final prefs = await SharedPreferences.getInstance();
   final saved = AppThemeMode.values.firstWhere(
     (e) => e.name == (prefs.getString('app_theme_mode') ?? 'flow'),

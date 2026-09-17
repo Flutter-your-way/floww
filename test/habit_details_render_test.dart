@@ -5,11 +5,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/config/entities/habit_day_log_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/theme/app_theme.dart';
-import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_definition.dart';
 import 'package:floww/core/habits/view_models/habit_details_view_model.dart';
 import 'package:floww/core/habits/views/habit_details_view.dart';
+
+import 'fakes/fake_habit_service.dart';
 
 Future<void> _loadFont(String family, String path) async {
   final loader = FontLoader(family)
@@ -31,15 +36,50 @@ void main() {
     );
   });
 
-  Future<HabitDetailsViewModel> pumpDetails(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390 * 3, 2000 * 3);
+  final today = AppDateUtils.dateOnly(DateTime.now());
+
+  HabitDefinition workoutHabit() => HabitDefinition(
+    id: 'workout_training',
+    title: 'Workout Training',
+    target: 45,
+    metric: HabitMetric.minutes,
+    icon: HabitIconKind.dumbbell,
+    createdAt: AppDateUtils.addDays(today, -10),
+    sortOrder: 0,
+    description: 'At least 45 min workout',
+    about: 'Regular training promotes your strength.',
+  );
+
+  List<HabitDayLog> completedDays(int count) => [
+    for (var index = 0; index < count; index++)
+      HabitDayLog(
+        date: AppDateUtils.addDays(today, -index),
+        entries: const [
+          HabitLogEntry(
+            id: 'workout_training',
+            title: 'Workout Training',
+            value: 45,
+            target: 45,
+            metric: 'minutes',
+          ),
+        ],
+      ),
+  ];
+
+  Future<HabitDetailsViewModel> pumpDetails(
+    WidgetTester tester, {
+    FakeHabitService? service,
+  }) async {
+    tester.view.physicalSize = const Size(390 * 3, 2200 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
 
-    final viewModel = HabitDetailsViewModel(
-      HabitService(),
-      'workout_training',
-    );
+    final habitService =
+        service ??
+        FakeHabitService(habits: [workoutHabit()], days: completedDays(3));
+    addTearDown(habitService.dispose);
+
+    final viewModel = HabitDetailsViewModel(habitService, 'workout_training');
     addTearDown(viewModel.dispose);
 
     await tester.pumpWidget(
@@ -72,6 +112,8 @@ void main() {
     expect(find.text('About This Habit'), findsOneWidget);
 
     expect(viewModel.stats.length, 4);
+    expect(viewModel.stats.first.value, '3');
+    expect(viewModel.stats[3].value, '3');
   });
 
   testWidgets('habit details switches the progress period', (tester) async {
@@ -109,5 +151,26 @@ void main() {
 
     expect(viewModel.habitTitle, 'Training');
     expect(find.text('Training'), findsOneWidget);
+  });
+
+  testWidgets('log progress sheet writes today\'s value', (tester) async {
+    final service = FakeHabitService(habits: [workoutHabit()]);
+    final viewModel = await pumpDetails(tester, service: service);
+
+    expect(viewModel.stats.first.value, '0');
+
+    await tester.tap(find.text('Log Progress'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Record what you have done today'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, '20');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save Progress'));
+    await tester.pumpAndSettle();
+
+    expect(service.savedDays.last.entryOf('workout_training')?.value, 20);
+    expect(viewModel.todayProgressLabel, '20 / 45 min');
   });
 }

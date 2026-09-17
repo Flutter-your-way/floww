@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
+import 'package:floww/config/widgets/placeholders/app_error_card.dart';
+import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
 import 'package:floww/core/workout/view_models/workout_details_view_model.dart';
 import 'package:floww/core/workout/views/add_exercise_sheet.dart';
@@ -56,7 +58,11 @@ class WorkoutDetailsView extends StatelessWidget {
           onBack: () => NavigationService.instance.pop(),
           onMore: _placeholderAction,
           children: [
-            if (detail == null)
+            if (viewModel.isLoading)
+              const AppSectionLoader()
+            else if (viewModel.errorMessage != null)
+              AppErrorCard(message: viewModel.errorMessage!)
+            else if (detail == null)
               const WorkoutEmptyStateCard(
                 icon: Icons.pending_actions,
                 title: 'Workout not found',

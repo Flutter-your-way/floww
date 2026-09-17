@@ -7,6 +7,8 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/effects/bottom_action_scrim.dart';
+import 'package:floww/config/widgets/placeholders/app_error_card.dart';
+import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/effects/top_progressive_blur.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
@@ -42,14 +44,25 @@ class ActiveWorkoutView extends StatelessWidget {
       builder: (context, viewModel, child) {
         if (viewModel.shouldStartCompletion) {
           viewModel.markCompletionStarted();
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => WorkoutCompletionFlow.start(
-              context: context,
-              viewModel: viewModel.completionViewModel(),
-            ),
-          );
+          final completionViewModel = viewModel.completionViewModel();
+          if (completionViewModel != null) {
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => WorkoutCompletionFlow.start(
+                context: context,
+                viewModel: completionViewModel,
+              ),
+            );
+          }
         }
         final session = viewModel.session;
+        if (session == null) {
+          return _ActiveWorkoutPlaceholder(
+            isLoading: viewModel.isLoading,
+            errorMessage: viewModel.errorMessage,
+            onRetry: viewModel.load,
+            onExit: _exit,
+          );
+        }
 
         return Scaffold(
           backgroundColor: context.colors.backgroundPrimary,
@@ -186,6 +199,47 @@ class _ExerciseContent extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _ActiveWorkoutPlaceholder extends StatelessWidget {
+  const _ActiveWorkoutPlaceholder({
+    required this.isLoading,
+    required this.errorMessage,
+    required this.onRetry,
+    required this.onExit,
+  });
+
+  final bool isLoading;
+  final String? errorMessage;
+  final Future<void> Function() onRetry;
+  final VoidCallback onExit;
+
+  @override
+  Widget build(BuildContext context) {
+    final horizontalPadding = context.sizes.screenHorizontalPadding;
+    final message = errorMessage;
+
+    return Scaffold(
+      backgroundColor: context.colors.backgroundPrimary,
+      body: AppBackground(
+        mode: AppBackgroundMode.flow,
+        isInner: true,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CustomHeader(onBackPressed: onExit, onClosePressed: onExit),
+              if (isLoading)
+                const AppSectionLoader()
+              else if (message != null)
+                AppErrorCard(message: message, onRetry: onRetry),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

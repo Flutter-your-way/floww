@@ -7,6 +7,8 @@ class HabitSuggestion {
     required this.target,
     required this.metric,
     required this.icon,
+    this.description,
+    this.about,
   });
 
   final String id;
@@ -14,6 +16,8 @@ class HabitSuggestion {
   final double target;
   final HabitMetric metric;
   final HabitIconKind icon;
+  final String? description;
+  final String? about;
 }
 
 class HabitSuggestionGroup {

@@ -14,6 +14,7 @@ class CustomHeader extends StatelessWidget {
     this.onBackPressed,
     this.onClosePressed,
     this.onMorePressed,
+    this.moreIcon = Icons.more_horiz,
   });
 
   final String? title;
@@ -22,6 +23,7 @@ class CustomHeader extends StatelessWidget {
   final VoidCallback? onBackPressed;
   final VoidCallback? onClosePressed;
   final VoidCallback? onMorePressed;
+  final IconData moreIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +93,7 @@ class CustomHeader extends StatelessWidget {
             Positioned(
               right: 0,
               child: CircularHeaderButton(
-                icon: Icons.more_horiz,
+                icon: moreIcon,
                 onPressed: onMorePressed,
               ),
             ),

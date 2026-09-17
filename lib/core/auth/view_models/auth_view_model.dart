@@ -14,6 +14,8 @@ class AuthViewModel extends ChangeNotifier {
 
   bool get isBusy => isGoogleLoading || isAppleLoading;
 
+  String? get avatarUrl => currentUser?.avatarUrl;
+
   Future<void> requestNotificationPermission() =>
       _authService.requestNotificationPermission();
 

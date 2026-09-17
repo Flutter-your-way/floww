@@ -10,10 +10,12 @@ class ProgressSnapshotResult {
   const ProgressSnapshotResult({
     required this.snapshot,
     required this.pendingFlowWrites,
+    required this.flowHistory,
   });
 
   final ProgressSnapshot snapshot;
   final List<DailyFlowEntry> pendingFlowWrites;
+  final List<DailyFlowEntry> flowHistory;
 }
 
 class ProgressSnapshotBuilder {
@@ -102,13 +104,10 @@ class ProgressSnapshotBuilder {
     final pendingFlowWrites = <DailyFlowEntry>[];
     final weekStart = AppDateUtils.startOfWeek(today);
     computedFlow.forEach((key, entry) {
-      final stored = storedFlow[key];
-      if (stored != null && !entry.hasActivity) return;
+      if (storedFlow.containsKey(key)) return;
+      if (!entry.hasActivity) return;
       flow[key] = entry;
-      final isRecent = !entry.date.isBefore(weekStart);
-      if (isRecent && (stored == null || !stored.sameValuesAs(entry))) {
-        if (entry.hasActivity || stored != null) pendingFlowWrites.add(entry);
-      }
+      if (!entry.date.isBefore(weekStart)) pendingFlowWrites.add(entry);
     });
 
     final weekDays = [
@@ -132,7 +131,9 @@ class ProgressSnapshotBuilder {
             flow[AppDateUtils.dateKey(AppDateUtils.addDays(today, -offset))],
         ]),
         streakDays: _streakOf(flow, today),
-        completedWorkouts: records.sessions.length,
+        completedWorkouts: records.sessions
+            .where((session) => session.isCompleted)
+            .length,
         flowScore: _flowSummary(
           flow: flow,
           today: today,
@@ -155,13 +156,15 @@ class ProgressSnapshotBuilder {
         checklist: _checklist(records, flow),
       ),
       pendingFlowWrites: pendingFlowWrites,
+      flowHistory: flow.values.toList(),
     );
   }
 
   Map<String, int> _setsByDay(List<WorkoutSessionLog> sessions) {
     final sets = <String, int>{};
     for (final session in sessions) {
-      final key = AppDateUtils.dateKey(session.completedAt);
+      if (!session.isCompleted) continue;
+      final key = AppDateUtils.dateKey(session.date);
       sets[key] = (sets[key] ?? 0) + session.totalSets;
     }
     return sets;
@@ -175,7 +178,7 @@ class ProgressSnapshotBuilder {
   }) {
     if (activeWeekScores.isEmpty) return const FlowScoreSummary.empty();
 
-    final latest = activeWeekScores.last;
+    final todayEntry = flow[AppDateUtils.dateKey(today)];
     final best = activeWeekScores.reduce(
       (best, entry) => entry.score >= best.score ? entry : best,
     );
@@ -193,7 +196,7 @@ class ProgressSnapshotBuilder {
     ]);
 
     return FlowScoreSummary(
-      score: latest.score,
+      score: todayEntry?.score ?? 0,
       weeklyDelta: average - previousAverage,
       bestScore: best.score,
       bestDay: AppDateUtils.weekdayName(best.date),

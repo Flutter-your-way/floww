@@ -1,12 +1,19 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/core/settings/models/settings_view_data.dart';
 
 class SettingsService {
-  const SettingsService();
+  SettingsService();
 
-  static const _connectedApps = [
+  static const String notificationsField = 'notifications';
+  static const String connectedAppsField = 'connectedApps';
+  static const String dietPlanStartedAtField = 'dietPlanStartedAt';
+
+  static const _defaultConnectedApps = [
     ConnectedAppItem(
       id: 'apple_health',
       name: 'Apple Health',
@@ -45,7 +52,7 @@ class SettingsService {
     ),
   ];
 
-  static const _notifications = NotificationSettings(
+  static const _defaultNotifications = NotificationSettings(
     master: NotificationToggleItem(
       id: 'master',
       title: 'Notifications',
@@ -141,13 +148,118 @@ class SettingsService {
     ),
   ];
 
-  List<ConnectedAppItem> connectedApps() => _connectedApps;
+  String? get userId {
+    try {
+      return FirebaseAuth.instance.currentUser?.uid;
+    } catch (e) {
+      debugPrint('settings auth unavailable: $e');
+      return null;
+    }
+  }
 
-  NotificationSettings notifications() => _notifications;
+  DocumentReference<Map<String, dynamic>>? _preferences() {
+    final uid = userId;
+    if (uid == null) return null;
+    try {
+      return FirebaseFirestore.instance
+          .collection(AppCollection.users)
+          .doc(uid)
+          .collection(AppCollection.settings)
+          .doc(AppCollection.settingsDoc);
+    } catch (e) {
+      debugPrint('settings store unavailable: $e');
+      return null;
+    }
+  }
+
+  List<ConnectedAppItem> defaultConnectedApps() => _defaultConnectedApps;
+
+  NotificationSettings defaultNotifications() => _defaultNotifications;
 
   List<PrivacyLinkItem> privacyLinks() => _privacyLinks;
 
   List<MeasurementOption> measurementOptions() => _measurementOptions;
 
-  MeasurementSystem measurementSystem() => MeasurementSystem.imperial;
+  Stream<List<ConnectedAppItem>> watchConnectedApps() =>
+      _watchField(connectedAppsField).map(connectedAppsOf);
+
+  Stream<NotificationSettings> watchNotifications() =>
+      _watchField(notificationsField).map(notificationsOf);
+
+  Future<void> setConnected(String id, bool isConnected) =>
+      _setFlag(connectedAppsField, id, isConnected);
+
+  Future<void> setNotificationEnabled(String id, bool isEnabled) =>
+      _setFlag(notificationsField, id, isEnabled);
+
+  Future<DateTime?> dietPlanStartedAt() async {
+    final document = _preferences();
+    if (document == null) return null;
+    try {
+      final snapshot = await document.get();
+      final value = snapshot.data()?[dietPlanStartedAtField];
+      return value is String ? DateTime.tryParse(value) : null;
+    } catch (e, stackTrace) {
+      debugPrint('read diet plan start failed: $e\n$stackTrace');
+      return null;
+    }
+  }
+
+  Future<void> setDietPlanStartedAt(DateTime date) async {
+    final document = _preferences();
+    if (document == null) return;
+    try {
+      await document.set({
+        dietPlanStartedAtField: date.toIso8601String(),
+      }, SetOptions(merge: true));
+    } catch (e, stackTrace) {
+      debugPrint('save diet plan start failed: $e\n$stackTrace');
+    }
+  }
+
+  @visibleForTesting
+  static List<ConnectedAppItem> connectedAppsOf(Map<String, dynamic> stored) => [
+    for (final app in _defaultConnectedApps)
+      app.copyWith(isConnected: stored[app.id] as bool? ?? app.isConnected),
+  ];
+
+  @visibleForTesting
+  static NotificationSettings notificationsOf(Map<String, dynamic> stored) {
+    NotificationToggleItem toggle(NotificationToggleItem item) =>
+        item.copyWith(isEnabled: stored[item.id] as bool? ?? item.isEnabled);
+
+    return NotificationSettings(
+      master: toggle(_defaultNotifications.master),
+      sections: [
+        for (final section in _defaultNotifications.sections)
+          section.copyWith(items: [for (final item in section.items) toggle(item)]),
+      ],
+    );
+  }
+
+  Stream<Map<String, dynamic>> _watchField(String field) {
+    final document = _preferences();
+    if (document == null) return Stream.value(const {});
+    return document
+        .snapshots()
+        .map<Map<String, dynamic>>((snapshot) {
+          final value = snapshot.data()?[field];
+          return value is Map
+              ? Map<String, dynamic>.from(value)
+              : <String, dynamic>{};
+        })
+        .handleError((Object error) => debugPrint('settings read failed: $error'));
+  }
+
+  Future<void> _setFlag(String field, String id, bool value) async {
+    final document = _preferences();
+    if (document == null) return;
+    try {
+      await document.set({
+        field: {id: value},
+      }, SetOptions(merge: true));
+    } catch (e, stackTrace) {
+      debugPrint('save settings failed: $e\n$stackTrace');
+    }
+  }
 }

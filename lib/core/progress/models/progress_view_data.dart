@@ -56,7 +56,8 @@ class FlowScoreSummary {
   final int averageScore;
   final List<FlowScoreDay> days;
 
-  bool get hasScores => score > 0;
+  bool get hasScores =>
+      score > 0 || averageScore > 0 || days.any((day) => day.hasScore);
 }
 
 class WaveInsights {

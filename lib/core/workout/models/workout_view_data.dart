@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'package:floww/core/workout/models/workout_detail.dart';
+import 'package:floww/core/workout/models/workout_section_kind.dart';
 
 class WorkoutEmptyState {
   const WorkoutEmptyState({
@@ -199,7 +199,7 @@ class WorkoutOverviewItem {
   final WorkoutSummaryItem summary;
   final TrainingEffectItem trainingEffect;
   final List<MuscleFocusEntry> muscles;
-  final HeartRateItem heartRate;
+  final HeartRateItem? heartRate;
   final PerformanceItem performance;
 }
 

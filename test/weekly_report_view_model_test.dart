@@ -7,6 +7,7 @@ import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/weekly_metric.dart';
 import 'package:floww/core/nutrition/view_models/weekly_report_view_model.dart';
 
+import 'fakes/fake_nutrition_goal_service.dart';
 import 'fakes/fake_nutrition_log_service.dart';
 
 void main() {
@@ -39,7 +40,7 @@ void main() {
     final viewModel = WeeklyReportViewModel(
       service,
       DateTime(2026, 8, 6),
-      goal,
+      FakeNutritionGoalService(goal),
     );
     await pumpEventQueue();
     return viewModel;

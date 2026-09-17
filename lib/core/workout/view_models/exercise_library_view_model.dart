@@ -1,23 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/entities/workout_exercise_entity.dart';
 import 'package:floww/core/workout/models/exercise.dart';
 import 'package:floww/core/workout/models/exercise_view_data.dart';
-import 'package:floww/core/workout/services/exercise_service.dart';
+import 'package:floww/core/workout/services/workout_catalog_service.dart';
+import 'package:floww/core/workout/services/workout_firestore.dart';
 
 class ExerciseLibraryViewModel extends ChangeNotifier {
   ExerciseLibraryViewModel(this._service) {
-    _exercises = [..._service.loadCatalog()];
+    _start();
   }
 
-  final ExerciseService _service;
+  static const String _loadFailure = 'Could not load your exercise library.';
 
-  late List<Exercise> _exercises;
+  final WorkoutCatalogService _service;
+
+  StreamSubscription<List<ExerciseCatalogEntry>>? _subscription;
+  List<ExerciseCatalogEntry> _exercises = const [];
   String _query = '';
   MuscleGroup? _expandedGroup = MuscleGroup.chest;
+  bool _isLoading = true;
+  bool _disposed = false;
+  String? _errorMessage;
 
   String _draftName = '';
   MuscleGroup _draftGroup = MuscleGroup.chest;
   Equipment _draftEquipment = Equipment.barbell;
+
+  bool get isLoading => _isLoading;
+
+  String? get errorMessage => _errorMessage;
 
   String get query => _query;
 
@@ -37,7 +51,8 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
 
   List<Equipment> get equipmentOptions => Equipment.values;
 
-  int get customCount => _exercises.where((item) => item.isCustom).length;
+  int get customCount =>
+      _exercises.where((exercise) => exercise.isCustom).length;
 
   bool get hasCustomExercises => customCount > 0;
 
@@ -45,32 +60,56 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
       '$customCount custom ${customCount == 1 ? 'exercise' : 'exercises'} '
       'added';
 
+  void _start() {
+    _subscription?.cancel();
+    _subscription = _service.watchExercises().listen((exercises) {
+      _exercises = exercises;
+      _isLoading = false;
+      _errorMessage = null;
+      notifyListeners();
+    }, onError: _onError);
+  }
+
+  void _onError(Object error) {
+    _isLoading = false;
+    _errorMessage = error is WorkoutException ? error.message : _loadFailure;
+    notifyListeners();
+  }
+
+  Future<void> retry() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    await _service.ensureSeeded();
+    _start();
+  }
+
   List<ExerciseGroupItem> get groups {
     final query = _query.trim().toLowerCase();
     final result = <ExerciseGroupItem>[];
     for (final group in MuscleGroup.values) {
-      final matches = _exercises
-          .where(
-            (item) =>
-                item.group == group &&
-                (query.isEmpty || item.name.toLowerCase().contains(query)),
-          )
-          .toList();
+      final matches = [
+        for (final exercise in _exercises)
+          if (exercise.group == group &&
+              (query.isEmpty || exercise.name.toLowerCase().contains(query)))
+            exercise,
+      ];
       if (matches.isEmpty) continue;
       result.add(
         ExerciseGroupItem(
           group: group,
           title: group.label,
           countLabel:
-              '${matches.length} ${matches.length == 1 ? 'Exercise' : 'Exercises'}',
+              '${matches.length} '
+              '${matches.length == 1 ? 'Exercise' : 'Exercises'}',
           isExpanded: query.isNotEmpty || _expandedGroup == group,
           exercises: [
-            for (final item in matches)
+            for (final exercise in matches)
               ExerciseRowItem(
-                id: item.id,
-                name: item.name,
-                isCustom: item.isCustom,
-                isAdded: item.isAdded,
+                id: exercise.id,
+                name: exercise.name,
+                isCustom: exercise.isCustom,
+                isAdded: exercise.isAdded,
               ),
           ],
         ),
@@ -90,12 +129,16 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleExercise(String id) {
-    final index = _exercises.indexWhere((item) => item.id == id);
-    if (index < 0) return;
-    final current = _exercises[index];
-    _exercises[index] = current.copyWith(isAdded: !current.isAdded);
-    notifyListeners();
+  Future<void> toggleExercise(String id) async {
+    for (final exercise in _exercises) {
+      if (exercise.id != id) continue;
+      try {
+        await _service.setAdded(id, !exercise.isAdded);
+      } on WorkoutException catch (error) {
+        _onError(error);
+      }
+      return;
+    }
   }
 
   void updateDraftName(String value) {
@@ -123,21 +166,34 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
     _draftEquipment = Equipment.barbell;
   }
 
-  void saveDraft() {
+  Future<void> saveDraft() async {
     if (!canSaveDraft) return;
     final name = _draftName.trim();
-    _exercises.add(
-      Exercise(
-        id: '${DateTime.now().microsecondsSinceEpoch}',
-        name: name,
-        group: _draftGroup,
-        equipment: _draftEquipment,
-        isCustom: true,
-        isAdded: true,
-      ),
-    );
-    _expandedGroup = _draftGroup;
+    final group = _draftGroup;
+    final equipment = _draftEquipment;
+    _expandedGroup = group;
     resetDraft();
     notifyListeners();
+    try {
+      await _service.createCustomExercise(
+        name: name,
+        group: group,
+        equipment: equipment,
+      );
+    } on WorkoutException catch (error) {
+      _onError(error);
+    }
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _subscription?.cancel();
+    super.dispose();
   }
 }

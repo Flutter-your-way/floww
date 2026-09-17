@@ -6,6 +6,7 @@ class HabitLogEntry {
     required this.title,
     required this.value,
     required this.target,
+    this.metric = defaultMetric,
   });
 
   factory HabitLogEntry.fromJson(Map<String, dynamic> json) => HabitLogEntry(
@@ -13,12 +14,16 @@ class HabitLogEntry {
     title: json['title'] as String,
     value: (json['value'] as num).toDouble(),
     target: (json['target'] as num).toDouble(),
+    metric: json['metric'] as String? ?? defaultMetric,
   );
+
+  static const String defaultMetric = 'sessions';
 
   final String id;
   final String title;
   final double value;
   final double target;
+  final String metric;
 
   bool get isCompleted => target > 0 && value >= target;
 
@@ -29,6 +34,7 @@ class HabitLogEntry {
     'title': title,
     'value': value,
     'target': target,
+    'metric': metric,
   };
 }
 
@@ -51,6 +57,9 @@ class HabitDayLog {
     final total = entries.fold<double>(0, (sum, e) => sum + e.progress);
     return total / entries.length;
   }
+
+  HabitLogEntry? entryOf(String id) =>
+      entries.where((entry) => entry.id == id).firstOrNull;
 
   Map<String, dynamic> toJson() => {
     'date': AppDateUtils.dateKey(date),

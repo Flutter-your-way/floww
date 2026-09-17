@@ -36,6 +36,12 @@ class FakeProgressService implements ProgressService {
     yield* _controller.stream;
   }
 
+  @override
+  Stream<List<DailyFlowEntry>> watchDailyFlow(DateTime from) async* {
+    yield _records.storedFlow;
+    yield* _controller.stream.map((records) => records.storedFlow);
+  }
+
   void emit(ProgressRecords records) {
     _records = records;
     _controller.add(records);

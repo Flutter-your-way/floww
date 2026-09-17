@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/core/home/providers/home_provider.dart';
+import 'package:floww/core/home/models/home_view_data.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 
 class TodayProgressCard extends StatelessWidget {

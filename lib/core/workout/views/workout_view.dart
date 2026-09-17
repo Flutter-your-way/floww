@@ -11,6 +11,8 @@ import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/config/widgets/effects/luminosity_layer.dart';
 import 'package:floww/config/widgets/headers/screen_date_header.dart';
+import 'package:floww/config/widgets/placeholders/app_error_card.dart';
+import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/view_models/workout_view_model.dart';
@@ -43,9 +45,12 @@ class WorkoutView extends StatelessWidget {
     if (picked != null) viewModel.selectDate(picked);
   }
 
-  void _startWorkout() {
+  void _startWorkout(WorkoutViewModel viewModel) {
     HapticManager.light();
-    NavigationService.instance.push(AppRouter.todaysWorkout);
+    NavigationService.instance.push(
+      AppRouter.todaysWorkout,
+      arguments: viewModel.selectedDate,
+    );
   }
 
   void _showInfo(
@@ -85,7 +90,7 @@ class WorkoutView extends StatelessWidget {
       detail: detail,
       onStart: () {
         Navigator.of(context).maybePop();
-        _startWorkout();
+        viewModel.startProgram(program.id);
       },
     );
   }
@@ -151,6 +156,13 @@ class WorkoutView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            if (viewModel.isLoading)
+                              const AppSectionLoader()
+                            else if (viewModel.errorMessage != null)
+                              AppErrorCard(
+                                message: viewModel.errorMessage!,
+                                onRetry: viewModel.retry,
+                              ),
                             if (viewModel.showOverview && overview != null)
                               LuminosityLayer(
                                 enabled: viewModel.isReadOnly,
@@ -209,7 +221,7 @@ class WorkoutView extends StatelessWidget {
                               SuggestedWorkoutCard(
                                 title: viewModel.suggestionTitle,
                                 suggestion: suggestion,
-                                onStartWorkout: _startWorkout,
+                                onStartWorkout: () => _startWorkout(viewModel),
                               ),
                             ],
                             if (viewModel.showExercises)
@@ -242,7 +254,7 @@ class WorkoutView extends StatelessWidget {
                   label: 'Start Workout',
                   icon: Icons.play_arrow_rounded,
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
-                  onPressed: _startWorkout,
+                  onPressed: () => _startWorkout(viewModel),
                 ),
               ),
             ],

@@ -7,7 +7,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
-import 'package:floww/core/workout/models/workout_detail.dart';
+import 'package:floww/core/workout/models/workout_section_kind.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/widgets/workout_exercise_row.dart';
 

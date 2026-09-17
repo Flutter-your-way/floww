@@ -10,17 +10,17 @@ import 'package:floww/core/habits/models/habit_day.dart';
 import 'package:floww/core/habits/models/habit_draft.dart';
 import 'package:floww/core/habits/models/habit_suggestion.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
-import 'package:floww/core/habits/services/habit_log_service.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
 
 enum HabitDateStatus { past, today, future }
 
 class HabitsViewModel extends ChangeNotifier {
-  HabitsViewModel(this._service, this._logService)
+  HabitsViewModel(this._service)
     : _selectedDate = AppDateUtils.dateOnly(DateTime.now()) {
-    _loadHabits();
     _dayRollover = DayRolloverTimer(_onNewDay);
+    start();
   }
 
   static const int _selectableRangeDays = 365;
@@ -29,12 +29,49 @@ class HabitsViewModel extends ChangeNotifier {
   static const double _goodScore = 0.5;
 
   final HabitService _service;
-  final HabitLogService _logService;
 
+  late final DayRolloverTimer _dayRollover;
+  StreamSubscription<HabitRecords>? _subscription;
+  HabitRecords _records = HabitRecords.empty;
+  HabitSnapshot _snapshot = HabitSnapshot.empty;
   DateTime _selectedDate;
   DateChangeDirection _dateDirection = DateChangeDirection.forward;
   List<Habit> _habits = const [];
-  late final DayRolloverTimer _dayRollover;
+  bool _isLoading = true;
+  String? _errorMessage;
+  String? _actionMessage;
+
+  bool get isLoading => _isLoading;
+
+  String? get errorMessage => _errorMessage;
+
+  String? get actionMessage => _actionMessage;
+
+  void start() {
+    _subscription?.cancel();
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    _subscription = _service.watchRecords().listen(
+      _onRecords,
+      onError: (Object error) {
+        _isLoading = false;
+        _errorMessage = 'Could not load your habits. Please try again.';
+        notifyListeners();
+      },
+    );
+  }
+
+  Future<void> retry() async => start();
+
+  void _onRecords(HabitRecords records) {
+    _records = records;
+    _snapshot = HabitSnapshot.of(records);
+    _habits = _snapshot.habitsFor(_selectedDate);
+    _isLoading = false;
+    _errorMessage = null;
+    notifyListeners();
+  }
 
   DateTime get selectedDate => _selectedDate;
 
@@ -61,7 +98,7 @@ class HabitsViewModel extends ChangeNotifier {
         : HabitDateStatus.past;
   }
 
-  bool get canEdit => dateStatus == HabitDateStatus.today;
+  bool get canEdit => dateStatus == HabitDateStatus.today && !_isLoading;
 
   bool get isReadOnly => dateStatus == HabitDateStatus.past;
 
@@ -98,8 +135,18 @@ class HabitsViewModel extends ChangeNotifier {
 
   String get createFirstHabitLabel => 'CREATE FIRST HABIT';
 
+  List<HabitSuggestion> get suggestions => [
+    for (final suggestion in _service.suggestions)
+      if (!_snapshot.definitions.any(
+        (definition) => definition.id == suggestion.id,
+      ))
+        suggestion,
+  ];
+
+  List<HabitSuggestionGroup> get suggestionGroups => _service.suggestionGroups;
+
   List<HabitSuggestionItem> get popularHabits => [
-    for (final suggestion in _service.popularHabits())
+    for (final suggestion in suggestions)
       HabitSuggestionItem(
         id: suggestion.id,
         title: suggestion.title,
@@ -172,7 +219,7 @@ class HabitsViewModel extends ChangeNotifier {
   ];
 
   List<HabitStatItem> get stats {
-    final stats = _service.statsFor(_selectedDate);
+    final stats = _snapshot.stats;
     return [
       HabitStatItem(
         title: 'CURRENT STREAK',
@@ -192,19 +239,7 @@ class HabitsViewModel extends ChangeNotifier {
     ];
   }
 
-  List<HabitDay> get _week =>
-      _service.weekFor(_selectedDate, todayCompletion: _todayCompletion);
-
-  double get _todayCompletion => AppDateUtils.isSameDay(_selectedDate, _today)
-      ? dailyScore
-      : _completionOfToday;
-
-  double get _completionOfToday {
-    final habits = _service.habitsFor(_today);
-    if (habits.isEmpty) return 0;
-    final total = habits.fold<double>(0, (sum, habit) => sum + habit.progress);
-    return total / habits.length;
-  }
+  List<HabitDay> get _week => _snapshot.weekFor(_selectedDate);
 
   List<WeekdayProgressItem> get weekdays => [
     for (final day in _week)
@@ -252,55 +287,48 @@ class HabitsViewModel extends ChangeNotifier {
 
   void selectDate(DateTime date) => _setDate(AppDateUtils.dateOnly(date));
 
-  List<HabitSuggestion> get suggestions => _service.popularHabits();
+  Future<void> addSuggestion(HabitSuggestion suggestion) =>
+      _run(() => _service.addSuggestion(suggestion));
 
-  List<HabitSuggestionGroup> get suggestionGroups =>
-      _service.suggestionGroups();
-
-  void addSuggestion(HabitSuggestion suggestion) {
-    _service.addHabit(suggestion);
-    _loadHabits();
-    _syncTodayLog();
-    notifyListeners();
-  }
-
-  void addCustomHabit(HabitDraft draft) {
-    _service.addCustomHabit(draft);
-    _loadHabits();
-    _syncTodayLog();
-    notifyListeners();
-  }
-
-  void addSuggestedHabit(String id) {
-    final suggestion = _service
-        .popularHabits()
+  Future<void> addSuggestedHabit(String id) async {
+    final suggestion = suggestions
         .where((suggestion) => suggestion.id == id)
         .firstOrNull;
     if (suggestion == null) return;
-    _service.addHabit(suggestion);
-    _loadHabits();
-    _syncTodayLog();
-    notifyListeners();
+    await addSuggestion(suggestion);
   }
 
-  void toggleHabit(String id) {
+  Future<void> addCustomHabit(HabitDraft draft) =>
+      _run(() => _service.createHabit(draft));
+
+  Future<void> toggleHabit(String id) {
+    final habit = _habits.where((habit) => habit.id == id).firstOrNull;
+    if (habit == null) return Future.value();
+    return logHabit(id, habit.isCompleted ? 0 : habit.target);
+  }
+
+  Future<void> logHabit(String id, double value) async {
     if (!canEdit) return;
     _habits = [
       for (final habit in _habits)
         if (habit.id == id)
-          habit.copyWith(value: habit.isCompleted ? 0 : habit.target)
+          habit.copyWith(value: value < 0 ? 0 : value)
         else
           habit,
     ];
-    _syncTodayLog();
     notifyListeners();
+    await _run(() => _service.saveDay(_selectedDate, _habits));
   }
 
-  void _syncTodayLog() {
-    final habits = AppDateUtils.isSameDay(_selectedDate, _today)
-        ? _habits
-        : _service.habitsFor(_today);
-    unawaited(_logService.saveDay(_today, habits));
+  Future<void> _run(Future<void> Function() action) async {
+    _actionMessage = null;
+    try {
+      await action();
+    } on HabitException catch (e) {
+      _actionMessage = e.message;
+      _habits = _snapshot.habitsFor(_selectedDate);
+    }
+    notifyListeners();
   }
 
   void _setDate(DateTime date) {
@@ -309,25 +337,23 @@ class HabitsViewModel extends ChangeNotifier {
         ? DateChangeDirection.forward
         : DateChangeDirection.backward;
     _selectedDate = date;
-    _loadHabits();
+    _habits = _snapshot.habitsFor(_selectedDate);
     notifyListeners();
   }
-
-  void _loadHabits() => _habits = _service.habitsFor(_selectedDate);
 
   void _onNewDay() {
     final previous = AppDateUtils.addDays(_today, -1);
     if (AppDateUtils.isSameDay(_selectedDate, previous)) {
-      _setDate(_today);
-      return;
+      _selectedDate = _today;
+      _dateDirection = DateChangeDirection.forward;
     }
-    _loadHabits();
-    notifyListeners();
+    _onRecords(_records);
   }
 
   @override
   void dispose() {
     _dayRollover.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 }

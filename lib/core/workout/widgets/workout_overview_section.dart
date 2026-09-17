@@ -28,6 +28,8 @@ class WorkoutOverviewSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final heartRate = overview.heartRate;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -40,13 +42,17 @@ class WorkoutOverviewSection extends StatelessWidget {
           onInfo: onTrainingEffectInfo,
         ),
         SizedBox(height: AppSpacing.lg),
-        MuscleFocusCard(
-          muscles: overview.muscles,
-          onViewAnatomy: onViewAnatomy,
-        ),
-        SizedBox(height: AppSpacing.lg),
-        HeartRateCard(heartRate: overview.heartRate),
-        SizedBox(height: AppSpacing.lg),
+        if (overview.muscles.isNotEmpty) ...[
+          MuscleFocusCard(
+            muscles: overview.muscles,
+            onViewAnatomy: onViewAnatomy,
+          ),
+          SizedBox(height: AppSpacing.lg),
+        ],
+        if (heartRate != null) ...[
+          HeartRateCard(heartRate: heartRate),
+          SizedBox(height: AppSpacing.lg),
+        ],
         PerformanceCard(
           performance: overview.performance,
           onViewDetails: onViewDetails,
