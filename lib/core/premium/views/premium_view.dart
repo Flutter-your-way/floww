@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/animations/tab_content_switcher.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
@@ -14,6 +15,7 @@ import 'package:floww/core/premium/widgets/premium_invoices_card.dart';
 import 'package:floww/core/premium/widgets/premium_payment_method_card.dart';
 import 'package:floww/core/premium/widgets/premium_payments_summary_card.dart';
 import 'package:floww/core/premium/widgets/premium_renewal_card.dart';
+import 'package:floww/core/premium/widgets/premium_saved_notice.dart';
 import 'package:floww/core/premium/widgets/premium_segmented_tabs.dart';
 import 'package:floww/core/premium/widgets/premium_status_card.dart';
 import 'package:floww/navigation/app_router.dart';
@@ -37,6 +39,7 @@ class PremiumView extends StatelessWidget {
     return Consumer<PremiumViewModel>(
       builder: (context, viewModel, child) {
         final errorMessage = viewModel.errorMessage;
+        final savedMessage = viewModel.savedMessage;
 
         return InnerPageScaffold(
           title: viewModel.title,
@@ -49,6 +52,13 @@ class PremiumView extends StatelessWidget {
                 AppErrorCard(message: errorMessage),
                 SizedBox(height: AppSpacing.xl2),
               ],
+              if (savedMessage != null) ...[
+                PremiumSavedNotice(
+                  message: savedMessage,
+                  onDismiss: viewModel.dismissSavedMessage,
+                ),
+                SizedBox(height: AppSpacing.xl2),
+              ],
               PremiumSegmentedTabs<PremiumTab>(
                 items: viewModel.tabs,
                 selected: viewModel.selectedTab,
@@ -56,10 +66,18 @@ class PremiumView extends StatelessWidget {
                 onSelected: (tab) => _selectTab(viewModel, tab),
               ),
               SizedBox(height: AppSpacing.xl2),
-              if (viewModel.isPlanTab)
-                _PremiumPlanTab(viewModel: viewModel, onUpgrade: _openUpgrade)
-              else
-                _PremiumPaymentsTab(viewModel: viewModel),
+              TabContentSwitcher(
+                reverse: viewModel.tabReverse,
+                child: KeyedSubtree(
+                  key: ValueKey(viewModel.selectedTab),
+                  child: viewModel.isPlanTab
+                      ? _PremiumPlanTab(
+                          viewModel: viewModel,
+                          onUpgrade: _openUpgrade,
+                        )
+                      : _PremiumPaymentsTab(viewModel: viewModel),
+                ),
+              ),
             ],
           ],
         );

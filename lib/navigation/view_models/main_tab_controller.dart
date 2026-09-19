@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 class MainTabController extends ChangeNotifier {
-  MainTabController({int initialIndex = workoutTab}) : _index = initialIndex;
+  MainTabController({int initialIndex = homeTab}) : _index = initialIndex;
 
   static const int homeTab = 0;
   static const int nutritionTab = 1;

@@ -95,7 +95,7 @@ class LogFoodSheet extends StatelessWidget {
                     caloriesLabel: viewModel.caloriesLabelOf(results[i]),
                     isAdded: viewModel.isAdded(results[i]),
                     isSaving: viewModel.isSaving(results[i]),
-                    onAdd: () => viewModel.add(results[i]),
+                    onToggle: () => viewModel.toggle(results[i]),
                   ),
                 ],
               ],

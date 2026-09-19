@@ -23,7 +23,7 @@ class HabitStatGrid extends StatelessWidget {
         for (var index = 0; index < items.length; index += _columns) ...[
           if (index > 0)
             Divider(
-              height: AppSpacing.xl4,
+              height: AppSpacing.xl2,
               thickness: AppSizes.s1,
               color: colors.borderSubtle,
             ),

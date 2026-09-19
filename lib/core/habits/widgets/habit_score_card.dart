@@ -151,7 +151,7 @@ class _ScoreSummary extends StatelessWidget {
               child: Text(
                 headline,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodyMediumMediumTight.copyWith(
+                style: AppTypography.bodySmallMediumTight.copyWith(
                   color: colors.primaryAlt,
                 ),
               ),
@@ -192,7 +192,8 @@ class _ScoreRing extends StatelessWidget {
       progress: progress,
       size: AppSizes.s100,
       strokeWidth: AppSizes.s10,
-      gradient: context.gradients.full,
+      glowColor: colors.textPrimary,
+      endColor: colors.textPrimary,
       trackColor: colors.textTertiary,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -204,8 +205,8 @@ class _ScoreRing extends StatelessWidget {
             children: [
               Text(
                 dailyScoreLabel,
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: AppTypography.bodyXLargeBold.copyWith(
+                  color: colors.textPrimary,
                 ),
               ),
               Padding(

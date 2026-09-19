@@ -49,13 +49,13 @@ class HabitDetailHeaderCard extends StatelessWidget {
                     Text(
                       title,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.heading3Bold,
+                      style: AppTypography.bodyXLargeBold,
                     ),
                     SizedBox(height: AppSpacing.xxs),
                     Text(
                       description,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.labelLargeMedium.copyWith(
+                      style: AppTypography.bodySmallRegularTight.copyWith(
                         color: colors.textSubtle,
                       ),
                     ),
@@ -74,7 +74,7 @@ class HabitDetailHeaderCard extends StatelessWidget {
             ],
           ),
           Divider(
-            height: AppSpacing.xl4,
+            height: AppSpacing.xl2,
             thickness: AppSizes.s1,
             color: colors.borderSubtle,
           ),

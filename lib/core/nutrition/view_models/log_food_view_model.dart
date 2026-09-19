@@ -47,8 +47,14 @@ class LogFoodViewModel extends ChangeNotifier {
 
   String get emptyMessage => 'No foods match "${_query.trim()}".';
 
-  bool isAdded(CatalogFood food) =>
-      _dayLogs.any((log) => log.mealType == _meal && food.matches(log.food));
+  FoodLog? _loggedEntryOf(CatalogFood food) {
+    for (final log in _dayLogs.reversed) {
+      if (log.mealType == _meal && food.matches(log.food)) return log;
+    }
+    return null;
+  }
+
+  bool isAdded(CatalogFood food) => _loggedEntryOf(food) != null;
 
   bool isSaving(CatalogFood food) => _saving.contains(food.displayName);
 
@@ -68,14 +74,13 @@ class LogFoodViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> toggle(CatalogFood food) =>
+      isAdded(food) ? remove(food) : add(food);
+
   Future<void> add(CatalogFood food) async {
     if (isAdded(food) || isSaving(food)) return;
-    final key = food.displayName;
-    _saving.add(key);
-    _errorMessage = null;
-    notifyListeners();
 
-    try {
+    return _save(food, () async {
       final userId = _logService.userId;
       if (userId == null) {
         throw NutritionLogException('Please sign in again.');
@@ -92,6 +97,24 @@ class LogFoodViewModel extends ChangeNotifier {
           loggedAt: AppDateUtils.atTimeOf(_date, now),
         ),
       );
+    });
+  }
+
+  Future<void> remove(CatalogFood food) async {
+    final logged = _loggedEntryOf(food);
+    if (logged == null || isSaving(food)) return;
+
+    return _save(food, () => _logService.deleteFoodLog(logged.id));
+  }
+
+  Future<void> _save(CatalogFood food, Future<void> Function() action) async {
+    final key = food.displayName;
+    _saving.add(key);
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await action();
     } on NutritionLogException catch (e) {
       _errorMessage = e.message;
     } finally {

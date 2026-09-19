@@ -143,8 +143,7 @@ class ExerciseCatalogEntry {
     if (value is! Map) return const {};
     return {
       for (final entry in value.entries)
-        if (entry.value is num)
-          '${entry.key}': (entry.value as num).toDouble(),
+        if (entry.value is num) '${entry.key}': (entry.value as num).toDouble(),
     };
   }
 

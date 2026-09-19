@@ -64,10 +64,7 @@ class _CustomOutlinedButtonState extends State<CustomOutlinedButton> {
             decoration: AppShapes.decoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(27.5),
-              side: BorderSide(
-                color: context.colors.borderMedium,
-                width: 1.5,
-              ),
+              side: BorderSide(color: context.colors.borderMedium, width: 1.5),
             ),
             child: Center(
               child: widget.isLoading

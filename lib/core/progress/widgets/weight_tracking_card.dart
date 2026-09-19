@@ -19,10 +19,12 @@ class WeightTrackingCard extends StatelessWidget {
     super.key,
     required this.viewModel,
     this.onAddWeight,
+    this.onUnlogWeight,
   });
 
   final ProgressViewModel viewModel;
   final VoidCallback? onAddWeight;
+  final VoidCallback? onUnlogWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +36,35 @@ class WeightTrackingCard extends StatelessWidget {
         children: [
           CardHeader(
             title: viewModel.weightTitle,
-            titleStyle: AppTypography.labelLargeSemiBold,
-            trailing: PillButton(
-              variant: PillButtonVariant.glass,
-              height: AppSizes.s28,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              label: viewModel.addWeightLabel,
-              labelStyle: AppTypography.captionSemiBold,
-              onPressed: onAddWeight,
+            titleStyle: AppTypography.heading4SemiBold,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (viewModel.canUnlogWeight) ...[
+                  PillButton(
+                    variant: PillButtonVariant.outline,
+                    height: AppSizes.s28,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
+                    label: viewModel.unlogWeightLabel,
+                    labelStyle: AppTypography.captionSemiBold,
+                    labelColor: context.colors.textSecondary,
+                    onPressed: onUnlogWeight,
+                  ),
+                  SizedBox(width: AppSpacing.md),
+                ],
+                PillButton(
+                  variant: PillButtonVariant.glass,
+                  height: AppSizes.s28,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  label: viewModel.addWeightLabel,
+                  labelStyle: AppTypography.captionSemiBold,
+                  onPressed: onAddWeight,
+                ),
+              ],
             ),
           ),
           SizedBox(height: AppSpacing.xl),
@@ -100,7 +123,7 @@ class _WeightHeadline extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
           child: Text(
             viewModel.weightUnit,
-            style: AppTypography.labelMediumRegular.copyWith(
+            style: AppTypography.bodyXSmallRegular.copyWith(
               color: colors.textSecondary,
             ),
           ),
@@ -121,7 +144,7 @@ class _WeightHeadline extends StatelessWidget {
               SizedBox(width: AppSpacing.xxs),
               Text(
                 viewModel.weightChangeLabel,
-                style: AppTypography.bodyMediumMediumTight.copyWith(
+                style: AppTypography.bodySmallMediumTight.copyWith(
                   color: changeColor,
                 ),
               ),
@@ -143,7 +166,7 @@ class _WeightHeadline extends StatelessWidget {
               SizedBox(width: AppSpacing.xs),
               Text(
                 viewModel.weightTargetValueLabel,
-                style: AppTypography.bodyMediumMediumTight.copyWith(
+                style: AppTypography.bodySmallMediumTight.copyWith(
                   color: colors.accentOrange,
                 ),
               ),

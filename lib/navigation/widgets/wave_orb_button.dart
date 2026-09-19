@@ -59,16 +59,11 @@ class _WaveOrbButtonState extends State<WaveOrbButton> {
                   ),
                 ],
               ),
-              child: ClipRect(
-                child: OverflowBox(
-                  maxWidth: AppSizes.s128,
-                  maxHeight: AppSizes.s128,
-                  child: SvgPicture.asset(
-                    AppImages.waveIcon,
-                    width: AppSizes.s128,
-                    height: AppSizes.s128,
-                  ),
-                ),
+              child: SvgPicture.asset(
+                AppImages.waveIcon,
+                width: AppSizes.s52,
+                height: AppSizes.s52,
+                theme: SvgTheme(currentColor: context.colors.primary),
               ),
             ),
           ),

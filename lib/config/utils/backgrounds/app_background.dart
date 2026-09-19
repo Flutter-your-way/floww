@@ -1,8 +1,28 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-enum AppBackgroundMode { defaultMode, flow, steady, restore }
+import 'package:floww/config/constants/app_images.dart';
+import 'package:floww/config/constants/app_motion.dart';
+import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/config/theme/theme_controller.dart';
+
+enum AppBackgroundMode {
+  defaultMode,
+  flow,
+  steady,
+  restore;
+
+  static AppBackgroundMode of(AppThemeMode mode) => switch (mode) {
+    AppThemeMode.flow => AppBackgroundMode.flow,
+    AppThemeMode.steady => AppBackgroundMode.steady,
+    AppThemeMode.restore => AppBackgroundMode.restore,
+  };
+
+  static AppBackgroundMode active(BuildContext context) =>
+      of(context.watch<ThemeModeController>().mode);
+}
 
 class AppBackground extends StatelessWidget {
   const AppBackground({
@@ -22,29 +42,32 @@ class AppBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final decoration = _decoration;
+    final layer = _BackgroundLayer(decoration: _decoration, modeKey: _modeKey);
 
     if (scrollable) {
       return _ScrollableBackground(
-        decoration: decoration,
+        layer: layer,
         safeAreaTop: safeAreaTop,
         child: child,
       );
     }
 
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: decoration,
-      child: SafeArea(
-        top: safeAreaTop,
-        bottom: false,
-        left: false,
-        right: false,
-        child: child,
-      ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        layer,
+        SafeArea(
+          top: safeAreaTop,
+          bottom: false,
+          left: false,
+          right: false,
+          child: child,
+        ),
+      ],
     );
   }
+
+  String get _modeKey => '${mode.name}_$isInner';
 
   BoxDecoration get _decoration {
     if (mode == AppBackgroundMode.defaultMode) {
@@ -65,31 +88,76 @@ class AppBackground extends StatelessWidget {
   String get _imagePath {
     switch (mode) {
       case AppBackgroundMode.flow:
-        return isInner
-            ? 'assets/images/floww_inner.png'
-            : 'assets/images/floww_main.png';
+        return isInner ? AppImages.flowInner : AppImages.flowMain;
       case AppBackgroundMode.steady:
-        return isInner
-            ? 'assets/images/steady_inner.png'
-            : 'assets/images/steady_main.png';
+        return isInner ? AppImages.steadyInner : AppImages.steadyMain;
       case AppBackgroundMode.restore:
-        return isInner
-            ? 'assets/images/restore_inner.png'
-            : 'assets/images/restore_main.png';
+        return isInner ? AppImages.restoreInner : AppImages.restoreMain;
       default:
-        return 'assets/images/floww_main.png';
+        return AppImages.flowMain;
     }
+  }
+}
+
+class _BackgroundLayer extends StatefulWidget {
+  const _BackgroundLayer({required this.decoration, required this.modeKey});
+
+  final BoxDecoration decoration;
+  final String modeKey;
+
+  @override
+  State<_BackgroundLayer> createState() => _BackgroundLayerState();
+}
+
+class _BackgroundLayerState extends State<_BackgroundLayer> {
+  late BoxDecoration _decoration = widget.decoration;
+  late String _modeKey = widget.modeKey;
+
+  @override
+  void didUpdateWidget(covariant _BackgroundLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.modeKey != _modeKey) _resolve();
+  }
+
+  Future<void> _resolve() async {
+    final decoration = widget.decoration;
+    final modeKey = widget.modeKey;
+    final image = decoration.image?.image;
+
+    if (image != null) {
+      await precacheImage(image, context);
+      if (!mounted || widget.modeKey != modeKey) return;
+    }
+
+    setState(() {
+      _decoration = decoration;
+      _modeKey = modeKey;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: AppMotion.modeShift,
+      switchInCurve: AppMotion.expandCurve,
+      switchOutCurve: AppMotion.collapseCurve,
+      layoutBuilder: (currentChild, previousChildren) => Stack(
+        fit: StackFit.expand,
+        children: [...previousChildren, ?currentChild],
+      ),
+      child: DecoratedBox(key: ValueKey(_modeKey), decoration: _decoration),
+    );
   }
 }
 
 class _ScrollableBackground extends StatefulWidget {
   const _ScrollableBackground({
-    required this.decoration,
+    required this.layer,
     required this.safeAreaTop,
     required this.child,
   });
 
-  final BoxDecoration decoration;
+  final Widget layer;
   final bool safeAreaTop;
   final Widget child;
 
@@ -120,7 +188,7 @@ class _ScrollableBackgroundState extends State<_ScrollableBackground> {
             offset: Offset(0, -_backgroundShift),
             child: child,
           ),
-          child: DecoratedBox(decoration: widget.decoration),
+          child: widget.layer,
         ),
         SafeArea(
           top: widget.safeAreaTop,

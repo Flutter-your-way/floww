@@ -63,7 +63,7 @@ class _InnerPageScaffoldState extends State<InnerPageScaffold> {
     return Scaffold(
       backgroundColor: context.colors.backgroundPrimary,
       body: AppBackground(
-        mode: AppBackgroundMode.flow,
+        mode: AppBackgroundMode.active(context),
         isInner: true,
         safeAreaTop: false,
         scrollable: false,

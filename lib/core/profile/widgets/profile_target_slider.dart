@@ -47,7 +47,7 @@ class ProfileTargetSlider extends StatelessWidget {
             SizedBox(width: AppSpacing.xs),
             Text(
               spec.unit,
-              style: AppTypography.bodyMediumMedium.copyWith(
+              style: AppTypography.bodySmallMediumTight.copyWith(
                 color: colors.textSubtle,
               ),
             ),

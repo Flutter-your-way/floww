@@ -108,15 +108,22 @@ class CreateExerciseSheet extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: AppSpacing.xl2),
-                  PillButton(
-                    label: 'Add to Library',
-                    icon: Icons.add,
-                    onPressed: viewModel.canSaveDraft
-                        ? () {
-                            viewModel.saveDraft();
-                            Navigator.of(context).maybePop();
-                          }
-                        : null,
+                  Align(
+                    child: IntrinsicWidth(
+                      child: PillButton(
+                        label: 'Add to Library',
+                        icon: Icons.add,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl3,
+                        ),
+                        onPressed: viewModel.canSaveDraft
+                            ? () {
+                                viewModel.saveDraft();
+                                Navigator.of(context).maybePop();
+                              }
+                            : null,
+                      ),
+                    ),
                   ),
                 ],
               ),

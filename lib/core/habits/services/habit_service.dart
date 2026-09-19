@@ -87,7 +87,7 @@ class HabitService {
     );
   }
 
-  Future<void> createHabit(
+  Future<String> createHabit(
     HabitDraft draft, {
     String? id,
     HabitIconKind icon = HabitIconKind.clipboard,
@@ -111,6 +111,7 @@ class HabitService {
         about: about,
       );
       await document.set(habit.toJson());
+      return document.id;
     },
   );
 
@@ -166,13 +167,13 @@ class HabitService {
     return habits;
   }
 
-  Future<void> _guard(
+  Future<T> _guard<T>(
     String operation,
     String failureMessage,
-    Future<void> Function() action,
+    Future<T> Function() action,
   ) async {
     try {
-      await action();
+      return await action();
     } on HabitException {
       rethrow;
     } catch (e, stackTrace) {

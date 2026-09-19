@@ -11,36 +11,44 @@ Future<T?> showAppFloatingSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
 }) {
+  final theme = Theme.of(context);
+
   return showGeneralDialog<T>(
     context: context,
     barrierDismissible: true,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: Colors.transparent,
     transitionDuration: AppFloatingSheet.transitionDuration,
-    pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+    pageBuilder: (context, animation, secondaryAnimation) => Theme(
+      data: theme,
+      child: Builder(builder: builder),
+    ),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       final curved = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,
         reverseCurve: Curves.easeInCubic,
       );
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          IgnorePointer(
-            child: FadeTransition(
-              opacity: curved,
-              child: const _SheetBackdrop(),
+      return Theme(
+        data: theme,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            IgnorePointer(
+              child: FadeTransition(
+                opacity: curved,
+                child: const _SheetBackdrop(),
+              ),
             ),
-          ),
-          SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(curved),
-            child: child,
-          ),
-        ],
+            SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 1),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          ],
+        ),
       );
     },
   );

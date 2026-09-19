@@ -4,10 +4,13 @@ import 'package:flutter/foundation.dart';
 
 import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/dates/day_rollover_timer.dart';
 import 'package:floww/core/achievements/models/streak_summary.dart';
 import 'package:floww/core/achievements/services/achievements_service.dart';
+import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
 import 'package:floww/core/home/services/home_service.dart';
 import 'package:floww/core/home/services/home_snapshot_builder.dart';
@@ -18,7 +21,8 @@ class HomeProvider extends ChangeNotifier {
   HomeProvider(
     this._service,
     this._builder,
-    this._achievementsService, {
+    this._achievementsService,
+    this._flowModeController, {
     MuscleMapService? muscleMapService,
   }) : _muscleMapService = muscleMapService ?? MuscleMapService() {
     _greeting = _greetingForHour(DateTime.now().hour);
@@ -36,6 +40,7 @@ class HomeProvider extends ChangeNotifier {
   final HomeService _service;
   final HomeSnapshotBuilder _builder;
   final AchievementsService _achievementsService;
+  final FlowModeController _flowModeController;
   final MuscleMapService _muscleMapService;
 
   late final DayRolloverTimer _dayRollover;
@@ -59,22 +64,25 @@ class HomeProvider extends ChangeNotifier {
 
   int get flowScorePercent => _snapshot.flowScorePercent;
 
-  String? get recoveryLevel =>
-      _snapshot.recovery.hasData ? _snapshot.recovery.levelLabel : null;
+  String get recoveryLevel => _snapshot.recovery.levelLabel;
 
-  AppThemeMode? get todayMode => _snapshot.flowMode?.mode;
+  bool get hasRecoveryData => _snapshot.recovery.hasData;
+
+  AppThemeMode get todayMode => _snapshot.flowMode.mode;
 
   FlowScoreBreakdown get flowScoreBreakdown => _snapshot.flowScoreBreakdown;
 
   List<FlowScoreBoost> get flowScoreBoosts => _snapshot.flowScoreBoosts;
 
-  FlowModeDetail? get flowModeDetail => _snapshot.flowMode;
+  FlowModeDetail get flowModeDetail => _snapshot.flowMode;
 
   RecoveryDetail get recoveryDetail => _snapshot.recovery;
 
   List<HabitItem> get habits => _snapshot.habits;
 
   WorkoutRecommendation? get workout => _snapshot.workout;
+
+  CompletedWorkout? get completedWorkout => _snapshot.completedWorkout;
 
   NutritionSummary get nutrition => _snapshot.nutrition;
 
@@ -87,10 +95,8 @@ class HomeProvider extends ChangeNotifier {
 
   String? get waveInsight => _snapshot.waveInsight;
 
-  StreakSummary get streakSummary => _achievementsService.streakSummaryOf(
-    _records.flowHistory,
-    date: _date,
-  );
+  StreakSummary get streakSummary =>
+      _achievementsService.streakSummaryOf(_records.flowHistory, date: _date);
 
   Future<void> _loadMuscleMap() async {
     try {
@@ -123,7 +129,28 @@ class HomeProvider extends ChangeNotifier {
     _snapshot = _builder.build(records, date: _date);
     _isReady = true;
     notifyListeners();
+    _flowModeController.reportScore(_snapshot.flowScorePercent);
     unawaited(_persistFlow(_snapshot.todayFlowEntry));
+  }
+
+  Future<void> toggleHabit(String id) async {
+    final habits = HabitSnapshot.of(_records.habits).habitsFor(_date);
+    final habit = habits.where((habit) => habit.id == id).firstOrNull;
+    if (habit == null) return;
+
+    final updated = [
+      for (final entry in habits)
+        if (entry.id == id)
+          entry.copyWith(value: entry.isCompleted ? 0 : entry.target)
+        else
+          entry,
+    ];
+
+    try {
+      await _service.saveHabitDay(_date, updated);
+    } on HabitException catch (e) {
+      debugPrint('Home habit toggle failed: ${e.message}');
+    }
   }
 
   Future<void> _persistFlow(DailyFlowEntry? entry) async {

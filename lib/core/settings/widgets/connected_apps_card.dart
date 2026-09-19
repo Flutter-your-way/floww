@@ -15,18 +15,20 @@ class ConnectedAppsCard extends StatelessWidget {
     required this.apps,
     required this.connectLabel,
     required this.connectedLabel,
-    this.onConnect,
+    required this.isPending,
+    this.onToggle,
   });
 
   final List<ConnectedAppItem> apps;
   final String connectLabel;
   final String connectedLabel;
-  final ValueChanged<ConnectedAppItem>? onConnect;
+  final bool Function(String id) isPending;
+  final ValueChanged<ConnectedAppItem>? onToggle;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final onConnect = this.onConnect;
+    final onToggle = this.onToggle;
 
     return AppCard(
       padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -44,7 +46,8 @@ class ConnectedAppsCard extends StatelessWidget {
               app: app,
               connectLabel: connectLabel,
               connectedLabel: connectedLabel,
-              onConnect: onConnect == null ? null : () => onConnect(app),
+              isPending: isPending(app.id),
+              onToggle: onToggle == null ? null : () => onToggle(app),
             ),
           ],
         ],
@@ -58,13 +61,15 @@ class _ConnectedAppRow extends StatelessWidget {
     required this.app,
     required this.connectLabel,
     required this.connectedLabel,
-    this.onConnect,
+    required this.isPending,
+    this.onToggle,
   });
 
   final ConnectedAppItem app;
   final String connectLabel;
   final String connectedLabel;
-  final VoidCallback? onConnect;
+  final bool isPending;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +102,8 @@ class _ConnectedAppRow extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl2),
             label: app.isConnected ? connectedLabel : connectLabel,
             labelStyle: AppTypography.bodyMediumSemiBold,
-            onPressed: app.isConnected ? null : onConnect,
+            isLoading: isPending,
+            onPressed: isPending ? null : onToggle,
           ),
         ],
       ),

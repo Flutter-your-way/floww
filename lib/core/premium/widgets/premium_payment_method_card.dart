@@ -36,7 +36,7 @@ class PremiumPaymentMethodCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CardHeader(title: title, titleStyle: AppTypography.heading3Bold),
+          CardHeader(title: title, titleStyle: AppTypography.heading4SemiBold),
           Divider(
             height: AppSpacing.xl2,
             thickness: AppSizes.s1,
@@ -60,7 +60,7 @@ class PremiumPaymentMethodCard extends StatelessWidget {
                     Text(
                       expiryLabel,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodyMediumMedium.copyWith(
+                      style: AppTypography.bodySmallRegularTight.copyWith(
                         color: colors.textSubtle,
                       ),
                     ),

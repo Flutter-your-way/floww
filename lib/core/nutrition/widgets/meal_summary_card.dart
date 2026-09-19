@@ -3,9 +3,9 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
-import 'package:floww/core/nutrition/widgets/macro_split_bar.dart';
 import 'package:floww/core/nutrition/widgets/meal_type_badge.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
 
@@ -71,42 +71,15 @@ class MealSummaryCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppSpacing.xl),
-          _MacroLegendRow(shares: shares),
-          SizedBox(height: AppSpacing.sm),
-          MacroSplitBar(shares: shares, height: AppSizes.s10),
-          SizedBox(height: AppSpacing.sm),
-          _MacroValuesRow(shares: shares, captionStyle: captionStyle),
+          _MacroColumnsRow(shares: shares, captionStyle: captionStyle),
         ],
       ),
     );
   }
 }
 
-class _MacroLegendRow extends StatelessWidget {
-  const _MacroLegendRow({required this.shares});
-
-  final List<MacroShare> shares;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final item in shares)
-          Expanded(
-            child: Text(
-              item.macro.label,
-              style: context.textTheme.labelSmall?.copyWith(
-                color: item.macro.colorOf(context),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _MacroValuesRow extends StatelessWidget {
-  const _MacroValuesRow({required this.shares, required this.captionStyle});
+class _MacroColumnsRow extends StatelessWidget {
+  const _MacroColumnsRow({required this.shares, required this.captionStyle});
 
   final List<MacroShare> shares;
   final TextStyle? captionStyle;
@@ -114,24 +87,60 @@ class _MacroValuesRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final item in shares)
+        for (var i = 0; i < shares.length; i++) ...[
+          if (i > 0) SizedBox(width: AppSpacing.lg),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  item.amountLabel,
-                  style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(width: AppSpacing.xs),
-                Text(item.shareLabel, style: captionStyle),
-              ],
+            child: _MacroColumn(
+              share: shares[i],
+              captionStyle: captionStyle,
             ),
           ),
+        ],
+      ],
+    );
+  }
+}
+
+class _MacroColumn extends StatelessWidget {
+  const _MacroColumn({required this.share, required this.captionStyle});
+
+  final MacroShare share;
+  final TextStyle? captionStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          share.macro.label,
+          style: context.textTheme.labelSmall?.copyWith(
+            color: share.macro.colorOf(context),
+          ),
+        ),
+        SizedBox(height: AppSpacing.sm),
+        AppProgressBar(
+          progress: share.share,
+          height: AppSizes.s10,
+          color: share.macro.colorOf(context),
+        ),
+        SizedBox(height: AppSpacing.sm),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              share.amountLabel,
+              style: context.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(width: AppSpacing.xs),
+            Text(share.shareLabel, style: captionStyle),
+          ],
+        ),
       ],
     );
   }

@@ -151,10 +151,15 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 ),
               ),
               SizedBox(height: AppSpacing.xl2),
-              PillButton(
-                label: _viewModel.submitLabel,
-                icon: Icons.check_rounded,
-                onPressed: _canSubmit ? _submit : null,
+              Align(
+                child: IntrinsicWidth(
+                  child: PillButton(
+                    label: _viewModel.submitLabel,
+                    icon: Icons.check_rounded,
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
+                    onPressed: _canSubmit ? _submit : null,
+                  ),
+                ),
               ),
             ],
           ),

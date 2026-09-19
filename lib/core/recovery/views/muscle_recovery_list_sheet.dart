@@ -28,14 +28,19 @@ class MuscleRecoveryListSheet extends StatelessWidget {
     required BuildContext context,
     required MuscleRecoveryViewModel viewModel,
   }) {
+    final theme = Theme.of(context);
+
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: context.colors.scrim,
-      builder: (_) => ChangeNotifierProvider<MuscleRecoveryViewModel>.value(
-        value: viewModel,
-        child: const MuscleRecoveryListSheet(),
+      builder: (_) => Theme(
+        data: theme,
+        child: ChangeNotifierProvider<MuscleRecoveryViewModel>.value(
+          value: viewModel,
+          child: const MuscleRecoveryListSheet(),
+        ),
       ),
     );
   }

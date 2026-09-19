@@ -45,10 +45,12 @@ class AppInfoSheet extends StatelessWidget {
           ),
         ),
         footer: Center(
-          child: PillButton(
-            label: confirmLabel,
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl4),
-            onPressed: () => NavigationService.instance.pop(),
+          child: IntrinsicWidth(
+            child: PillButton(
+              label: confirmLabel,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl4),
+              onPressed: () => NavigationService.instance.pop(),
+            ),
           ),
         ),
       ),

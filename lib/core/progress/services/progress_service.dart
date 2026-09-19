@@ -240,6 +240,15 @@ class ProgressService {
     );
   }
 
+  Future<void> deleteWeightLog(String id) async {
+    final uid = _requireUserId;
+    await _write(
+      'deleteWeightLog',
+      'Could not remove this weigh-in. Please try again.',
+      () => _weightLogs(uid).doc(id).delete(),
+    );
+  }
+
   Future<void> saveDailyFlow(List<DailyFlowEntry> entries) async {
     final uid = userId;
     if (uid == null || entries.isEmpty) return;

@@ -7,6 +7,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/animations/date_change_transition.dart';
+import 'package:floww/config/widgets/animations/tab_content_switcher.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/config/widgets/effects/luminosity_layer.dart';
@@ -116,7 +117,7 @@ class WorkoutView extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               AppBackground(
-                mode: AppBackgroundMode.flow,
+                mode: AppBackgroundMode.active(context),
                 safeAreaTop: false,
                 scrollable: true,
                 child: Column(
@@ -147,97 +148,102 @@ class WorkoutView extends StatelessWidget {
                       selected: viewModel.selectedTab,
                       onSelected: viewModel.selectTab,
                     ),
-                    SizedBox(height: AppSizes.s40),
+                    SizedBox(height: AppSpacing.lg),
                     Padding(
                       padding: horizontalPadding,
                       child: DateChangeTransition(
                         value: viewModel.selectedDate,
                         direction: viewModel.dateDirection,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (viewModel.isLoading)
-                              const AppSectionLoader()
-                            else if (viewModel.errorMessage != null)
-                              AppErrorCard(
-                                message: viewModel.errorMessage!,
-                                onRetry: viewModel.retry,
-                              ),
-                            if (viewModel.showOverview && overview != null)
-                              LuminosityLayer(
-                                enabled: viewModel.isReadOnly,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    if (viewModel.showReadOnlyBanner) ...[
-                                      TipCard(
-                                        title: viewModel.readOnlyLabel,
-                                        icon:
-                                            Icons.local_fire_department_rounded,
-                                      ),
-                                      SizedBox(height: AppSpacing.lg),
-                                    ],
-                                    WorkoutOverviewSection(
-                                      overview: overview,
-                                      showSummary: !viewModel.isReadOnly,
-                                      onViewAnatomy: () =>
-                                          _openAnatomy(context, viewModel),
-                                      onViewDetails: overviewWorkoutId == null
-                                          ? null
-                                          : () => _openWorkoutDetails(
-                                              overviewWorkoutId,
-                                            ),
-                                      onSummaryInfo: () => _showInfo(
-                                        context,
-                                        title: 'Workout Summary',
-                                        message: viewModel.summaryInfoMessage,
-                                      ),
-                                      onTrainingEffectInfo: () => _showInfo(
-                                        context,
-                                        title: 'Training Effect',
-                                        message:
-                                            viewModel.trainingEffectInfoMessage,
-                                      ),
-                                    ),
-                                  ],
+                        child: TabContentSwitcher(
+                          reverse: viewModel.tabReverse,
+                          child: Column(
+                            key: ValueKey(viewModel.selectedTab),
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (viewModel.isLoading)
+                                const AppSectionLoader()
+                              else if (viewModel.errorMessage != null)
+                                AppErrorCard(
+                                  message: viewModel.errorMessage!,
+                                  onRetry: viewModel.retry,
                                 ),
-                              ),
-                            if (viewModel.showHistory)
-                              WorkoutHistorySection(
-                                sessions: viewModel.historySessions,
-                                onOpen: (session) =>
-                                    _openWorkoutDetails(session.id),
-                              ),
-                            if (viewModel.showEmptyState)
-                              WorkoutEmptyStateCard(
-                                icon: viewModel.emptyState.icon,
-                                title: viewModel.emptyState.title,
-                                message: viewModel.emptyState.message,
-                              ),
-                            if (viewModel.showSuggestion &&
-                                suggestion != null) ...[
-                              SizedBox(height: AppSpacing.lg),
-                              SuggestedWorkoutCard(
-                                title: viewModel.suggestionTitle,
-                                suggestion: suggestion,
-                                onStartWorkout: () => _startWorkout(viewModel),
-                              ),
-                            ],
-                            if (viewModel.showExercises)
-                              const ExerciseLibrarySection(),
-                            if (viewModel.showPrograms) ...[
-                              if (activeProgram != null) ...[
-                                ActiveProgramCard(program: activeProgram),
-                                SizedBox(height: AppSpacing.xl3),
+                              if (viewModel.showOverview && overview != null)
+                                LuminosityLayer(
+                                  enabled: viewModel.isReadOnly,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      if (viewModel.showReadOnlyBanner) ...[
+                                        TipCard(
+                                          title: viewModel.readOnlyLabel,
+                                          icon: Icons
+                                              .local_fire_department_rounded,
+                                        ),
+                                        SizedBox(height: AppSpacing.lg),
+                                      ],
+                                      WorkoutOverviewSection(
+                                        overview: overview,
+                                        showSummary: !viewModel.isReadOnly,
+                                        onViewAnatomy: () =>
+                                            _openAnatomy(context, viewModel),
+                                        onViewDetails: overviewWorkoutId == null
+                                            ? null
+                                            : () => _openWorkoutDetails(
+                                                overviewWorkoutId,
+                                              ),
+                                        onSummaryInfo: () => _showInfo(
+                                          context,
+                                          title: 'Workout Summary',
+                                          message: viewModel.summaryInfoMessage,
+                                        ),
+                                        onTrainingEffectInfo: () => _showInfo(
+                                          context,
+                                          title: 'Training Effect',
+                                          message: viewModel
+                                              .trainingEffectInfoMessage,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (viewModel.showHistory)
+                                WorkoutHistorySection(
+                                  sessions: viewModel.historySessions,
+                                  onOpen: (session) =>
+                                      _openWorkoutDetails(session.id),
+                                ),
+                              if (viewModel.showEmptyState)
+                                WorkoutEmptyStateCard(
+                                  icon: viewModel.emptyState.icon,
+                                  title: viewModel.emptyState.title,
+                                  message: viewModel.emptyState.message,
+                                ),
+                              if (viewModel.showSuggestion &&
+                                  suggestion != null) ...[
+                                SizedBox(height: AppSpacing.lg),
+                                SuggestedWorkoutCard(
+                                  title: viewModel.suggestionTitle,
+                                  suggestion: suggestion,
+                                  onStartWorkout: () =>
+                                      _startWorkout(viewModel),
+                                ),
                               ],
-                              ProgramListSection(
-                                programs: viewModel.programs,
-                                onStart: (program) =>
-                                    _openProgram(context, viewModel, program),
-                              ),
+                              if (viewModel.showExercises)
+                                const ExerciseLibrarySection(),
+                              if (viewModel.showPrograms) ...[
+                                if (activeProgram != null) ...[
+                                  ActiveProgramCard(program: activeProgram),
+                                  SizedBox(height: AppSpacing.xl3),
+                                ],
+                                ProgramListSection(
+                                  programs: viewModel.programs,
+                                  onStart: (program) =>
+                                      _openProgram(context, viewModel, program),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),

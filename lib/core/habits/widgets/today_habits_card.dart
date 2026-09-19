@@ -32,7 +32,7 @@ class TodayHabitsCard extends StatelessWidget {
         children: [
           CardHeader(
             title: title,
-            titleStyle: AppTypography.labelLargeSemiBold,
+            titleStyle: AppTypography.heading4SemiBold,
           ),
           SizedBox(height: AppSpacing.xl),
           for (var index = 0; index < items.length; index++) ...[

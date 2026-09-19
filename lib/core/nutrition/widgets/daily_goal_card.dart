@@ -3,8 +3,8 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/widgets/nutrition/macro_segment_bar.dart';
 import 'package:floww/config/widgets/nutrition/macro_value_label.dart';
-import 'package:floww/core/nutrition/widgets/macro_segment_bar.dart';
 
 class DailyGoalCard extends StatelessWidget {
   const DailyGoalCard({
@@ -28,7 +28,7 @@ class DailyGoalCard extends StatelessWidget {
         children: [
           Text(
             'Daily Goal',
-            style: AppTypography.labelLargeSemiBold.copyWith(
+            style: AppTypography.heading4SemiBold.copyWith(
               color: context.colors.textPrimary,
             ),
           ),

@@ -45,7 +45,7 @@ class HabitStatTile extends StatelessWidget {
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.labelLargeMedium.copyWith(
+                style: AppTypography.bodySmallMediumTight.copyWith(
                   color: colors.textSubtle,
                 ),
               ),
@@ -60,7 +60,7 @@ class HabitStatTile extends StatelessWidget {
               child: Text(
                 value,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.heading3Bold,
+                style: AppTypography.bodyXLargeBold,
               ),
             ),
             if (unit != null) ...[
@@ -69,7 +69,7 @@ class HabitStatTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                 child: Text(
                   unit,
-                  style: AppTypography.bodySmallMediumTight.copyWith(
+                  style: AppTypography.bodyXSmallRegular.copyWith(
                     color: colors.textSecondary,
                   ),
                 ),

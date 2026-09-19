@@ -40,7 +40,7 @@ class WaveInsightsCard extends StatelessWidget {
             icon: Icons.bolt,
             iconColor: colors.primary,
             iconSize: AppSizes.s16,
-            titleStyle: AppTypography.labelLargeSemiBold,
+            titleStyle: AppTypography.heading4SemiBold,
             trailing: Text(
               rangeLabel,
               style: AppTypography.bodySmallRegularTight.copyWith(

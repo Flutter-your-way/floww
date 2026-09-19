@@ -62,7 +62,7 @@ class _PremiumFeatureRow extends StatelessWidget {
               SizedBox(height: AppSpacing.xxs),
               Text(
                 feature.description,
-                style: AppTypography.bodyMediumMedium.copyWith(
+                style: AppTypography.bodySmallRegularTight.copyWith(
                   color: colors.textSubtle,
                 ),
               ),

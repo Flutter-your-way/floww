@@ -24,7 +24,7 @@ class ProfileMetricCard extends StatelessWidget {
         children: [
           CardHeader(
             title: section.title,
-            titleStyle: AppTypography.heading4,
+            titleStyle: AppTypography.heading4SemiBold,
             trailing: _ProfileEditAction(label: section.actionLabel),
             onTap: onEdit,
           ),
@@ -56,7 +56,7 @@ class _ProfileEditAction extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.labelMediumSemiBold.copyWith(
+          style: AppTypography.bodySmallMediumTight.copyWith(
             color: colors.primary,
           ),
         ),
@@ -105,7 +105,7 @@ class _ProfileMetricRow extends StatelessWidget {
           SizedBox(width: AppSpacing.xs),
           Text(
             unit,
-            style: AppTypography.bodyMediumMedium.copyWith(
+            style: AppTypography.bodySmallMediumTight.copyWith(
               color: colors.textSubtle,
             ),
           ),

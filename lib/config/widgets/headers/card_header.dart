@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 
 class CardHeader extends StatelessWidget {
   const CardHeader({
@@ -42,7 +43,11 @@ class CardHeader extends StatelessWidget {
           child: Text(
             title,
             overflow: TextOverflow.ellipsis,
-            style: titleStyle ?? context.textTheme.titleLarge,
+            style:
+                titleStyle ??
+                AppTypography.heading4SemiBold.copyWith(
+                  color: context.colors.textPrimary,
+                ),
           ),
         ),
         if (titleTrailing != null) ...[

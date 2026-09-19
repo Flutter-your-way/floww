@@ -46,7 +46,7 @@ class _TypewriterTextState extends State<TypewriterText> {
   void _startTyping() {
     _timer?.cancel();
     _displayedCharacterCount = 0;
-    
+
     if (widget.text.isEmpty) {
       widget.onFinished?.call();
       return;
@@ -77,9 +77,7 @@ class _TypewriterTextState extends State<TypewriterText> {
       text: TextSpan(
         style: widget.style,
         children: [
-          TextSpan(
-            text: widget.text.substring(0, _displayedCharacterCount),
-          ),
+          TextSpan(text: widget.text.substring(0, _displayedCharacterCount)),
           TextSpan(
             text: widget.text.substring(_displayedCharacterCount),
             style: const TextStyle(color: Colors.transparent),

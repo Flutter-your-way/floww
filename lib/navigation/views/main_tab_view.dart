@@ -6,6 +6,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/core/flow_mode/widgets/flow_mode_ambient_layer.dart';
 import 'package:floww/core/wave/views/wave_chat_sheet.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
@@ -104,10 +105,8 @@ class _MainTabViewState extends State<MainTabView> {
     return ChangeNotifierProvider.value(
       value: _controller,
       child: Consumer<MainTabController>(
-        builder: (context, controller, child) => _buildScaffold(
-          context,
-          controller,
-        ),
+        builder: (context, controller, child) =>
+            _buildScaffold(context, controller),
       ),
     );
   }
@@ -134,6 +133,7 @@ class _MainTabViewState extends State<MainTabView> {
               ),
             ),
           ),
+          const Positioned.fill(child: FlowModeAmbientLayer()),
           Positioned(
             left: 0,
             right: 0,

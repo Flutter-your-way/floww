@@ -8,6 +8,7 @@ import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/streams/combine_latest.dart';
+import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
 import 'package:floww/core/health/services/health_log_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
@@ -120,18 +121,20 @@ class HomeService {
   Future<void> saveDailyFlow(DailyFlowEntry entry) =>
       _progressService.saveDailyFlow([entry]);
 
+  Future<void> saveHabitDay(DateTime date, List<Habit> habits) =>
+      _habitService.saveDay(date, habits);
+
   static Stream<Object?> _guarded<T>(
     Stream<T> source,
     T fallback,
     String label,
-  ) =>
-      source.transform(
-        StreamTransformer<T, T>.fromHandlers(
-          handleData: (data, sink) => sink.add(data),
-          handleError: (error, stackTrace, sink) {
-            debugPrint('Home $label stream failed: $error');
-            sink.add(fallback);
-          },
-        ),
-      );
+  ) => source.transform(
+    StreamTransformer<T, T>.fromHandlers(
+      handleData: (data, sink) => sink.add(data),
+      handleError: (error, stackTrace, sink) {
+        debugPrint('Home $label stream failed: $error');
+        sink.add(fallback);
+      },
+    ),
+  );
 }

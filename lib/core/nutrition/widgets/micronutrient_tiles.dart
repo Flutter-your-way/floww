@@ -104,7 +104,7 @@ class _MicronutrientTile extends StatelessWidget {
                 SizedBox(width: AppSpacing.md),
                 Text(
                   item.percentLabel,
-                  style: context.textTheme.labelSmall?.copyWith(
+                  style: context.textTheme.bodySmall?.copyWith(
                     color: barColor ?? colors.textSecondary,
                   ),
                 ),
@@ -125,7 +125,7 @@ class _MicronutrientTile extends StatelessWidget {
                   child: Text(
                     item.goalLabel,
                     overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.labelSmall?.copyWith(
+                    style: context.textTheme.bodySmall?.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),

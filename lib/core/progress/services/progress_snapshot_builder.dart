@@ -315,7 +315,7 @@ class ProgressSnapshotBuilder {
   WeightTracking _weight(ProgressRecords records, DateTime today) {
     final entries = [
       for (final log in records.weights)
-        WeightEntry(date: log.loggedAt, weight: log.weightKg),
+        WeightEntry(id: log.id, date: log.loggedAt, weight: log.weightKg),
     ];
     final startWeight =
         records.goals.startWeightKg ??

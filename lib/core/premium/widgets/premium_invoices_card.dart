@@ -46,7 +46,7 @@ class PremiumInvoicesCard extends StatelessWidget {
         children: [
           CardHeader(
             title: title,
-            titleStyle: AppTypography.heading3Bold,
+            titleStyle: AppTypography.heading4SemiBold,
             showChevron: true,
             onTap: onOpenAll,
           ),
@@ -118,7 +118,7 @@ class _PremiumInvoiceRow extends StatelessWidget {
               Text(
                 invoice.subtitle,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodyMediumMedium.copyWith(
+                style: AppTypography.bodySmallRegularTight.copyWith(
                   color: colors.textSubtle,
                 ),
               ),

@@ -298,8 +298,13 @@ class HabitsViewModel extends ChangeNotifier {
     await addSuggestion(suggestion);
   }
 
-  Future<void> addCustomHabit(HabitDraft draft) =>
-      _run(() => _service.createHabit(draft));
+  Future<String?> addCustomHabit(HabitDraft draft) async {
+    String? createdId;
+    await _run(() async {
+      createdId = await _service.createHabit(draft);
+    });
+    return createdId;
+  }
 
   Future<void> toggleHabit(String id) {
     final habit = _habits.where((habit) => habit.id == id).firstOrNull;

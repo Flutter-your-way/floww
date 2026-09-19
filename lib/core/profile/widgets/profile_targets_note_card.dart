@@ -14,7 +14,7 @@ class ProfileTargetsNoteCard extends StatelessWidget {
     return AppCard(
       child: Text(
         message,
-        style: AppTypography.bodyMediumRegular.copyWith(
+        style: AppTypography.bodySmallRegularTight.copyWith(
           color: context.colors.textSubtle,
         ),
       ),

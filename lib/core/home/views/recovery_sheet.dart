@@ -6,6 +6,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/cards/app_icon_tile.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
+import 'package:floww/config/widgets/stats/app_stat_column.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
 import 'package:floww/core/home/widgets/recovery_metric_row.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
@@ -52,6 +53,14 @@ class RecoverySheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (metrics.isEmpty)
+              Text(
+                'Connect Apple Health or Health Connect to see your sleep, '
+                'HRV and energy.',
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+              ),
             for (var i = 0; i < metrics.length; i++) ...[
               if (i > 0) SizedBox(height: AppSpacing.xl),
               RecoveryMetricRow(metric: metrics[i]),
@@ -77,12 +86,7 @@ class _RecoveryTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'RECOVERY',
-          style: context.textTheme.bodySmall?.copyWith(
-            color: colors.textSecondary,
-          ),
-        ),
+        const AppStatLabel(label: 'RECOVERY'),
         SizedBox(height: AppSpacing.xxs),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -105,23 +109,10 @@ class _RecoveryTitle extends StatelessWidget {
                 color: colors.borderSubtle,
               ),
             ),
-            Container(
-              width: AppSizes.s6,
-              height: AppSizes.s6,
-              margin: EdgeInsets.only(
-                right: AppSpacing.sm,
-                bottom: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: colors.success,
-                shape: BoxShape.circle,
-              ),
-            ),
-            Text(
-              levelLabel,
-              style: context.textTheme.bodyLarge?.copyWith(
-                color: colors.success,
-              ),
+            AppStatValue(
+              value: levelLabel,
+              dotColor: colors.success,
+              valueColor: colors.success,
             ),
           ],
         ),

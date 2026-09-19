@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -25,17 +27,12 @@ class AppleHealthSyncCard extends StatelessWidget {
       variant: AppCardVariant.tinted,
       child: Row(
         children: [
-          Container(
-            height: AppSizes.s40,
-            width: AppSizes.s40,
-            decoration: AppShapes.decoration(
-              color: context.colors.textPrimary,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Icon(
-              Icons.favorite,
-              color: context.colors.destructive,
-              size: AppSizes.s20,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: SvgPicture.asset(
+              AppImages.appleHealth,
+              height: AppSizes.s40,
+              width: AppSizes.s40,
             ),
           ),
           SizedBox(width: AppSpacing.lg),

@@ -161,7 +161,7 @@ class ConsistencyCard extends StatelessWidget {
                   value: calorieStreak,
                   label: 'Calorie Streak',
                   caption: '≥70% calorie goal',
-                  color: colors.accentOrange,
+                  color: colors.primary,
                 ),
               ),
               SizedBox(width: AppSpacing.md),

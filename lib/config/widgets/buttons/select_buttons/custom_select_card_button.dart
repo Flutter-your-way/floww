@@ -22,14 +22,19 @@ class CustomSelectCardButton extends StatelessWidget {
     this.svgIcon,
     this.iconData,
     this.width,
-  }) : assert(svgIcon != null || iconData != null, 'Either svgIcon or iconData must be provided');
+  }) : assert(
+         svgIcon != null || iconData != null,
+         'Either svgIcon or iconData must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
     final themeColors = context.colors;
 
     // Define border color based on state
-    final borderColor = isSelected ? themeColors.primary : const Color(0xFF181818);
+    final borderColor = isSelected
+        ? themeColors.primary
+        : const Color(0xFF181818);
 
     // The background color is always solid #1F1F1F for this card style
     const backgroundColor = Color(0xFF1F1F1F);
@@ -45,10 +50,7 @@ class CustomSelectCardButton extends StatelessWidget {
         decoration: AppShapes.decoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: borderColor,
-            width: 1,
-          ),
+          side: BorderSide(color: borderColor, width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -87,8 +89,12 @@ class CustomSelectCardButton extends StatelessWidget {
   }
 
   Widget _buildIconBox(Color primaryColor) {
-    final iconBoxColor = isSelected ? primaryColor.withValues(alpha: 0.08) : const Color(0xFF181818);
-    final activeIconColor = isSelected ? primaryColor : Colors.white.withValues(alpha: 0.5);
+    final iconBoxColor = isSelected
+        ? primaryColor.withValues(alpha: 0.08)
+        : const Color(0xFF181818);
+    final activeIconColor = isSelected
+        ? primaryColor
+        : Colors.white.withValues(alpha: 0.5);
 
     return Container(
       width: 40,
@@ -103,16 +109,9 @@ class CustomSelectCardButton extends StatelessWidget {
               svgIcon!,
               width: 20,
               height: 20,
-              colorFilter: ColorFilter.mode(
-                activeIconColor,
-                BlendMode.srcIn,
-              ),
+              colorFilter: ColorFilter.mode(activeIconColor, BlendMode.srcIn),
             )
-          : Icon(
-              iconData,
-              size: 20,
-              color: activeIconColor,
-            ),
+          : Icon(iconData, size: 20, color: activeIconColor),
     );
   }
 }

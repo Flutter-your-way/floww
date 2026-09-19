@@ -8,6 +8,8 @@ import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 
+const String _flameEmoji = '🔥';
+
 class HabitStreaksCard extends StatelessWidget {
   const HabitStreaksCard({super.key, required this.items});
 
@@ -21,7 +23,7 @@ class HabitStreaksCard extends StatelessWidget {
         children: [
           CardHeader(
             title: 'Habit Streaks',
-            titleStyle: AppTypography.labelLargeSemiBold,
+            titleStyle: AppTypography.heading4SemiBold,
           ),
           SizedBox(height: AppSpacing.xl),
           for (final item in items) ...[
@@ -57,16 +59,12 @@ class _StreakRow extends StatelessWidget {
           ),
         ),
         SizedBox(width: AppSpacing.md),
-        Icon(
-          Icons.local_fire_department_rounded,
-          size: AppSizes.s20,
-          color: colors.accentOrange,
-        ),
+        Text(_flameEmoji, style: AppTypography.bodyLargeSemiBoldTight),
         SizedBox(width: AppSpacing.xs),
         Text(
           item.daysLabel,
           style: AppTypography.bodyLargeSemiBoldTight.copyWith(
-            color: colors.accentOrange,
+            color: colors.primary,
           ),
         ),
         SizedBox(width: AppSpacing.xs),

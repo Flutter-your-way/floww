@@ -63,7 +63,11 @@ class _MuscleFigure extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = this.label;
-    final figure = SvgPicture.asset(asset, height: height);
+    final figure = SvgPicture.asset(
+      asset,
+      height: height,
+      theme: SvgTheme(currentColor: context.colors.primary),
+    );
 
     if (label == null) return figure;
 

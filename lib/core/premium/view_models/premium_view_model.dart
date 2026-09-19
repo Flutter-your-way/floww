@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/currency_formatter.dart';
 import 'package:floww/config/utils/share/share_service.dart';
@@ -38,12 +40,15 @@ class PremiumViewModel extends ChangeNotifier {
   PremiumSnapshot _snapshot = PremiumService.catalog;
   StreamSubscription<PremiumSnapshot>? _subscription;
   PremiumTab _tab = PremiumTab.plan;
+  bool _tabReverse = false;
   bool _isLoading = true;
   bool _isCancelling = false;
   bool _isExportingAll = false;
   bool _disposed = false;
   String? _errorMessage;
   String? _downloadingInvoiceId;
+  String? _savedMessage;
+  Timer? _savedNoticeTimer;
 
   String get title => 'Floww Premium';
 
@@ -56,6 +61,8 @@ class PremiumViewModel extends ChangeNotifier {
   List<PremiumTab> get tabs => PremiumTab.values;
 
   PremiumTab get selectedTab => _tab;
+
+  bool get tabReverse => _tabReverse;
 
   String tabLabel(PremiumTab tab) => switch (tab) {
     PremiumTab.plan => 'My Plan',
@@ -180,9 +187,15 @@ class PremiumViewModel extends ChangeNotifier {
 
   bool get isBusyWithPdf => _isExportingAll || _downloadingInvoiceId != null;
 
-  String get invoiceShareText => 'Your Floww Premium invoice';
+  String? get savedMessage => _savedMessage;
 
-  String get statementShareText => 'Your Floww Premium payment statement';
+  String savedLocationLabel(SavedFileLocation location) =>
+      switch (location) {
+        SavedFileLocation.downloads => 'Downloads › Floww',
+        SavedFileLocation.appFolder when Platform.isAndroid =>
+          'the Floww app folder',
+        SavedFileLocation.appFolder => 'Files › On My iPhone › Floww',
+      };
 
   Future<bool> downloadInvoice(String invoiceId) async {
     if (isBusyWithPdf) return false;
@@ -205,7 +218,7 @@ class PremiumViewModel extends ChangeNotifier {
         invoice,
         customer: _service.customer,
       );
-      await _share(document, text: invoiceShareText);
+      await _save(document, label: 'Invoice');
       return true;
     } catch (e) {
       _errorMessage = _pdfErrorOf(e);
@@ -233,7 +246,7 @@ class PremiumViewModel extends ChangeNotifier {
         _snapshot.invoices,
         customer: _service.customer,
       );
-      await _share(document, text: statementShareText);
+      await _save(document, label: 'Statement');
       return true;
     } catch (e) {
       _errorMessage = _pdfErrorOf(e);
@@ -244,15 +257,42 @@ class PremiumViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _share(InvoiceDocument document, {required String text}) =>
-      _shareService.shareFile(
-        document.bytes,
-        name: document.fileName,
-        extension: InvoicePdfService.fileExtension,
+  Future<void> _save(InvoiceDocument document, {required String label}) async {
+    final saved = await _shareService.saveFile(
+      document.bytes,
+      name: document.fileName,
+      extension: InvoicePdfService.fileExtension,
+      failureMessage: 'Could not save the PDF. Please try again.',
+    );
+    _showSaved(
+      '$label saved to ${savedLocationLabel(saved.location)} · ${saved.name}',
+    );
+
+    try {
+      await _shareService.openFile(
+        saved.path,
         mimeType: InvoicePdfService.mimeType,
-        text: text,
-        failureMessage: 'Could not prepare the PDF. Please try again.',
       );
+    } on ShareException catch (error) {
+      _errorMessage = error.message;
+    }
+  }
+
+  void _showSaved(String message) {
+    _savedNoticeTimer?.cancel();
+    _savedMessage = message;
+    _savedNoticeTimer = Timer(AppMotion.notice, () {
+      _savedMessage = null;
+      _notify();
+    });
+  }
+
+  void dismissSavedMessage() {
+    if (_savedMessage == null) return;
+    _savedNoticeTimer?.cancel();
+    _savedMessage = null;
+    _notify();
+  }
 
   String _pdfErrorOf(Object error) => switch (error) {
     InvoicePdfException(:final message) => message,
@@ -271,6 +311,7 @@ class PremiumViewModel extends ChangeNotifier {
 
   void selectTab(PremiumTab tab) {
     if (_tab == tab) return;
+    _tabReverse = tab.index < _tab.index;
     _tab = tab;
     _notify();
   }
@@ -301,6 +342,7 @@ class PremiumViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _savedNoticeTimer?.cancel();
     _subscription?.cancel();
     super.dispose();
   }

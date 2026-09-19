@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/animations/animated_value_text.dart';
 import 'package:floww/config/widgets/progress/app_progress_ring.dart';
 
 class GoalRingSummary extends StatelessWidget {
@@ -25,7 +27,7 @@ class GoalRingSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final captionStyle = context.textTheme.labelSmall?.copyWith(
+    final captionStyle = context.textTheme.bodySmall?.copyWith(
       color: colors.textSecondary,
     );
 
@@ -54,13 +56,13 @@ class GoalRingSummary extends StatelessWidget {
                     width: AppSizes.s8,
                     height: AppSizes.s8,
                     decoration: BoxDecoration(
-                      color: colors.primary,
+                      color: colors.success,
                       shape: BoxShape.circle,
                     ),
                   ),
                   SizedBox(width: AppSpacing.sm),
-                  Text(
-                    shareLabel,
+                  AnimatedValueText(
+                    value: shareLabel,
                     style: context.textTheme.bodySmall?.copyWith(
                       color: colors.primary,
                     ),
@@ -73,14 +75,16 @@ class GoalRingSummary extends StatelessWidget {
         SizedBox(width: AppSpacing.lg),
         AppProgressRing(
           progress: progress,
+          glowColor: colors.textPrimary,
+          endColor: colors.textPrimary,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Consumed', style: captionStyle),
-              Text(
-                consumedValue,
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+              AnimatedValueText(
+                value: consumedValue,
+                style: AppTypography.bodyXLargeBold.copyWith(
+                  color: colors.textPrimary,
                 ),
               ),
               Text(consumedUnit, style: captionStyle),
@@ -105,15 +109,15 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           label,
-          style: context.textTheme.labelSmall?.copyWith(
+          style: context.textTheme.bodySmall?.copyWith(
             color: context.colors.textSecondary,
           ),
         ),
         SizedBox(height: AppSpacing.xs),
-        Text(
-          value,
-          style: context.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
+        AnimatedValueText(
+          value: value,
+          style: AppTypography.bodyXLargeBold.copyWith(
+            color: context.colors.textPrimary,
           ),
         ),
       ],

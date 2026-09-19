@@ -35,7 +35,7 @@ class ProfileEditField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.bodyMediumMedium.copyWith(
+          style: AppTypography.bodySmallMediumTight.copyWith(
             color: colors.textSubtle,
           ),
         ),

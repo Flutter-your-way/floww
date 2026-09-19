@@ -60,7 +60,7 @@ class MealBreakdownCard extends StatelessWidget {
               label: 'ADD MEAL',
               icon: Icons.add_circle,
               iconColor: context.colors.primary,
-              labelStyle: AppTypography.labelSmallSemiBold,
+              labelStyle: AppTypography.bodySmallSemiBold,
               onPressed: onAddMeal,
             ),
           ],
@@ -81,7 +81,7 @@ class _MealRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final onAdd = this.onAdd;
-    final captionStyle = context.textTheme.labelSmall?.copyWith(
+    final captionStyle = context.textTheme.bodySmall?.copyWith(
       color: colors.textSecondary,
     );
 

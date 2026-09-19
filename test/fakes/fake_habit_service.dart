@@ -48,16 +48,17 @@ class FakeHabitService implements HabitService {
   }
 
   @override
-  Future<void> createHabit(
+  Future<String> createHabit(
     HabitDraft draft, {
     String? id,
     HabitIconKind icon = HabitIconKind.clipboard,
     String? about,
   }) async {
     _throwOnError();
+    final habitId = id ?? 'habit-${++_nextId}';
     _habits.add(
       HabitDefinition(
-        id: id ?? 'habit-${++_nextId}',
+        id: habitId,
         title: draft.title,
         target: draft.target,
         metric: draft.metric,
@@ -69,6 +70,7 @@ class FakeHabitService implements HabitService {
       ),
     );
     _emit();
+    return habitId;
   }
 
   @override

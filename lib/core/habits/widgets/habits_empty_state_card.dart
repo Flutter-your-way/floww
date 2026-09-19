@@ -48,7 +48,7 @@ class HabitsEmptyStateCard extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: AppTypography.labelLargeMedium.copyWith(
+            style: AppTypography.bodySmallRegularTight.copyWith(
               color: colors.textSubtle,
             ),
           ),

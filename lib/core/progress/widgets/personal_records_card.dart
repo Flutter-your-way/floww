@@ -26,7 +26,7 @@ class PersonalRecordsCard extends StatelessWidget {
         children: [
           CardHeader(
             title: title,
-            titleStyle: AppTypography.labelLargeSemiBold,
+            titleStyle: AppTypography.heading4SemiBold,
           ),
           SizedBox(height: AppSpacing.xl),
           IntrinsicHeight(

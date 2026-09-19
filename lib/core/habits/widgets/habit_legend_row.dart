@@ -44,7 +44,7 @@ class _LegendChip extends StatelessWidget {
         SizedBox(width: AppSpacing.xs),
         Text(
           item.label,
-          style: AppTypography.captionSemiBold.copyWith(
+          style: AppTypography.bodySmallMediumTight.copyWith(
             color: context.colors.textPrimary,
           ),
         ),

@@ -14,6 +14,7 @@ import 'package:floww/core/achievements/views/streak_achievements_sheet.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
 import 'package:floww/core/progress/view_models/progress_view_model.dart';
 import 'package:floww/core/progress/views/log_weight_sheet.dart';
+import 'package:floww/core/progress/views/unlog_weight_sheet.dart';
 import 'package:floww/core/progress/widgets/flow_score_summary_card.dart';
 import 'package:floww/core/progress/widgets/getting_started_card.dart';
 import 'package:floww/core/progress/widgets/habit_consistency_card.dart';
@@ -51,7 +52,7 @@ class ProgressView extends StatelessWidget {
           final errorMessage = viewModel.errorMessage;
 
           return AppBackground(
-            mode: AppBackgroundMode.flow,
+            mode: AppBackgroundMode.active(context),
             safeAreaTop: false,
             scrollable: true,
             child: Padding(
@@ -115,19 +116,13 @@ class ProgressView extends StatelessWidget {
                       emptyButtonLabel: viewModel.startWorkoutLabel,
                     ),
                     SizedBox(height: AppSpacing.lg),
-                    if (insights != null) ...[
-                      WaveInsightsCard(
-                        title: viewModel.insightsTitle,
-                        rangeLabel: viewModel.monthlyRangeLabel,
-                        insights: insights,
-                        improvementLabel: viewModel.improvementLabel,
-                        weaknessLabel: viewModel.weaknessLabel,
-                      ),
-                      SizedBox(height: AppSpacing.lg),
-                    ],
                     WeightTrackingCard(
                       viewModel: viewModel,
                       onAddWeight: () => LogWeightSheet.show(
+                        context: context,
+                        viewModel: viewModel,
+                      ),
+                      onUnlogWeight: () => UnlogWeightSheet.show(
                         context: context,
                         viewModel: viewModel,
                       ),
@@ -152,6 +147,16 @@ class ProgressView extends StatelessWidget {
                       weakestHabit: viewModel.weakestHabit,
                     ),
                     SizedBox(height: AppSpacing.lg),
+                    if (insights != null) ...[
+                      WaveInsightsCard(
+                        title: viewModel.insightsTitle,
+                        rangeLabel: viewModel.monthlyRangeLabel,
+                        insights: insights,
+                        improvementLabel: viewModel.improvementLabel,
+                        weaknessLabel: viewModel.weaknessLabel,
+                      ),
+                      SizedBox(height: AppSpacing.lg),
+                    ],
                     if (viewModel.showRecords)
                       PersonalRecordsCard(
                         title: viewModel.recordsTitle,

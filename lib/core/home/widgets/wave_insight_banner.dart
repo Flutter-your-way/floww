@@ -5,8 +5,6 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
-import 'package:floww/config/theme/app_shapes.dart';
-import 'package:smooth_corner/smooth_corner.dart';
 
 class WaveInsightBanner extends StatelessWidget {
   const WaveInsightBanner({super.key, required this.message});
@@ -16,38 +14,35 @@ class WaveInsightBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      variant: AppCardVariant.tinted,
+      variant: AppCardVariant.accentOutline,
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.lg,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SmoothClipRRect(
-            smoothness: AppShapes.smoothness,
-            borderRadius: BorderRadius.circular(999),
-            child: SvgPicture.asset(AppImages.appIconSvg),
+          SvgPicture.asset(
+            AppImages.waveIcon,
+            width: AppSizes.s36,
+            height: AppSizes.s36,
+            theme: SvgTheme(currentColor: context.colors.primary),
           ),
           SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text.rich(
               TextSpan(
                 style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colors.textSecondary,
+                  color: context.colors.textPrimary,
                 ),
                 children: [
                   TextSpan(
                     text: 'Wave Insight: ',
-                    style: TextStyle(
+                    style: context.textTheme.bodySmall?.copyWith(
                       color: context.colors.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  TextSpan(
-                    text: message,
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  TextSpan(text: message),
                 ],
               ),
             ),

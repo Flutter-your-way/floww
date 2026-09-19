@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/core/achievements/models/streak_summary.dart';
 import 'package:floww/core/achievements/widgets/streak_milestones_card.dart';
@@ -23,11 +23,8 @@ class StreakAchievementsSheet extends StatelessWidget {
     BuildContext context, {
     required StreakSummary summary,
   }) {
-    return showModalBottomSheet<void>(
+    return showAppFloatingSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: context.colors.scrim,
       builder: (_) => StreakAchievementsSheet(summary: summary),
     );
   }
@@ -39,20 +36,10 @@ class StreakAchievementsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * _maxHeightFactor,
-      ),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: AppShapes.decoration(
-          color: context.colors.backgroundSecondary,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.xl),
-          ),
-        ),
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewPaddingOf(context).bottom,
+    return AppFloatingSheet(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * _maxHeightFactor,
         ),
         child: AppSheetPanel(
           title: 'Streak & Achievements',

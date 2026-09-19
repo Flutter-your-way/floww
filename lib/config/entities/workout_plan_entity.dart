@@ -137,8 +137,7 @@ class WorkoutEntryEntity {
     return total;
   }
 
-  double get targetVolumeKg =>
-      (targetWeightKg ?? 0) * targetSets * targetReps;
+  double get targetVolumeKg => (targetWeightKg ?? 0) * targetSets * targetReps;
 
   double? get bestSetWeightKg {
     double? best;
@@ -212,7 +211,6 @@ class WorkoutEntryEntity {
         if (item is Map<String, dynamic>) LoggedSetEntry.fromJson(item),
     ];
   }
-
 }
 
 class WorkoutPlanEntity {

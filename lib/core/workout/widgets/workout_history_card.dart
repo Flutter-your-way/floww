@@ -40,14 +40,16 @@ class WorkoutHistoryCard extends StatelessWidget {
                       session.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.headlineSmall,
+                      style: AppTypography.heading4SemiBold.copyWith(
+                        color: colors.textPrimary,
+                      ),
                     ),
                     SizedBox(height: AppSpacing.xs),
                     Text(
                       session.dateLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.bodyMedium?.copyWith(
+                      style: AppTypography.bodySmallRegularTight.copyWith(
                         color: colors.textSecondary,
                       ),
                     ),
@@ -62,12 +64,12 @@ class WorkoutHistoryCard extends StatelessWidget {
                   Text(
                     session.effectLabel,
                     style: AppTypography.bodyXLargeBold.copyWith(
-                      color: colors.accentOrange,
+                      color: colors.primaryAlt,
                     ),
                   ),
                   Text(
                     'effect',
-                    style: context.textTheme.bodyMedium?.copyWith(
+                    style: AppTypography.labelSmallMedium.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
@@ -124,7 +126,7 @@ class _HistoryMetric extends StatelessWidget {
             metric.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.textTheme.bodyMedium?.copyWith(
+            style: AppTypography.bodySmallRegularTight.copyWith(
               color: colors.textMuted,
             ),
           ),

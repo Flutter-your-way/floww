@@ -58,7 +58,7 @@ class _MacroColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = item.macro.colorOf(context);
-    final captionStyle = context.textTheme.labelSmall?.copyWith(
+    final captionStyle = context.textTheme.bodySmall?.copyWith(
       color: context.colors.textSecondary,
     );
 

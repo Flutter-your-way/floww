@@ -3,13 +3,17 @@ import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/core/recovery/models/muscle_group.dart';
 import 'package:floww/core/recovery/models/muscle_recovery_status.dart';
 
+enum FlowScoreBoostKind { workout, habits, nutrition }
+
 class FlowScoreBoost {
   const FlowScoreBoost({
+    required this.kind,
     required this.label,
     required this.points,
     required this.completed,
   });
 
+  final FlowScoreBoostKind kind;
   final String label;
   final int points;
   final bool completed;
@@ -71,6 +75,13 @@ class FlowModeDetail {
   final String statusLabel;
   final List<String> reasons;
   final List<String> tips;
+
+  static const empty = FlowModeDetail(
+    mode: AppThemeMode.restore,
+    statusLabel: 'Active today · Set by WAVE AI',
+    reasons: [],
+    tips: [],
+  );
 }
 
 enum RecoveryMetricAccent { sleep, hrv, energy }
@@ -137,6 +148,34 @@ class WorkoutRecommendation {
   final String durationLabel;
   final String intensityLabel;
   final List<String> reasons;
+}
+
+class CompletedWorkoutStat {
+  const CompletedWorkoutStat({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
+
+  final String label;
+  final String value;
+  final String unit;
+}
+
+class CompletedWorkout {
+  const CompletedWorkout({
+    required this.sessionId,
+    required this.title,
+    required this.completedLabel,
+    required this.stats,
+    required this.highlights,
+  });
+
+  final String sessionId;
+  final String title;
+  final String completedLabel;
+  final List<CompletedWorkoutStat> stats;
+  final List<String> highlights;
 }
 
 class NutritionSummary {
@@ -223,6 +262,7 @@ class HomeSnapshot {
     required this.flowMode,
     required this.habits,
     required this.workout,
+    required this.completedWorkout,
     required this.nutrition,
     required this.todayProgress,
     required this.muscleRecovery,
@@ -237,9 +277,10 @@ class HomeSnapshot {
     flowScoreBreakdown: FlowScoreBreakdown.empty,
     flowScoreBoosts: [],
     recovery: RecoveryDetail.empty,
-    flowMode: null,
+    flowMode: FlowModeDetail.empty,
     habits: [],
     workout: null,
+    completedWorkout: null,
     nutrition: NutritionSummary(
       totalCalories: 0,
       calorieGoal: 0,
@@ -259,9 +300,10 @@ class HomeSnapshot {
   final FlowScoreBreakdown flowScoreBreakdown;
   final List<FlowScoreBoost> flowScoreBoosts;
   final RecoveryDetail recovery;
-  final FlowModeDetail? flowMode;
+  final FlowModeDetail flowMode;
   final List<HabitItem> habits;
   final WorkoutRecommendation? workout;
+  final CompletedWorkout? completedWorkout;
   final NutritionSummary nutrition;
   final TodayProgress todayProgress;
   final MuscleRecoveryData muscleRecovery;

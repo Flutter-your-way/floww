@@ -91,13 +91,15 @@ class _LogWeightSheetState extends State<LogWeightSheet> {
           ],
         ),
         footer: Center(
-          child: PillButton(
-            height: AppSizes.s52,
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl4),
-            icon: Icons.check_rounded,
-            label: viewModel.saveWeightLabel,
-            labelStyle: AppTypography.heading4SemiBold,
-            onPressed: canSave ? _save : null,
+          child: IntrinsicWidth(
+            child: PillButton(
+              height: AppSizes.s52,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl4),
+              icon: Icons.check_rounded,
+              label: viewModel.saveWeightLabel,
+              labelStyle: AppTypography.heading4SemiBold,
+              onPressed: canSave ? _save : null,
+            ),
           ),
         ),
       ),

@@ -14,6 +14,8 @@ class ConnectedAppsViewModel extends ChangeNotifier {
   final SettingsService _service;
 
   List<ConnectedAppItem> _apps;
+  final Set<String> _pending = <String>{};
+  String? _errorMessage;
   StreamSubscription<List<ConnectedAppItem>>? _subscription;
   bool _disposed = false;
 
@@ -23,25 +25,71 @@ class ConnectedAppsViewModel extends ChangeNotifier {
 
   String get connectedLabel => 'Connected';
 
+  String get disconnectLabel => 'Disconnect';
+
+  String get cancelLabel => 'Keep Connected';
+
+  String get disconnectTitle => 'Disconnect this source?';
+
+  String get errorRetryLabel => 'Dismiss';
+
+  String? get errorMessage => _errorMessage;
+
   List<ConnectedAppItem> get apps => List.unmodifiable(_apps);
 
-  Future<void> connect(String id) async {
+  bool isPending(String id) => _pending.contains(id);
+
+  String disconnectMessage(String name) =>
+      'Floww will stop syncing recovery and activity data from $name. '
+      'You can reconnect at any time.';
+
+  ConnectedAppItem? appById(String id) {
+    for (final app in _apps) {
+      if (app.id == id) return app;
+    }
+    return null;
+  }
+
+  Future<void> setConnected(String id, bool isConnected) async {
     final index = _apps.indexWhere((app) => app.id == id);
-    if (index < 0 || _apps[index].isConnected) return;
+    if (index < 0) return;
+    final previous = _apps[index];
+    if (previous.isConnected == isConnected || _pending.contains(id)) return;
+
+    _pending.add(id);
+    _errorMessage = null;
     _apps = List<ConnectedAppItem>.of(_apps)
-      ..[index] = _apps[index].copyWith(isConnected: true);
+      ..[index] = previous.copyWith(isConnected: isConnected);
     notifyListeners();
-    await _service.setConnected(id, true);
+
+    final saved = await _service.setConnected(id, isConnected);
+    _pending.remove(id);
+    if (!saved) {
+      final current = _apps.indexWhere((app) => app.id == id);
+      if (current >= 0) {
+        _apps = List<ConnectedAppItem>.of(_apps)..[current] = previous;
+      }
+      _errorMessage = isConnected
+          ? 'Could not connect ${previous.name}. Check your connection and try again.'
+          : 'Could not disconnect ${previous.name}. Check your connection and try again.';
+    }
+    notifyListeners();
+  }
+
+  void dismissError() {
+    if (_errorMessage == null) return;
+    _errorMessage = null;
+    notifyListeners();
   }
 
   void _watch() {
-    _subscription = _service.watchConnectedApps().listen(
-      (apps) {
-        _apps = apps;
-        notifyListeners();
-      },
-      onError: (Object error) => debugPrint('connected apps failed: $error'),
-    );
+    _subscription = _service.watchConnectedApps().listen((apps) {
+      _apps = [
+        for (final app in apps)
+          _pending.contains(app.id) ? (appById(app.id) ?? app) : app,
+      ];
+      notifyListeners();
+    }, onError: (Object error) => debugPrint('connected apps failed: $error'));
   }
 
   @override

@@ -43,7 +43,7 @@ class CancelSubscriptionSheet extends StatelessWidget {
         onClose: () => Navigator.of(context).maybePop(),
         body: Text(
           viewModel.cancelMessage,
-          style: AppTypography.bodyMediumMedium.copyWith(
+          style: AppTypography.bodySmallRegularTight.copyWith(
             color: colors.textSubtle,
           ),
         ),

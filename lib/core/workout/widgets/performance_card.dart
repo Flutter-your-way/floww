@@ -29,7 +29,7 @@ class PerformanceCard extends StatelessWidget {
         children: [
           CardHeader(
             title: 'Performance',
-            titleStyle: AppTypography.labelLargeSemiBold.copyWith(
+            titleStyle: AppTypography.heading4SemiBold.copyWith(
               color: context.colors.textPrimary,
             ),
           ),
@@ -134,7 +134,7 @@ class _PersonalRecordsPanel extends StatelessWidget {
     return Container(
       decoration: AppShapes.decoration(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: colors.amberBorder, width: AppSizes.s1),
+        side: BorderSide(color: colors.borderGlow, width: AppSizes.s1),
       ),
       child: ClipPath(
         clipper: ShapeBorderClipper(shape: shape),
@@ -143,7 +143,7 @@ class _PersonalRecordsPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              color: colors.amberSurface,
+              color: colors.tint,
               padding: EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg,
                 vertical: AppSpacing.md,
@@ -151,7 +151,7 @@ class _PersonalRecordsPanel extends StatelessWidget {
               child: Text(
                 'PERSONAL RECORDS',
                 style: AppTypography.captionSemiBold.copyWith(
-                  color: colors.accentOrangeLight,
+                  color: colors.primary,
                 ),
               ),
             ),
@@ -206,14 +206,14 @@ class _PersonalRecordRow extends StatelessWidget {
               vertical: AppSpacing.xxs,
             ),
             decoration: AppShapes.decoration(
-              color: colors.amberBorder,
+              color: colors.borderGlow,
               borderRadius: BorderRadius.circular(AppRadius.full),
-              side: BorderSide(color: colors.amberBorder, width: AppSizes.s1),
+              side: BorderSide(color: colors.borderGlow, width: AppSizes.s1),
             ),
             child: Text(
               record.improvement,
               style: AppTypography.bodySmallMediumTight.copyWith(
-                color: colors.accentOrangeLight,
+                color: colors.primary,
               ),
             ),
           ),

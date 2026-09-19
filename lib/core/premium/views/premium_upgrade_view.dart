@@ -115,7 +115,7 @@ class _PremiumUpgradeFooter extends StatelessWidget {
         Text(
           footnote,
           textAlign: TextAlign.center,
-          style: AppTypography.bodyMediumMedium.copyWith(
+          style: AppTypography.bodySmallRegularTight.copyWith(
             color: context.colors.textSubtle,
           ),
         ),

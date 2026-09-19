@@ -47,7 +47,7 @@ class ProfileIdentityCard extends StatelessWidget {
                 Text(
                   summary.subtitle,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.labelMediumRegular.copyWith(
+                  style: AppTypography.bodySmallRegularTight.copyWith(
                     color: colors.textSubtle,
                   ),
                 ),

@@ -3,6 +3,7 @@ class AppImages {
   static const String _imagesBase = 'assets/images';
 
   static const String ofb = '$_iconsBase/floww-orb.png';
+  static const String restoreOrb = '$_iconsBase/restore_orb.png';
   static const String appIcon = '$_iconsBase/app_icon.png';
   static const String appIconSvg = '$_iconsBase/app_icon_svg.svg';
   static const String waveIcon = '$_iconsBase/wave_icon.svg';
@@ -13,6 +14,7 @@ class AppImages {
   static const String welcome2 = '$_iconsBase/welcome_2.svg';
   static const String welcome3 = '$_iconsBase/welcome_3.svg';
 
+  static const String appleHealth = '$_iconsBase/apple_health.svg';
   static const String appleHealthIcon = '$_iconsBase/apple_health_icon.svg';
   static const String whoopIcon = '$_iconsBase/whoop_icon.svg';
   static const String ouraIcon = '$_iconsBase/oura_icon.svg';
@@ -30,6 +32,14 @@ class AppImages {
   static const String tab_3 = '$_iconsBase/tab_3.svg';
   static const String tab_4 = '$_iconsBase/tab_4.svg';
   static const String tab_5 = '$_iconsBase/tab_5.svg';
+
+  // Mode Backgrounds
+  static const String flowMain = '$_imagesBase/floww_main.png';
+  static const String flowInner = '$_imagesBase/floww_inner.png';
+  static const String steadyMain = '$_imagesBase/steady_main.png';
+  static const String steadyInner = '$_imagesBase/steady_inner.png';
+  static const String restoreMain = '$_imagesBase/restore_main.png';
+  static const String restoreInner = '$_imagesBase/restore_inner.png';
 
   // Muscle Image
   static const String muscleFront = '$_imagesBase/muscle_front.svg';

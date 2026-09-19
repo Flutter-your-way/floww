@@ -4,6 +4,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
@@ -41,7 +42,9 @@ class SuggestedWorkoutCard extends StatelessWidget {
                   children: [
                     Text(
                       suggestion.title,
-                      style: context.textTheme.headlineSmall,
+                      style: AppTypography.heading4SemiBold.copyWith(
+                        color: context.colors.textPrimary,
+                      ),
                     ),
                     SizedBox(height: AppSpacing.md),
                     _WorkoutMetaRow(
@@ -107,7 +110,7 @@ class _WorkoutMetaItem extends StatelessWidget {
         SizedBox(width: AppSpacing.xs),
         Text(
           label,
-          style: context.textTheme.bodyMedium?.copyWith(color: color),
+          style: AppTypography.bodySmallRegularTight.copyWith(color: color),
         ),
       ],
     );
@@ -137,7 +140,7 @@ class _SuggestionReasons extends StatelessWidget {
         children: [
           Text(
             'Recommended by WAVE because:',
-            style: context.textTheme.bodyMedium?.copyWith(
+            style: AppTypography.bodySmallRegularTight.copyWith(
               color: context.colors.textSecondary,
             ),
           ),
@@ -154,7 +157,12 @@ class _SuggestionReasons extends StatelessWidget {
                   ),
                   SizedBox(width: AppSpacing.md),
                   Expanded(
-                    child: Text(reason, style: context.textTheme.bodyMedium),
+                    child: Text(
+                      reason,
+                      style: AppTypography.bodySmallRegularTight.copyWith(
+                        color: context.colors.textPrimary,
+                      ),
+                    ),
                   ),
                 ],
               ),

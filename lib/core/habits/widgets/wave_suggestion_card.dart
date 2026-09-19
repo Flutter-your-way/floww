@@ -50,8 +50,9 @@ class WaveSuggestionCard extends StatelessWidget {
             children: [
               SvgPicture.asset(
                 AppImages.waveIcon,
-                width: AppSizes.s36,
-                height: AppSizes.s36,
+                width: AppSizes.s32,
+                height: AppSizes.s32,
+                theme: SvgTheme(currentColor: context.colors.primary),
               ),
               SizedBox(width: AppSpacing.md),
               Expanded(

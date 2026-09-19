@@ -117,7 +117,7 @@ class ProfileView extends StatelessWidget {
               Text(
                 viewModel.versionLabel,
                 textAlign: TextAlign.center,
-                style: AppTypography.bodyMediumMedium.copyWith(
+                style: AppTypography.bodySmallRegularTight.copyWith(
                   color: context.colors.textDim,
                 ),
               ),

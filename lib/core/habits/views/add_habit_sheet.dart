@@ -93,10 +93,17 @@ class AddHabitSheet extends StatelessWidget {
                       onSelect: (item) => _add(context, viewModel, item),
                     ),
                   SizedBox(height: AppSpacing.xl2),
-                  PillButton(
-                    label: viewModel.createCustomLabel,
-                    icon: Icons.add_rounded,
-                    onPressed: () => Navigator.of(context).pop(true),
+                  Align(
+                    child: IntrinsicWidth(
+                      child: PillButton(
+                        label: viewModel.createCustomLabel,
+                        icon: Icons.add_rounded,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl3,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(true),
+                      ),
+                    ),
                   ),
                 ],
               ),

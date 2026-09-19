@@ -21,7 +21,7 @@ class PopularHabitsCard extends StatelessWidget {
         children: [
           CardHeader(
             title: 'Popular Habits to Try',
-            titleStyle: AppTypography.labelLargeSemiBold,
+            titleStyle: AppTypography.heading4SemiBold,
           ),
           SizedBox(height: AppSpacing.xl),
           HabitSuggestionGrid(items: items, onSelect: onSelect),

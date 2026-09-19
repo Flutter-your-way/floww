@@ -74,9 +74,7 @@ class WaveChatService {
       greeting: greetingFor(DateTime.now()),
       userName: context.hasName ? context.userName : 'there',
       flowScore: context.flowScore,
-      modeLabel:
-          context.snapshot.flowMode?.mode.name.toUpperCase() ??
-          _modeLabelOf(context.flowScore),
+      modeLabel: context.snapshot.flowMode.mode.name.toUpperCase(),
       workoutTitle: workout?.title ?? 'Rest day',
       workoutDetail: workout == null
           ? 'No session scheduled'
@@ -318,12 +316,6 @@ class WaveChatService {
   static const double _lowFactorThreshold = 0.6;
 
   static String _liters(double ml) => (ml / 1000).toStringAsFixed(1);
-
-  static String _modeLabelOf(int flowScore) {
-    if (flowScore >= 75) return 'FLOW';
-    if (flowScore >= 50) return 'STEADY';
-    return 'RESTORE';
-  }
 
   static int _potentialOf(WaveContext context) {
     final breakdown = context.snapshot.flowScoreBreakdown;

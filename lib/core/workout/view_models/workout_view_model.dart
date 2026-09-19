@@ -50,6 +50,7 @@ class WorkoutViewModel extends ChangeNotifier {
   DateTime _selectedDate;
   DateChangeDirection _dateDirection = DateChangeDirection.forward;
   WorkoutTab _selectedTab = WorkoutTab.overview;
+  bool _tabReverse = false;
   late final DayRolloverTimer _dayRollover;
 
   List<WorkoutSessionEntity> _sessions = const [];
@@ -67,6 +68,8 @@ class WorkoutViewModel extends ChangeNotifier {
   List<WorkoutTab> get tabs => WorkoutTab.values;
 
   WorkoutTab get selectedTab => _selectedTab;
+
+  bool get tabReverse => _tabReverse;
 
   DateTime get selectedDate => _selectedDate;
 
@@ -450,7 +453,7 @@ class WorkoutViewModel extends ChangeNotifier {
         PerformanceStatItem(
           label: 'New PRs',
           value: '${session.personalRecords.length}',
-          tone: WorkoutStatTone.warning,
+          tone: WorkoutStatTone.accent,
         ),
         PerformanceStatItem(
           label: 'Exercises Completed',
@@ -611,6 +614,7 @@ class WorkoutViewModel extends ChangeNotifier {
 
   void selectTab(WorkoutTab tab) {
     if (tab == _selectedTab) return;
+    _tabReverse = tab.index < _selectedTab.index;
     _selectedTab = tab;
     notifyListeners();
   }

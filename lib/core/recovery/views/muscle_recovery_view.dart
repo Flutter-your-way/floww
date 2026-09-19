@@ -27,7 +27,7 @@ class MuscleRecoveryView extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.colors.backgroundPrimary,
       body: AppBackground(
-        mode: AppBackgroundMode.flow,
+        mode: AppBackgroundMode.active(context),
         isInner: true,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),

@@ -42,7 +42,7 @@ class WorkoutVolumeCard extends StatelessWidget {
         children: [
           CardHeader(
             title: title,
-            titleStyle: AppTypography.labelLargeSemiBold,
+            titleStyle: AppTypography.heading4SemiBold,
             trailing: Text(
               rangeLabel,
               style: AppTypography.bodySmallRegularTight.copyWith(

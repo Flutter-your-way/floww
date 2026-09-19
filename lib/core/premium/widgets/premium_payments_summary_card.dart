@@ -40,12 +40,12 @@ class PremiumPaymentsSummaryCard extends StatelessWidget {
                 Text(
                   totalLabel,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.heading3Bold,
+                  style: AppTypography.bodyHeadlineBoldTight,
                 ),
                 SizedBox(height: AppSpacing.xxs),
                 Text(
                   totalCaption,
-                  style: AppTypography.bodyMediumMedium.copyWith(
+                  style: AppTypography.bodySmallRegularTight.copyWith(
                     color: colors.textSubtle,
                   ),
                 ),
@@ -59,12 +59,14 @@ class PremiumPaymentsSummaryCard extends StatelessWidget {
             children: [
               Text(
                 countLabel,
-                style: AppTypography.heading4.copyWith(color: colors.primary),
+                style: AppTypography.bodyXLargeBold.copyWith(
+                  color: colors.primary,
+                ),
               ),
               SizedBox(height: AppSpacing.xxs),
               Text(
                 sinceLabel,
-                style: AppTypography.bodyMediumMedium.copyWith(
+                style: AppTypography.bodySmallRegularTight.copyWith(
                   color: colors.textSubtle,
                 ),
               ),

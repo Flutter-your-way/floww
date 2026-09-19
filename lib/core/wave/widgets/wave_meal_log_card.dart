@@ -280,13 +280,13 @@ class _MealTotalsRow extends StatelessWidget {
           _MacroTotal(
             value: totals.carbs,
             unit: 'carb',
-            color: colors.fatAccent,
+            color: colors.carbsAccent,
           ),
           SizedBox(width: AppSpacing.lg),
           _MacroTotal(
             value: totals.fat,
             unit: 'fat',
-            color: colors.accentOrangeLight,
+            color: colors.fatAccent,
           ),
           const Spacer(),
           Text(

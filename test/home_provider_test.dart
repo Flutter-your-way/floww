@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/habit_day_log_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/config/theme/theme_controller.dart';
+import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/habits/models/habit.dart';
@@ -59,6 +61,7 @@ void main() {
     service,
     HomeSnapshotBuilder(),
     AchievementsService(),
+    FlowModeController(ThemeModeController(AppThemeMode.flow)),
   );
 
   test('an empty account renders the home empty states', () async {
@@ -188,39 +191,42 @@ void main() {
     service.dispose();
   });
 
-  test('logging food raises the flow score and writes it to firestore', () async {
-    final service = FakeHomeService();
-    final provider = providerOf(service);
-    await pumpEventQueue();
-    expect(provider.flowScorePercent, 0);
+  test(
+    'logging food raises the flow score and writes it to firestore',
+    () async {
+      final service = FakeHomeService();
+      final provider = providerOf(service);
+      await pumpEventQueue();
+      expect(provider.flowScorePercent, 0);
 
-    service.emit(
-      recordsOf(
-        nutrition: NutritionLogs(
-          foods: [
-            testFoodLog(
-              id: 'lunch',
-              meal: MealType.lunch,
-              at: todayAt(13),
-              calories: 800,
-            ),
-          ],
-          waters: [
-            WaterLog(id: 'glass', amountMl: 2500, loggedAt: todayAt(10)),
-          ],
+      service.emit(
+        recordsOf(
+          nutrition: NutritionLogs(
+            foods: [
+              testFoodLog(
+                id: 'lunch',
+                meal: MealType.lunch,
+                at: todayAt(13),
+                calories: 800,
+              ),
+            ],
+            waters: [
+              WaterLog(id: 'glass', amountMl: 2500, loggedAt: todayAt(10)),
+            ],
+          ),
         ),
-      ),
-    );
-    await pumpEventQueue();
+      );
+      await pumpEventQueue();
 
-    expect(provider.flowScorePercent, greaterThan(0));
-    expect(service.savedFlow, hasLength(1));
-    expect(service.savedFlow.single.score, provider.flowScorePercent);
-    expect(provider.streakCount, 1);
+      expect(provider.flowScorePercent, greaterThan(0));
+      expect(service.savedFlow, hasLength(1));
+      expect(service.savedFlow.single.score, provider.flowScorePercent);
+      expect(provider.streakCount, 1);
 
-    provider.dispose();
-    service.dispose();
-  });
+      provider.dispose();
+      service.dispose();
+    },
+  );
 
   test('an unchanged score is not written to firestore twice', () async {
     final service = FakeHomeService(

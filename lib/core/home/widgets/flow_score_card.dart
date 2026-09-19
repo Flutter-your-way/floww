@@ -1,18 +1,21 @@
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_theme.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/custom_outlined_button.dart';
+import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
+import 'package:floww/config/widgets/stats/app_stat_column.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
 class FlowScoreCard extends StatelessWidget {
   const FlowScoreCard({
     super.key,
     required this.percent,
-    this.recoveryLevel,
-    this.todayMode,
+    required this.recoveryLevel,
+    required this.todayMode,
+    this.hasRecoveryData = true,
     this.onStartWorkout,
     this.onBreakdownTap,
     this.onRecoveryTap,
@@ -20,8 +23,9 @@ class FlowScoreCard extends StatelessWidget {
   });
 
   final int percent;
-  final String? recoveryLevel;
-  final AppThemeMode? todayMode;
+  final String recoveryLevel;
+  final bool hasRecoveryData;
+  final AppThemeMode todayMode;
   final VoidCallback? onStartWorkout;
   final VoidCallback? onBreakdownTap;
   final VoidCallback? onRecoveryTap;
@@ -42,11 +46,7 @@ class FlowScoreCard extends StatelessWidget {
       decoration: AppShapes.decoration(
         borderRadius: BorderRadius.circular(AppRadius.xl),
         side: BorderSide(color: context.colors.borderGlow, width: 1),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1C2218), Color(0xFF93D500)],
-        ),
+        gradient: context.gradients.darkGlow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -82,7 +82,7 @@ class FlowScoreCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: AppSpacing.lg),
-                _FlowScoreBar(fraction: percent / 100),
+                _AnimatedFlowScoreBar(percent: percent),
                 SizedBox(height: AppSpacing.lg),
                 if (percent == 0)
                   ..._buildEmptyState(context)
@@ -90,47 +90,39 @@ class FlowScoreCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      _AnimatedFlowScoreValue(percent: percent),
                       Text(
-                        '$percent',
-                        style: context.textTheme.displayLarge?.copyWith(
-                          height: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(bottom: AppSpacing.xs),
-                        child: Text(
-                          '%',
-                          style: context.textTheme.titleLarge?.copyWith(
-                            color: context.colors.textSecondary,
-                          ),
+                        '%',
+                        style: context.textTheme.titleLarge?.copyWith(
+                          color: context.colors.textSecondary,
                         ),
                       ),
                       const Spacer(),
-                      if (recoveryLevel != null)
-                        _StatColumn(
-                          label: 'RECOVERY',
-                          value: recoveryLevel!,
-                          showDot: true,
-                          onTap: onRecoveryTap,
+                      AppStatColumn(
+                        label: 'RECOVERY',
+                        value: recoveryLevel,
+                        dotColor: hasRecoveryData
+                            ? context.colors.success
+                            : context.colors.textSecondary,
+                        showInfoIcon: true,
+                        onTap: onRecoveryTap,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
                         ),
-                      if (recoveryLevel != null && todayMode != null)
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg,
-                          ),
-                          child: Container(
-                            width: 1,
-                            height: AppSizes.s32,
-                            color: context.colors.borderSubtle,
-                          ),
+                        child: Container(
+                          width: AppSizes.s1,
+                          height: AppSizes.s32,
+                          color: context.colors.borderSubtle,
                         ),
-                      if (todayMode != null)
-                        _StatColumn(
-                          label: "TODAY'S MODE",
-                          value: todayMode!.name.toUpperCase(),
-                          showDot: false,
-                          onTap: onModeTap,
-                        ),
+                      ),
+                      AppStatColumn(
+                        label: "TODAY'S MODE",
+                        value: todayMode.name.toUpperCase(),
+                        showInfoIcon: true,
+                        onTap: onModeTap,
+                      ),
                     ],
                   ),
                 ],
@@ -144,31 +136,105 @@ class FlowScoreCard extends StatelessWidget {
 
   List<Widget> _buildEmptyState(BuildContext context) {
     return [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text('0', style: context.textTheme.displayLarge?.copyWith(height: 1)),
-          Padding(
-            padding: EdgeInsets.only(bottom: AppSpacing.xs),
-            child: Text(
-              '%',
-              style: context.textTheme.titleLarge?.copyWith(
-                color: context.colors.textSecondary,
+      IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '0',
+                      style: AppTypography.displayNumericSmall.copyWith(
+                        height: 1,
+                        color: context.colors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '%',
+                      style: context.textTheme.titleLarge?.copyWith(
+                        color: context.colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      SizedBox(height: AppSpacing.lg),
-      Text(
-        'Complete your first workout to unlock your Flow Score.',
-        style: context.textTheme.bodyMedium?.copyWith(
-          color: context.colors.textSecondary,
+            VerticalDivider(
+              width: AppSpacing.xl4,
+              thickness: AppSizes.s1,
+              color: context.colors.borderSubtle,
+            ),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Complete your first workout to unlock your Flow Score.',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.sm),
+                  IntrinsicWidth(
+                    child: PillButton(
+                      variant: PillButtonVariant.glass,
+                      height: AppSizes.s32,
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                      label: 'Start Workout',
+                      labelStyle: AppTypography.bodySmallSemiBold,
+                      labelColor: context.colors.primary,
+                      onPressed: onStartWorkout,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      SizedBox(height: AppSpacing.lg),
-      CustomOutlinedButton(text: 'Start Workout', onPressed: onStartWorkout),
     ];
+  }
+}
+
+class _AnimatedFlowScoreBar extends StatelessWidget {
+  const _AnimatedFlowScoreBar({required this.percent});
+
+  final int percent;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: percent / 100),
+      duration: AppMotion.medium,
+      curve: AppMotion.expandCurve,
+      builder: (context, value, child) => _FlowScoreBar(fraction: value),
+    );
+  }
+}
+
+class _AnimatedFlowScoreValue extends StatelessWidget {
+  const _AnimatedFlowScoreValue({required this.percent});
+
+  final int percent;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: percent.toDouble()),
+      duration: AppMotion.medium,
+      curve: AppMotion.expandCurve,
+      builder: (context, value, child) => Text(
+        '${value.round()}',
+        style: context.textTheme.displayLarge?.copyWith(height: 1),
+      ),
+    );
   }
 }
 
@@ -179,6 +245,21 @@ class _FlowScoreBar extends StatelessWidget {
 
   static const double _trackHeight = 24;
   static const double _thumbSize = 30;
+  static const double _hotZoneWidth = 88;
+  static const double _fillGlow = 0.3;
+  static const double _thumbGlow = 0.6;
+
+  Gradient _fillGradient(BuildContext context, double fillWidth) {
+    final colors = context.colors;
+    final hotStart = fillWidth <= 0
+        ? 0.0
+        : ((fillWidth - _hotZoneWidth) / fillWidth).clamp(0.0, 1.0);
+
+    return LinearGradient(
+      colors: [colors.primaryDeep, colors.primary, colors.textPrimary],
+      stops: [0, hotStart, 1],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,118 +288,53 @@ class _FlowScoreBar extends StatelessWidget {
                 height: _trackHeight,
                 width: fillWidth,
                 decoration: AppShapes.decoration(
-                  gradient: LinearGradient(
-                    stops: [0.1, 0.5, 1.0],
-                    colors: [
-                      Color(0xFF84B814),
-                      Color(0xFFC3FF3D),
-                      Color(0xFFFFFFFF),
-                    ],
-                  ),
+                  gradient: _fillGradient(context, fillWidth),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(AppRadius.full),
                     bottomLeft: Radius.circular(AppRadius.full),
                   ),
+                  shadows: [
+                    BoxShadow(
+                      color: context.colors.primary.withValues(
+                        alpha: _fillGlow,
+                      ),
+                      blurRadius: AppSizes.s20,
+                    ),
+                  ],
                 ),
               ),
-              if (fraction > 0)
-                Positioned(
-                  left: thumbLeft,
-                  child: Container(
-                    width: _thumbSize / 5,
-                    height: _thumbSize,
-                    decoration: AppShapes.decoration(
-                      color: context.colors.primary,
-                      side: BorderSide(
-                        color: context.colors.textPrimary,
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                      shadows: [
-                        BoxShadow(
-                          color: context.colors.textPrimary.withValues(
-                            alpha: 0.6,
-                          ),
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        ),
-                      ],
+              Positioned(
+                left: thumbLeft,
+                child: Container(
+                  width: _thumbSize / 5,
+                  height: _thumbSize,
+                  decoration: AppShapes.decoration(
+                    color: context.colors.primary,
+                    side: BorderSide(
+                      color: context.colors.textPrimary,
+                      width: 1.5,
                     ),
+                    borderRadius: BorderRadius.circular(30),
+                    shadows: [
+                      BoxShadow(
+                        color: context.colors.textPrimary.withValues(
+                          alpha: _thumbGlow,
+                        ),
+                        blurRadius: AppSizes.s6,
+                        spreadRadius: AppSizes.s1,
+                      ),
+                      BoxShadow(
+                        color: context.colors.primary.withValues(alpha: 0.4),
+                        blurRadius: AppSizes.s12,
+                      ),
+                    ],
                   ),
                 ),
+              ),
             ],
           );
         },
       ),
-    );
-  }
-}
-
-class _StatColumn extends StatelessWidget {
-  const _StatColumn({
-    required this.label,
-    required this.value,
-    required this.showDot,
-    this.onTap,
-  });
-
-  final String label;
-  final String value;
-  final bool showDot;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: _buildContent(context),
-    );
-  }
-
-  Widget _buildContent(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: context.textTheme.labelSmall?.copyWith(
-                color: context.colors.textSecondary,
-              ),
-            ),
-            SizedBox(width: AppSpacing.xs),
-            Icon(
-              Icons.info_outline,
-              size: AppSizes.s12,
-              color: context.colors.textSecondary,
-            ),
-          ],
-        ),
-        SizedBox(height: AppSpacing.xs),
-        Row(
-          children: [
-            if (showDot) ...[
-              Container(
-                width: AppSizes.s8,
-                height: AppSizes.s8,
-                decoration: BoxDecoration(
-                  color: context.colors.primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              SizedBox(width: AppSpacing.xs),
-            ],
-            Text(
-              value,
-              style: context.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

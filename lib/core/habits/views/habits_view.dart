@@ -68,12 +68,20 @@ class _HabitsViewState extends State<HabitsView> {
     BuildContext context,
     HabitsViewModel viewModel,
   ) async {
+    String? createdId;
     await AddHabitSheet.show(
       context: context,
       suggestions: viewModel.suggestions,
       groups: viewModel.suggestionGroups,
       onAdd: viewModel.addSuggestion,
-      onCreateCustom: viewModel.addCustomHabit,
+      onCreateCustom: (draft) async {
+        createdId = await viewModel.addCustomHabit(draft);
+      },
+    );
+    if (createdId == null) return;
+    await NavigationService.instance.push(
+      AppRouter.habitDetails,
+      arguments: createdId,
     );
   }
 
@@ -94,7 +102,7 @@ class _HabitsViewState extends State<HabitsView> {
             fit: StackFit.expand,
             children: [
               AppBackground(
-                mode: AppBackgroundMode.flow,
+                mode: AppBackgroundMode.active(context),
                 safeAreaTop: false,
                 scrollable: true,
                 child: Padding(

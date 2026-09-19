@@ -2,10 +2,32 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:gal/gal.dart';
+import 'package:media_store_plus/media_store_plus.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-enum ShareErrorCode { captureFailed, saveFailed, shareFailed, permissionDenied }
+enum ShareErrorCode {
+  captureFailed,
+  saveFailed,
+  shareFailed,
+  openFailed,
+  permissionDenied,
+}
+
+enum SavedFileLocation { downloads, appFolder }
+
+class SavedFile {
+  const SavedFile({
+    required this.name,
+    required this.path,
+    required this.location,
+  });
+
+  final String name;
+  final String path;
+  final SavedFileLocation location;
+}
 
 class ShareException implements Exception {
   const ShareException(this.code, this.message);
@@ -23,6 +45,10 @@ class ShareService {
   static const String _albumName = 'Floww';
   static const String _fileExtension = '.png';
   static const String _mimeType = 'image/png';
+  static const String _downloadsFolder = 'Floww';
+  static const int _maxNameAttempts = 100;
+
+  static bool _mediaStoreReady = false;
 
   Future<File> writeTempFile(
     Uint8List bytes, {
@@ -38,6 +64,83 @@ class ShareService {
       debugPrint('writeTempFile failed: $e\n$stackTrace');
       throw ShareException(ShareErrorCode.saveFailed, failureMessage);
     }
+  }
+
+  Future<SavedFile> saveFile(
+    Uint8List bytes, {
+    required String name,
+    required String extension,
+    String failureMessage = 'Could not save your file. Please try again.',
+  }) async {
+    final File file;
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final target = _availableFile(directory, name, extension);
+      file = await target.writeAsBytes(bytes, flush: true);
+    } catch (e, stackTrace) {
+      debugPrint('saveFile failed: $e\n$stackTrace');
+      throw ShareException(ShareErrorCode.saveFailed, failureMessage);
+    }
+
+    final publishedName = Platform.isAndroid
+        ? await _publishToDownloads(bytes, name: name, extension: extension)
+        : null;
+
+    return SavedFile(
+      name: publishedName ?? _baseName(file.path),
+      path: file.path,
+      location: publishedName == null
+          ? SavedFileLocation.appFolder
+          : SavedFileLocation.downloads,
+    );
+  }
+
+  Future<String?> _publishToDownloads(
+    Uint8List bytes, {
+    required String name,
+    required String extension,
+  }) async {
+    try {
+      final temp = await writeTempFile(bytes, name: name, extension: extension);
+      if (!_mediaStoreReady) {
+        await MediaStore.ensureInitialized();
+        _mediaStoreReady = true;
+      }
+      MediaStore.appFolder = _downloadsFolder;
+      final info = await MediaStore().saveFile(
+        tempFilePath: temp.path,
+        dirType: DirType.download,
+        dirName: DirName.download,
+      );
+      return info?.name;
+    } catch (e, stackTrace) {
+      debugPrint('publishToDownloads failed: $e\n$stackTrace');
+      return null;
+    }
+  }
+
+  Future<void> openFile(String path, {String? mimeType}) async {
+    final result = await OpenFilex.open(path, type: mimeType);
+    if (result.type == ResultType.done) return;
+
+    debugPrint('openFile failed: ${result.type} ${result.message}');
+    throw const ShareException(
+      ShareErrorCode.openFailed,
+      'Saved, but no app on this device could open the PDF.',
+    );
+  }
+
+  String _baseName(String path) => path.split(Platform.pathSeparator).last;
+
+  File _availableFile(Directory directory, String name, String extension) {
+    final file = File('${directory.path}/$name$extension');
+    if (!file.existsSync()) return file;
+
+    for (var attempt = 2; attempt <= _maxNameAttempts; attempt++) {
+      final candidate = File('${directory.path}/$name-$attempt$extension');
+      if (!candidate.existsSync()) return candidate;
+    }
+    return file;
   }
 
   Future<void> shareFile(
@@ -91,7 +194,10 @@ class ShareService {
     failureMessage: 'Could not prepare your card. Please try again.',
   );
 
-  Future<void> saveImageToGallery(Uint8List bytes, {required String name}) async {
+  Future<void> saveImageToGallery(
+    Uint8List bytes, {
+    required String name,
+  }) async {
     try {
       if (!await Gal.hasAccess(toAlbum: true)) {
         final granted = await Gal.requestAccess(toAlbum: true);

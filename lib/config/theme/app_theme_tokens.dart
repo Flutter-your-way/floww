@@ -1,4 +1,5 @@
 import 'package:floww/config/constants/app_sizes.dart';
+import 'package:floww/config/theme/app_mode_intensity.dart';
 import 'package:flutter/material.dart';
 
 extension FlowwThemeContext on BuildContext {
@@ -11,6 +12,8 @@ extension FlowwThemeContext on BuildContext {
   AppColorTokens get colors => theme.extension<AppColorTokens>()!;
 
   AppGradientTokens get gradients => theme.extension<AppGradientTokens>()!;
+
+  AppModeIntensity get intensity => theme.extension<AppModeIntensity>()!;
 
   AppLayoutSizes get sizes => const AppLayoutSizes();
 }
@@ -262,14 +265,17 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     primaryDeep: Color(0xFF00C4D5),
     primaryAlt: Color(0xFF22CDE6),
     tint: Color(0x1422CDE6),
-    tintStrong: Color(0x1728D5E6),
-    borderGlow: Color(0x3D22CDE6),
+    tintStrong: Color(0x2628D5E6),
+    borderGlow: Color(0x5C22CDE6),
     borderAccent: Color(0x8028D5E6),
     bgTinted: Color(0xFF182122),
     bgWarm: Color(0xFF182122),
     accentOrange: Color(0xFFF97316),
     surfaceBright: Color(0xFFE0EAEB),
     onSurfaceBright: Color(0xFF00697A),
+    proteinAccent: Color(0xFFF04A7D),
+    carbsAccent: Color(0xFF2196F3),
+    fatAccent: Color(0xFFF5A623),
   );
 
   @override
@@ -677,8 +683,10 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     ),
     primary: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF00C4D5)]),
     bright: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
-    ramp: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
-    full: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
+    ramp: LinearGradient(colors: [Color(0xFF00C4D5), Color(0xFF28D5E6)]),
+    full: LinearGradient(
+      colors: [Color(0xFF00C4D5), Color(0xFF28D5E6), Color(0xFFFFFFFF)],
+    ),
     barFill: LinearGradient(
       colors: [Color(0xFFFFFFFF), Color(0xFF28D5E6), Color(0xFF00C4D5)],
       begin: Alignment.topCenter,
@@ -686,7 +694,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       stops: [0.0, 0.5, 1.0],
     ),
     darkGlow: LinearGradient(
-      colors: [Color(0xFF182122), Color(0xFF00C4D5)],
+      colors: [Color(0xFF101617), Color(0xFF105A5E)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),
@@ -711,7 +719,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       stops: [0.0, 0.5, 1.0],
     ),
     glowCard: LinearGradient(
-      colors: [_AppPalette.backgroundSurface, Color(0xFF1F6670)],
+      colors: [Color(0xFF1B2426), Color(0xFF2E96A8)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       stops: [0.3, 1.0],
@@ -811,7 +819,11 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       orange: Gradient.lerp(orange, other.orange, t)!,
       glowRadial: Gradient.lerp(glowRadial, other.glowRadial, t)!,
       mainBackground: Gradient.lerp(mainBackground, other.mainBackground, t)!,
-      innerBackground: Gradient.lerp(innerBackground, other.innerBackground, t)!,
+      innerBackground: Gradient.lerp(
+        innerBackground,
+        other.innerBackground,
+        t,
+      )!,
       glowCard: Gradient.lerp(glowCard, other.glowCard, t)!,
       chartArea: Gradient.lerp(chartArea, other.chartArea, t)!,
       shareSheen: Gradient.lerp(shareSheen, other.shareSheen, t)!,

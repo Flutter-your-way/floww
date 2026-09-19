@@ -23,7 +23,7 @@ class PremiumFeaturesCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CardHeader(title: title, titleStyle: AppTypography.heading3Bold),
+          CardHeader(title: title, titleStyle: AppTypography.heading4SemiBold),
           PremiumFeatureList(features: features),
         ],
       ),

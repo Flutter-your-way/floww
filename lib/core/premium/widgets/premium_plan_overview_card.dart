@@ -52,12 +52,12 @@ class PremiumPlanOverviewCard extends StatelessWidget {
                     Text(
                       title,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.heading3Bold,
+                      style: AppTypography.heading4SemiBold,
                     ),
                     SizedBox(height: AppSpacing.xxs),
                     Text(
                       subtitle,
-                      style: AppTypography.bodyLargeMedium.copyWith(
+                      style: AppTypography.bodySmallRegularTight.copyWith(
                         color: colors.textSubtle,
                       ),
                     ),

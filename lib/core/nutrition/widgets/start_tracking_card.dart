@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 
 class StartTrackingCard extends StatelessWidget {
@@ -26,18 +27,16 @@ class StartTrackingCard extends StatelessWidget {
               children: [
                 Text(
                   'Start Tracking Today',
-                  style: context.textTheme.titleMedium?.copyWith(
+                  style: AppTypography.heading4SemiBold.copyWith(
                     color: context.colors.primary,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 SizedBox(height: AppSpacing.xs),
                 Text(
                   'Log your meals below to track calories, macros, and build '
                   'your nutrition score.',
-                  style: context.textTheme.bodySmall?.copyWith(
+                  style: AppTypography.bodySmallRegularTight.copyWith(
                     color: context.colors.textSecondary,
-                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],

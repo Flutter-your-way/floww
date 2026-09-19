@@ -24,7 +24,7 @@ class HeartRateCard extends StatelessWidget {
         children: [
           CardHeader(
             title: 'Heart Rate',
-            titleStyle: AppTypography.labelLargeSemiBold.copyWith(
+            titleStyle: AppTypography.heading4SemiBold.copyWith(
               color: context.colors.textPrimary,
             ),
           ),

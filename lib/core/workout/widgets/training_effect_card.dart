@@ -26,7 +26,7 @@ class TrainingEffectCard extends StatelessWidget {
           CardHeader(
             title: 'Training Effect',
             onTap: onInfo,
-            titleStyle: AppTypography.labelLargeSemiBold.copyWith(
+            titleStyle: AppTypography.heading4SemiBold.copyWith(
               color: colors.textPrimary,
             ),
             titleTrailing: Icon(
@@ -51,7 +51,7 @@ class TrainingEffectCard extends StatelessWidget {
                   ),
                   Text(
                     effect.rating,
-                    style: AppTypography.labelLargeSemiBold.copyWith(
+                    style: AppTypography.labelSmallMedium.copyWith(
                       color: colors.primaryAlt,
                     ),
                   ),
@@ -88,7 +88,7 @@ class TrainingEffectCard extends StatelessWidget {
                         SizedBox(width: AppSpacing.lg),
                         Text(
                           effect.recoveryValue,
-                          style: AppTypography.bodyMediumMediumTight.copyWith(
+                          style: AppTypography.bodySmallMediumTight.copyWith(
                             color: colors.primaryAlt,
                           ),
                         ),

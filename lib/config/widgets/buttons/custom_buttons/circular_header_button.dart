@@ -65,10 +65,7 @@ class _CircularHeaderButtonState extends State<CircularHeaderButton> {
               shape: BoxShape.circle,
               border: widget.borderColor == null
                   ? null
-                  : Border.all(
-                      color: widget.borderColor!,
-                      width: AppSizes.s1,
-                    ),
+                  : Border.all(color: widget.borderColor!, width: AppSizes.s1),
             ),
             child: Center(
               child: Icon(

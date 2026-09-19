@@ -8,6 +8,7 @@ import 'package:floww/core/achievements/models/streak_day.dart';
 import 'package:floww/core/achievements/models/streak_day_status.dart';
 import 'package:floww/core/achievements/models/streak_summary.dart';
 import 'package:floww/core/achievements/services/achievements_data.dart';
+import 'package:floww/core/auth/services/auth_service.dart';
 import 'package:floww/core/habits/services/habit_log_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
@@ -42,7 +43,9 @@ class AchievementsService {
     WorkoutSessionService? sessionService,
     NutritionLogService? nutritionLogService,
     MuscleRecoveryService? recoveryService,
-  }) : _injectedProgressService = progressService,
+    AuthService? authService,
+  }) : _injectedAuthService = authService,
+       _injectedProgressService = progressService,
        _injectedHabitLogService = habitLogService,
        _injectedSessionService = sessionService,
        _injectedNutritionLogService = nutritionLogService,
@@ -63,12 +66,14 @@ class AchievementsService {
   final WorkoutSessionService? _injectedSessionService;
   final NutritionLogService? _injectedNutritionLogService;
   final MuscleRecoveryService? _injectedRecoveryService;
+  final AuthService? _injectedAuthService;
 
   ProgressService? _progressServiceCache;
   HabitLogService? _habitLogServiceCache;
   WorkoutSessionService? _sessionServiceCache;
   NutritionLogService? _nutritionLogServiceCache;
   MuscleRecoveryService? _recoveryServiceCache;
+  AuthService? _authServiceCache;
 
   ProgressService get _progressService =>
       _injectedProgressService ??
@@ -89,6 +94,14 @@ class AchievementsService {
   MuscleRecoveryService get _recoveryService =>
       _injectedRecoveryService ??
       (_recoveryServiceCache ??= MuscleRecoveryService());
+
+  AuthService get _authService =>
+      _injectedAuthService ?? (_authServiceCache ??= AuthService());
+
+  DateTime? get _joinedAt {
+    final createdAt = _authService.accountCreatedAt;
+    return createdAt == null ? null : AppDateUtils.dateOnly(createdAt);
+  }
 
   Stream<AchievementsRecords> watchRecords() {
     final from = AppDateUtils.addDays(
@@ -158,13 +171,19 @@ class AchievementsService {
   StreakSummary streakSummaryOf(
     List<DailyFlowEntry> flowHistory, {
     DateTime? date,
+    DateTime? joinedAt,
   }) {
     final today = AppDateUtils.dateOnly(date ?? DateTime.now());
     final flow = flowByDay(flowHistory);
     final weekStart = AppDateUtils.startOfWeek(today);
+    final joined = joinedAt == null
+        ? _joinedAt ?? _firstTrackedDayOf(flowHistory) ?? today
+        : AppDateUtils.dateOnly(joinedAt);
+    final monthStart = DateTime(today.year, today.month);
+    final trackedStart = joined.isAfter(monthStart) ? joined : monthStart;
 
     var monthCompleted = 0;
-    for (var day = 1; day <= today.day; day++) {
+    for (var day = trackedStart.day; day <= today.day; day++) {
       final entry = flow[AppDateUtils.dateKey(
         DateTime(today.year, today.month, day),
       )];
@@ -175,13 +194,27 @@ class AchievementsService {
       currentDays: currentStreakOf(flow, today),
       bestDays: longestStreakOf(flow),
       monthCompletedDays: monthCompleted,
-      monthTotalDays: today.day,
+      monthTotalDays: today.day - trackedStart.day + 1,
       days: [
         for (var index = 0; index < DateTime.daysPerWeek; index++)
-          _streakDayOf(flow, AppDateUtils.addDays(weekStart, index), today),
+          _streakDayOf(
+            flow,
+            AppDateUtils.addDays(weekStart, index),
+            today,
+            joined,
+          ),
       ],
       milestones: AchievementsData.milestones,
     );
+  }
+
+  static DateTime? _firstTrackedDayOf(List<DailyFlowEntry> flowHistory) {
+    DateTime? earliest;
+    for (final entry in flowHistory) {
+      final day = AppDateUtils.dateOnly(entry.date);
+      if (earliest == null || day.isBefore(earliest)) earliest = day;
+    }
+    return earliest;
   }
 
   static Map<String, DailyFlowEntry> flowByDay(List<DailyFlowEntry> history) => {
@@ -222,9 +255,10 @@ class AchievementsService {
     Map<String, DailyFlowEntry> flow,
     DateTime date,
     DateTime today,
+    DateTime joinedAt,
   ) {
     final label = AppDateUtils.shortWeekday(date).substring(0, 1);
-    if (date.isAfter(today)) {
+    if (date.isAfter(today) || date.isBefore(joinedAt)) {
       return StreakDay(label: label, status: StreakDayStatus.upcoming);
     }
     final score = flow[AppDateUtils.dateKey(date)]?.score ?? 0;

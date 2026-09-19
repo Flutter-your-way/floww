@@ -78,7 +78,7 @@ class _ViewAllAction extends StatelessWidget {
           children: [
             Text(
               'View all',
-              style: AppTypography.labelSmallSemiBold.copyWith(color: color),
+              style: AppTypography.bodySmallSemiBold.copyWith(color: color),
             ),
             SizedBox(width: AppSpacing.xxs),
             Icon(Icons.chevron_right_rounded, color: color, size: AppSizes.s16),
@@ -120,7 +120,7 @@ class _RecentFoodChip extends StatelessWidget {
             ),
             Text(
               item.caloriesLabel,
-              style: context.textTheme.labelSmall?.copyWith(
+              style: context.textTheme.bodySmall?.copyWith(
                 color: colors.textSecondary,
               ),
             ),
@@ -144,7 +144,7 @@ class _RecentFoodChip extends StatelessWidget {
                     size: AppSizes.s10,
                   ),
                   SizedBox(width: AppSpacing.xs),
-                  Text(item.meal.label, style: context.textTheme.labelSmall),
+                  Text(item.meal.label, style: context.textTheme.bodySmall),
                 ],
               ),
             ),

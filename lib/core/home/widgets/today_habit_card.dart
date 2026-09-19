@@ -13,11 +13,13 @@ class TodayHabitCard extends StatelessWidget {
     required this.habits,
     this.onCreateFirstHabit,
     this.onTap,
+    this.onToggleHabit,
   });
 
   final List<HabitItem> habits;
   final VoidCallback? onCreateFirstHabit;
   final VoidCallback? onTap;
+  final ValueChanged<HabitItem>? onToggleHabit;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +47,12 @@ class TodayHabitCard extends StatelessWidget {
           else
             for (var i = 0; i < habits.length; i++) ...[
               if (i > 0) SizedBox(height: AppSpacing.lg),
-              _HabitRow(habit: habits[i]),
+              _HabitRow(
+                habit: habits[i],
+                onTap: onToggleHabit == null
+                    ? onTap
+                    : () => onToggleHabit!(habits[i]),
+              ),
             ],
         ],
       ),
@@ -54,38 +61,43 @@ class TodayHabitCard extends StatelessWidget {
 }
 
 class _HabitRow extends StatelessWidget {
-  const _HabitRow({required this.habit});
+  const _HabitRow({required this.habit, this.onTap});
 
   final HabitItem habit;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          habit.completed ? Icons.check_circle : Icons.circle_outlined,
-          color: habit.completed
-              ? context.colors.primary
-              : context.colors.borderMedium,
-          size: AppSizes.s24,
-        ),
-        SizedBox(width: AppSpacing.lg),
-        Expanded(
-          child: Text(
-            habit.title,
-            style: context.textTheme.bodyLarge?.copyWith(
-              color: habit.completed ? context.colors.textSecondary : null,
-              decoration: habit.completed ? TextDecoration.lineThrough : null,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          Icon(
+            habit.completed ? Icons.check_circle : Icons.circle_outlined,
+            color: habit.completed
+                ? context.colors.primary
+                : context.colors.borderMedium,
+            size: AppSizes.s24,
+          ),
+          SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Text(
+              habit.title,
+              style: context.textTheme.bodyLarge?.copyWith(
+                color: habit.completed ? context.colors.textSecondary : null,
+                decoration: habit.completed ? TextDecoration.lineThrough : null,
+              ),
             ),
           ),
-        ),
-        Text(
-          habit.valueLabel,
-          style: context.textTheme.bodyMedium?.copyWith(
-            color: context.colors.textSecondary,
+          Text(
+            habit.valueLabel,
+            style: context.textTheme.bodyMedium?.copyWith(
+              color: context.colors.textSecondary,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

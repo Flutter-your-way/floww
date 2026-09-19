@@ -253,12 +253,8 @@ class _PillButtonLabel extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style:
-                  (labelStyle ??
-                          defaultStyle ??
-                          context.textTheme.titleMedium)
-                      ?.copyWith(
-                color: color,
-              ),
+                  (labelStyle ?? defaultStyle ?? context.textTheme.titleMedium)
+                      ?.copyWith(color: color),
             ),
           ),
       ],

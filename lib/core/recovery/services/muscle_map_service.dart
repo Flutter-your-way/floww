@@ -42,9 +42,11 @@ class MuscleMapTemplate {
 }
 
 class MuscleMapService {
-  static const String highlightFill = '#BAFF1F';
+  static const String highlightFill = 'currentColor';
   static const String baseFill = '#BDBDBD';
-  static final RegExp fillPattern = RegExp('fill="#[0-9A-Fa-f]{6}"');
+  static final RegExp fillPattern = RegExp(
+    'fill="(#[0-9A-Fa-f]{6}|currentColor)"',
+  );
 
   static final RegExp _headerPattern = RegExp('<svg[^>]*>');
   static final RegExp _shapePattern = RegExp('<path[^>]*>');

@@ -62,7 +62,7 @@ class _TrialSubscription extends StatelessWidget {
               child: Text(
                 subscription.title,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.heading4.copyWith(color: colors.primary),
+                style: AppTypography.heading4SemiBold.copyWith(color: colors.primary),
               ),
             ),
           ],
@@ -70,7 +70,7 @@ class _TrialSubscription extends StatelessWidget {
         SizedBox(height: AppSpacing.md),
         Text(
           subscription.message,
-          style: AppTypography.labelMediumRegular.copyWith(
+          style: AppTypography.bodySmallRegularTight.copyWith(
             color: colors.textSubtle,
           ),
         ),

@@ -99,10 +99,15 @@ class ProgramStartSheet extends StatelessWidget {
               _ProgramWarningBox(message: warning),
             ],
             SizedBox(height: AppSpacing.xl2),
-            PillButton(
-              label: detail.startLabel,
-              icon: Icons.play_arrow_rounded,
-              onPressed: onStart,
+            Align(
+              child: IntrinsicWidth(
+                child: PillButton(
+                  label: detail.startLabel,
+                  icon: Icons.play_arrow_rounded,
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
+                  onPressed: onStart,
+                ),
+              ),
             ),
           ],
         ),

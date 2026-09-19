@@ -24,6 +24,32 @@ class AppTypography {
     letterSpacing: -1,
   );
 
+  static const TextStyle displayNumericSmall = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 48,
+    fontWeight: FontWeight.w700,
+    height: 1.1,
+    letterSpacing: -0.6,
+  );
+
+  static const TextStyle flowModeTitle = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 30,
+    fontWeight: FontWeight.w700,
+    height: 1.1,
+    letterSpacing: 6,
+    decoration: TextDecoration.none,
+  );
+
+  static const TextStyle flowModeMessage = TextStyle(
+    fontFamily: _fontBody,
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    height: 1.45,
+    letterSpacing: 0.2,
+    decoration: TextDecoration.none,
+  );
+
   static const TextStyle heading1 = TextStyle(
     fontFamily: _fontHeading,
     fontSize: 36,
@@ -94,6 +120,14 @@ class AppTypography {
     fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 28 / 18,
+    letterSpacing: 0,
+  );
+
+  static const TextStyle heading4Medium = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 18,
+    fontWeight: FontWeight.w500,
+    height: 1.2,
     letterSpacing: 0,
   );
 

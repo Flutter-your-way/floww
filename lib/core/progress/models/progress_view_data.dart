@@ -68,10 +68,29 @@ class WaveInsights {
 }
 
 class WeightEntry {
-  const WeightEntry({required this.date, required this.weight});
+  const WeightEntry({
+    required this.id,
+    required this.date,
+    required this.weight,
+  });
 
+  final String id;
   final DateTime date;
   final double weight;
+}
+
+class WeightHistoryItem {
+  const WeightHistoryItem({
+    required this.id,
+    required this.valueLabel,
+    required this.dateLabel,
+    required this.isLatest,
+  });
+
+  final String id;
+  final String valueLabel;
+  final String dateLabel;
+  final bool isLatest;
 }
 
 class WeightTracking {

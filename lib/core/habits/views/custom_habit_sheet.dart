@@ -11,7 +11,7 @@ import 'package:floww/core/habits/view_models/custom_habit_view_model.dart';
 import 'package:floww/core/habits/widgets/habit_text_field.dart';
 import 'package:floww/core/habits/widgets/habit_unit_dropdown.dart';
 
-typedef CustomHabitCallback = void Function(HabitDraft draft);
+typedef CustomHabitCallback = Future<void> Function(HabitDraft draft);
 
 class CustomHabitSheet extends StatelessWidget {
   const CustomHabitSheet({super.key, required this.onCreate});
@@ -31,12 +31,15 @@ class CustomHabitSheet extends StatelessWidget {
     );
   }
 
-  void _submit(BuildContext context, CustomHabitViewModel viewModel) {
+  Future<void> _submit(
+    BuildContext context,
+    CustomHabitViewModel viewModel,
+  ) async {
     final draft = viewModel.buildDraft();
     if (draft == null) return;
     HapticManager.success();
-    onCreate(draft);
-    Navigator.of(context).maybePop();
+    await onCreate(draft);
+    if (context.mounted) Navigator.of(context).maybePop();
   }
 
   @override
@@ -84,12 +87,19 @@ class CustomHabitSheet extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
-                  PillButton(
-                    label: viewModel.submitLabel,
-                    icon: Icons.add_rounded,
-                    onPressed: viewModel.canSubmit
-                        ? () => _submit(context, viewModel)
-                        : null,
+                  Align(
+                    child: IntrinsicWidth(
+                      child: PillButton(
+                        label: viewModel.submitLabel,
+                        icon: Icons.add_rounded,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl3,
+                        ),
+                        onPressed: viewModel.canSubmit
+                            ? () => _submit(context, viewModel)
+                            : null,
+                      ),
+                    ),
                   ),
                 ],
               ),

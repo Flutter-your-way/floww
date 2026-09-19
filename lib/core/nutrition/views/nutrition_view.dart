@@ -114,7 +114,7 @@ class NutritionView extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               AppBackground(
-                mode: AppBackgroundMode.flow,
+                mode: AppBackgroundMode.active(context),
                 safeAreaTop: false,
                 scrollable: true,
                 child: Padding(

@@ -26,7 +26,7 @@ class WeeklyReportCard extends StatelessWidget {
                 children: [
                   Text(
                     'Weekly Nutrition Report',
-                    style: AppTypography.bodyLargeSemiBoldTall.copyWith(
+                    style: AppTypography.heading4SemiBold.copyWith(
                       color: context.colors.textPrimary,
                     ),
                   ),

@@ -38,6 +38,40 @@ void main() {
     viewModel.dispose();
   });
 
+  test('toggling a logged food unlogs it from the selected meal', () async {
+    final service = FakeNutritionLogService();
+    final viewModel = LogFoodViewModel(service, date, MealType.lunch);
+    await viewModel.toggle(chicken);
+    await pumpEventQueue();
+    expect(viewModel.isAdded(chicken), isTrue);
+
+    await viewModel.toggle(chicken);
+    await pumpEventQueue();
+
+    expect(service.foodLogs, isEmpty);
+    expect(viewModel.isAdded(chicken), isFalse);
+    expect(viewModel.isSaving(chicken), isFalse);
+    expect(viewModel.errorMessage, isNull);
+    viewModel.dispose();
+  });
+
+  test('unlogging only removes the food from the selected meal', () async {
+    final service = FakeNutritionLogService();
+    final viewModel = LogFoodViewModel(service, date, MealType.lunch);
+    await viewModel.add(chicken);
+    await pumpEventQueue();
+    viewModel.selectMeal(MealType.dinner);
+    await viewModel.add(chicken);
+    await pumpEventQueue();
+
+    await viewModel.remove(chicken);
+    await pumpEventQueue();
+
+    expect(service.foodLogs.single.mealType, MealType.lunch);
+    expect(viewModel.isAdded(chicken), isFalse);
+    viewModel.dispose();
+  });
+
   test('added state is per meal', () async {
     final service = FakeNutritionLogService();
     final viewModel = LogFoodViewModel(service, date, MealType.lunch);

@@ -31,11 +31,7 @@ class MuscleRecoveryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CardHeader(
-            title: 'Muscle Recovery',
-            showChevron: true,
-            onTap: onTap,
-          ),
+          CardHeader(title: 'Muscle Recovery', showChevron: true, onTap: onTap),
           SizedBox(height: AppSpacing.xl),
           Row(
             children: [

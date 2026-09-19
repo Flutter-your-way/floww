@@ -42,7 +42,7 @@ class WorkoutExercisesCard extends StatelessWidget {
               title: 'Exercises',
               trailing: Text(
                 countLabel,
-                style: context.textTheme.bodyMedium?.copyWith(
+                style: AppTypography.bodySmallRegularTight.copyWith(
                   color: context.colors.textSecondary,
                 ),
               ),

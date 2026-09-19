@@ -14,7 +14,7 @@ class FeaturePlaceholderView extends StatelessWidget {
     return Scaffold(
       body: AppBackground(
         safeAreaTop: false,
-        mode: AppBackgroundMode.flow,
+        mode: AppBackgroundMode.active(context),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

@@ -34,13 +34,15 @@ class ProgressCardEmptyState extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: AppTypography.heading4.copyWith(color: colors.textPrimary),
+          style: AppTypography.heading4SemiBold.copyWith(
+            color: colors.textPrimary,
+          ),
         ),
         SizedBox(height: AppSpacing.md),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: AppTypography.bodyMediumRegular.copyWith(
+          style: AppTypography.bodySmallRegularTight.copyWith(
             color: colors.textSecondary,
           ),
         ),

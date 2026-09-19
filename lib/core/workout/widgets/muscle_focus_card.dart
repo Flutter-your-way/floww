@@ -26,7 +26,7 @@ class MuscleFocusCard extends StatelessWidget {
         children: [
           CardHeader(
             title: 'Muscle Focus',
-            titleStyle: AppTypography.labelLargeSemiBold.copyWith(
+            titleStyle: AppTypography.heading4SemiBold.copyWith(
               color: colors.textPrimary,
             ),
             trailing: WorkoutChip(

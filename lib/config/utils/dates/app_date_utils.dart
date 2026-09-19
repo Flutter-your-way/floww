@@ -95,10 +95,11 @@ class AppDateUtils {
   static bool isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  static int daysBetween(DateTime from, DateTime to) =>
-      DateTime.utc(to.year, to.month, to.day)
-          .difference(DateTime.utc(from.year, from.month, from.day))
-          .inDays;
+  static int daysBetween(DateTime from, DateTime to) => DateTime.utc(
+    to.year,
+    to.month,
+    to.day,
+  ).difference(DateTime.utc(from.year, from.month, from.day)).inDays;
 
   static DateTime startOfWeek(DateTime date) =>
       addDays(dateOnly(date), 1 - date.weekday);

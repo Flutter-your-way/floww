@@ -7,6 +7,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
+import 'package:floww/config/widgets/stats/app_stat_column.dart';
 import 'package:floww/core/wave/models/wave_card_data.dart';
 import 'package:floww/core/wave/widgets/wave_card.dart';
 
@@ -91,21 +92,10 @@ class _BriefStatGrid extends StatelessWidget {
               Expanded(
                 child: _BriefStatCell(
                   label: "TODAY'S MODE",
-                  value: Row(
-                    children: [
-                      Icon(
-                        Icons.bolt,
-                        size: AppSizes.s18,
-                        color: context.colors.primary,
-                      ),
-                      SizedBox(width: AppSpacing.xs),
-                      Text(
-                        brief.modeLabel,
-                        style: AppTypography.heading4.copyWith(
-                          color: context.colors.primary,
-                        ),
-                      ),
-                    ],
+                  value: AppStatValue(
+                    value: brief.modeLabel,
+                    leadingIcon: Icons.bolt,
+                    valueColor: context.colors.primary,
                   ),
                 ),
               ),

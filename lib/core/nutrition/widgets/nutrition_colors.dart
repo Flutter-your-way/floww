@@ -36,7 +36,7 @@ extension MealTypeStyle on MealType {
 
 extension WeeklyMetricStyle on WeeklyMetric {
   Color colorOf(BuildContext context) => switch (this) {
-    WeeklyMetric.calories => context.colors.accentOrange,
+    WeeklyMetric.calories => context.colors.primary,
     WeeklyMetric.protein => context.colors.primary,
     WeeklyMetric.fiber => context.colors.fiberAccent,
   };

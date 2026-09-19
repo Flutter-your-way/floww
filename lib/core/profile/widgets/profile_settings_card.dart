@@ -31,7 +31,7 @@ class ProfileSettingsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CardHeader(title: title, titleStyle: AppTypography.heading4),
+          CardHeader(title: title, titleStyle: AppTypography.heading4SemiBold),
           for (final item in items) ...[
             Divider(
               height: AppSpacing.xl2,
@@ -81,7 +81,7 @@ class _ProfileSettingRow extends StatelessWidget {
                 Text(
                   item.subtitle,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodyMediumMedium.copyWith(
+                  style: AppTypography.bodySmallRegularTight.copyWith(
                     color: colors.textSubtle,
                   ),
                 ),

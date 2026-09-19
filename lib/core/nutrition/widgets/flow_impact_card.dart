@@ -34,12 +34,12 @@ class FlowImpactCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(_bolt, style: AppTypography.labelLargeSemiBold),
+              const Text(_bolt, style: AppTypography.heading4SemiBold),
               SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   _title,
-                  style: AppTypography.labelLargeSemiBold.copyWith(
+                  style: AppTypography.heading4SemiBold.copyWith(
                     color: context.colors.textPrimary,
                   ),
                 ),

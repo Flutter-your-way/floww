@@ -214,7 +214,7 @@ class _StepOneContent extends StatelessWidget {
                               ],
                             ),
                             style: context.textTheme.displayLarge?.copyWith(
-                              fontSize: 58,
+                              fontSize: AppSizes.s48,
                               fontStyle: FontStyle.italic,
                               letterSpacing: -0.15,
                             ),
@@ -274,6 +274,7 @@ class _StepOneContent extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(height: AppSizes.s32),
                     ],
                   ),
                 ),

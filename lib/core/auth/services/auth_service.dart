@@ -66,6 +66,12 @@ class AuthService {
 
   Future<UserModel> signInWithApple() async {
     try {
+      if (!await SignInWithApple.isAvailable()) {
+        throw AuthException(
+          'Sign in with Apple is not available on this device.',
+        );
+      }
+
       final rawNonce = generateNonce();
       final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
 
@@ -77,8 +83,13 @@ class AuthService {
         nonce: hashedNonce,
       );
 
+      final identityToken = appleCredential.identityToken;
+      if (identityToken == null) {
+        throw AuthException('Could not sign in with Apple. Please try again.');
+      }
+
       final oauthCredential = AppleAuthProvider.credentialWithIDToken(
-        appleCredential.identityToken!,
+        identityToken,
         rawNonce,
         AppleFullPersonName(
           givenName: appleCredential.givenName,
@@ -87,11 +98,18 @@ class AuthService {
       );
 
       final userCredential = await _auth.signInWithCredential(oauthCredential);
+      final firebaseUser = userCredential.user!;
       final name =
           '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
               .trim();
+
+      if (name.isNotEmpty && (firebaseUser.displayName ?? '').isEmpty) {
+        await firebaseUser.updateDisplayName(name);
+        await firebaseUser.reload();
+      }
+
       return await _findOrCreateUser(
-        userCredential.user!,
+        _auth.currentUser ?? firebaseUser,
         provider: AuthProvider.apple,
         displayName: name,
       );
@@ -106,6 +124,14 @@ class AuthService {
       rethrow;
     } catch (_) {
       throw AuthException('Could not sign in with Apple. Please try again.');
+    }
+  }
+
+  DateTime? get accountCreatedAt {
+    try {
+      return _auth.currentUser?.metadata.creationTime;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -200,11 +226,17 @@ class AuthService {
       return user;
     }
 
+    final resolvedName = displayName.isNotEmpty
+        ? displayName
+        : (firebaseUser.displayName ?? '');
+    final storedName = doc.data()?['displayName'] as String?;
     final updatedFields = {
       'lastLoginAt': now.toIso8601String(),
       'updatedAt': now.toIso8601String(),
       if (doc.data()?['avatarUrl'] == null && firebaseUser.photoURL != null)
         'avatarUrl': firebaseUser.photoURL,
+      if ((storedName == null || storedName.isEmpty) && resolvedName.isNotEmpty)
+        'displayName': resolvedName,
     };
     await docRef.update(updatedFields);
     return UserModel.fromJson({...doc.data()!, ...updatedFields});

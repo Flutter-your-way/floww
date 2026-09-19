@@ -186,10 +186,10 @@ class SettingsService {
   Stream<NotificationSettings> watchNotifications() =>
       _watchField(notificationsField).map(notificationsOf);
 
-  Future<void> setConnected(String id, bool isConnected) =>
+  Future<bool> setConnected(String id, bool isConnected) =>
       _setFlag(connectedAppsField, id, isConnected);
 
-  Future<void> setNotificationEnabled(String id, bool isEnabled) =>
+  Future<bool> setNotificationEnabled(String id, bool isEnabled) =>
       _setFlag(notificationsField, id, isEnabled);
 
   Future<DateTime?> dietPlanStartedAt() async {
@@ -251,15 +251,17 @@ class SettingsService {
         .handleError((Object error) => debugPrint('settings read failed: $error'));
   }
 
-  Future<void> _setFlag(String field, String id, bool value) async {
+  Future<bool> _setFlag(String field, String id, bool value) async {
     final document = _preferences();
-    if (document == null) return;
+    if (document == null) return false;
     try {
       await document.set({
         field: {id: value},
       }, SetOptions(merge: true));
+      return true;
     } catch (e, stackTrace) {
       debugPrint('save settings failed: $e\n$stackTrace');
+      return false;
     }
   }
 }

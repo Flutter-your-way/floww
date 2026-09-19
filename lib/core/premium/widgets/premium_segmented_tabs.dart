@@ -27,6 +27,8 @@ class PremiumSegmentedTabs<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badgeOf = this.badgeOf;
+    final count = items.length;
+    final selectedIndex = items.indexOf(selected);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xs),
@@ -38,17 +40,62 @@ class PremiumSegmentedTabs<T> extends StatelessWidget {
           width: AppSizes.s1,
         ),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          for (final item in items)
-            Expanded(
-              child: _Segment(
-                label: labelOf(item),
-                badge: badgeOf == null ? null : badgeOf(item),
-                isSelected: item == selected,
-                onTap: () => onSelected(item),
+          if (count > 0 && selectedIndex >= 0)
+            Positioned.fill(
+              child: AnimatedAlign(
+                duration: AppMotion.expand,
+                curve: AppMotion.expandCurve,
+                alignment: Alignment(
+                  count > 1 ? -1 + 2 * selectedIndex / (count - 1) : 0,
+                  0,
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: 1 / count,
+                  heightFactor: 1,
+                  child: const _SegmentIndicator(),
+                ),
               ),
             ),
+          Row(
+            children: [
+              for (final item in items)
+                Expanded(
+                  child: _Segment(
+                    label: labelOf(item),
+                    badge: badgeOf == null ? null : badgeOf(item),
+                    isSelected: item == selected,
+                    onTap: () => onSelected(item),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SegmentIndicator extends StatelessWidget {
+  const _SegmentIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return DecoratedBox(
+      decoration: AppShapes.decoration(
+        gradient: context.gradients.primaryButton,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        side: BorderSide(color: colors.surfaceTranslucent, width: AppSizes.s1),
+        shadows: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: AppOpacity.buttonGlow),
+            offset: const Offset(0, AppSizes.s4),
+            blurRadius: AppSizes.s12,
+            spreadRadius: -AppSizes.s4,
+          ),
         ],
       ),
     );
@@ -79,52 +126,32 @@ class _Segment extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: AppMotion.press,
-        curve: AppMotion.expandCurve,
+      child: Container(
         height: AppSizes.s52,
         alignment: Alignment.center,
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        decoration: AppShapes.decoration(
-          gradient: isSelected ? context.gradients.primaryButton : null,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          side: isSelected
-              ? BorderSide(color: colors.surfaceTranslucent, width: AppSizes.s1)
-              : BorderSide.none,
-          shadows: isSelected
-              ? [
-                  BoxShadow(
-                    color: colors.primary.withValues(
-                      alpha: AppOpacity.buttonGlow,
-                    ),
-                    offset: const Offset(0, AppSizes.s4),
-                    blurRadius: AppSizes.s12,
-                    spreadRadius: -AppSizes.s4,
-                  ),
-                ]
-              : null,
-        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: AnimatedDefaultTextStyle(
+                duration: AppMotion.expand,
+                curve: AppMotion.expandCurve,
                 style: AppTypography.labelLargeSemiBold.copyWith(
                   color: foreground,
                 ),
+                child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
             ),
             if (badge != null) ...[
               SizedBox(width: AppSpacing.sm),
-              Text(
-                badge,
-                maxLines: 1,
+              AnimatedDefaultTextStyle(
+                duration: AppMotion.expand,
+                curve: AppMotion.expandCurve,
                 style: AppTypography.labelSmallMedium.copyWith(
                   color: foreground,
                 ),
+                child: Text(badge, maxLines: 1),
               ),
             ],
           ],

@@ -29,7 +29,7 @@ class WeeklyProgressCard extends StatelessWidget {
         children: [
           CardHeader(
             title: 'Weekly Progress',
-            titleStyle: AppTypography.labelLargeSemiBold,
+            titleStyle: AppTypography.heading4SemiBold,
             showChevron: true,
             onTap: onTap,
           ),

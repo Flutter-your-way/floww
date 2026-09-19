@@ -1,27 +1,29 @@
 import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/config/theme/app_mode_intensity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_typography.dart';
 import 'app_theme_tokens.dart';
 
-
-
 class AppTheme {
   AppTheme._();
 
-  static ThemeData buildTheme(AppThemeMode mode) {
-    final colorTokens = switch (mode) {
-      AppThemeMode.flow => AppColorTokens.flow,
-      AppThemeMode.steady => AppColorTokens.steady,
-      AppThemeMode.restore => AppColorTokens.restore,
-    };
+  static AppColorTokens colorsOf(AppThemeMode mode) => switch (mode) {
+    AppThemeMode.flow => AppColorTokens.flow,
+    AppThemeMode.steady => AppColorTokens.steady,
+    AppThemeMode.restore => AppColorTokens.restore,
+  };
 
-    final gradientTokens = switch (mode) {
-      AppThemeMode.flow => AppGradientTokens.flow,
-      AppThemeMode.steady => AppGradientTokens.steady,
-      AppThemeMode.restore => AppGradientTokens.restore,
-    };
+  static AppGradientTokens gradientsOf(AppThemeMode mode) => switch (mode) {
+    AppThemeMode.flow => AppGradientTokens.flow,
+    AppThemeMode.steady => AppGradientTokens.steady,
+    AppThemeMode.restore => AppGradientTokens.restore,
+  };
+
+  static ThemeData buildTheme(AppThemeMode mode) {
+    final colorTokens = colorsOf(mode);
+    final gradientTokens = gradientsOf(mode);
 
     return ThemeData(
       useMaterial3: true,
@@ -75,7 +77,7 @@ class AppTheme {
             displayColor: colorTokens.textPrimary,
             bodyColor: colorTokens.textPrimary,
           ),
-      extensions: [colorTokens, gradientTokens],
+      extensions: [colorTokens, gradientTokens, AppModeIntensity.of(mode)],
     );
   }
 }

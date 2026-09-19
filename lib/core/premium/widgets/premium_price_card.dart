@@ -39,7 +39,7 @@ class PremiumPriceCard extends StatelessWidget {
             AppStatusChip(
               label: highlightLabel,
               labelStyle: AppTypography.bodySmallSemiBold,
-              isExpanded: true,
+              horizontalPadding: AppSpacing.lg,
             ),
             SizedBox(height: AppSpacing.lg),
           ],

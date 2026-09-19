@@ -4,6 +4,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/widgets/workout_icon_tile.dart';
@@ -31,14 +32,16 @@ class ProgramRowCard extends StatelessWidget {
                   program.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.headlineSmall,
+                  style: AppTypography.heading4SemiBold.copyWith(
+                    color: context.colors.textPrimary,
+                  ),
                 ),
                 SizedBox(height: AppSpacing.sm),
                 Text(
                   program.detail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.bodySmall?.copyWith(
+                  style: AppTypography.bodySmallRegularTight.copyWith(
                     color: context.colors.textSecondary,
                   ),
                 ),
@@ -74,7 +77,7 @@ class _StartProgramButton extends StatelessWidget {
         ),
         child: Text(
           'Start',
-          style: context.textTheme.bodyMedium?.copyWith(
+          style: AppTypography.labelSmallMedium.copyWith(
             color: context.colors.primary,
           ),
         ),

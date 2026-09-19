@@ -24,6 +24,8 @@ import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 Future<void> showWaveChatSheet(BuildContext context) {
+  final theme = Theme.of(context);
+
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
@@ -31,7 +33,7 @@ Future<void> showWaveChatSheet(BuildContext context) {
     barrierColor: Colors.transparent,
     transitionDuration: AppMotion.expand,
     pageBuilder: (context, animation, secondaryAnimation) =>
-        const WaveChatSheet(),
+        Theme(data: theme, child: const WaveChatSheet()),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       final curved = CurvedAnimation(
         parent: animation,
@@ -39,23 +41,26 @@ Future<void> showWaveChatSheet(BuildContext context) {
         reverseCurve: AppMotion.collapseCurve,
       );
 
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          IgnorePointer(
-            child: FadeTransition(
-              opacity: curved,
-              child: const _WaveBackdrop(),
+      return Theme(
+        data: theme,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            IgnorePointer(
+              child: FadeTransition(
+                opacity: curved,
+                child: const _WaveBackdrop(),
+              ),
             ),
-          ),
-          SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(curved),
-            child: child,
-          ),
-        ],
+            SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 1),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          ],
+        ),
       );
     },
   );

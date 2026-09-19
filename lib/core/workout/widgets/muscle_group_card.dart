@@ -46,12 +46,14 @@ class MuscleGroupCard extends StatelessWidget {
                         group.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.headlineSmall,
+                        style: AppTypography.heading4SemiBold.copyWith(
+                          color: colors.textPrimary,
+                        ),
                       ),
                       SizedBox(height: AppSpacing.xxs),
                       Text(
                         group.countLabel,
-                        style: context.textTheme.bodyMedium?.copyWith(
+                        style: AppTypography.bodySmallRegularTight.copyWith(
                           color: colors.textSecondary,
                         ),
                       ),

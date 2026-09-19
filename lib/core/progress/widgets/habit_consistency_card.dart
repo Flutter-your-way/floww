@@ -41,7 +41,7 @@ class HabitConsistencyCard extends StatelessWidget {
         children: [
           CardHeader(
             title: title,
-            titleStyle: AppTypography.labelLargeSemiBold,
+            titleStyle: AppTypography.heading4SemiBold,
           ),
           if (strongestHabit != null && weakestHabit != null) ...[
             SizedBox(height: AppSpacing.lg),
@@ -162,7 +162,7 @@ class _HabitConsistencyRow extends StatelessWidget {
         SizedBox(width: AppSpacing.lg),
         Text(
           '${item.completedDays}',
-          style: AppTypography.bodyMediumMediumTight.copyWith(
+          style: AppTypography.bodySmallMediumTight.copyWith(
             color: colors.textPrimary,
           ),
         ),

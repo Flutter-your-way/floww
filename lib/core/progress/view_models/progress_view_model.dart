@@ -167,6 +167,8 @@ class ProgressViewModel extends ChangeNotifier {
 
   String get addWeightLabel => '+ Add New';
 
+  String get unlogWeightLabel => 'Unlog';
+
   String get weightUnit => 'kg';
 
   String get weightValueLabel => weight.currentWeight.toStringAsFixed(2);
@@ -320,6 +322,48 @@ class ProgressViewModel extends ChangeNotifier {
     if (weight == null || weight <= 0) return 'Enter a valid weight.';
     try {
       await _service.addWeightLog(weight, DateTime.now());
+      return null;
+    } on ProgressException catch (e) {
+      return e.message;
+    }
+  }
+
+  String get unlogWeightTitle => 'Unlog Weight';
+
+  String get unlogWeightSubtitle =>
+      'Remove a weigh-in you logged by mistake. This cannot be undone.';
+
+  String get unlogWeightEmptyMessage => 'You have no weigh-ins to remove yet.';
+
+  String get unlogWeightConfirmTitle => 'Remove this weigh-in?';
+
+  String unlogWeightConfirmMessage(WeightHistoryItem item) =>
+      'This deletes your ${item.valueLabel} entry from ${item.dateLabel}. '
+      'Your other weigh-ins stay in your history.';
+
+  String get unlogWeightConfirmLabel => 'Remove';
+
+  String get unlogWeightCancelLabel => 'Keep';
+
+  bool get canUnlogWeight => weight.hasEntries;
+
+  List<WeightHistoryItem> get weightHistory {
+    final entries = weight.entries;
+    return [
+      for (var index = entries.length - 1; index >= 0; index -= 1)
+        WeightHistoryItem(
+          id: entries[index].id,
+          valueLabel:
+              '${entries[index].weight.toStringAsFixed(1)} $weightUnit',
+          dateLabel: AppDateUtils.monthDay(entries[index].date),
+          isLatest: index == entries.length - 1,
+        ),
+    ];
+  }
+
+  Future<String?> unlogWeight(String id) async {
+    try {
+      await _service.deleteWeightLog(id);
       return null;
     } on ProgressException catch (e) {
       return e.message;

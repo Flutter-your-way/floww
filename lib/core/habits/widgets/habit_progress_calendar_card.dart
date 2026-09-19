@@ -35,7 +35,7 @@ class HabitProgressCalendarCard extends StatelessWidget {
         children: [
           CardHeader(
             title: title,
-            titleStyle: AppTypography.heading3Medium,
+            titleStyle: AppTypography.heading4SemiBold,
             trailing: HabitPeriodButton(
               label: periodLabel,
               onPressed: onSelectPeriod,

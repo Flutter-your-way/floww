@@ -58,7 +58,7 @@ class WorkoutNotesCard extends StatelessWidget {
             ),
             child: Text(
               notes.isEmpty ? emptyMessage : notes,
-              style: AppTypography.bodyLargeMedium.copyWith(
+              style: AppTypography.bodySmallRegularTight.copyWith(
                 color: colors.textSecondary,
               ),
             ),

@@ -11,7 +11,7 @@ class CatalogFoodRow extends StatelessWidget {
     required this.caloriesLabel,
     required this.isAdded,
     required this.isSaving,
-    this.onAdd,
+    this.onToggle,
   });
 
   final String name;
@@ -19,14 +19,14 @@ class CatalogFoodRow extends StatelessWidget {
   final String caloriesLabel;
   final bool isAdded;
   final bool isSaving;
-  final VoidCallback? onAdd;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
     return GestureDetector(
-      onTap: isAdded || isSaving ? null : onAdd,
+      onTap: isSaving ? null : onToggle,
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -69,7 +69,9 @@ class CatalogFoodRow extends StatelessWidget {
                       color: colors.primary,
                     )
                   : Icon(
-                      isAdded ? Icons.check_rounded : Icons.add_rounded,
+                      isAdded
+                          ? Icons.check_circle_rounded
+                          : Icons.add_rounded,
                       color: colors.primary,
                       size: AppSizes.s24,
                     ),

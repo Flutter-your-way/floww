@@ -2,6 +2,7 @@ import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
@@ -19,8 +20,7 @@ import 'package:floww/core/recovery/services/muscle_recovery_service.dart';
 
 class HomeSnapshotBuilder {
   HomeSnapshotBuilder({MuscleRecoveryService? muscleRecoveryService})
-    : _muscleRecoveryService =
-          muscleRecoveryService ?? MuscleRecoveryService();
+    : _muscleRecoveryService = muscleRecoveryService ?? MuscleRecoveryService();
 
   static const int weeklyWindowDays = 7;
   static const int mealsPerDay = FlowScoreCalculator.targetMealsPerDay;
@@ -31,11 +31,13 @@ class HomeSnapshotBuilder {
   static const int _habitPoints = 35;
   static const int _nutritionPoints = 25;
 
+  static const int _secondsPerMinute = 60;
+
   static const int _highIntensitySets = 20;
   static const int _moderateIntensitySets = 12;
 
-  static const int _flowModeFloor = 75;
-  static const int _steadyModeFloor = 50;
+  static const int _highRecoveryFloor = 75;
+  static const int _lowRecoveryFloor = 50;
 
   static const Map<AppThemeMode, List<String>> _modeTips = {
     AppThemeMode.flow: [
@@ -137,6 +139,7 @@ class HomeSnapshotBuilder {
       flowScoreBoosts: _boostsOf(todayEntry),
       recovery: recovery,
       flowMode: _flowModeOf(
+        score: todayEntry.score,
         recovery: recovery,
         records: records,
         today: today,
@@ -151,6 +154,7 @@ class HomeSnapshotBuilder {
           ),
       ],
       workout: _workoutOf(records: records, recovery: recovery, today: today),
+      completedWorkout: _completedWorkoutOf(completedToday),
       nutrition: NutritionSummary(
         totalCalories: nutritionDay.calories.round(),
         calorieGoal: goal.calories,
@@ -279,31 +283,37 @@ class HomeSnapshotBuilder {
 
   List<FlowScoreBoost> _boostsOf(DailyFlowEntry entry) => [
     FlowScoreBoost(
+      kind: FlowScoreBoostKind.workout,
       label: 'Workout',
       points: _workoutPoints,
       completed: entry.workoutScore >= 100,
     ),
     FlowScoreBoost(
+      kind: FlowScoreBoostKind.habits,
       label: 'Habits',
       points: _habitPoints,
       completed: entry.habitScore >= 100,
     ),
     FlowScoreBoost(
+      kind: FlowScoreBoostKind.nutrition,
       label: 'Nutrition',
       points: _nutritionPoints,
       completed: entry.nutritionScore >= 100,
     ),
   ];
 
-  FlowModeDetail? _flowModeOf({
+  FlowModeDetail _flowModeOf({
+    required int score,
     required RecoveryDetail recovery,
     required HomeRecords records,
     required DateTime today,
   }) {
-    if (!recovery.hasData) return null;
+    final mode = AppThemeMode.fromFlowScore(score);
+    final reasons = <String>['Flow Score is $score%'];
 
-    final mode = modeOf(recovery.percent);
-    final reasons = <String>['Recovery is ${recovery.levelLabel}'];
+    if (recovery.hasData) {
+      reasons.add('Recovery is ${recovery.levelLabel}');
+    }
 
     for (final metric in recovery.metrics) {
       if (metric.label == 'Sleep') {
@@ -326,12 +336,6 @@ class HomeSnapshotBuilder {
     );
   }
 
-  static AppThemeMode modeOf(int recoveryPercent) {
-    if (recoveryPercent >= _flowModeFloor) return AppThemeMode.flow;
-    if (recoveryPercent >= _steadyModeFloor) return AppThemeMode.steady;
-    return AppThemeMode.restore;
-  }
-
   WorkoutRecommendation? _workoutOf({
     required HomeRecords records,
     required RecoveryDetail recovery,
@@ -347,9 +351,9 @@ class HomeSnapshotBuilder {
 
     final lastWorkout = _lastCompletedSession(records.sessions);
     if (lastWorkout != null) {
-      final hours = today.difference(
-        AppDateUtils.dateOnly(lastWorkout.completedAt),
-      ).inDays;
+      final hours = today
+          .difference(AppDateUtils.dateOnly(lastWorkout.completedAt))
+          .inDays;
       reasons.add(
         hours == 0 ? 'Trained earlier today' : 'Last workout ${hours}d ago',
       );
@@ -365,6 +369,71 @@ class HomeSnapshotBuilder {
       intensityLabel: _intensityOf(plan.totalSets),
       reasons: reasons,
     );
+  }
+
+  CompletedWorkout? _completedWorkoutOf(List<WorkoutSessionEntity> sessions) {
+    if (sessions.isEmpty) return null;
+
+    final latest = sessions.reduce(
+      (current, session) =>
+          session.completedAt.isAfter(current.completedAt) ? session : current,
+    );
+
+    var seconds = 0;
+    var sets = 0;
+    var calories = 0;
+    var volumeKg = 0.0;
+    var flowPoints = 0;
+    var records = 0;
+    for (final session in sessions) {
+      seconds += session.durationSeconds;
+      sets += session.totalSets;
+      calories += session.caloriesKcal;
+      volumeKg += session.volumeKg;
+      flowPoints += session.flowPoints;
+      records += session.personalRecords.length;
+    }
+
+    final completedTime = AppDateUtils.time(latest.completedAt);
+
+    return CompletedWorkout(
+      sessionId: latest.id,
+      title: latest.name,
+      completedLabel: sessions.length == 1
+          ? 'Completed at $completedTime'
+          : '${sessions.length} sessions · last at $completedTime',
+      stats: [
+        CompletedWorkoutStat(
+          label: 'Duration',
+          value: '${_minutesOf(seconds)}',
+          unit: 'min',
+        ),
+        CompletedWorkoutStat(label: 'Sets', value: '$sets', unit: 'total'),
+        if (calories > 0)
+          CompletedWorkoutStat(
+            label: 'Calories',
+            value: NumberFormatter.grouped(calories),
+            unit: 'kcal',
+          )
+        else if (volumeKg > 0)
+          CompletedWorkoutStat(
+            label: 'Volume',
+            value: NumberFormatter.grouped(volumeKg.round()),
+            unit: 'kg',
+          ),
+      ],
+      highlights: [
+        if (flowPoints > 0) '+$flowPoints Flow points earned',
+        if (records > 0) '$records personal record${records == 1 ? '' : 's'}',
+        if (latest.programLabel.isNotEmpty) latest.programLabel,
+      ],
+    );
+  }
+
+  static int _minutesOf(int seconds) {
+    if (seconds <= 0) return 0;
+    final minutes = (seconds / _secondsPerMinute).round();
+    return minutes == 0 ? 1 : minutes;
   }
 
   static String _intensityOf(int totalSets) {
@@ -458,9 +527,7 @@ class HomeSnapshotBuilder {
       inRecoveryCount: _countOf(snapshot, MuscleRecoveryStatus.recovering),
       readyMusclesCount: _countOf(snapshot, MuscleRecoveryStatus.ready),
       fatiguedMusclesCount: _countOf(snapshot, MuscleRecoveryStatus.fatigued),
-      statuses: {
-        for (final item in snapshot.items) item.group: item.status,
-      },
+      statuses: {for (final item in snapshot.items) item.group: item.status},
     );
   }
 
@@ -478,7 +545,7 @@ class HomeSnapshotBuilder {
   }) {
     final plan = records.plan;
 
-    if (recovery.hasData && recovery.percent >= _flowModeFloor) {
+    if (recovery.hasData && recovery.percent >= _highRecoveryFloor) {
       if (workoutSets == 0 && plan != null) {
         return 'Recovery is ${recovery.levelLabel.toLowerCase()} — a prime '
             'window to push on ${plan.name}.';
@@ -487,7 +554,7 @@ class HomeSnapshotBuilder {
           'momentum and stay on top of your habits today.';
     }
 
-    if (recovery.hasData && recovery.percent < _steadyModeFloor) {
+    if (recovery.hasData && recovery.percent < _lowRecoveryFloor) {
       return 'Recovery is ${recovery.levelLabel.toLowerCase()} — keep today '
           'light and protect tonight’s sleep.';
     }

@@ -66,6 +66,18 @@ class FakeProgressService implements ProgressService {
   }
 
   @override
+  Future<void> deleteWeightLog(String id) async {
+    emit(
+      _copyWith(
+        weights: [
+          for (final log in _records.weights)
+            if (log.id != id) log,
+        ],
+      ),
+    );
+  }
+
+  @override
   Future<void> saveDailyFlow(List<DailyFlowEntry> entries) async {
     savedFlow.addAll(entries);
   }

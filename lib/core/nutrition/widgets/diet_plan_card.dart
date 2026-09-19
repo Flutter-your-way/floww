@@ -24,7 +24,7 @@ class DietPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final captionStyle = context.textTheme.labelSmall?.copyWith(
+    final captionStyle = context.textTheme.bodySmall?.copyWith(
       color: colors.textSecondary,
     );
 
@@ -36,6 +36,7 @@ class DietPlanCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const CardHeader(title: 'Diet Plan', showChevron: true),
+            SizedBox(height: AppSpacing.xxs),
             Text('Built by WAVE from your goals', style: captionStyle),
             SizedBox(height: AppSpacing.lg),
             Row(

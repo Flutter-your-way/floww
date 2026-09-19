@@ -72,7 +72,7 @@ class DetectedMealCard extends StatelessWidget {
                 child: _MacroTile(
                   label: 'Carbs',
                   value: carbs,
-                  color: colors.accentOrange,
+                  color: colors.carbsAccent,
                 ),
               ),
               SizedBox(width: AppSpacing.md),

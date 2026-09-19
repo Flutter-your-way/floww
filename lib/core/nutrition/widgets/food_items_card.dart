@@ -169,7 +169,7 @@ class _FoodItemRow extends StatelessWidget {
                   Text(
                     item.carbsLabel,
                     style: context.textTheme.labelSmall?.copyWith(
-                      color: colors.accentOrange,
+                      color: colors.carbsAccent,
                     ),
                   ),
                   SizedBox(width: AppSpacing.xs),
