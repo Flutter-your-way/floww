@@ -3,6 +3,7 @@ import 'package:floww/config/constants/app_glass.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/effects/liquid_glass.dart';
 import 'package:floww/config/widgets/headers/screen_title.dart';
@@ -14,6 +15,7 @@ class ProfileTitleHeader extends StatelessWidget {
     required this.title,
     required this.streakCount,
     this.avatarUrl,
+    this.avatarInitial,
     this.onAvatarTap,
     this.onStreakTap,
   });
@@ -22,6 +24,7 @@ class ProfileTitleHeader extends StatelessWidget {
   final String title;
   final int streakCount;
   final String? avatarUrl;
+  final String? avatarInitial;
   final VoidCallback? onAvatarTap;
   final VoidCallback? onStreakTap;
 
@@ -41,7 +44,7 @@ class ProfileTitleHeader extends StatelessWidget {
         SizedBox(width: AppSpacing.md),
         PressScale(
           onTap: onAvatarTap,
-          child: _UserAvatar(avatarUrl: avatarUrl),
+          child: _UserAvatar(avatarUrl: avatarUrl, initial: avatarInitial),
         ),
       ],
     );
@@ -89,17 +92,19 @@ class _StreakBadge extends StatelessWidget {
 }
 
 class _UserAvatar extends StatelessWidget {
-  const _UserAvatar({this.avatarUrl});
+  const _UserAvatar({this.avatarUrl, this.initial});
 
   static const double _borderWidth = 1.5;
   static const double _borderOpacity = 0.5;
   static const double _backgroundOpacity = 0.35;
 
   final String? avatarUrl;
+  final String? initial;
 
   @override
   Widget build(BuildContext context) {
     final avatarUrl = this.avatarUrl;
+    final fallback = _AvatarFallback(initial: initial);
 
     return Container(
       height: AppSizes.s40,
@@ -116,16 +121,15 @@ class _UserAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: avatarUrl == null
-            ? const _AvatarFallback()
+            ? fallback
             : Image.network(
                 avatarUrl,
                 fit: BoxFit.cover,
                 width: AppSizes.s40,
                 height: AppSizes.s40,
                 loadingBuilder: (context, child, progress) =>
-                    progress == null ? child : const _AvatarFallback(),
-                errorBuilder: (context, error, stackTrace) =>
-                    const _AvatarFallback(),
+                    progress == null ? child : fallback,
+                errorBuilder: (context, error, stackTrace) => fallback,
               ),
       ),
     );
@@ -133,14 +137,29 @@ class _UserAvatar extends StatelessWidget {
 }
 
 class _AvatarFallback extends StatelessWidget {
-  const _AvatarFallback();
+  const _AvatarFallback({this.initial});
+
+  final String? initial;
 
   @override
   Widget build(BuildContext context) {
-    return Icon(
-      Icons.person,
-      color: context.colors.textPrimary,
-      size: AppSizes.s24,
+    final initial = this.initial;
+
+    if (initial == null || initial.isEmpty) {
+      return Icon(
+        Icons.person,
+        color: context.colors.textPrimary,
+        size: AppSizes.s24,
+      );
+    }
+
+    return Center(
+      child: Text(
+        initial,
+        style: AppTypography.bodyLargeBold.copyWith(
+          color: context.colors.textPrimary,
+        ),
+      ),
     );
   }
 }

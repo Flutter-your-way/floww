@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/achievements/view_models/achievements_view_model.dart';
 import 'package:floww/core/achievements/views/achievements_view.dart';
@@ -23,6 +25,8 @@ import 'package:floww/core/nutrition/views/diet_plan_view.dart';
 import 'package:floww/core/nutrition/views/food_scan_view.dart';
 import 'package:floww/core/nutrition/views/meal_details_view.dart';
 import 'package:floww/core/nutrition/views/weekly_report_view.dart';
+import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/config/widgets/theme/forced_theme_mode.dart';
 import 'package:floww/core/onboarding/views/connect_wearables_view.dart';
 import 'package:floww/core/profile/view_models/edit_daily_targets_view_model.dart';
 import 'package:floww/core/profile/view_models/edit_personal_info_view_model.dart';
@@ -33,7 +37,12 @@ import 'package:floww/core/premium/view_models/premium_upgrade_view_model.dart';
 import 'package:floww/core/premium/view_models/premium_view_model.dart';
 import 'package:floww/core/premium/views/premium_upgrade_view.dart';
 import 'package:floww/core/premium/views/premium_view.dart';
+import 'package:floww/core/profile/models/profile_photo_args.dart';
+import 'package:floww/core/profile/services/profile_avatar_service.dart';
 import 'package:floww/core/profile/services/profile_service.dart';
+import 'package:floww/core/profile/view_models/profile_photo_crop_view_model.dart';
+import 'package:floww/core/profile/views/profile_photo_crop_view.dart';
+import 'package:floww/core/profile/views/profile_photo_view.dart';
 import 'package:floww/core/recovery/services/muscle_map_service.dart';
 import 'package:floww/core/recovery/services/muscle_recovery_service.dart';
 import 'package:floww/core/recovery/view_models/muscle_recovery_view_model.dart';
@@ -74,15 +83,40 @@ class AppRouterConfig {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRouter.splash:
-        return MaterialPageRoute(builder: (_) => const SplashView());
+        return MaterialPageRoute(
+          builder: (_) => const ForcedThemeMode(
+            mode: AppThemeMode.flow,
+            child: SplashView(),
+          ),
+        );
       case AppRouter.meetWaves:
-        return MaterialPageRoute(builder: (_) => const MeetWavesView());
+        return MaterialPageRoute(
+          builder: (_) => const ForcedThemeMode(
+            mode: AppThemeMode.flow,
+            child: MeetWavesView(),
+          ),
+        );
       case AppRouter.accountSetup:
-        return MaterialPageRoute(builder: (_) => const AuthView());
+        return MaterialPageRoute(
+          builder: (_) => const ForcedThemeMode(
+            mode: AppThemeMode.flow,
+            child: AuthView(),
+          ),
+        );
       case AppRouter.onboardingQuestion:
-        return MaterialPageRoute(builder: (_) => OnboardingQuestionView());
+        return MaterialPageRoute(
+          builder: (_) => ForcedThemeMode(
+            mode: AppThemeMode.flow,
+            child: OnboardingQuestionView(),
+          ),
+        );
       case AppRouter.connectWearables:
-        return MaterialPageRoute(builder: (_) => const ConnectWearablesView());
+        return MaterialPageRoute(
+          builder: (_) => const ForcedThemeMode(
+            mode: AppThemeMode.flow,
+            child: ConnectWearablesView(),
+          ),
+        );
       case AppRouter.home:
         return MaterialPageRoute(builder: (_) => const MainTabView());
       case AppRouter.foodScan:
@@ -199,10 +233,24 @@ class AppRouterConfig {
       case AppRouter.editPersonalInfo:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => EditPersonalInfoViewModel(ProfileService()),
+            create: (_) => EditPersonalInfoViewModel(
+              ProfileService(),
+              ProfileAvatarService(),
+            ),
             child: const EditPersonalInfoView(),
           ),
         );
+      case AppRouter.profilePhotoCrop:
+        final bytes = settings.arguments! as Uint8List;
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => ProfilePhotoCropViewModel(bytes),
+            child: ProfilePhotoCropView(),
+          ),
+        );
+      case AppRouter.profilePhoto:
+        final args = settings.arguments! as ProfilePhotoArgs;
+        return MaterialPageRoute(builder: (_) => ProfilePhotoView(args: args));
       case AppRouter.editDailyTargets:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
@@ -220,23 +268,22 @@ class AppRouterConfig {
       case AppRouter.notificationSettings:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) =>
-                NotificationSettingsViewModel(SettingsService()),
+            create: (_) => NotificationSettingsViewModel(SettingsService()),
             child: const NotificationSettingsView(),
           ),
         );
       case AppRouter.units:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) =>
-                UnitsViewModel(SettingsService(), ProfileService()),
+            create: (_) => UnitsViewModel(SettingsService(), ProfileService()),
             child: const UnitsView(),
           ),
         );
       case AppRouter.privacyData:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => PrivacyDataViewModel(SettingsService()),
+            create: (_) =>
+                PrivacyDataViewModel(SettingsService(), AuthService()),
             child: const PrivacyDataView(),
           ),
         );

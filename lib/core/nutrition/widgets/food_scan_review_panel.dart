@@ -53,7 +53,7 @@ class FoodScanReviewPanel extends StatelessWidget {
         secondaryLabel: 'Edit Meal',
         secondaryIcon: Icons.edit_outlined,
         onSecondary: onEdit,
-        primaryLabel: 'Start Workout',
+        primaryLabel: 'Add to Log',
         primaryIcon: Icons.check_rounded,
         onPrimary: onSave,
         isLoading: isSaving,

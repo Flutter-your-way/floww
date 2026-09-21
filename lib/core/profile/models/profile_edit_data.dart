@@ -8,6 +8,32 @@ enum WeightUnit { kg, lbs }
 
 enum DailyTarget { steps, sleep, water }
 
+enum ProfileAvatarSource { camera, library }
+
+enum ProfileAvatarAction { takePhoto, chooseFromLibrary, viewPhoto, remove }
+
+enum CropCorner { topLeft, topRight, bottomLeft, bottomRight }
+
+class ProfileAvatarOption {
+  const ProfileAvatarOption({
+    required this.icon,
+    required this.label,
+    required this.action,
+  });
+
+  final IconData icon;
+  final String label;
+  final ProfileAvatarAction action;
+
+  bool get isDestructive => action == ProfileAvatarAction.remove;
+
+  ProfileAvatarSource? get source => switch (action) {
+    ProfileAvatarAction.takePhoto => ProfileAvatarSource.camera,
+    ProfileAvatarAction.chooseFromLibrary => ProfileAvatarSource.library,
+    _ => null,
+  };
+}
+
 class ProfileChoice {
   const ProfileChoice({required this.id, required this.label, this.icon});
 

@@ -91,8 +91,7 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
 
   String get _durationValue => '$_durationMinutes';
 
-  String get _volumeValue =>
-      NumberFormatter.grouped(_session.volumeKg.round());
+  String get _volumeValue => NumberFormatter.grouped(_session.volumeKg.round());
 
   WorkoutCompleteItem get summary => WorkoutCompleteItem(
     glyph: '🎉',
@@ -209,7 +208,7 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
     subtitle: 'How do you feel after today\'s session?',
     moods: [
       RecoveryMoodItem(mood: RecoveryMood.great, glyph: '😊', label: 'Great'),
-      RecoveryMoodItem(mood: RecoveryMood.okay, glyph: '😐', label: 'Okey'),
+      RecoveryMoodItem(mood: RecoveryMood.okay, glyph: '😐', label: 'Okay'),
       RecoveryMoodItem(mood: RecoveryMood.tired, glyph: '😓', label: 'Tired'),
       RecoveryMoodItem(mood: RecoveryMood.sore, glyph: '🤕', label: 'Sore'),
     ],

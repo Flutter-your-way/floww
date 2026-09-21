@@ -9,6 +9,7 @@ import 'package:floww/config/entities/measurement_system.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/theme/app_theme.dart';
 import 'package:floww/core/profile/models/profile_edit_data.dart';
+import 'package:floww/core/profile/services/profile_avatar_service.dart';
 import 'package:floww/core/profile/view_models/edit_daily_targets_view_model.dart';
 import 'package:floww/core/profile/view_models/edit_personal_info_view_model.dart';
 import 'package:floww/core/profile/views/edit_daily_targets_view.dart';
@@ -51,7 +52,7 @@ void main() {
     WidgetTester tester,
     FakeProfileService service,
   ) async {
-    final viewModel = EditPersonalInfoViewModel(service);
+    final viewModel = EditPersonalInfoViewModel(service, ProfileAvatarService());
     addTearDown(viewModel.dispose);
 
     await _pump(

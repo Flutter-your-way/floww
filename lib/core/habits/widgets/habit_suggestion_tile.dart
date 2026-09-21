@@ -30,26 +30,29 @@ class HabitSuggestionTile extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AppCard(
         variant: AppCardVariant.subtle,
-        radius: AppRadius.lg,
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        radius: AppRadius.md,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
         child: Row(
           children: [
             Container(
-              width: AppSizes.s40,
-              height: AppSizes.s40,
+              width: AppSizes.s32,
+              height: AppSizes.s32,
               alignment: Alignment.center,
               decoration: AppShapes.decoration(
                 color: colors.bgTinted,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 side: BorderSide(color: colors.borderGlow),
               ),
               child: HabitIcon(
                 kind: item.icon,
-                size: AppSizes.s20,
+                size: AppSizes.s16,
                 color: colors.textPrimary,
               ),
             ),
-            SizedBox(width: AppSpacing.lg),
+            SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -58,13 +61,13 @@ class HabitSuggestionTile extends StatelessWidget {
                   Text(
                     item.title,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.labelLargeSemiBold,
+                    style: AppTypography.labelMediumSemiBold,
                   ),
                   SizedBox(height: AppSpacing.xxs),
                   Text(
                     item.targetLabel,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySmallMediumTight.copyWith(
+                    style: AppTypography.bodyXSmallMedium.copyWith(
                       color: colors.textSubtle,
                     ),
                   ),
@@ -92,7 +95,7 @@ class HabitSuggestionGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var index = 0; index < items.length; index += 2) ...[
-          if (index > 0) SizedBox(height: AppSpacing.lg),
+          if (index > 0) SizedBox(height: AppSpacing.md),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -103,7 +106,7 @@ class HabitSuggestionGrid extends StatelessWidget {
                     onSelect: onSelect,
                   ),
                 ),
-                SizedBox(width: AppSpacing.lg),
+                SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: index + 1 < items.length
                       ? HabitSuggestionTile(

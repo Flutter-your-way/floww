@@ -6,6 +6,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/text_field/max_length_notice.dart';
 
 class ProfileEditField extends StatelessWidget {
   const ProfileEditField({
@@ -16,6 +17,7 @@ class ProfileEditField extends StatelessWidget {
     required this.onChanged,
     this.isNumeric = false,
     this.trailing,
+    this.maxLength,
   });
 
   final String label;
@@ -24,11 +26,13 @@ class ProfileEditField extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final bool isNumeric;
   final Widget? trailing;
+  final int? maxLength;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final trailing = this.trailing;
+    final maxLength = this.maxLength;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -58,6 +62,7 @@ class ProfileEditField extends StatelessWidget {
                   onChanged: onChanged,
                   style: context.textTheme.bodyLarge,
                   cursorColor: colors.primary,
+                  maxLength: maxLength,
                   keyboardType: isNumeric
                       ? const TextInputType.numberWithOptions(decimal: true)
                       : TextInputType.text,
@@ -69,6 +74,7 @@ class ProfileEditField extends StatelessWidget {
                       : TextCapitalization.words,
                   decoration: InputDecoration(
                     isDense: true,
+                    counterText: '',
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -89,6 +95,14 @@ class ProfileEditField extends StatelessWidget {
             ],
           ),
         ),
+        if (maxLength != null)
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (context, value, child) => MaxLengthNotice(
+              length: value.text.length,
+              maxLength: maxLength,
+            ),
+          ),
       ],
     );
   }

@@ -39,6 +39,18 @@ class _FlowModeAmbientLayerState extends State<FlowModeAmbientLayer>
     if (!_controller.isAnimating) _controller.repeat();
   }
 
+  static const double _repaintsPerSecond = 15;
+
+  double _quantizedPhase(AppModeIntensity intensity) {
+    final steps =
+        (intensity.ambientDriftPeriod.inMilliseconds *
+                _repaintsPerSecond /
+                1000)
+            .round()
+            .clamp(1, 1000);
+    return (_controller.value * steps).floorToDouble() / steps;
+  }
+
   @override
   Widget build(BuildContext context) {
     final intensity = context.intensity;
@@ -51,8 +63,9 @@ class _FlowModeAmbientLayerState extends State<FlowModeAmbientLayer>
           animation: _controller,
           builder: (context, _) => CustomPaint(
             size: Size.infinite,
+            isComplex: true,
             painter: _AmbientPainter(
-              phase: _controller.value,
+              phase: _quantizedPhase(intensity),
               primary: context.colors.primary,
               deep: context.colors.primaryDeep,
               opacity: intensity.ambientOpacity,
@@ -145,5 +158,6 @@ class _AmbientPainter extends CustomPainter {
       oldDelegate.primary != primary ||
       oldDelegate.deep != deep ||
       oldDelegate.opacity != opacity ||
-      oldDelegate.radiusFactor != radiusFactor;
+      oldDelegate.radiusFactor != radiusFactor ||
+      oldDelegate.glow != glow;
 }

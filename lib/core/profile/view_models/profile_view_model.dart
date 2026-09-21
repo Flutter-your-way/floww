@@ -9,6 +9,7 @@ import 'package:floww/config/utils/formatters/measurement_converter.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/auth/services/auth_service.dart';
 import 'package:floww/core/profile/models/profile_account.dart';
+import 'package:floww/core/profile/models/profile_photo_args.dart';
 import 'package:floww/core/profile/models/profile_view_data.dart';
 import 'package:floww/core/profile/services/profile_service.dart';
 import 'package:floww/navigation/app_router.dart';
@@ -60,6 +61,11 @@ class ProfileViewModel extends ChangeNotifier {
     isPremium: _account.isPremium,
     avatarUrl: _account.avatarUrl,
   );
+
+  ProfilePhotoArgs get photoArgs =>
+      ProfilePhotoArgs(title: photoTitle, imageUrl: _account.avatarUrl);
+
+  String get photoTitle => 'Profile Photo';
 
   ProfileMetricSection get personalInformation => ProfileMetricSection(
     title: 'Personal Information',

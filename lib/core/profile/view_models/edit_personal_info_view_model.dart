@@ -1,17 +1,22 @@
-import 'package:flutter/widgets.dart';
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
 
 import 'package:floww/config/entities/measurement_system.dart';
 import 'package:floww/config/utils/formatters/measurement_converter.dart';
 import 'package:floww/core/profile/models/profile_account.dart';
 import 'package:floww/core/profile/models/profile_edit_data.dart';
+import 'package:floww/core/profile/models/profile_photo_args.dart';
+import 'package:floww/core/profile/services/profile_avatar_service.dart';
 import 'package:floww/core/profile/services/profile_service.dart';
 
 class EditPersonalInfoViewModel extends ChangeNotifier {
-  EditPersonalInfoViewModel(this._service) {
+  EditPersonalInfoViewModel(this._service, this._avatarService) {
     load();
   }
 
   final ProfileService _service;
+  final ProfileAvatarService _avatarService;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
@@ -25,10 +30,22 @@ class EditPersonalInfoViewModel extends ChangeNotifier {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _disposed = false;
+  bool _isAvatarBusy = false;
   String? _errorMessage;
+  String? _avatarErrorMessage;
+  String? _avatarUrl;
+  Uint8List? _avatarBytes;
   PersonalInformationDraft? _savedDraft;
 
   String get title => 'Edit Personal Information';
+
+  String get avatarTitle => 'Profile Photo';
+
+  String get avatarHint => 'Tap the photo to change how you appear in Floww.';
+
+  String get avatarActionLabel => hasAvatar ? 'Change Photo' : 'Add Photo';
+
+  String get avatarSheetTitle => 'Profile photo';
 
   String get nameLabel => 'Your Name';
 
@@ -62,6 +79,53 @@ class EditPersonalInfoViewModel extends ChangeNotifier {
   bool get isSaving => _isSaving;
 
   String? get errorMessage => _errorMessage;
+
+  String? get avatarErrorMessage => _avatarErrorMessage;
+
+  bool get isAvatarBusy => _isAvatarBusy;
+
+  bool get hasAvatar => _avatarBytes != null || _avatarUrl != null;
+
+  Uint8List? get avatarBytes => _avatarBytes;
+
+  String? get avatarUrl => _avatarUrl;
+
+  String get avatarInitial {
+    final name = nameController.text.trim();
+    if (name.isEmpty) return '?';
+    return name.characters.first.toUpperCase();
+  }
+
+  List<ProfileAvatarOption> get avatarOptions => [
+    const ProfileAvatarOption(
+      icon: Icons.photo_camera_outlined,
+      label: 'Take a photo',
+      action: ProfileAvatarAction.takePhoto,
+    ),
+    const ProfileAvatarOption(
+      icon: Icons.photo_library_outlined,
+      label: 'Choose from library',
+      action: ProfileAvatarAction.chooseFromLibrary,
+    ),
+    if (hasAvatar) ...[
+      const ProfileAvatarOption(
+        icon: Icons.fullscreen_rounded,
+        label: 'View full screen',
+        action: ProfileAvatarAction.viewPhoto,
+      ),
+      const ProfileAvatarOption(
+        icon: Icons.delete_outline_rounded,
+        label: 'Remove photo',
+        action: ProfileAvatarAction.remove,
+      ),
+    ],
+  ];
+
+  ProfilePhotoArgs get photoArgs => ProfilePhotoArgs(
+    title: avatarTitle,
+    imageUrl: _avatarUrl,
+    imageBytes: _avatarBytes,
+  );
 
   HeightUnit get heightUnit => _heightUnit;
 
@@ -141,6 +205,62 @@ class EditPersonalInfoViewModel extends ChangeNotifier {
     }
   }
 
+  Future<Uint8List?> pickAvatarImage(ProfileAvatarSource source) async {
+    if (_isAvatarBusy) return null;
+    _isAvatarBusy = true;
+    _avatarErrorMessage = null;
+    _notify();
+
+    try {
+      return await _avatarService.pickImage(source);
+    } on ProfileException catch (e) {
+      _avatarErrorMessage = e.message;
+      return null;
+    } finally {
+      _isAvatarBusy = false;
+      _notify();
+    }
+  }
+
+  Future<bool> applyAvatar(Uint8List bytes) async {
+    if (_isAvatarBusy) return false;
+    _isAvatarBusy = true;
+    _avatarErrorMessage = null;
+    _avatarBytes = bytes;
+    _notify();
+
+    try {
+      _avatarUrl = await _avatarService.upload(bytes);
+      return true;
+    } on ProfileException catch (e) {
+      _avatarErrorMessage = e.message;
+      return false;
+    } finally {
+      _isAvatarBusy = false;
+      _notify();
+    }
+  }
+
+  Future<bool> removeAvatar() async {
+    if (_isAvatarBusy || !hasAvatar) return false;
+    _isAvatarBusy = true;
+    _avatarErrorMessage = null;
+    _notify();
+
+    try {
+      await _avatarService.remove();
+      _avatarBytes = null;
+      _avatarUrl = null;
+      return true;
+    } on ProfileException catch (e) {
+      _avatarErrorMessage = e.message;
+      return false;
+    } finally {
+      _isAvatarBusy = false;
+      _notify();
+    }
+  }
+
   void updateName(String value) => _notify();
 
   void updateHeight(String value) => _notify();
@@ -209,6 +329,8 @@ class EditPersonalInfoViewModel extends ChangeNotifier {
     _heightUnit = isImperial ? HeightUnit.inches : HeightUnit.cm;
     _weightUnit = isImperial ? WeightUnit.lbs : WeightUnit.kg;
 
+    _avatarUrl = account.avatarUrl;
+    _avatarBytes = null;
     nameController.text = account.name ?? '';
     heightController.text = _measurement(
       account.heightCm,

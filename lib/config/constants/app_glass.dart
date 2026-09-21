@@ -1,3 +1,5 @@
+import 'package:flutter/animation.dart';
+
 import 'package:floww/config/constants/app_sizes.dart';
 
 class AppGlass {
@@ -31,4 +33,27 @@ class AppGlass {
 
   static const Duration indicatorTravel = Duration(milliseconds: 420);
   static const Duration iconFade = Duration(milliseconds: 240);
+
+  static const Duration indicatorPopIn = Duration(milliseconds: 520);
+  static const Duration indicatorPopOut = Duration(milliseconds: 220);
+  static const Curve indicatorPopCurve = Cubic(0.16, 1.5, 0.3, 1);
+  static const Curve indicatorPopOutCurve = Curves.easeInCubic;
+  static const Interval indicatorPopFade = Interval(
+    0,
+    0.36,
+    curve: Curves.easeOut,
+  );
+  static const double indicatorPopScale = 0.52;
+  static const double indicatorPopRise = AppSizes.s6;
+  static const double indicatorPopSquash = 0.18;
+  static const Duration indicatorPopSettle = Duration(milliseconds: 190);
+
+  static const Duration indicatorBurst = Duration(milliseconds: 620);
+  static const Curve indicatorBurstCurve = Curves.easeOutQuart;
+  static const double indicatorBurstScale = 0.62;
+  static const double indicatorBurstOpacity = 0.35;
+  static const double indicatorBurstWidth = AppSizes.s2;
+
+  static const double iconLiftSelected = AppSizes.s2;
+  static const double iconPopScale = 1.08;
 }

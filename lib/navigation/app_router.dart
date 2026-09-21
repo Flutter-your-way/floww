@@ -23,6 +23,8 @@ class AppRouter {
   static const String profile = '/profile';
   static const String editPersonalInfo = '/edit_personal_info';
   static const String editDailyTargets = '/edit_daily_targets';
+  static const String profilePhotoCrop = '/profile_photo_crop';
+  static const String profilePhoto = '/profile_photo';
   static const String premium = '/premium';
   static const String premiumUpgrade = '/premium_upgrade';
   static const String connectedApps = '/connected_apps';

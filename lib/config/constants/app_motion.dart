@@ -22,6 +22,12 @@ class AppMotion {
   static const double slideDistanceSmall = AppSizes.s12;
   static const double slideDistanceTab = AppSizes.s24;
 
+  static const Duration segment = Duration(milliseconds: 460);
+  static const Duration segmentLabel = Duration(milliseconds: 320);
+  static const Curve segmentCurve = Cubic(0.2, 1, 0.3, 1);
+  static const double segmentStretch = 0.14;
+  static const double segmentSquash = 0.5;
+
   static const Duration tabSwitch = Duration(milliseconds: 420);
   static const Curve tabSwitchCurve = Curves.easeOutCubic;
   static const Curve tabSwitchExitCurve = Curves.easeInCubic;

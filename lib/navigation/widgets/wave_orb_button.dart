@@ -24,46 +24,48 @@ class _WaveOrbButtonState extends State<WaveOrbButton> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: AppSizes.s52,
-      width: AppSizes.s52,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _setPressed(true),
-        onTapUp: (_) => _setPressed(false),
-        onTapCancel: () => _setPressed(false),
-        onTap: widget.onTap,
-        child: AnimatedScale(
-          scale: _pressed ? 0.98 : 1.0,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          child: AnimatedOpacity(
-            opacity: _pressed ? 0.85 : 1.0,
+    return RepaintBoundary(
+      child: SizedBox(
+        height: AppSizes.s52,
+        width: AppSizes.s52,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (_) => _setPressed(true),
+          onTapUp: (_) => _setPressed(false),
+          onTapCancel: () => _setPressed(false),
+          onTap: widget.onTap,
+          child: AnimatedScale(
+            scale: _pressed ? 0.98 : 1.0,
             duration: const Duration(milliseconds: 120),
             curve: Curves.easeOut,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: context.colors.primary.withValues(
-                      alpha: AppOpacity.softGlow,
+            child: AnimatedOpacity(
+              opacity: _pressed ? 0.85 : 1.0,
+              duration: const Duration(milliseconds: 120),
+              curve: Curves.easeOut,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: context.colors.primary.withValues(
+                        alpha: AppOpacity.softGlow,
+                      ),
+                      blurRadius: AppSizes.s40,
                     ),
-                    blurRadius: AppSizes.s40,
-                  ),
-                  BoxShadow(
-                    color: context.colors.primary.withValues(
-                      alpha: AppOpacity.buttonGlowStrong,
+                    BoxShadow(
+                      color: context.colors.primary.withValues(
+                        alpha: AppOpacity.buttonGlowStrong,
+                      ),
+                      blurRadius: AppSizes.s20,
                     ),
-                    blurRadius: AppSizes.s20,
-                  ),
-                ],
-              ),
-              child: SvgPicture.asset(
-                AppImages.waveIcon,
-                width: AppSizes.s52,
-                height: AppSizes.s52,
-                theme: SvgTheme(currentColor: context.colors.primary),
+                  ],
+                ),
+                child: SvgPicture.asset(
+                  AppImages.waveIcon,
+                  width: AppSizes.s52,
+                  height: AppSizes.s52,
+                  theme: SvgTheme(currentColor: context.colors.primary),
+                ),
               ),
             ),
           ),

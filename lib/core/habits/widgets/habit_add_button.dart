@@ -44,17 +44,17 @@ class _HabitAddButtonState extends State<HabitAddButton> {
         scale: _pressed ? 0.96 : 1.0,
         duration: _pressDuration,
         child: Container(
-          width: AppSizes.s40,
-          height: AppSizes.s40,
+          width: AppSizes.s32,
+          height: AppSizes.s32,
           alignment: Alignment.center,
           decoration: AppShapes.decoration(
             color: colors.backgroundElevated,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             side: BorderSide(color: colors.borderMedium),
           ),
           child: Icon(
             Icons.add_rounded,
-            size: AppSizes.s20,
+            size: AppSizes.s16,
             color: colors.primaryAlt,
           ),
         ),

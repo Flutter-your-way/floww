@@ -37,40 +37,42 @@ class LiquidGlass extends StatelessWidget {
   Widget build(BuildContext context) {
     final shape = AppShapes.border(borderRadius: borderRadius);
 
-    return DecoratedBox(
-      decoration: ShapeDecoration(shape: shape, shadows: shadows),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: ClipPath(
-              clipper: ShapeBorderClipper(shape: shape),
-              child: LayoutBuilder(
-                builder: (context, constraints) => _GlassSurface(
-                  size: constraints.biggest,
-                  borderRadius: borderRadius,
-                  blurSigma: blurSigma,
-                  refraction: refraction,
-                  thickness: thickness,
-                  dispersion: dispersion,
-                  glare: glare,
-                  brightness: brightness,
-                  fillOpacity: fillOpacity,
+    return RepaintBoundary(
+      child: DecoratedBox(
+        decoration: ShapeDecoration(shape: shape, shadows: shadows),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ClipPath(
+                clipper: ShapeBorderClipper(shape: shape),
+                child: LayoutBuilder(
+                  builder: (context, constraints) => _GlassSurface(
+                    size: constraints.biggest,
+                    borderRadius: borderRadius,
+                    blurSigma: blurSigma,
+                    refraction: refraction,
+                    thickness: thickness,
+                    dispersion: dispersion,
+                    glare: glare,
+                    brightness: brightness,
+                    fillOpacity: fillOpacity,
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: _GlassRimPainter(
-                  shape: shape,
-                  gradient: context.gradients.glassRim,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _GlassRimPainter(
+                    shape: shape,
+                    gradient: context.gradients.glassRim,
+                  ),
                 ),
               ),
             ),
-          ),
-          child,
-        ],
+            child,
+          ],
+        ),
       ),
     );
   }
@@ -105,6 +107,8 @@ class _GlassSurface extends StatefulWidget {
 
 class _GlassSurfaceState extends State<_GlassSurface> {
   ui.FragmentShader? _shader;
+  ui.ImageFilter? _filter;
+  double _filterPixelRatio = 0;
 
   @override
   void initState() {
@@ -113,9 +117,34 @@ class _GlassSurfaceState extends State<_GlassSurface> {
   }
 
   @override
+  void didUpdateWidget(_GlassSurface oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.size != widget.size ||
+        oldWidget.borderRadius != widget.borderRadius ||
+        oldWidget.blurSigma != widget.blurSigma ||
+        oldWidget.refraction != widget.refraction ||
+        oldWidget.thickness != widget.thickness ||
+        oldWidget.dispersion != widget.dispersion ||
+        oldWidget.glare != widget.glare ||
+        oldWidget.brightness != widget.brightness) {
+      _filter = null;
+    }
+  }
+
+  @override
   void dispose() {
     _shader?.dispose();
     super.dispose();
+  }
+
+  ui.ImageFilter _filterFor(double devicePixelRatio) {
+    final cached = _filter;
+    if (cached != null && _filterPixelRatio == devicePixelRatio) return cached;
+
+    final filter = _buildFilter(devicePixelRatio);
+    _filter = filter;
+    _filterPixelRatio = devicePixelRatio;
+    return filter;
   }
 
   ui.ImageFilter _buildFilter(double devicePixelRatio) {
@@ -148,7 +177,7 @@ class _GlassSurfaceState extends State<_GlassSurface> {
   @override
   Widget build(BuildContext context) {
     return BackdropFilter(
-      filter: _buildFilter(MediaQuery.devicePixelRatioOf(context)),
+      filter: _filterFor(MediaQuery.devicePixelRatioOf(context)),
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: context.gradients.glassFill,

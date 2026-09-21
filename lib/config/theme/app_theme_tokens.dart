@@ -127,6 +127,12 @@ class _OverlayGradients {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
+
+  static const footerScrim = LinearGradient(
+    colors: [Color(0x000A0A0A), Color(0x470A0A0A)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 }
 
 @immutable
@@ -500,6 +506,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     this.cameraScrim = _OverlayGradients.cameraScrim,
     this.cardSheen = _OverlayGradients.cardSheen,
     this.actionScrim = _OverlayGradients.actionScrim,
+    this.footerScrim = _OverlayGradients.footerScrim,
     this.glassFill = _OverlayGradients.glassFill,
     this.glassRim = _OverlayGradients.glassRim,
     this.glassIndicator = _OverlayGradients.glassIndicator,
@@ -528,6 +535,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient cameraScrim;
   final Gradient cardSheen;
   final Gradient actionScrim;
+  final Gradient footerScrim;
   final Gradient glassFill;
   final Gradient glassRim;
   final Gradient glassIndicator;
@@ -768,6 +776,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? cameraScrim,
     Gradient? cardSheen,
     Gradient? actionScrim,
+    Gradient? footerScrim,
     Gradient? glassFill,
     Gradient? glassRim,
     Gradient? glassIndicator,
@@ -796,6 +805,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       cameraScrim: cameraScrim ?? this.cameraScrim,
       cardSheen: cardSheen ?? this.cardSheen,
       actionScrim: actionScrim ?? this.actionScrim,
+      footerScrim: footerScrim ?? this.footerScrim,
       glassFill: glassFill ?? this.glassFill,
       glassRim: glassRim ?? this.glassRim,
       glassIndicator: glassIndicator ?? this.glassIndicator,
@@ -833,6 +843,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       cameraScrim: Gradient.lerp(cameraScrim, other.cameraScrim, t)!,
       cardSheen: Gradient.lerp(cardSheen, other.cardSheen, t)!,
       actionScrim: Gradient.lerp(actionScrim, other.actionScrim, t)!,
+      footerScrim: Gradient.lerp(footerScrim, other.footerScrim, t)!,
       glassFill: Gradient.lerp(glassFill, other.glassFill, t)!,
       glassRim: Gradient.lerp(glassRim, other.glassRim, t)!,
       glassIndicator: Gradient.lerp(glassIndicator, other.glassIndicator, t)!,

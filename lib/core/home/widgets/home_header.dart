@@ -8,6 +8,7 @@ class HomeHeader extends StatelessWidget {
     required this.userName,
     required this.streakCount,
     this.avatarUrl,
+    this.avatarInitial,
     this.onAvatarTap,
     this.onStreakTap,
   });
@@ -16,6 +17,7 @@ class HomeHeader extends StatelessWidget {
   final String userName;
   final int streakCount;
   final String? avatarUrl;
+  final String? avatarInitial;
   final VoidCallback? onAvatarTap;
   final VoidCallback? onStreakTap;
 
@@ -26,6 +28,7 @@ class HomeHeader extends StatelessWidget {
       title: userName,
       streakCount: streakCount,
       avatarUrl: avatarUrl,
+      avatarInitial: avatarInitial,
       onAvatarTap: onAvatarTap,
       onStreakTap: onStreakTap,
     );

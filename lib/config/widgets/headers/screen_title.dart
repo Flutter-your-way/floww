@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_constants.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 
@@ -22,6 +23,8 @@ class ScreenTitle extends StatelessWidget {
         ),
         Text(
           title,
+          maxLines: AppLimits.displayNameMaxLines,
+          overflow: TextOverflow.ellipsis,
           style: AppTypography.heading3ExtraBoldItalic.copyWith(
             color: context.colors.backgroundSecondary,
           ),

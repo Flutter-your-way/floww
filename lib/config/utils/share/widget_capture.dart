@@ -13,38 +13,35 @@ class WidgetCapture {
   static const Duration _settleDelay = Duration(milliseconds: 40);
 
   static Future<Uint8List> toPngBytes(GlobalKey boundaryKey) async {
-    try {
-      final boundary =
-          boundaryKey.currentContext?.findRenderObject()
-              as RenderRepaintBoundary?;
-      if (boundary == null) {
-        throw const ShareException(
-          ShareErrorCode.captureFailed,
-          'Could not render your card. Please try again.',
-        );
-      }
-      if (boundary.debugNeedsPaint) {
-        await Future<void>.delayed(_settleDelay);
-      }
-      final image = await boundary.toImage(pixelRatio: _pixelRatio);
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      image.dispose();
-      final bytes = data?.buffer.asUint8List();
-      if (bytes == null) {
-        throw const ShareException(
-          ShareErrorCode.captureFailed,
-          'Could not render your card. Please try again.',
-        );
-      }
-      return bytes;
-    } on ShareException {
-      rethrow;
-    } catch (e, stackTrace) {
-      debugPrint('toPngBytes failed: $e\n$stackTrace');
+    final bytes = await toPngBytesOrNull(boundaryKey);
+    if (bytes == null) {
       throw const ShareException(
         ShareErrorCode.captureFailed,
         'Could not render your card. Please try again.',
       );
+    }
+    return bytes;
+  }
+
+  static Future<Uint8List?> toPngBytesOrNull(
+    GlobalKey boundaryKey, {
+    double pixelRatio = _pixelRatio,
+  }) async {
+    try {
+      final boundary =
+          boundaryKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
+      if (boundary == null) return null;
+      if (boundary.debugNeedsPaint) {
+        await Future<void>.delayed(_settleDelay);
+      }
+      final image = await boundary.toImage(pixelRatio: pixelRatio);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      return data?.buffer.asUint8List();
+    } catch (e, stackTrace) {
+      debugPrint('toPngBytes failed: $e\n$stackTrace');
+      return null;
     }
   }
 }

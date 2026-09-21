@@ -7,7 +7,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
-import 'package:floww/config/widgets/sheets/app_sheet_header.dart';
+import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/core/habits/models/habit_suggestion.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/view_models/add_habit_view_model.dart';
@@ -60,52 +60,44 @@ class AddHabitSheet extends StatelessWidget {
         final suggestions = viewModel.suggestions;
 
         return AppFloatingSheet(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppSheetHeader(
-                    title: viewModel.title,
-                    subtitle: viewModel.subtitle,
+          child: AppSheetPanel(
+            title: viewModel.title,
+            subtitle: viewModel.subtitle,
+            onClose: () => Navigator.of(context).maybePop(),
+            body: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (viewModel.hasSuggestionGroup) ...[
+                  WaveSuggestionCard(
+                    label: viewModel.waveLabel,
+                    title: viewModel.groupTitle,
+                    actionLabel: viewModel.tryAnotherLabel,
+                    items: viewModel.groupItems,
+                    onTryAnother: viewModel.canTryAnother
+                        ? viewModel.nextGroup
+                        : null,
+                    onAdd: (item) => _add(context, viewModel, item),
                   ),
-                  SizedBox(height: AppSpacing.xl2),
-                  if (viewModel.hasSuggestionGroup) ...[
-                    WaveSuggestionCard(
-                      label: viewModel.waveLabel,
-                      title: viewModel.groupTitle,
-                      actionLabel: viewModel.tryAnotherLabel,
-                      items: viewModel.groupItems,
-                      onTryAnother: viewModel.canTryAnother
-                          ? viewModel.nextGroup
-                          : null,
-                      onAdd: (item) => _add(context, viewModel, item),
-                    ),
-                    SizedBox(height: AppSpacing.xl2),
-                  ],
-                  if (suggestions.isEmpty)
-                    _EmptySuggestions(message: viewModel.emptyMessage)
-                  else
-                    HabitSuggestionGrid(
-                      items: suggestions,
-                      onSelect: (item) => _add(context, viewModel, item),
-                    ),
-                  SizedBox(height: AppSpacing.xl2),
-                  Align(
-                    child: IntrinsicWidth(
-                      child: PillButton(
-                        label: viewModel.createCustomLabel,
-                        icon: Icons.add_rounded,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl3,
-                        ),
-                        onPressed: () => Navigator.of(context).pop(true),
-                      ),
-                    ),
-                  ),
+                  SizedBox(height: AppSpacing.xl),
                 ],
+                if (suggestions.isEmpty)
+                  _EmptySuggestions(message: viewModel.emptyMessage)
+                else
+                  HabitSuggestionGrid(
+                    items: suggestions,
+                    onSelect: (item) => _add(context, viewModel, item),
+                  ),
+              ],
+            ),
+            footer: Align(
+              child: IntrinsicWidth(
+                child: PillButton(
+                  label: viewModel.createCustomLabel,
+                  icon: Icons.add_rounded,
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
+                  onPressed: () => Navigator.of(context).pop(true),
+                ),
               ),
             ),
           ),

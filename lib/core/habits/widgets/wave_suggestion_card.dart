@@ -50,8 +50,8 @@ class WaveSuggestionCard extends StatelessWidget {
             children: [
               SvgPicture.asset(
                 AppImages.waveIcon,
-                width: AppSizes.s32,
-                height: AppSizes.s32,
+                width: AppSizes.s24,
+                height: AppSizes.s24,
                 theme: SvgTheme(currentColor: context.colors.primary),
               ),
               SizedBox(width: AppSpacing.md),
@@ -62,7 +62,7 @@ class WaveSuggestionCard extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: AppTypography.labelMediumSemiBold.copyWith(
+                      style: AppTypography.labelSmallSemiBold.copyWith(
                         color: context.colors.primaryAlt,
                       ),
                     ),
@@ -70,7 +70,7 @@ class WaveSuggestionCard extends StatelessWidget {
                     Text(
                       title,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.labelLargeSemiBold,
+                      style: AppTypography.labelMediumSemiBold,
                     ),
                   ],
                 ),
@@ -78,15 +78,15 @@ class WaveSuggestionCard extends StatelessWidget {
               SizedBox(width: AppSpacing.md),
               PillButton(
                 onPressed: onTryAnother == null ? null : _tryAnother,
-                height: AppSizes.s36,
+                height: AppSizes.s28,
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 label: actionLabel,
-                labelStyle: AppTypography.labelMediumSemiBold,
+                labelStyle: AppTypography.labelSmallSemiBold,
               ),
             ],
           ),
           for (final item in items) ...[
-            SizedBox(height: AppSpacing.lg),
+            SizedBox(height: AppSpacing.md),
             _WaveSuggestionRow(
               item: item,
               onAdd: onAdd == null ? null : () => onAdd(item),
@@ -111,7 +111,7 @@ class _WaveSuggestionRow extends StatelessWidget {
       radius: AppRadius.md,
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
-        vertical: AppSpacing.lg,
+        vertical: AppSpacing.md,
       ),
       child: Row(
         children: [
@@ -123,13 +123,13 @@ class _WaveSuggestionRow extends StatelessWidget {
                 Text(
                   item.title,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.labelLargeSemiBold,
+                  style: AppTypography.labelMediumSemiBold,
                 ),
                 SizedBox(height: AppSpacing.xxs),
                 Text(
                   item.targetLabel,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySmallMediumTight.copyWith(
+                  style: AppTypography.bodyXSmallMedium.copyWith(
                     color: context.colors.textSubtle,
                   ),
                 ),

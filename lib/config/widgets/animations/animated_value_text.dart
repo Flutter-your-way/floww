@@ -9,12 +9,14 @@ class AnimatedValueText extends StatelessWidget {
     this.style,
     this.textAlign,
     this.duration = AppMotion.expand,
+    this.alignment = Alignment.centerLeft,
   });
 
   final String value;
   final TextStyle? style;
   final TextAlign? textAlign;
   final Duration duration;
+  final AlignmentGeometry alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,7 @@ class AnimatedValueText extends StatelessWidget {
       switchInCurve: AppMotion.expandCurve,
       switchOutCurve: AppMotion.collapseCurve,
       layoutBuilder: (currentChild, previousChildren) => Stack(
-        alignment: Alignment.centerLeft,
+        alignment: alignment,
         children: [...previousChildren, ?currentChild],
       ),
       child: Text(

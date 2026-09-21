@@ -180,48 +180,39 @@ class NavTabItem {
 class _BlurredFooter extends StatelessWidget {
   const _BlurredFooter();
 
-  static const _bandFractions = [1.0, 0.8, 0.6, 0.4, 0.2];
-  static const _bandSigma = 1.2;
+  static const _bands = [(1.0, 1.1), (0.55, 2.5)];
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        for (final fraction in _bandFractions)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            top: 0,
-            child: FractionallySizedBox(
-              heightFactor: fraction,
-              alignment: Alignment.bottomCenter,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(
-                    sigmaX: _bandSigma,
-                    sigmaY: _bandSigma,
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          for (final (fraction, sigma) in _bands)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              top: 0,
+              child: FractionallySizedBox(
+                heightFactor: fraction,
+                alignment: Alignment.bottomCenter,
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                    child: const SizedBox.expand(),
                   ),
-                  child: const SizedBox.expand(),
                 ),
               ),
             ),
-          ),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  context.colors.backgroundPrimary.withValues(alpha: 0),
-                  context.colors.backgroundPrimary.withValues(alpha: 0.28),
-                ],
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: context.gradients.footerScrim,
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

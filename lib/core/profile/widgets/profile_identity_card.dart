@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 
-import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/chips/app_status_chip.dart';
 import 'package:floww/core/profile/models/profile_view_data.dart';
+import 'package:floww/core/profile/widgets/profile_avatar_image.dart';
 
 class ProfileIdentityCard extends StatelessWidget {
   const ProfileIdentityCard({
     super.key,
     required this.summary,
     required this.badgeLabel,
+    this.onAvatarTap,
   });
 
   final ProfileSummary summary;
   final String badgeLabel;
+  final VoidCallback? onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +30,12 @@ class ProfileIdentityCard extends StatelessWidget {
       borderColor: summary.isPremium ? colors.borderGlow : null,
       child: Row(
         children: [
-          _ProfileAvatarTile(
-            initial: summary.initial,
-            avatarUrl: summary.avatarUrl,
+          PressScale(
+            onTap: summary.avatarUrl == null ? null : onAvatarTap,
+            child: ProfileAvatarImage(
+              initial: summary.initial,
+              imageUrl: summary.avatarUrl,
+            ),
           ),
           SizedBox(width: AppSpacing.xl),
           Expanded(
@@ -63,49 +68,6 @@ class ProfileIdentityCard extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _ProfileAvatarTile extends StatelessWidget {
-  const _ProfileAvatarTile({required this.initial, this.avatarUrl});
-
-  final String initial;
-  final String? avatarUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final avatarUrl = this.avatarUrl;
-    final borderRadius = BorderRadius.circular(AppRadius.lg);
-
-    return Container(
-      height: AppSizes.s60,
-      width: AppSizes.s60,
-      alignment: Alignment.center,
-      clipBehavior: Clip.antiAlias,
-      decoration: AppShapes.decoration(
-        color: colors.bgTinted,
-        borderRadius: borderRadius,
-        side: BorderSide(color: colors.borderAccent, width: AppSizes.s1),
-      ),
-      child: avatarUrl == null
-          ? Text(
-              initial,
-              style: AppTypography.heading2Bold.copyWith(color: colors.primary),
-            )
-          : Image.network(
-              avatarUrl,
-              fit: BoxFit.cover,
-              width: AppSizes.s60,
-              height: AppSizes.s60,
-              errorBuilder: (context, error, stackTrace) => Text(
-                initial,
-                style: AppTypography.heading2Bold.copyWith(
-                  color: colors.primary,
-                ),
-              ),
-            ),
     );
   }
 }

@@ -38,9 +38,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Floww uses your camera to scan your meals so WAVE can estimate their calories and nutrition.</string>
+	<string>Floww uses your camera to scan your meals so WAVE can estimate their calories and nutrition, and to take your profile photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Floww lets you pick a photo of your meal from your library so WAVE can estimate its calories and nutrition.</string>
+	<string>Floww lets you pick a photo from your library for your meals and your profile picture.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Floww saves your workout share card to your photo library so you can post it anywhere.</string>
 	<key>NSHealthShareUsageDescription</key>

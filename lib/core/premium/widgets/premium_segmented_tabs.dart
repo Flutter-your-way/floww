@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_motion.dart';
@@ -7,8 +9,9 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 
-class PremiumSegmentedTabs<T> extends StatelessWidget {
+class PremiumSegmentedTabs<T> extends StatefulWidget {
   const PremiumSegmentedTabs({
     super.key,
     required this.items,
@@ -25,10 +28,58 @@ class PremiumSegmentedTabs<T> extends StatelessWidget {
   final ValueChanged<T> onSelected;
 
   @override
+  State<PremiumSegmentedTabs<T>> createState() =>
+      _PremiumSegmentedTabsState<T>();
+}
+
+class _PremiumSegmentedTabsState<T> extends State<PremiumSegmentedTabs<T>>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late Animation<double> _alignmentX;
+  late double _travel;
+
+  double _alignmentFor(T item) {
+    final count = widget.items.length;
+    final index = widget.items.indexOf(item);
+    if (count < 2 || index < 0) return 0;
+
+    return -1 + 2 * index / (count - 1);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: AppMotion.segment);
+    final target = _alignmentFor(widget.selected);
+    _travel = 0;
+    _alignmentX = AlwaysStoppedAnimation<double>(target);
+  }
+
+  @override
+  void didUpdateWidget(covariant PremiumSegmentedTabs<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected == widget.selected) return;
+
+    final begin = _alignmentX.value;
+    final end = _alignmentFor(widget.selected);
+    _travel = (end - begin).abs() / 2;
+    _alignmentX = Tween<double>(begin: begin, end: end).animate(
+      CurvedAnimation(parent: _controller, curve: AppMotion.segmentCurve),
+    );
+    _controller.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final badgeOf = this.badgeOf;
-    final count = items.length;
-    final selectedIndex = items.indexOf(selected);
+    final badgeOf = widget.badgeOf;
+    final count = widget.items.length;
+    final hasIndicator = count > 0 && widget.items.contains(widget.selected);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xs),
@@ -42,31 +93,39 @@ class PremiumSegmentedTabs<T> extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          if (count > 0 && selectedIndex >= 0)
+          if (hasIndicator)
             Positioned.fill(
-              child: AnimatedAlign(
-                duration: AppMotion.expand,
-                curve: AppMotion.expandCurve,
-                alignment: Alignment(
-                  count > 1 ? -1 + 2 * selectedIndex / (count - 1) : 0,
-                  0,
-                ),
-                child: FractionallySizedBox(
-                  widthFactor: 1 / count,
-                  heightFactor: 1,
-                  child: const _SegmentIndicator(),
-                ),
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  final pulse = math.sin(math.pi * _controller.value) * _travel;
+                  final stretch = AppMotion.segmentStretch * pulse;
+
+                  return Align(
+                    alignment: Alignment(_alignmentX.value, 0),
+                    child: FractionallySizedBox(
+                      widthFactor: 1 / count,
+                      heightFactor: 1,
+                      child: Transform.scale(
+                        scaleX: 1 + stretch,
+                        scaleY: 1 - stretch * AppMotion.segmentSquash,
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+                child: const _SegmentIndicator(),
               ),
             ),
           Row(
             children: [
-              for (final item in items)
+              for (final item in widget.items)
                 Expanded(
                   child: _Segment(
-                    label: labelOf(item),
+                    label: widget.labelOf(item),
                     badge: badgeOf == null ? null : badgeOf(item),
-                    isSelected: item == selected,
-                    onTap: () => onSelected(item),
+                    isSelected: item == widget.selected,
+                    onTap: () => widget.onSelected(item),
                   ),
                 ),
             ],
@@ -123,9 +182,8 @@ class _Segment extends StatelessWidget {
         ? colors.backgroundPrimary
         : colors.textSecondary;
 
-    return GestureDetector(
+    return PressScale(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: Container(
         height: AppSizes.s52,
         alignment: Alignment.center,
@@ -135,19 +193,23 @@ class _Segment extends StatelessWidget {
           children: [
             Flexible(
               child: AnimatedDefaultTextStyle(
-                duration: AppMotion.expand,
-                curve: AppMotion.expandCurve,
+                duration: AppMotion.segmentLabel,
+                curve: AppMotion.segmentCurve,
                 style: AppTypography.labelLargeSemiBold.copyWith(
                   color: foreground,
                 ),
-                child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
             if (badge != null) ...[
               SizedBox(width: AppSpacing.sm),
               AnimatedDefaultTextStyle(
-                duration: AppMotion.expand,
-                curve: AppMotion.expandCurve,
+                duration: AppMotion.segmentLabel,
+                curve: AppMotion.segmentCurve,
                 style: AppTypography.labelSmallMedium.copyWith(
                   color: foreground,
                 ),

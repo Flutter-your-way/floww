@@ -75,7 +75,7 @@ class _InnerPageScaffoldState extends State<InnerPageScaffold> {
                 child: ListView(
                   controller: _controller,
                   padding: EdgeInsets.only(
-                    top: viewPadding.top + kToolbarHeight + AppSpacing.md,
+                    top: viewPadding.top + kToolbarHeight + AppSpacing.xl3,
                     bottom: viewPadding.bottom + footerExtent,
                     left: horizontalPadding,
                     right: horizontalPadding,

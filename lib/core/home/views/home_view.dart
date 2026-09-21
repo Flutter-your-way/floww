@@ -192,99 +192,94 @@ class HomeView extends StatelessWidget {
             curve: AppMotion.expandCurve,
             child: Builder(
               builder: (context) => Scaffold(
-                body: AppBackground(
+                body: AppBackground.list(
                   safeAreaTop: false,
-                  scrollable: true,
                   mode: AppBackgroundMode.of(activeMode),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height:
-                              MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                        ),
-                        HomeHeader(
-                          greeting: home.greeting,
-                          userName: home.userName,
-                          streakCount: home.streakCount,
-                          avatarUrl: context.watch<AuthViewModel>().avatarUrl,
-                          onAvatarTap: _openProfile,
-                          onStreakTap: () => _openStreak(context, home),
-                        ),
-                        SizedBox(height: AppSpacing.xl2),
-                        FlowModeDebugTrigger(
-                          child: FlowScoreCard(
-                            percent: home.flowScorePercent,
-                            recoveryLevel: home.recoveryLevel,
-                            hasRecoveryData: home.hasRecoveryData,
-                            todayMode: activeMode,
-                            onStartWorkout: () => _startWorkout(context, home),
-                            onBreakdownTap: () => _openBreakdown(context, home),
-                            onRecoveryTap: () => _openRecovery(context, home),
-                            onModeTap: () =>
-                                _openFlowMode(context, home, flowMode),
-                          ),
-                        ),
-                        AppCollapsibleSection(
-                          visible: home.flowScorePercent == 0,
-                          gap: AppSpacing.xl2,
-                          child: FlowScoreBoostCard(
-                            boosts: home.flowScoreBoosts,
-                            onBoostTap: (boost) => _openBoost(context, boost),
-                          ),
-                        ),
-                        SizedBox(height: AppSpacing.xl2),
-                        TodayHabitCard(
-                          habits: home.habits,
-                          onCreateFirstHabit: () => _createFirstHabit(context),
-                          onTap: () => _openHabits(context),
-                          onToggleHabit: (habit) =>
-                              _toggleHabit(context, habit),
-                        ),
-                        SizedBox(height: AppSpacing.xl2),
-                        TodayWorkoutCard(
-                          workout: home.workout,
-                          completed: home.completedWorkout,
-                          onStartWorkout: () => _startWorkout(context, home),
-                          onViewSummary: () =>
-                              _openWorkoutSummary(home.completedWorkout),
-                        ),
-                        SizedBox(height: AppSpacing.xl2),
-                        NutritionSummaryCard(
-                          nutrition: home.nutrition,
-                          onTap: _openNutrition,
-                        ),
-                        SizedBox(height: AppSpacing.xl2),
-                        AppleHealthSyncCard(
-                          connected: health.isConnected,
-                          syncDetail: health.statusLabel,
-                          onConnect: health.connect,
-                          onDisconnect: health.disconnect,
-                        ),
-                        SizedBox(height: AppSpacing.xl2),
-                        TodayProgressCard(progress: home.todayProgress),
-                        SizedBox(height: AppSpacing.xl2),
-                        MuscleRecoveryCard(
-                          data: home.muscleRecovery,
-                          frontTemplate: home.muscleMapOf(MuscleBodySide.front),
-                          backTemplate: home.muscleMapOf(MuscleBodySide.back),
-                          onTap: () => NavigationService.instance.push(
-                            AppRouter.muscleRecovery,
-                          ),
-                        ),
-                        if (home.waveInsight != null) ...[
-                          SizedBox(height: AppSpacing.xl2),
-                          WaveInsightBanner(message: home.waveInsight!),
-                        ],
-                        SizedBox(
-                          height:
-                              MediaQuery.viewPaddingOf(context).bottom +
-                              AppSizes.s96,
-                        ),
-                      ],
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.paddingOf(context).top + AppSpacing.lg,
                     ),
-                  ),
+                    HomeHeader(
+                      greeting: home.greeting,
+                      userName: home.userName,
+                      streakCount: home.streakCount,
+                      avatarUrl: context.watch<AuthViewModel>().avatarUrl,
+                      avatarInitial: context
+                          .watch<AuthViewModel>()
+                          .avatarInitial,
+                      onAvatarTap: _openProfile,
+                      onStreakTap: () => _openStreak(context, home),
+                    ),
+                    SizedBox(height: AppSpacing.xl2),
+                    FlowModeDebugTrigger(
+                      child: FlowScoreCard(
+                        percent: home.flowScorePercent,
+                        recoveryLevel: home.recoveryLevel,
+                        hasRecoveryData: home.hasRecoveryData,
+                        todayMode: activeMode,
+                        onStartWorkout: () => _startWorkout(context, home),
+                        onBreakdownTap: () => _openBreakdown(context, home),
+                        onRecoveryTap: () => _openRecovery(context, home),
+                        onModeTap: () => _openFlowMode(context, home, flowMode),
+                      ),
+                    ),
+                    AppCollapsibleSection(
+                      visible: home.flowScorePercent == 0,
+                      gap: AppSpacing.xl2,
+                      child: FlowScoreBoostCard(
+                        boosts: home.flowScoreBoosts,
+                        onBoostTap: (boost) => _openBoost(context, boost),
+                      ),
+                    ),
+                    SizedBox(height: AppSpacing.xl2),
+                    TodayHabitCard(
+                      habits: home.habits,
+                      onCreateFirstHabit: () => _createFirstHabit(context),
+                      onTap: () => _openHabits(context),
+                      onToggleHabit: (habit) => _toggleHabit(context, habit),
+                    ),
+                    SizedBox(height: AppSpacing.xl2),
+                    TodayWorkoutCard(
+                      workout: home.workout,
+                      completed: home.completedWorkout,
+                      onStartWorkout: () => _startWorkout(context, home),
+                      onViewSummary: () =>
+                          _openWorkoutSummary(home.completedWorkout),
+                    ),
+                    SizedBox(height: AppSpacing.xl2),
+                    NutritionSummaryCard(
+                      nutrition: home.nutrition,
+                      onTap: _openNutrition,
+                    ),
+                    SizedBox(height: AppSpacing.xl2),
+                    AppleHealthSyncCard(
+                      connected: health.isConnected,
+                      syncDetail: health.statusLabel,
+                      onConnect: health.connect,
+                      onDisconnect: health.disconnect,
+                    ),
+                    SizedBox(height: AppSpacing.xl2),
+                    TodayProgressCard(progress: home.todayProgress),
+                    SizedBox(height: AppSpacing.xl2),
+                    MuscleRecoveryCard(
+                      data: home.muscleRecovery,
+                      frontTemplate: home.muscleMapOf(MuscleBodySide.front),
+                      backTemplate: home.muscleMapOf(MuscleBodySide.back),
+                      onTap: () => NavigationService.instance.push(
+                        AppRouter.muscleRecovery,
+                      ),
+                    ),
+                    if (home.waveInsight != null) ...[
+                      SizedBox(height: AppSpacing.xl2),
+                      WaveInsightBanner(message: home.waveInsight!),
+                    ],
+                    SizedBox(
+                      height:
+                          MediaQuery.viewPaddingOf(context).bottom +
+                          AppSizes.s96,
+                    ),
+                  ],
                 ),
               ),
             ),

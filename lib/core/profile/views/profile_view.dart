@@ -27,6 +27,14 @@ class ProfileView extends StatelessWidget {
     NavigationService.instance.push(viewModel.subscriptionRoute);
   }
 
+  void _openPhoto(ProfileViewModel viewModel) {
+    HapticManager.light();
+    NavigationService.instance.push(
+      AppRouter.profilePhoto,
+      arguments: viewModel.photoArgs,
+    );
+  }
+
   void _edit(String route) {
     HapticManager.light();
     NavigationService.instance.push(route);
@@ -84,6 +92,7 @@ class ProfileView extends StatelessWidget {
               ProfileIdentityCard(
                 summary: viewModel.summary,
                 badgeLabel: viewModel.premiumBadgeLabel,
+                onAvatarTap: () => _openPhoto(viewModel),
               ),
               SizedBox(height: AppSpacing.xl2),
               ProfileMetricCard(

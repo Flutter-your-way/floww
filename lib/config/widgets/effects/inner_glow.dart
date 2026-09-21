@@ -20,6 +20,8 @@ class InnerGlow extends StatelessWidget {
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: CustomPaint(
+        isComplex: true,
+        willChange: false,
         painter: _InnerGlowPainter(color: color, radius: radius, blur: blur),
       ),
     );

@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:floww/config/constants/app_api.dart';
 import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/entities/user_model.dart';
 import 'package:floww/config/theme/app_mode.dart';
@@ -20,6 +23,10 @@ class AuthException implements Exception {
   String toString() => message;
 }
 
+class AuthCancelledException extends AuthException {
+  AuthCancelledException(super.message);
+}
+
 class AuthService {
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
@@ -27,28 +34,29 @@ class AuthService {
 
   GoogleSignIn get _googleSignIn => GoogleSignIn.instance;
 
-  bool _googleSignInInitialized = false;
+  static Future<void>? _googleSignInSetup;
+
+  static bool _googleSignInInitialized = false;
+
+  Future<void> _ensureGoogleSignIn() {
+    return _googleSignInSetup ??= _googleSignIn.initialize().then((_) {
+      _googleSignInInitialized = true;
+    });
+  }
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection(AppCollection.users);
 
   Future<UserModel> signInWithGoogle() async {
     try {
-      if (!_googleSignInInitialized) {
-        await _googleSignIn.initialize();
-        _googleSignInInitialized = true;
-      }
-      final googleUser = await _googleSignIn.authenticate();
-      final idToken = googleUser.authentication.idToken;
-      if (idToken == null) {
-        throw AuthException('Could not sign in with Google. Please try again.');
-      }
-      final credential = GoogleAuthProvider.credential(idToken: idToken);
-      final userCredential = await _auth.signInWithCredential(credential);
+      final google = await _googleCredential();
+      final userCredential = await _auth.signInWithCredential(
+        google.credential,
+      );
       return await _findOrCreateUser(
         userCredential.user!,
         provider: AuthProvider.google,
-        displayName: googleUser.displayName ?? '',
+        displayName: google.displayName,
       );
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
@@ -66,42 +74,10 @@ class AuthService {
 
   Future<UserModel> signInWithApple() async {
     try {
-      if (!await SignInWithApple.isAvailable()) {
-        throw AuthException(
-          'Sign in with Apple is not available on this device.',
-        );
-      }
-
-      final rawNonce = generateNonce();
-      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
-
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: const [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        nonce: hashedNonce,
-      );
-
-      final identityToken = appleCredential.identityToken;
-      if (identityToken == null) {
-        throw AuthException('Could not sign in with Apple. Please try again.');
-      }
-
-      final oauthCredential = AppleAuthProvider.credentialWithIDToken(
-        identityToken,
-        rawNonce,
-        AppleFullPersonName(
-          givenName: appleCredential.givenName,
-          familyName: appleCredential.familyName,
-        ),
-      );
-
-      final userCredential = await _auth.signInWithCredential(oauthCredential);
+      final apple = await _appleCredential();
+      final userCredential = await _auth.signInWithCredential(apple.credential);
       final firebaseUser = userCredential.user!;
-      final name =
-          '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
-              .trim();
+      final name = apple.displayName;
 
       if (name.isNotEmpty && (firebaseUser.displayName ?? '').isEmpty) {
         await firebaseUser.updateDisplayName(name);
@@ -142,27 +118,22 @@ class AuthService {
     final doc = await _usersCollection.doc(firebaseUser.uid).get();
     if (!doc.exists) return null;
 
-    final data = doc.data()!;
-    final storedAvatarUrl = data['avatarUrl'] as String?;
-    if (storedAvatarUrl == null && firebaseUser.photoURL != null) {
-      return UserModel.fromJson({...data, 'avatarUrl': firebaseUser.photoURL});
-    }
+    return UserModel.fromJson(doc.data()!);
+  }
 
-    return UserModel.fromJson(data);
+  Stream<String?> watchAvatarUrl() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return const Stream<String?>.empty();
+
+    return _usersCollection
+        .doc(uid)
+        .snapshots()
+        .map((doc) => doc.data()?['avatarUrl'] as String?);
   }
 
   Future<void> signOut() async {
-    try {
-      final uid = _auth.currentUser?.uid;
-      final token = await FirebaseMessaging.instance.getToken();
-      if (uid != null && token != null) {
-        await _usersCollection.doc(uid).update({
-          'fcmToken': FieldValue.arrayRemove([token]),
-        });
-      }
-    } catch (_) {
-      debugPrint('signOut token cleanup skipped');
-    }
+    final uid = _auth.currentUser?.uid;
+    if (uid != null) await _removeFcmToken(uid);
 
     try {
       if (_googleSignInInitialized) await _googleSignIn.signOut();
@@ -170,6 +141,146 @@ class AuthService {
     } catch (_) {
       throw AuthException('Could not sign you out. Please try again.');
     }
+  }
+
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) throw AuthException('Please sign in again.');
+
+    await _removeFcmToken(user.uid);
+    await _requestAccountDeletion(user);
+
+    try {
+      if (_googleSignInInitialized) await _googleSignIn.signOut();
+    } catch (_) {
+      debugPrint('deleteAccount google sign out skipped');
+    }
+
+    try {
+      await _auth.signOut();
+    } catch (e, stackTrace) {
+      debugPrint('deleteAccount local sign out skipped: $e\n$stackTrace');
+    }
+  }
+
+  Future<void> _requestAccountDeletion(User user) async {
+    final client = HttpClient()..connectionTimeout = AppApi.connectTimeout;
+    try {
+      final token = await user.getIdToken();
+      final request = await client.deleteUrl(AppApi.uri(AppApi.account));
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+
+      final response = await request.close().timeout(
+        AppApi.accountDeleteTimeout,
+      );
+      final body = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode == HttpStatus.ok) return;
+
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final error = json['error'] as Map<String, dynamic>?;
+      debugPrint('deleteAccount rejected: ${response.statusCode} $body');
+      throw AuthException(
+        error?['message'] as String? ??
+            'Could not delete your account. Please try again.',
+      );
+    } on AuthException {
+      rethrow;
+    } on TimeoutException {
+      throw AuthException(
+        'This is taking too long. Check your connection and try again.',
+      );
+    } on IOException {
+      throw AuthException(
+        'No connection. Check your internet and try again.',
+      );
+    } catch (e, stackTrace) {
+      debugPrint('deleteAccount request failed: $e\n$stackTrace');
+      throw AuthException('Could not delete your account. Please try again.');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<void> _removeFcmToken(String uid) async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null) return;
+      await _usersCollection.doc(uid).update({
+        'fcmToken': FieldValue.arrayRemove([token]),
+      });
+    } catch (_) {
+      debugPrint('deleteAccount token cleanup skipped');
+    }
+  }
+
+  Future<({AuthCredential credential, String displayName})>
+  _googleCredential() async {
+    await _ensureGoogleSignIn();
+    final GoogleSignInAccount googleUser;
+    try {
+      googleUser = await _googleSignIn.authenticate();
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw AuthCancelledException('Sign in was cancelled.');
+      }
+      rethrow;
+    }
+    final idToken = googleUser.authentication.idToken;
+    if (idToken == null) {
+      throw AuthException('Could not sign in with Google. Please try again.');
+    }
+    return (
+      credential: GoogleAuthProvider.credential(idToken: idToken),
+      displayName: googleUser.displayName ?? '',
+    );
+  }
+
+  Future<({AuthCredential credential, String displayName})>
+  _appleCredential() async {
+    if (!await SignInWithApple.isAvailable()) {
+      throw AuthException(
+        'Sign in with Apple is not available on this device.',
+      );
+    }
+
+    final rawNonce = generateNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+    final AuthorizationCredentialAppleID appleCredential;
+    try {
+      appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw AuthCancelledException('Sign in was cancelled.');
+      }
+      rethrow;
+    }
+
+    final identityToken = appleCredential.identityToken;
+    if (identityToken == null) {
+      throw AuthException('Could not sign in with Apple. Please try again.');
+    }
+
+    return (
+      credential: AppleAuthProvider.credentialWithIDToken(
+        identityToken,
+        rawNonce,
+        AppleFullPersonName(
+          givenName: appleCredential.givenName,
+          familyName: appleCredential.familyName,
+        ),
+      ),
+      displayName:
+          '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
+              .trim(),
+    );
   }
 
   Future<void> registerFcmToken(String uid) async {
@@ -233,8 +344,6 @@ class AuthService {
     final updatedFields = {
       'lastLoginAt': now.toIso8601String(),
       'updatedAt': now.toIso8601String(),
-      if (doc.data()?['avatarUrl'] == null && firebaseUser.photoURL != null)
-        'avatarUrl': firebaseUser.photoURL,
       if ((storedName == null || storedName.isEmpty) && resolvedName.isNotEmpty)
         'displayName': resolvedName,
     };
@@ -252,6 +361,8 @@ class AuthService {
         return 'Too many attempts. Please try again later.';
       case 'user-disabled':
         return 'This account has been disabled.';
+      case 'requires-recent-login':
+        return 'Please sign in again before deleting your account.';
       default:
         return 'Something went wrong. Please try again.';
     }

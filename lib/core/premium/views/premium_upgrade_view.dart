@@ -5,6 +5,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/animations/animated_value_text.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
@@ -67,6 +68,7 @@ class PremiumUpgradeView extends StatelessWidget {
             ),
             SizedBox(height: AppSpacing.xl2),
             PremiumPriceCard(
+              selectionIndex: viewModel.terms.indexOf(viewModel.selectedTerm),
               priceLabel: viewModel.priceLabel,
               periodLabel: viewModel.periodLabel,
               highlightLabel: viewModel.highlightLabel,
@@ -107,9 +109,16 @@ class _PremiumUpgradeFooter extends StatelessWidget {
       children: [
         PillButton(
           variant: PillButtonVariant.primary,
-          label: label,
           isLoading: isLoading,
           onPressed: onPressed,
+          child: AnimatedValueText(
+            value: label,
+            alignment: Alignment.center,
+            textAlign: TextAlign.center,
+            style: AppTypography.heading4SemiBold.copyWith(
+              color: context.colors.backgroundSecondary,
+            ),
+          ),
         ),
         SizedBox(height: AppSpacing.lg),
         Text(

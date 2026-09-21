@@ -6,6 +6,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
+import 'package:floww/config/widgets/effects/bottom_action_scrim.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
 import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
@@ -128,23 +129,11 @@ class _OnboardingQuestionViewState extends State<OnboardingQuestionView> {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  height: MediaQuery.sizeOf(context).height * 0.3,
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            context.colors.backgroundPrimary,
-                            context.colors.backgroundPrimary.withValues(
-                              alpha: 0,
-                            ),
-                          ],
-                          stops: const [0.0, 1.0],
-                        ),
-                      ),
-                    ),
+                  child: BottomActionScrim(
+                    height:
+                        MediaQuery.paddingOf(context).bottom +
+                        AppSizes.s72 +
+                        context.sizes.bottomScrimExtra,
                   ),
                 ),
                 Positioned(

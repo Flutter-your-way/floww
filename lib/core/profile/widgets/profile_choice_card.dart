@@ -26,7 +26,10 @@ class ProfileChoiceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CardHeader(title: group.title, titleStyle: AppTypography.heading4SemiBold),
+          CardHeader(
+            title: group.title,
+            titleStyle: AppTypography.heading4SemiBold,
+          ),
           SizedBox(height: AppSpacing.xl),
           Wrap(
             spacing: AppSpacing.lg,

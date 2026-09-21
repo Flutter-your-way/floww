@@ -33,25 +33,27 @@ class AppProgressRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: size,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 0, end: progress.clamp(0.0, 1.0)),
-        duration: duration,
-        curve: AppMotion.expandCurve,
-        builder: (context, value, child) => CustomPaint(
-          painter: _RingPainter(
-            progress: value,
-            strokeWidth: strokeWidth,
-            trackColor: trackColor ?? context.colors.backgroundElevated,
-            color: color ?? context.colors.primary,
-            gradient: gradient,
-            glowColor: glowColor,
-            endColor: endColor,
+    return RepaintBoundary(
+      child: SizedBox.square(
+        dimension: size,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: progress.clamp(0.0, 1.0)),
+          duration: duration,
+          curve: AppMotion.expandCurve,
+          builder: (context, value, child) => CustomPaint(
+            painter: _RingPainter(
+              progress: value,
+              strokeWidth: strokeWidth,
+              trackColor: trackColor ?? context.colors.backgroundElevated,
+              color: color ?? context.colors.primary,
+              gradient: gradient,
+              glowColor: glowColor,
+              endColor: endColor,
+            ),
+            child: child,
           ),
-          child: child,
+          child: Center(child: child),
         ),
-        child: Center(child: child),
       ),
     );
   }

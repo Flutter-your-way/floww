@@ -1,6 +1,8 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:progressive_blur/progressive_blur.dart';
 
 class TopProgressiveBlur extends StatelessWidget {
   const TopProgressiveBlur({super.key, required this.child});
@@ -12,45 +14,68 @@ class TopProgressiveBlur extends StatelessWidget {
       kToolbarHeight +
       context.sizes.topBlurBandExtra;
 
-  static double blurEdgeOf(BuildContext context) =>
-      bandHeightOf(context) - context.sizes.topBlurEdgeFade;
+  static double blurEdgeOf(BuildContext context) => bandHeightOf(context);
 
   @override
   Widget build(BuildContext context) {
-    final sizes = context.sizes;
-    final band = bandHeightOf(context);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        child,
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: bandHeightOf(context),
+          child: const _TopBlurBand(),
+        ),
+      ],
+    );
+  }
+}
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final height = constraints.maxHeight;
-        if (!height.isFinite || height <= 0) return child;
+class _TopBlurBand extends StatelessWidget {
+  const _TopBlurBand();
 
-        final fadeStart = (1 - band / height).clamp(0.0, 1.0);
-        final solidStart = (1 - (band - sizes.topBlurEdgeFade) / height).clamp(
-          fadeStart,
-          1.0,
-        );
-        final ramp = solidStart - fadeStart;
+  @override
+  Widget build(BuildContext context) {
+    final layers = context.sizes.topBlurLayers;
+    final sigma = context.sizes.topBlurSigma / math.sqrt(layers);
 
-        return ProgressiveBlurWidget(
-          sigma: sizes.topBlurSigma,
-          blurTextureDimensions: sizes.topBlurTextureSize,
-          linearGradientBlur: LinearGradientBlur(
-            values: const [0, 0.08, 0.3, 0.65, 1, 1],
-            stops: [
-              fadeStart,
-              fadeStart + ramp * 0.35,
-              fadeStart + ramp * 0.6,
-              fadeStart + ramp * 0.82,
-              solidStart,
-              1,
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: LayoutBuilder(
+          builder: (context, constraints) => Stack(
+            fit: StackFit.expand,
+            children: [
+              for (var index = 0; index < layers; index++)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: constraints.maxHeight * (layers - index) / layers,
+                  child: _BlurLayer(sigma: sigma),
+                ),
             ],
-            start: Alignment.bottomCenter,
-            end: Alignment.topCenter,
           ),
-          child: child,
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _BlurLayer extends StatelessWidget {
+  const _BlurLayer({required this.sigma});
+
+  final double sigma;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+        child: const SizedBox.expand(),
+      ),
     );
   }
 }

@@ -33,6 +33,22 @@ class UserModel {
   final String? phoneNumber;
   final List<String>? fcmToken;
 
+  UserModel withAvatarUrl(String? avatarUrl) => UserModel(
+    uid: uid,
+    email: email,
+    displayName: displayName,
+    avatarUrl: avatarUrl,
+    provider: provider,
+    mode: mode,
+    onboardingCompleted: onboardingCompleted,
+    answersSubmitted: answersSubmitted,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    lastLoginAt: lastLoginAt,
+    phoneNumber: phoneNumber,
+    fcmToken: fcmToken,
+  );
+
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
     uid: json['uid'] as String,
     email: json['email'] as String,

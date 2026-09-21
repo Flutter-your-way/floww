@@ -35,62 +35,66 @@ class HabitScoreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Container(
-      decoration: AppShapes.decoration(
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        gradient: context.gradients.darkGlow,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(gradient: context.gradients.cardSheen),
+    return RepaintBoundary(
+      child: Container(
+        decoration: AppShapes.decoration(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          gradient: context.gradients.darkGlow,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: context.gradients.cardSheen,
+                ),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const CardHeader(title: 'Habit Score', icon: Icons.bolt),
-                SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ScoreSummary(
-                        scoreLabel: scoreLabel,
-                        scoreTotalLabel: scoreTotalLabel,
-                        headline: headline,
-                        message: message,
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const CardHeader(title: 'Habit Score', icon: Icons.bolt),
+                  SizedBox(height: AppSpacing.lg),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ScoreSummary(
+                          scoreLabel: scoreLabel,
+                          scoreTotalLabel: scoreTotalLabel,
+                          headline: headline,
+                          message: message,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: AppSpacing.xl2),
-                    _ScoreRing(
-                      progress: progress,
-                      dailyScoreLabel: dailyScoreLabel,
-                      flowPointsLabel: flowPointsLabel,
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.lg),
-                Divider(
-                  height: AppSizes.s1,
-                  thickness: AppSizes.s1,
-                  color: colors.borderMedium,
-                ),
-                SizedBox(height: AppSpacing.lg),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final stat in stats)
-                      Expanded(child: _StatColumn(stat: stat)),
-                  ],
-                ),
-              ],
+                      SizedBox(width: AppSpacing.xl2),
+                      _ScoreRing(
+                        progress: progress,
+                        dailyScoreLabel: dailyScoreLabel,
+                        flowPointsLabel: flowPointsLabel,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: AppSpacing.lg),
+                  Divider(
+                    height: AppSizes.s1,
+                    thickness: AppSizes.s1,
+                    color: colors.borderMedium,
+                  ),
+                  SizedBox(height: AppSpacing.lg),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final stat in stats)
+                        Expanded(child: _StatColumn(stat: stat)),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

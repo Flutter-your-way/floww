@@ -86,19 +86,23 @@ class AppCard extends StatelessWidget {
       child: child,
     );
 
-    if (variant != AppCardVariant.innerGlow) return card;
+    if (variant != AppCardVariant.innerGlow) {
+      return RepaintBoundary(child: card);
+    }
 
-    return Stack(
-      children: [
-        card,
-        Positioned.fill(
-          child: InnerGlow(
-            color: context.colors.primary.withValues(alpha: glowOpacity),
-            radius: radius,
-            blur: glowBlur,
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          card,
+          Positioned.fill(
+            child: InnerGlow(
+              color: context.colors.primary.withValues(alpha: glowOpacity),
+              radius: radius,
+              blur: glowBlur,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

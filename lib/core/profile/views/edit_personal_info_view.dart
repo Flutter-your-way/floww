@@ -1,6 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/navigation/app_router.dart';
+
+import 'package:floww/config/constants/app_constants.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
@@ -11,6 +16,8 @@ import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
 import 'package:floww/config/widgets/sheets/app_confirm_sheet.dart';
 import 'package:floww/core/profile/models/profile_edit_data.dart';
 import 'package:floww/core/profile/view_models/edit_personal_info_view_model.dart';
+import 'package:floww/core/profile/widgets/profile_avatar_card.dart';
+import 'package:floww/core/profile/widgets/profile_avatar_source_sheet.dart';
 import 'package:floww/core/profile/widgets/profile_choice_card.dart';
 import 'package:floww/core/profile/widgets/profile_edit_field.dart';
 import 'package:floww/core/profile/widgets/profile_unit_dropdown.dart';
@@ -26,6 +33,59 @@ class EditPersonalInfoView extends StatelessWidget {
     }
     HapticManager.success();
     NavigationService.instance.pop();
+  }
+
+  Future<void> _changeAvatar(
+    BuildContext context,
+    EditPersonalInfoViewModel viewModel,
+  ) async {
+    HapticManager.light();
+    final option = await ProfileAvatarSourceSheet.show(
+      context,
+      title: viewModel.avatarSheetTitle,
+      options: viewModel.avatarOptions,
+    );
+    if (option == null) return;
+
+    switch (option.action) {
+      case ProfileAvatarAction.viewPhoto:
+        NavigationService.instance.push(
+          AppRouter.profilePhoto,
+          arguments: viewModel.photoArgs,
+        );
+      case ProfileAvatarAction.remove:
+        _report(viewModel, await viewModel.removeAvatar());
+      case ProfileAvatarAction.takePhoto:
+      case ProfileAvatarAction.chooseFromLibrary:
+        await _pickAvatar(viewModel, option.source!);
+    }
+  }
+
+  Future<void> _pickAvatar(
+    EditPersonalInfoViewModel viewModel,
+    ProfileAvatarSource source,
+  ) async {
+    final picked = await viewModel.pickAvatarImage(source);
+    if (picked == null) {
+      _report(viewModel, false);
+      return;
+    }
+
+    final cropped = await NavigationService.instance.push(
+      AppRouter.profilePhotoCrop,
+      arguments: picked,
+    );
+    if (cropped is! Uint8List) return;
+
+    _report(viewModel, await viewModel.applyAvatar(cropped));
+  }
+
+  void _report(EditPersonalInfoViewModel viewModel, bool succeeded) {
+    if (succeeded) {
+      HapticManager.success();
+      return;
+    }
+    if (viewModel.avatarErrorMessage != null) HapticManager.error();
   }
 
   Future<void> _handleBack(
@@ -84,6 +144,18 @@ class EditPersonalInfoView extends StatelessWidget {
                   AppErrorCard(message: errorMessage, onRetry: viewModel.load),
                   SizedBox(height: AppSpacing.xl2),
                 ],
+                ProfileAvatarCard(
+                  title: viewModel.avatarTitle,
+                  hint: viewModel.avatarHint,
+                  actionLabel: viewModel.avatarActionLabel,
+                  initial: viewModel.avatarInitial,
+                  imageUrl: viewModel.avatarUrl,
+                  imageBytes: viewModel.avatarBytes,
+                  errorMessage: viewModel.avatarErrorMessage,
+                  isBusy: viewModel.isAvatarBusy,
+                  onTap: () => _changeAvatar(context, viewModel),
+                ),
+                SizedBox(height: AppSpacing.xl2),
                 _PersonalDetailsCard(viewModel: viewModel),
                 SizedBox(height: AppSpacing.xl2),
                 ProfileChoiceCard(
@@ -129,6 +201,7 @@ class _PersonalDetailsCard extends StatelessWidget {
             hint: viewModel.nameHint,
             controller: viewModel.nameController,
             onChanged: viewModel.updateName,
+            maxLength: AppLimits.displayNameMaxLength,
           ),
           SizedBox(height: AppSpacing.xl2),
           ProfileEditField(

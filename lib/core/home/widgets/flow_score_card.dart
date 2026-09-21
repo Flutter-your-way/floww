@@ -41,95 +41,97 @@ class FlowScoreCard extends StatelessWidget {
   }
 
   Widget _buildCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: AppShapes.decoration(
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        side: BorderSide(color: context.colors.borderGlow, width: 1),
-        gradient: context.gradients.darkGlow,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topRight,
-                  radius: 1.0,
-                  colors: [
-                    context.colors.backgroundSurface,
-                    context.colors.backgroundSurface.withValues(alpha: 0),
-                  ],
+    return RepaintBoundary(
+      child: Container(
+        width: double.infinity,
+        decoration: AppShapes.decoration(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          side: BorderSide(color: context.colors.borderGlow, width: 1),
+          gradient: context.gradients.darkGlow,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.topRight,
+                    radius: 1.0,
+                    colors: [
+                      context.colors.backgroundSurface,
+                      context.colors.backgroundSurface.withValues(alpha: 0),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.bolt,
-                      color: context.colors.primary,
-                      size: AppSizes.s20,
-                    ),
-                    SizedBox(width: AppSpacing.sm),
-                    Text('Flow Score', style: context.textTheme.titleLarge),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.lg),
-                _AnimatedFlowScoreBar(percent: percent),
-                SizedBox(height: AppSpacing.lg),
-                if (percent == 0)
-                  ..._buildEmptyState(context)
-                else ...[
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      _AnimatedFlowScoreValue(percent: percent),
-                      Text(
-                        '%',
-                        style: context.textTheme.titleLarge?.copyWith(
-                          color: context.colors.textSecondary,
-                        ),
+                      Icon(
+                        Icons.bolt,
+                        color: context.colors.primary,
+                        size: AppSizes.s20,
                       ),
-                      const Spacer(),
-                      AppStatColumn(
-                        label: 'RECOVERY',
-                        value: recoveryLevel,
-                        dotColor: hasRecoveryData
-                            ? context.colors.success
-                            : context.colors.textSecondary,
-                        showInfoIcon: true,
-                        onTap: onRecoveryTap,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                        ),
-                        child: Container(
-                          width: AppSizes.s1,
-                          height: AppSizes.s32,
-                          color: context.colors.borderSubtle,
-                        ),
-                      ),
-                      AppStatColumn(
-                        label: "TODAY'S MODE",
-                        value: todayMode.name.toUpperCase(),
-                        showInfoIcon: true,
-                        onTap: onModeTap,
-                      ),
+                      SizedBox(width: AppSpacing.sm),
+                      Text('Flow Score', style: context.textTheme.titleLarge),
                     ],
                   ),
+                  SizedBox(height: AppSpacing.lg),
+                  _AnimatedFlowScoreBar(percent: percent),
+                  SizedBox(height: AppSpacing.lg),
+                  if (percent == 0)
+                    ..._buildEmptyState(context)
+                  else ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _AnimatedFlowScoreValue(percent: percent),
+                        Text(
+                          '%',
+                          style: context.textTheme.titleLarge?.copyWith(
+                            color: context.colors.textSecondary,
+                          ),
+                        ),
+                        const Spacer(),
+                        AppStatColumn(
+                          label: 'RECOVERY',
+                          value: recoveryLevel,
+                          dotColor: hasRecoveryData
+                              ? context.colors.success
+                              : context.colors.textSecondary,
+                          showInfoIcon: true,
+                          onTap: onRecoveryTap,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                          ),
+                          child: Container(
+                            width: AppSizes.s1,
+                            height: AppSizes.s32,
+                            color: context.colors.borderSubtle,
+                          ),
+                        ),
+                        AppStatColumn(
+                          label: "TODAY'S MODE",
+                          value: todayMode.name.toUpperCase(),
+                          showInfoIcon: true,
+                          onTap: onModeTap,
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

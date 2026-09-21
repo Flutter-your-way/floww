@@ -27,14 +27,27 @@ enum AppBackgroundMode {
 class AppBackground extends StatelessWidget {
   const AppBackground({
     super.key,
-    required this.child,
+    required Widget this.child,
     this.mode = AppBackgroundMode.defaultMode,
     this.isInner = false,
     this.safeAreaTop = true,
     this.scrollable = false,
-  });
+  }) : children = null,
+       padding = null;
 
-  final Widget child;
+  const AppBackground.list({
+    super.key,
+    required List<Widget> this.children,
+    this.padding,
+    this.mode = AppBackgroundMode.defaultMode,
+    this.isInner = false,
+    this.safeAreaTop = true,
+  }) : child = null,
+       scrollable = true;
+
+  final Widget? child;
+  final List<Widget>? children;
+  final EdgeInsetsGeometry? padding;
   final AppBackgroundMode mode;
   final bool isInner;
   final bool safeAreaTop;
@@ -43,12 +56,22 @@ class AppBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final layer = _BackgroundLayer(decoration: _decoration, modeKey: _modeKey);
+    final items = children;
+
+    if (items != null) {
+      return _ListBackground(
+        layer: layer,
+        safeAreaTop: safeAreaTop,
+        padding: padding,
+        children: items,
+      );
+    }
 
     if (scrollable) {
       return _ScrollableBackground(
         layer: layer,
         safeAreaTop: safeAreaTop,
-        child: child,
+        child: child!,
       );
     }
 
@@ -61,7 +84,7 @@ class AppBackground extends StatelessWidget {
           bottom: false,
           left: false,
           right: false,
-          child: child,
+          child: child!,
         ),
       ],
     );
@@ -137,15 +160,75 @@ class _BackgroundLayerState extends State<_BackgroundLayer> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: AppMotion.modeShift,
-      switchInCurve: AppMotion.expandCurve,
-      switchOutCurve: AppMotion.collapseCurve,
-      layoutBuilder: (currentChild, previousChildren) => Stack(
-        fit: StackFit.expand,
-        children: [...previousChildren, ?currentChild],
+    return RepaintBoundary(
+      child: AnimatedSwitcher(
+        duration: AppMotion.modeShift,
+        switchInCurve: AppMotion.expandCurve,
+        switchOutCurve: AppMotion.collapseCurve,
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          fit: StackFit.expand,
+          children: [...previousChildren, ?currentChild],
+        ),
+        child: DecoratedBox(key: ValueKey(_modeKey), decoration: _decoration),
       ),
-      child: DecoratedBox(key: ValueKey(_modeKey), decoration: _decoration),
+    );
+  }
+}
+
+class _ListBackground extends StatefulWidget {
+  const _ListBackground({
+    required this.layer,
+    required this.safeAreaTop,
+    required this.padding,
+    required this.children,
+  });
+
+  final Widget layer;
+  final bool safeAreaTop;
+  final EdgeInsetsGeometry? padding;
+  final List<Widget> children;
+
+  @override
+  State<_ListBackground> createState() => _ListBackgroundState();
+}
+
+class _ListBackgroundState extends State<_ListBackground> {
+  final ScrollController _controller = ScrollController();
+
+  double get _backgroundShift =>
+      _controller.hasClients ? math.max(0.0, _controller.offset) : 0.0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ListenableBuilder(
+          listenable: _controller,
+          builder: (context, child) => Transform.translate(
+            offset: Offset(0, -_backgroundShift),
+            child: child,
+          ),
+          child: widget.layer,
+        ),
+        SafeArea(
+          top: widget.safeAreaTop,
+          bottom: false,
+          left: false,
+          right: false,
+          child: ListView(
+            controller: _controller,
+            padding: widget.padding,
+            children: widget.children,
+          ),
+        ),
+      ],
     );
   }
 }

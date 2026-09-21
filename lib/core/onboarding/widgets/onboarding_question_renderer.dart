@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/config/constants/app_constants.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/buttons/radio_select_button/custom_radio_select_button.dart';
 import 'package:floww/config/widgets/buttons/select_buttons/custom_select_card_button.dart';
 import 'package:floww/config/widgets/buttons/select_buttons/custom_select_button.dart';
 import 'package:floww/config/widgets/text_field/custom_text_form_field.dart';
+import 'package:floww/config/widgets/text_field/max_length_notice.dart';
 import 'package:floww/config/widgets/animations/typewriter_text.dart';
 
 import '../models/onboarding_models.dart';
@@ -21,10 +23,12 @@ class OnboardingQuestionRenderer extends StatefulWidget {
   const OnboardingQuestionRenderer({super.key, required this.question});
 
   @override
-  State<OnboardingQuestionRenderer> createState() => _OnboardingQuestionRendererState();
+  State<OnboardingQuestionRenderer> createState() =>
+      _OnboardingQuestionRendererState();
 }
 
-class _OnboardingQuestionRendererState extends State<OnboardingQuestionRenderer> {
+class _OnboardingQuestionRendererState
+    extends State<OnboardingQuestionRenderer> {
   bool _showSubtitle = false;
   bool _showOptions = false;
 
@@ -114,7 +118,9 @@ class _OnboardingQuestionRendererState extends State<OnboardingQuestionRenderer>
           child: AnimatedOpacity(
             opacity: _showOptions ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 300),
-            child: SingleChildScrollView(child: _buildInputWidget(context, widget.question)),
+            child: SingleChildScrollView(
+              child: _buildInputWidget(context, widget.question),
+            ),
           ),
         ),
       ],
@@ -129,11 +135,12 @@ class _OnboardingQuestionRendererState extends State<OnboardingQuestionRenderer>
       case InputType.multiQuestion:
         return Column(
           children: (q.subQuestions ?? []).map((subQ) {
-            final bool showTitle = subQ.title.isNotEmpty && 
-                                   subQ.title != q.title &&
-                                   subQ.inputType != InputType.timePicker && 
-                                   subQ.inputType != InputType.datePicker &&
-                                   subQ.inputType != InputType.inlineSlider;
+            final bool showTitle =
+                subQ.title.isNotEmpty &&
+                subQ.title != q.title &&
+                subQ.inputType != InputType.timePicker &&
+                subQ.inputType != InputType.datePicker &&
+                subQ.inputType != InputType.inlineSlider;
             return Padding(
               padding: const EdgeInsets.only(bottom: 24.0),
               child: Column(
@@ -163,11 +170,23 @@ class _OnboardingQuestionRendererState extends State<OnboardingQuestionRenderer>
         );
 
       case InputType.text:
-        return CustomTextFormField(
-          hintText: 'Enter answer',
-          initialValue: currentValue as String?,
-          onChanged: (val) => provider.setAnswer(q.id, val),
-          textInputAction: TextInputAction.done,
+        final textAnswer = currentValue as String?;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CustomTextFormField(
+              hintText: 'Enter answer',
+              initialValue: textAnswer,
+              onChanged: (val) => provider.setAnswer(q.id, val),
+              textInputAction: TextInputAction.done,
+              textCapitalization: TextCapitalization.words,
+              maxLength: AppLimits.displayNameMaxLength,
+            ),
+            MaxLengthNotice(
+              length: textAnswer?.length ?? 0,
+              maxLength: AppLimits.displayNameMaxLength,
+            ),
+          ],
         );
 
       case InputType.cardSelect:
@@ -319,7 +338,8 @@ class _OnboardingQuestionRendererState extends State<OnboardingQuestionRenderer>
           final intValue = val.toInt();
           final str = intValue.toString();
           if (str.length > 3) {
-            formattedValue = '${str.substring(0, str.length - 3)},${str.substring(str.length - 3)}';
+            formattedValue =
+                '${str.substring(0, str.length - 3)},${str.substring(str.length - 3)}';
           } else {
             formattedValue = str;
           }
@@ -434,7 +454,7 @@ class _OnboardingQuestionRendererState extends State<OnboardingQuestionRenderer>
     final lowerTitle = q.title.toLowerCase();
     bool isYearOnly = false;
     String selectorTitle = 'Select';
-    
+
     if (isDate) {
       leadingIcon = CupertinoIcons.calendar;
       if (lowerTitle.contains('born') || lowerTitle.contains('birth')) {
@@ -449,7 +469,8 @@ class _OnboardingQuestionRendererState extends State<OnboardingQuestionRenderer>
       if (lowerTitle.contains('sleep') || lowerTitle.contains('bed')) {
         leadingIcon = Icons.nights_stay;
         selectorTitle = 'Bedtime';
-      } else if (lowerTitle.contains('wake') || lowerTitle.contains('morning')) {
+      } else if (lowerTitle.contains('wake') ||
+          lowerTitle.contains('morning')) {
         leadingIcon = Icons.wb_sunny_outlined;
         selectorTitle = 'Wake Up Time';
       } else {

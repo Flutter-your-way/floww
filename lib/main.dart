@@ -13,7 +13,6 @@ import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/services/premium_service.dart';
 import 'package:floww/firebase_options.dart';
 import 'package:flutter/material.dart';
-import 'package:progressive_blur/progressive_blur.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,7 +25,6 @@ import 'navigation/router_config.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await ProgressiveBlurWidget.precache();
   await LiquidGlassShader.preload();
   await OrbShader.preload();
   final prefs = await SharedPreferences.getInstance();
