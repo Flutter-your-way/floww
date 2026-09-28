@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/core/workout/models/add_exercise_view_data.dart';
 import 'package:floww/core/workout/models/exercise_info.dart';
+import 'package:floww/core/workout/models/set_type.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 
 enum ActiveSetStatus { completed, current, pending }
@@ -16,8 +18,12 @@ class TodayWorkoutItem {
     required this.insight,
     required this.exerciseCountLabel,
     required this.exercises,
+    this.statusLabel,
+    this.statusIcon,
   });
 
+  final String? statusLabel;
+  final IconData? statusIcon;
   final String name;
   final IconData icon;
   final String programLabel;
@@ -49,6 +55,44 @@ class ExerciseInfoSectionItem {
   final String? emptyMessage;
 }
 
+class ActiveSetDotItem {
+  const ActiveSetDotItem({
+    required this.status,
+    this.badge = '',
+    this.loggedIndex,
+  });
+
+  final ActiveSetStatus status;
+  final String badge;
+  final int? loggedIndex;
+}
+
+class SetTypeOption {
+  const SetTypeOption({
+    required this.type,
+    required this.label,
+    required this.isSelected,
+  });
+
+  final SetType type;
+  final String label;
+  final bool isSelected;
+}
+
+class ActiveSetInputItem {
+  const ActiveSetInputItem({
+    required this.primary,
+    required this.reserve,
+    required this.typeOptions,
+    this.weight,
+  });
+
+  final AddExerciseTargetItem primary;
+  final AddExerciseTargetItem? weight;
+  final AddExerciseTargetItem reserve;
+  final List<SetTypeOption> typeOptions;
+}
+
 class ActiveExerciseItem {
   const ActiveExerciseItem({
     required this.name,
@@ -57,10 +101,11 @@ class ActiveExerciseItem {
     required this.repsValue,
     required this.repsLabel,
     required this.setDots,
-    required this.repsInReserveValue,
-    required this.repsInReserveLabel,
+    required this.input,
     required this.infoSections,
     this.imageUrl,
+    this.lastTimeLabel,
+    this.supersetLabel,
   });
 
   final String name;
@@ -68,11 +113,72 @@ class ActiveExerciseItem {
   final String setsLabel;
   final String repsValue;
   final String repsLabel;
-  final List<ActiveSetStatus> setDots;
-  final String repsInReserveValue;
-  final String repsInReserveLabel;
+  final List<ActiveSetDotItem> setDots;
+  final ActiveSetInputItem input;
   final List<ExerciseInfoSectionItem> infoSections;
   final String? imageUrl;
+  final String? lastTimeLabel;
+  final String? supersetLabel;
+}
+
+enum ActiveQueueStatus { done, skipped, current, pending }
+
+class ActiveQueueItem {
+  const ActiveQueueItem({
+    required this.id,
+    required this.name,
+    required this.detailLabel,
+    required this.status,
+    this.groupLabel,
+  });
+
+  final String id;
+  final String name;
+  final String detailLabel;
+  final ActiveQueueStatus status;
+  final String? groupLabel;
+}
+
+class ActiveOptionItem {
+  const ActiveOptionItem({
+    required this.action,
+    required this.icon,
+    required this.label,
+    this.isEnabled = true,
+    this.isDestructive = false,
+  });
+
+  final ActiveOptionAction action;
+  final IconData icon;
+  final String label;
+  final bool isEnabled;
+  final bool isDestructive;
+}
+
+enum ActiveOptionAction {
+  undoLastSet,
+  addSet,
+  removeSet,
+  swapExercise,
+  superset,
+  reorder,
+  finishEarly,
+}
+
+class EditSetItem {
+  const EditSetItem({
+    required this.title,
+    required this.primary,
+    required this.reserve,
+    required this.typeOptions,
+    this.weight,
+  });
+
+  final String title;
+  final AddExerciseTargetItem primary;
+  final AddExerciseTargetItem? weight;
+  final AddExerciseTargetItem reserve;
+  final List<SetTypeOption> typeOptions;
 }
 
 class ActiveWorkoutItem {
@@ -86,6 +192,8 @@ class ActiveWorkoutItem {
     required this.isPaused,
     required this.restSecondsLabel,
     required this.primaryActionLabel,
+    required this.canShortenRest,
+    this.nextUpLabel,
   });
 
   final String timerLabel;
@@ -97,4 +205,6 @@ class ActiveWorkoutItem {
   final bool isPaused;
   final String restSecondsLabel;
   final String primaryActionLabel;
+  final bool canShortenRest;
+  final String? nextUpLabel;
 }

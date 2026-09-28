@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_shapes.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
+import 'package:floww/config/constants/app_sizes.dart';
 
 class CustomOutlinedButton extends StatefulWidget {
   const CustomOutlinedButton({
@@ -68,15 +70,10 @@ class _CustomOutlinedButtonState extends State<CustomOutlinedButton> {
             ),
             child: Center(
               child: widget.isLoading
-                  ? SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          context.colors.textPrimary,
-                        ),
-                      ),
+                  ? AppSpinner(
+                      size: AppSizes.s24,
+                      strokeWidth: 2.5,
+                      color: context.colors.textPrimary,
                     )
                   : Row(
                       mainAxisSize: MainAxisSize.min,

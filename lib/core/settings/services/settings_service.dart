@@ -218,10 +218,11 @@ class SettingsService {
   }
 
   @visibleForTesting
-  static List<ConnectedAppItem> connectedAppsOf(Map<String, dynamic> stored) => [
-    for (final app in _defaultConnectedApps)
-      app.copyWith(isConnected: stored[app.id] as bool? ?? app.isConnected),
-  ];
+  static List<ConnectedAppItem> connectedAppsOf(Map<String, dynamic> stored) =>
+      [
+        for (final app in _defaultConnectedApps)
+          app.copyWith(isConnected: stored[app.id] as bool? ?? app.isConnected),
+      ];
 
   @visibleForTesting
   static NotificationSettings notificationsOf(Map<String, dynamic> stored) {
@@ -232,7 +233,9 @@ class SettingsService {
       master: toggle(_defaultNotifications.master),
       sections: [
         for (final section in _defaultNotifications.sections)
-          section.copyWith(items: [for (final item in section.items) toggle(item)]),
+          section.copyWith(
+            items: [for (final item in section.items) toggle(item)],
+          ),
       ],
     );
   }
@@ -248,7 +251,9 @@ class SettingsService {
               ? Map<String, dynamic>.from(value)
               : <String, dynamic>{};
         })
-        .handleError((Object error) => debugPrint('settings read failed: $error'));
+        .handleError(
+          (Object error) => debugPrint('settings read failed: $error'),
+        );
   }
 
   Future<bool> _setFlag(String field, String id, bool value) async {

@@ -8,6 +8,7 @@ import 'package:floww/core/habits/models/habit_day.dart';
 import 'package:floww/core/habits/models/habit_detail.dart';
 import 'package:floww/core/habits/models/habit_draft.dart';
 import 'package:floww/core/habits/models/habit_period.dart';
+import 'package:floww/core/habits/models/habit_schedule.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
 import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
@@ -71,8 +72,15 @@ class HabitDetailsViewModel extends ChangeNotifier {
   String get habitDescription {
     final detail = _detail;
     if (detail == null) return '';
-    if (detail.description.isNotEmpty) return detail.description;
-    return 'Daily target of ${HabitLabels.amount(detail.target, detail.metric)}';
+    final amount = HabitLabels.amount(detail.target, detail.metric);
+    final goal = detail.goalType == HabitGoalType.limit
+        ? 'Max $amount'
+        : amount;
+    final summary = '${HabitLabels.schedule(detail.schedule)} · $goal';
+    final tag = HabitLabels.sourceTag(detail.source);
+    final rules = tag == null ? summary : '$summary · $tag';
+    if (detail.description.isEmpty) return rules;
+    return '${detail.description}\n$rules';
   }
 
   HabitIconKind get habitIcon => _detail?.icon ?? HabitIconKind.clipboard;
@@ -215,6 +223,11 @@ class HabitDetailsViewModel extends ChangeNotifier {
         label: 'Missed (${countOf(HabitDayStatus.missed)})',
         status: HabitDayStatus.missed,
       ),
+      if (countOf(HabitDayStatus.rest) > 0)
+        HabitLegendItem(
+          label: 'Rest (${countOf(HabitDayStatus.rest)})',
+          status: HabitDayStatus.rest,
+        ),
     ];
   }
 
@@ -246,6 +259,13 @@ class HabitDetailsViewModel extends ChangeNotifier {
 
   HabitMetric get initialMetric => _detail?.metric ?? HabitMetric.minutes;
 
+  HabitGoalType get initialGoalType => _detail?.goalType ?? HabitGoalType.build;
+
+  HabitSchedule get initialSchedule =>
+      _detail?.schedule ?? const HabitSchedule.daily();
+
+  HabitSource get initialSource => _detail?.source ?? HabitSource.manual;
+
   void selectPeriod(HabitPeriod period) {
     if (period == _period) return;
     _period = period;
@@ -260,7 +280,7 @@ class HabitDetailsViewModel extends ChangeNotifier {
     await _service.saveDay(_today, [
       for (final habit in _snapshot.habitsFor(_today))
         if (habit.id != _habitId) habit,
-    ]);
+    ], changedIds: const {});
   });
 
   Future<void> logProgress(double value) => _run(() {
@@ -271,7 +291,7 @@ class HabitDetailsViewModel extends ChangeNotifier {
         else
           habit,
     ];
-    return _service.saveDay(_today, habits);
+    return _service.saveDay(_today, habits, changedIds: {_habitId});
   });
 
   Future<void> _run(Future<void> Function() action) async {

@@ -24,6 +24,7 @@ class HabitsViewModel extends ChangeNotifier {
   }
 
   static const int _selectableRangeDays = 365;
+  static const int _weekdayReferenceDays = 6;
   static const int _maxFlowPoints = 20;
   static const double _greatScore = 0.8;
   static const double _goodScore = 0.5;
@@ -100,7 +101,26 @@ class HabitsViewModel extends ChangeNotifier {
 
   bool get canEdit => dateStatus == HabitDateStatus.today && !_isLoading;
 
+  bool get canAddHabit => dateStatus != HabitDateStatus.past && !_isLoading;
+
   bool get isReadOnly => dateStatus == HabitDateStatus.past;
+
+  bool get isFuture => dateStatus == HabitDateStatus.future;
+
+  bool get showPlannedHabits => isFuture && _habits.isNotEmpty;
+
+  String get _dayReference {
+    final distance = AppDateUtils.daysBetween(_today, _selectedDate).abs();
+    return distance <= _weekdayReferenceDays
+        ? AppDateUtils.weekdayName(_selectedDate)
+        : AppDateUtils.dayMonth(_selectedDate);
+  }
+
+  String get futureTitle => 'Nothing logged yet';
+
+  String get futureMessage =>
+      'This is a future date. Come back on $_dayReference to track your '
+      'habits, or review what\'s planned below.';
 
   String get readOnlyLabel {
     final isYesterday = AppDateUtils.isSameDay(
@@ -155,18 +175,22 @@ class HabitsViewModel extends ChangeNotifier {
       ),
   ];
 
-  int get totalCount => _habits.length;
+  List<Habit> get _dueHabits => _habits.where((habit) => habit.isDue).toList();
 
-  int get completedCount => _habits.where((habit) => habit.isCompleted).length;
+  int get totalCount => _dueHabits.length;
+
+  int get completedCount =>
+      _dueHabits.where((habit) => habit.isCompleted).length;
 
   String get scoreLabel => '$completedCount';
 
   String get scoreTotalLabel => '/$totalCount';
 
   double get dailyScore {
-    if (_habits.isEmpty) return 0;
-    final total = _habits.fold<double>(0, (sum, habit) => sum + habit.progress);
-    return total / _habits.length;
+    final due = _dueHabits;
+    if (due.isEmpty) return 0;
+    final total = due.fold<double>(0, (sum, habit) => sum + habit.progress);
+    return total / due.length;
   }
 
   String get dailyScoreLabel => '${(dailyScore * 100).round()}';
@@ -175,13 +199,19 @@ class HabitsViewModel extends ChangeNotifier {
 
   String get flowPointsLabel => HabitLabels.points(flowPoints);
 
+  bool get _isRestDay => _habits.isNotEmpty && _dueHabits.isEmpty;
+
   String get headline {
+    if (_isRestDay) return 'Rest day';
     if (dailyScore >= _greatScore) return 'Great consistency!';
     if (dailyScore >= _goodScore) return 'Good momentum';
     return completedCount > 0 ? 'Keep going' : 'Nothing done yet';
   }
 
   String get headlineMessage {
+    if (_isRestDay) {
+      return 'Nothing is scheduled today. Anything you do is a bonus.';
+    }
     if (dailyScore >= _greatScore) {
       return 'You\'re building strong daily habits.';
     }
@@ -207,22 +237,30 @@ class HabitsViewModel extends ChangeNotifier {
         'Consistency is your superpower.';
   }
 
-  List<HabitRowItem> get habits => [
-    for (final habit in _habits)
-      HabitRowItem(
-        id: habit.id,
-        title: habit.title,
-        progressLabel: HabitLabels.progress(habit),
-        progress: habit.progress,
-        isCompleted: habit.isCompleted,
-      ),
-  ];
+  List<HabitRowItem> get habits => [for (final habit in _habits) _rowOf(habit)];
+
+  HabitRowItem _rowOf(Habit habit) {
+    final isRest = !habit.isDue && !habit.isCompleted;
+    final schedule = _snapshot.definitionOf(habit.id)?.schedule;
+    return HabitRowItem(
+      id: habit.id,
+      title: habit.title,
+      progressLabel: HabitLabels.progress(habit),
+      progress: habit.progress,
+      isCompleted: habit.isCompleted,
+      tagLabel: isRest && schedule != null
+          ? HabitLabels.restTag(schedule)
+          : HabitLabels.sourceTag(habit.source),
+      isRest: isRest,
+      isAuto: habit.isAuto,
+    );
+  }
 
   List<HabitStatItem> get stats {
     final stats = _snapshot.stats;
     return [
       HabitStatItem(
-        title: 'CURRENT STREAK',
+        title: 'PERFECT STREAK',
         value: '${stats.currentStreakDays}',
         unit: 'days',
       ),
@@ -233,8 +271,8 @@ class HabitsViewModel extends ChangeNotifier {
       ),
       HabitStatItem(
         title: 'WEEKLY AVERAGE',
-        value: '${stats.weeklyAverageMinutes}',
-        unit: 'min',
+        value: '${stats.weeklyCompletionPercent}',
+        unit: '%',
       ),
     ];
   }
@@ -274,6 +312,11 @@ class HabitsViewModel extends ChangeNotifier {
         label: 'Missed (${countOf(HabitDayStatus.missed)})',
         status: HabitDayStatus.missed,
       ),
+      if (countOf(HabitDayStatus.rest) > 0)
+        HabitLegendItem(
+          label: 'Rest (${countOf(HabitDayStatus.rest)})',
+          status: HabitDayStatus.rest,
+        ),
     ];
   }
 
@@ -309,7 +352,7 @@ class HabitsViewModel extends ChangeNotifier {
   Future<void> toggleHabit(String id) {
     final habit = _habits.where((habit) => habit.id == id).firstOrNull;
     if (habit == null) return Future.value();
-    return logHabit(id, habit.isCompleted ? 0 : habit.target);
+    return logHabit(id, habit.toggled().value);
   }
 
   Future<void> logHabit(String id, double value) async {
@@ -322,7 +365,9 @@ class HabitsViewModel extends ChangeNotifier {
           habit,
     ];
     notifyListeners();
-    await _run(() => _service.saveDay(_selectedDate, _habits));
+    await _run(
+      () => _service.saveDay(_selectedDate, _habits, changedIds: {id}),
+    );
   }
 
   Future<void> _run(Future<void> Function() action) async {

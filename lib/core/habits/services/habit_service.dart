@@ -105,6 +105,9 @@ class HabitService {
         target: draft.target,
         metric: draft.metric,
         icon: icon,
+        schedule: draft.schedule,
+        goalType: draft.goalType,
+        source: draft.source,
         createdAt: AppDateUtils.dateOnly(DateTime.now()),
         sortOrder: DateTime.now().millisecondsSinceEpoch,
         description: draft.description,
@@ -120,6 +123,8 @@ class HabitService {
       title: suggestion.title,
       target: suggestion.target,
       metric: suggestion.metric,
+      goalType: suggestion.goalType,
+      source: suggestion.source,
       description: suggestion.description,
     ),
     id: suggestion.id,
@@ -134,6 +139,9 @@ class HabitService {
       'title': draft.title,
       'target': draft.target,
       'metric': draft.metric.name,
+      'schedule': draft.schedule.toJson(),
+      'goalType': draft.goalType.name,
+      'source': draft.source.name,
       'description': draft.description,
     }),
   );
@@ -144,10 +152,14 @@ class HabitService {
     () => _habits(_requireUserId).doc(id).delete(),
   );
 
-  Future<void> saveDay(DateTime date, List<Habit> habits) => _guard(
+  Future<void> saveDay(
+    DateTime date,
+    List<Habit> habits, {
+    Set<String>? changedIds,
+  }) => _guard(
     'saveDay',
     'Could not save your habits. Please try again.',
-    () => _logService.saveDay(date, habits),
+    () => _logService.saveDay(date, habits, changedIds: changedIds),
   );
 
   Stream<List<HabitDefinition>> _habitStream(String uid) => _habits(uid)

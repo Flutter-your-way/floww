@@ -24,12 +24,14 @@ class WaveMessageItem extends StatelessWidget {
     required this.viewModel,
     required this.onPlanAction,
     required this.onOpenNutrition,
+    required this.onOpenWorkout,
   });
 
   final WaveMessage message;
   final WaveChatViewModel viewModel;
   final ValueChanged<WavePlanItem> onPlanAction;
   final VoidCallback onOpenNutrition;
+  final VoidCallback onOpenWorkout;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +80,11 @@ class WaveMessageItem extends StatelessWidget {
       WaveConfirmationMessage() => WaveConfirmationCard(
         title: message.title,
         detail: message.detail,
+        actionLabel: viewModel.confirmationActionLabel(message),
+        onAction: switch (message.action) {
+          WaveConfirmationAction.openWorkout => onOpenWorkout,
+          null => null,
+        },
       ),
       WaveCheckInMessage() => WaveCheckInCard(
         title: message.title,

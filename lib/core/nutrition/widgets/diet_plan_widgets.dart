@@ -128,7 +128,9 @@ class DietPlanDayCard extends StatelessWidget {
                   day.isCompleted
                       ? Icons.check_circle_outline_rounded
                       : Icons.radio_button_unchecked_rounded,
-                  color: day.isCompleted ? colors.primary : colors.textSecondary,
+                  color: day.isCompleted
+                      ? colors.primary
+                      : colors.textSecondary,
                   size: AppSizes.s20,
                 ),
                 SizedBox(width: AppSpacing.sm),
@@ -259,9 +261,7 @@ class _TotalLabel extends StatelessWidget {
         style: context.textTheme.labelSmall?.copyWith(
           color: context.colors.textSecondary,
         ),
-        children: [
-          TextSpan(text: value, style: context.textTheme.labelMedium),
-        ],
+        children: [TextSpan(text: value, style: context.textTheme.labelMedium)],
       ),
     );
   }

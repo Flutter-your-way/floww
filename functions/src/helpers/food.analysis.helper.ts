@@ -2,6 +2,8 @@ import {zodTextFormat} from "openai/helpers/zod";
 import {ApiError} from "../common/api.error";
 import {clamp, roundTo, toAmount, toAmounts} from "../common/utils";
 import {
+  FOOD_DESCRIBE_MODEL,
+  FOOD_DESCRIBE_REASONING_EFFORT,
   FOOD_SCAN_MODEL,
   FOOD_SCAN_REASONING_EFFORT,
 } from "../constants/ai.constants";
@@ -11,9 +13,14 @@ import {
   foodAnalysisSchema,
 } from "../models/food.model";
 import {
+  FOOD_DESCRIBE_INSTRUCTIONS,
+  buildFoodDescribeUserText,
+} from "../prompts/food.describe.prompt";
+import {
   FOOD_SCAN_INSTRUCTIONS,
   buildFoodScanUserText,
 } from "../prompts/food.scan.prompt";
+import {DescribeFoodRequest} from "../validators/describe.food.validator";
 import {ScanFoodRequest} from "../validators/scan.food.validator";
 import {getOpenAI} from "./openai.helper";
 import {AiTokenUsage} from "./usage.helper";
@@ -72,6 +79,24 @@ export const sanitizeFoodAnalysis = (analysis: FoodAnalysis): FoodAnalysis => {
   };
 };
 
+const toAnalysisResult = (
+  parsed: FoodAnalysis | null,
+  usage: {input_tokens: number; output_tokens: number} | undefined,
+  failureMessage: string,
+): FoodAnalysisResult => {
+  if (!parsed) {
+    throw new ApiError("AI_FAILED", failureMessage);
+  }
+
+  return {
+    analysis: sanitizeFoodAnalysis(parsed),
+    usage: {
+      inputTokens: usage?.input_tokens ?? 0,
+      outputTokens: usage?.output_tokens ?? 0,
+    },
+  };
+};
+
 export const analyzeFoodImage = async (
   request: ScanFoodRequest,
 ): Promise<FoodAnalysisResult> => {
@@ -95,15 +120,34 @@ export const analyzeFoodImage = async (
     text: {format: zodTextFormat(foodAnalysisSchema, "food_analysis")},
   });
 
-  if (!response.output_parsed) {
-    throw new ApiError("AI_FAILED", "WAVE could not analyze this photo.");
-  }
+  return toAnalysisResult(
+    response.output_parsed,
+    response.usage,
+    "WAVE could not analyze this photo.",
+  );
+};
 
-  return {
-    analysis: sanitizeFoodAnalysis(response.output_parsed),
-    usage: {
-      inputTokens: response.usage?.input_tokens ?? 0,
-      outputTokens: response.usage?.output_tokens ?? 0,
-    },
-  };
+export const analyzeFoodText = async (
+  request: DescribeFoodRequest,
+): Promise<FoodAnalysisResult> => {
+  const response = await getOpenAI().responses.parse({
+    model: FOOD_DESCRIBE_MODEL,
+    reasoning: {effort: FOOD_DESCRIBE_REASONING_EFFORT},
+    instructions: FOOD_DESCRIBE_INSTRUCTIONS,
+    input: [
+      {
+        role: "user",
+        content: [
+          {type: "input_text", text: buildFoodDescribeUserText(request.text)},
+        ],
+      },
+    ],
+    text: {format: zodTextFormat(foodAnalysisSchema, "food_analysis")},
+  });
+
+  return toAnalysisResult(
+    response.output_parsed,
+    response.usage,
+    "WAVE could not analyze this meal.",
+  );
 };

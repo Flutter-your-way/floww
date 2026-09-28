@@ -1,6 +1,8 @@
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
+import 'package:floww/core/nutrition/models/custom_food.dart';
 import 'package:floww/core/nutrition/models/food_log.dart';
+import 'package:floww/core/nutrition/models/water_log.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 
 class WaveContext {
@@ -9,7 +11,11 @@ class WaveContext {
     required this.goal,
     required this.waterMl,
     required this.recentLogs,
+    required this.todayFoods,
+    required this.todayWaters,
+    required this.customFoods,
     required this.plan,
+    required this.hasActiveWorkout,
     required this.isReady,
   });
 
@@ -18,7 +24,11 @@ class WaveContext {
     goal: NutritionGoal.defaults,
     waterMl: 0,
     recentLogs: [],
+    todayFoods: [],
+    todayWaters: [],
+    customFoods: [],
     plan: null,
+    hasActiveWorkout: false,
     isReady: false,
   );
 
@@ -26,7 +36,11 @@ class WaveContext {
   final NutritionGoal goal;
   final double waterMl;
   final List<FoodLog> recentLogs;
+  final List<FoodLog> todayFoods;
+  final List<WaterLog> todayWaters;
+  final List<CustomFood> customFoods;
   final WorkoutPlanEntity? plan;
+  final bool hasActiveWorkout;
   final bool isReady;
 
   String get userName => snapshot.userName;

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_motion.dart';
+import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class AppSectionLoader extends StatelessWidget {
   const AppSectionLoader({super.key});
@@ -10,8 +12,12 @@ class AppSectionLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: AppSpacing.xl5),
-      child: Center(
-        child: CircularProgressIndicator(color: context.colors.primary),
+      child: const Center(
+        child: AppSpinner(
+          size: AppSizes.s36,
+          strokeWidth: AppSizes.s4,
+          revealDelay: AppMotion.spinnerRevealDelay,
+        ),
       ),
     );
   }

@@ -5,20 +5,36 @@ import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 
 class WorkoutIconTile extends StatelessWidget {
-  const WorkoutIconTile({super.key});
+  const WorkoutIconTile({
+    super.key,
+    this.icon = Icons.fitness_center,
+    this.isHighlighted = false,
+    this.backgroundColor,
+  });
+
+  final IconData icon;
+  final bool isHighlighted;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Container(
       width: AppSizes.s48,
       height: AppSizes.s48,
       decoration: AppShapes.decoration(
-        color: context.colors.backgroundElevated,
+        color: isHighlighted
+            ? colors.bgTinted
+            : backgroundColor ?? colors.backgroundElevated,
         borderRadius: BorderRadius.circular(AppRadius.md),
+        side: isHighlighted
+            ? BorderSide(color: colors.borderGlow, width: AppSizes.s1)
+            : BorderSide.none,
       ),
       child: Icon(
-        Icons.fitness_center,
-        color: context.colors.textMuted,
+        icon,
+        color: isHighlighted ? colors.primaryAlt : colors.textMuted,
         size: AppSizes.s24,
       ),
     );

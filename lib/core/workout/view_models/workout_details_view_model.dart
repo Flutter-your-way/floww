@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/entities/workout_plan_entity.dart';
@@ -76,7 +77,11 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
 
   List<AddExerciseSectionOption> get sectionOptions => [
     for (final kind in WorkoutSectionKind.values)
-      AddExerciseSectionOption(id: kind.id, glyph: kind.glyph, title: kind.title),
+      AddExerciseSectionOption(
+        id: kind.id,
+        glyph: kind.glyph,
+        title: kind.title,
+      ),
   ];
 
   String? get expandedSectionId => _expandedSectionId;
@@ -95,7 +100,7 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
         WorkoutStatItem(
           icon: Icons.schedule,
           title: 'DURATION',
-          value: _durationLabel(session.durationSeconds),
+          value: _durationLabel(session.elapsedSecondsAt(DateTime.now())),
           unit: 'min',
         ),
         WorkoutStatItem(
@@ -201,21 +206,34 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
   }
 
   WorkoutExerciseItem _exerciseOf(WorkoutEntryEntity exercise) {
-    final logged = exercise.sets.length;
+    final logged = exercise.workingSetCount;
+    final unit = exercise.isTimed ? 'sec' : 'reps';
+    final best = exercise.bestSetWeightKg;
+    final weight = best ?? exercise.targetWeightKg;
     return WorkoutExerciseItem(
       id: exercise.id,
       name: exercise.name,
       imageUrl: exercise.imageUrl,
-      setsLabel:
-          '$logged/${exercise.targetSets} sets x ${exercise.targetReps} reps',
-      weightLabel: exercise.isBodyweight
-          ? 'BW'
-          : '${_weightLabel(exercise.targetWeightKg!)} kg',
+      setsLabel: logged == 0
+          ? '0/${exercise.targetSets} sets x ${exercise.targetReps} $unit'
+          : '$logged/${exercise.targetSets} sets · ${_loggedLabel(exercise)}',
+      weightLabel: weight == null ? 'BW' : '${_weightLabel(weight)} kg',
       restLabel: _durationLabel(exercise.restSeconds),
       volumeLabel: exercise.completedVolumeKg == 0
           ? '—'
           : NumberFormatter.grouped(exercise.completedVolumeKg.round()),
     );
+  }
+
+  String _loggedLabel(WorkoutEntryEntity exercise) {
+    final sets = exercise.workingSets;
+    if (exercise.isTimed) {
+      return sets.map((set) => '${set.durationSeconds ?? 0}s').join(', ');
+    }
+    final reps = sets.map((set) => '${set.reps}').join(', ');
+    final oneRepMax = exercise.bestEstimatedOneRepMaxKg;
+    if (oneRepMax == null) return '$reps reps';
+    return '$reps reps · e1RM ${_weightLabel(oneRepMax)} kg';
   }
 
   String _weightLabel(double value) {
@@ -232,6 +250,31 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
   void toggleSection(String id) {
     _expandedSectionId = _expandedSectionId == id ? null : id;
     notifyListeners();
+  }
+
+  bool get canUnlog => kDebugMode && _session != null;
+
+  String get unlogTitle => 'Unlog Workout?';
+
+  String get unlogMessage =>
+      'This deletes the session and its sets, and today\'s plan goes back to '
+      'not started. Debug builds only.';
+
+  String get unlogConfirmLabel => 'Unlog';
+
+  String get unlogCancelLabel => 'Keep';
+
+  Future<bool> unlog() async {
+    final session = _session;
+    if (session == null) return false;
+    try {
+      await _subscription?.cancel();
+      await _service.unlogSession(session);
+      return true;
+    } on WorkoutException catch (error) {
+      _onError(error);
+      return false;
+    }
   }
 
   Future<void> updateNotes(String value) async {

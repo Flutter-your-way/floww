@@ -14,18 +14,15 @@ class WaterIntakeViewModel extends ChangeNotifier {
     : _day = NutritionDay(date: _date, goal: _goal) {
     _subscription = _logService
         .watchLogs(_date, AppDateUtils.addDays(_date, 1))
-        .listen(
-          (logs) {
-            _day = NutritionDay(
-              date: _date,
-              goal: _goal,
-              foodLogs: logs.foods,
-              waterLogs: logs.waters,
-            );
-            notifyListeners();
-          },
-          onError: (Object error) => debugPrint('water watch failed: $error'),
-        );
+        .listen((logs) {
+          _day = NutritionDay(
+            date: _date,
+            goal: _goal,
+            foodLogs: logs.foods,
+            waterLogs: logs.waters,
+          );
+          notifyListeners();
+        }, onError: (Object error) => debugPrint('water watch failed: $error'));
   }
 
   static const quickAmounts = [
@@ -48,14 +45,14 @@ class WaterIntakeViewModel extends ChangeNotifier {
   StreamSubscription<NutritionLogs>? _subscription;
   bool _disposed = false;
 
-  bool get canEdit =>
-      !_date.isBefore(AppDateUtils.dateOnly(DateTime.now()));
+  bool get canEdit => !_date.isBefore(AppDateUtils.dateOnly(DateTime.now()));
 
   bool get isSaving => _isSaving;
 
   String? get errorMessage => _errorMessage;
 
-  String get goalLabel => '${NutritionLabels.liters(_goal.waterMl.toDouble())}L';
+  String get goalLabel =>
+      '${NutritionLabels.liters(_goal.waterMl.toDouble())}L';
 
   String get remainingLabel =>
       '${NutritionLabels.liters(math.max(0, _goal.waterMl - _day.waterMl))}L';

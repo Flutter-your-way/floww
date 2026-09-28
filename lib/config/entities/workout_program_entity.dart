@@ -1,4 +1,5 @@
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 
 class ProgramExerciseEntry {
@@ -30,6 +31,16 @@ class ProgramExerciseEntry {
   final int? restSeconds;
   final int? repsInReserve;
   final double? weightKg;
+
+  ProgramExerciseEntry copyWith({int? sets, int? reps}) => ProgramExerciseEntry(
+    exerciseId: exerciseId,
+    section: section,
+    sets: sets ?? this.sets,
+    reps: reps ?? this.reps,
+    restSeconds: restSeconds,
+    repsInReserve: repsInReserve,
+    weightKg: weightKg,
+  );
 
   Map<String, dynamic> toJson() => {
     'exerciseId': exerciseId,
@@ -73,6 +84,21 @@ class ProgramDayEntry {
   final int durationMinutes;
   final List<ProgramExerciseEntry> exercises;
 
+  ProgramDayEntry copyWith({
+    int? weekday,
+    String? name,
+    String? focus,
+    int? durationMinutes,
+    List<ProgramExerciseEntry>? exercises,
+  }) => ProgramDayEntry(
+    weekday: weekday ?? this.weekday,
+    name: name ?? this.name,
+    focus: focus ?? this.focus,
+    goal: goal,
+    durationMinutes: durationMinutes ?? this.durationMinutes,
+    exercises: exercises ?? this.exercises,
+  );
+
   Map<String, dynamic> toJson() => {
     'weekday': weekday,
     'name': name,
@@ -91,6 +117,10 @@ class WorkoutProgramEntity {
     required this.level,
     required this.weeks,
     required this.days,
+    this.deloadEvery = 0,
+    this.goal = ProgramGoal.strength,
+    this.isCustom = false,
+    this.basedOn,
   });
 
   factory WorkoutProgramEntity.fromJson(Map<String, dynamic> json) =>
@@ -104,6 +134,10 @@ class WorkoutProgramEntity {
           for (final item in (json['days'] as List? ?? const []))
             if (item is Map<String, dynamic>) ProgramDayEntry.fromJson(item),
         ],
+        deloadEvery: (json['deloadEvery'] as num? ?? 0).toInt(),
+        goal: ProgramGoal.fromId(json['goal'] as String?),
+        isCustom: json['isCustom'] as bool? ?? false,
+        basedOn: json['basedOn'] as String?,
       );
 
   final String id;
@@ -112,8 +146,23 @@ class WorkoutProgramEntity {
   final String level;
   final int weeks;
   final List<ProgramDayEntry> days;
+  final int deloadEvery;
+  final ProgramGoal goal;
+  final bool isCustom;
+  final String? basedOn;
+
+  bool isDeloadWeek(int week) => deloadEvery > 0 && week % deloadEvery == 0;
 
   int get sessionsPerWeek => days.length;
+
+  int get averageMinutes {
+    if (days.isEmpty) return 0;
+    var total = 0;
+    for (final day in days) {
+      total += day.durationMinutes;
+    }
+    return (total / days.length).round();
+  }
 
   ProgramDayEntry? dayFor(DateTime date) {
     for (final day in days) {
@@ -122,6 +171,35 @@ class WorkoutProgramEntity {
     return null;
   }
 
+  ProgramDayEntry? dayOn(DateTime date, List<int> weekdays) {
+    if (weekdays.length != days.length) return dayFor(date);
+    final index = weekdays.indexOf(date.weekday);
+    return index < 0 ? null : days[index];
+  }
+
+  WorkoutProgramEntity copyWith({
+    String? id,
+    String? name,
+    String? description,
+    String? level,
+    int? weeks,
+    List<ProgramDayEntry>? days,
+    ProgramGoal? goal,
+    bool? isCustom,
+    String? basedOn,
+  }) => WorkoutProgramEntity(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    description: description ?? this.description,
+    level: level ?? this.level,
+    weeks: weeks ?? this.weeks,
+    days: days ?? this.days,
+    deloadEvery: deloadEvery,
+    goal: goal ?? this.goal,
+    isCustom: isCustom ?? this.isCustom,
+    basedOn: basedOn ?? this.basedOn,
+  );
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
@@ -129,6 +207,10 @@ class WorkoutProgramEntity {
     'level': level,
     'weeks': weeks,
     'days': [for (final day in days) day.toJson()],
+    'deloadEvery': deloadEvery,
+    'goal': goal.id,
+    'isCustom': isCustom,
+    if (basedOn != null) 'basedOn': basedOn,
   };
 }
 
@@ -140,6 +222,8 @@ class ActiveProgramEntry {
     required this.startedAt,
     required this.totalWeeks,
     required this.daysPerWeek,
+    this.shiftDays = 0,
+    this.weekdays = const [],
   });
 
   factory ActiveProgramEntry.fromJson(Map<String, dynamic> json) =>
@@ -150,6 +234,11 @@ class ActiveProgramEntry {
         startedAt: DateTime.parse(json['startedAt'] as String).toLocal(),
         totalWeeks: (json['totalWeeks'] as num? ?? 0).toInt(),
         daysPerWeek: (json['daysPerWeek'] as num? ?? 0).toInt(),
+        shiftDays: (json['shiftDays'] as num? ?? 0).toInt(),
+        weekdays: [
+          for (final item in (json['weekdays'] as List? ?? const []))
+            if (item is num) item.toInt(),
+        ],
       );
 
   final String id;
@@ -158,12 +247,53 @@ class ActiveProgramEntry {
   final DateTime startedAt;
   final int totalWeeks;
   final int daysPerWeek;
+  final int shiftDays;
+  final List<int> weekdays;
+
+  DateTime programDateOf(DateTime date) =>
+      AppDateUtils.addDays(AppDateUtils.dateOnly(date), -shiftDays);
+
+  ActiveProgramEntry shiftedBy(int days) => ActiveProgramEntry(
+    id: id,
+    name: name,
+    level: level,
+    startedAt: startedAt,
+    totalWeeks: totalWeeks,
+    daysPerWeek: daysPerWeek,
+    shiftDays: shiftDays + days,
+    weekdays: weekdays,
+  );
+
+  ActiveProgramEntry withProgram(WorkoutProgramEntity program) =>
+      ActiveProgramEntry(
+        id: id,
+        name: program.name,
+        level: program.level,
+        startedAt: startedAt,
+        totalWeeks: totalWeeks,
+        daysPerWeek: program.sessionsPerWeek,
+        shiftDays: shiftDays,
+        weekdays: weekdays.length == program.days.length ? weekdays : const [],
+      );
+
+  DateTime get startDate => AppDateUtils.dateOnly(startedAt);
+
+  DateTime get endDate => AppDateUtils.addDays(
+    AppDateUtils.startOfWeek(startedAt),
+    totalWeeks * DateTime.daysPerWeek,
+  );
+
+  bool isActiveOn(DateTime date) {
+    final programDate = programDateOf(date);
+    if (programDate.isBefore(startDate)) return false;
+    return totalWeeks <= 0 || programDate.isBefore(endDate);
+  }
 
   int weekAt(DateTime date) {
     final start = AppDateUtils.startOfWeek(startedAt);
     final elapsed = AppDateUtils.daysBetween(
       start,
-      AppDateUtils.startOfWeek(date),
+      AppDateUtils.startOfWeek(programDateOf(date)),
     );
     final week = (elapsed ~/ DateTime.daysPerWeek) + 1;
     if (week < 1) return 1;
@@ -177,6 +307,8 @@ class ActiveProgramEntry {
     'startedAt': AppDateUtils.isoKey(startedAt),
     'totalWeeks': totalWeeks,
     'daysPerWeek': daysPerWeek,
+    'shiftDays': shiftDays,
+    if (weekdays.isNotEmpty) 'weekdays': weekdays,
   };
 }
 

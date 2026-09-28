@@ -10,7 +10,11 @@ import 'package:floww/core/recovery/services/muscle_map_service.dart';
 import 'package:floww/core/recovery/widgets/muscle_status_palette.dart';
 
 class MuscleThumbnail extends StatelessWidget {
-  const MuscleThumbnail({super.key, required this.item, required this.template});
+  const MuscleThumbnail({
+    super.key,
+    required this.item,
+    required this.template,
+  });
 
   final MuscleRecoveryItem item;
   final MuscleMapTemplate template;
@@ -20,12 +24,12 @@ class MuscleThumbnail extends StatelessWidget {
     final colors = context.colors;
 
     return Container(
-      width: AppSizes.s48,
-      height: AppSizes.s48,
+      width: AppSizes.s40,
+      height: AppSizes.s40,
       padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
       decoration: AppShapes.decoration(
         color: colors.backgroundPrimary,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         side: BorderSide(color: colors.borderGlow, width: AppSizes.s1),
       ),
       child: SvgPicture.string(

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_mode_intensity.dart';
 import 'package:flutter/material.dart';
@@ -79,6 +81,47 @@ class _MacroGradients {
   static const fats = LinearGradient(
     colors: [Color(0xFFEF6820), Color(0xFFFAC515), _trackEnd],
     stops: [0.0, 0.3746, 0.7491],
+  );
+}
+
+class _BackgroundGradients {
+  const _BackgroundGradients._();
+
+  static const _center = Alignment(-0.7, -0.5);
+  static const _radius = 1.2;
+  static const _stops = [0.0, 0.4, 1.0];
+
+  static const flow = RadialGradient(
+    center: _center,
+    radius: _radius,
+    colors: [
+      Color(0xFF3F5E14),
+      Color(0xFF1D280D),
+      _AppPalette.backgroundPrimary,
+    ],
+    stops: _stops,
+  );
+
+  static const steady = RadialGradient(
+    center: _center,
+    radius: _radius,
+    colors: [
+      Color(0xFF6A3A14),
+      Color(0xFF2E1B0C),
+      _AppPalette.backgroundPrimary,
+    ],
+    stops: _stops,
+  );
+
+  static const restore = RadialGradient(
+    center: _center,
+    radius: _radius,
+    colors: [
+      Color(0xFF1F5A70),
+      Color(0xFF112A33),
+      _AppPalette.backgroundPrimary,
+    ],
+    stops: _stops,
   );
 }
 
@@ -267,13 +310,13 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   );
 
   static const restore = AppColorTokens(
-    primary: Color(0xFF28D5E6),
+    primary: Color(0xFF22D3EE),
     primaryDeep: Color(0xFF00C4D5),
-    primaryAlt: Color(0xFF22CDE6),
-    tint: Color(0x1422CDE6),
-    tintStrong: Color(0x2628D5E6),
-    borderGlow: Color(0x5C22CDE6),
-    borderAccent: Color(0x8028D5E6),
+    primaryAlt: Color(0xFF22D3EE),
+    tint: Color(0x1422D3EE),
+    tintStrong: Color(0x2622D3EE),
+    borderGlow: Color(0x5C22D3EE),
+    borderAccent: Color(0x8022D3EE),
     bgTinted: Color(0xFF182122),
     bgWarm: Color(0xFF182122),
     accentOrange: Color(0xFFF97316),
@@ -546,6 +589,32 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     end: Alignment.bottomCenter,
   );
 
+  static const double topFadeExtent = 0.08;
+  static const double bottomFadeExtent = 0.06;
+
+  static LinearGradient edgeFadeMask({
+    double topEdge = 0,
+    double bottomEdge = 1,
+    bool fadeBottom = false,
+  }) {
+    final topSolid = math.min(topEdge + topFadeExtent, bottomEdge);
+    final bottomSolid = fadeBottom
+        ? math.max(bottomEdge - bottomFadeExtent, topSolid)
+        : bottomEdge;
+
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Colors.transparent,
+        Colors.white,
+        Colors.white,
+        fadeBottom ? Colors.transparent : Colors.white,
+      ],
+      stops: [topEdge, topSolid, bottomSolid, bottomEdge],
+    );
+  }
+
   static const flow = AppGradientTokens(
     primaryButton: LinearGradient(
       colors: [Color(0xFFC3FF3D), Color(0xFFC3FF3D), Color(0xFF87B26B)],
@@ -578,18 +647,8 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       colors: [Color(0x17C3FF3D), Color(0xFF000000)],
       stops: [0, 0.7],
     ),
-    mainBackground: LinearGradient(
-      colors: [Color(0x26C3FF3D), Color(0xFF1F2218), Color(0xFF0A0A0A)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      stops: [0.0, 0.5, 1.0],
-    ),
-    innerBackground: LinearGradient(
-      colors: [Color(0x26C3FF3D), Color(0xFF1F2218), Color(0x2687B26B)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      stops: [0.0, 0.5, 1.0],
-    ),
+    mainBackground: _BackgroundGradients.flow,
+    innerBackground: _BackgroundGradients.flow,
     glowCard: LinearGradient(
       colors: [_AppPalette.backgroundSurface, Color(0xFF55722A)],
       begin: Alignment.topCenter,
@@ -645,18 +704,8 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       colors: [Color(0x17F97316), Color(0xFF000000)],
       stops: [0, 0.7],
     ),
-    mainBackground: LinearGradient(
-      colors: [Color(0x26F97316), Color(0xFF221C18), Color(0xFF0A0A0A)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      stops: [0.0, 0.5, 1.0],
-    ),
-    innerBackground: LinearGradient(
-      colors: [Color(0x26F97316), Color(0xFF221C18), Color(0x26D55900)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      stops: [0.0, 0.5, 1.0],
-    ),
+    mainBackground: _BackgroundGradients.steady,
+    innerBackground: _BackgroundGradients.steady,
     glowCard: LinearGradient(
       colors: [_AppPalette.backgroundSurface, Color(0xFF7A4418)],
       begin: Alignment.topCenter,
@@ -684,19 +733,19 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
 
   static const restore = AppGradientTokens(
     primaryButton: LinearGradient(
-      colors: [Color(0xFF28D5E6), Color(0xFF28D5E6), Color(0xFF00C4D5)],
+      colors: [Color(0xFF22D3EE), Color(0xFF22D3EE), Color(0xFF00C4D5)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       stops: [0.0, 0.5, 1.0],
     ),
-    primary: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF00C4D5)]),
-    bright: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF28D5E6)]),
-    ramp: LinearGradient(colors: [Color(0xFF00C4D5), Color(0xFF28D5E6)]),
+    primary: LinearGradient(colors: [Color(0xFF22D3EE), Color(0xFF00C4D5)]),
+    bright: LinearGradient(colors: [Color(0xFF22D3EE), Color(0xFF22D3EE)]),
+    ramp: LinearGradient(colors: [Color(0xFF00C4D5), Color(0xFF22D3EE)]),
     full: LinearGradient(
-      colors: [Color(0xFF00C4D5), Color(0xFF28D5E6), Color(0xFFFFFFFF)],
+      colors: [Color(0xFF00C4D5), Color(0xFF22D3EE), Color(0xFFFFFFFF)],
     ),
     barFill: LinearGradient(
-      colors: [Color(0xFFFFFFFF), Color(0xFF28D5E6), Color(0xFF00C4D5)],
+      colors: [Color(0xFFFFFFFF), Color(0xFF22D3EE), Color(0xFF00C4D5)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       stops: [0.0, 0.5, 1.0],
@@ -706,26 +755,16 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),
-    reversed: LinearGradient(colors: [Color(0xFF00C4D5), Color(0xFF28D5E6)]),
+    reversed: LinearGradient(colors: [Color(0xFF00C4D5), Color(0xFF22D3EE)]),
     amber: LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF59E0B)]),
-    subtle: LinearGradient(colors: [Color(0xFF28D5E6), Color(0xFF22CDE6)]),
+    subtle: LinearGradient(colors: [Color(0xFF22D3EE), Color(0xFF22D3EE)]),
     orange: LinearGradient(colors: [Color(0xFFD55900), Color(0xFFF97316)]),
     glowRadial: RadialGradient(
-      colors: [Color(0x1728D5E6), Color(0xFF000000)],
+      colors: [Color(0x1722D3EE), Color(0xFF000000)],
       stops: [0, 0.7],
     ),
-    mainBackground: LinearGradient(
-      colors: [Color(0x2628D5E6), Color(0xFF182122), Color(0xFF0A0A0A)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      stops: [0.0, 0.5, 1.0],
-    ),
-    innerBackground: LinearGradient(
-      colors: [Color(0x2628D5E6), Color(0xFF182122), Color(0x2600C4D5)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      stops: [0.0, 0.5, 1.0],
-    ),
+    mainBackground: _BackgroundGradients.restore,
+    innerBackground: _BackgroundGradients.restore,
     glowCard: LinearGradient(
       colors: [Color(0xFF1B2426), Color(0xFF2E96A8)],
       begin: Alignment.topCenter,
@@ -733,7 +772,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       stops: [0.3, 1.0],
     ),
     chartArea: LinearGradient(
-      colors: [Color(0x5928D5E6), Color(0x0028D5E6)],
+      colors: [Color(0x5922D3EE), Color(0x0022D3EE)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),

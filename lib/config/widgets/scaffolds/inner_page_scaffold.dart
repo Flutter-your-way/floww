@@ -3,7 +3,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/widgets/effects/bottom_action_scrim.dart';
-import 'package:floww/config/widgets/effects/top_progressive_blur.dart';
+import 'package:floww/config/widgets/effects/header_blur_band.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
 import 'package:flutter/material.dart';
 
@@ -71,22 +71,28 @@ class _InnerPageScaffoldState extends State<InnerPageScaffold> {
           fit: StackFit.expand,
           children: [
             Positioned.fill(
-              child: TopProgressiveBlur(
-                child: ListView(
-                  controller: _controller,
-                  padding: EdgeInsets.only(
-                    top: viewPadding.top + kToolbarHeight + AppSpacing.xl3,
-                    bottom: viewPadding.bottom + footerExtent,
-                    left: horizontalPadding,
-                    right: horizontalPadding,
-                  ),
-                  children: [...widget.children],
+              child: ListView.builder(
+                controller: _controller,
+                padding: EdgeInsets.only(
+                  top: viewPadding.top + kToolbarHeight + AppSpacing.xl3,
+                  bottom: viewPadding.bottom + footerExtent,
+                  left: horizontalPadding,
+                  right: horizontalPadding,
                 ),
+                itemCount: widget.children.length,
+                itemBuilder: (context, index) => widget.children[index],
               ),
             ),
             Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: HeaderBlurBand.heightOf(context),
+              child: const HeaderBlurBand(),
+            ),
+            Positioned(
               top:
-                  TopProgressiveBlur.blurEdgeOf(context) +
+                  HeaderBlurBand.heightOf(context) +
                   context.sizes.topDividerOffset,
               left: 0,
               right: 0,

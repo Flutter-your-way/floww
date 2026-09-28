@@ -11,6 +11,7 @@ import 'package:floww/config/widgets/cards/app_icon_tile.dart';
 import 'package:floww/config/widgets/chips/app_status_chip.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/premium/models/premium_view_data.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class PremiumInvoicesCard extends StatelessWidget {
   const PremiumInvoicesCard({
@@ -164,13 +165,10 @@ class _PremiumExportAction extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (isLoading)
-            SizedBox(
-              width: AppSizes.s20,
-              height: AppSizes.s20,
-              child: CircularProgressIndicator(
-                strokeWidth: _loaderStroke,
-                color: colors.primary,
-              ),
+            AppSpinner(
+              size: AppSizes.s20,
+              strokeWidth: _loaderStroke,
+              color: colors.primary,
             )
           else
             Icon(

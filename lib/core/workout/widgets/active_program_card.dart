@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/widgets/workout_chip.dart';
 
 class ActiveProgramCard extends StatelessWidget {
-  const ActiveProgramCard({super.key, required this.program});
+  const ActiveProgramCard({super.key, required this.program, this.onTap});
 
   final ActiveProgramItem program;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -20,12 +23,12 @@ class ActiveProgramCard extends StatelessWidget {
     final gradients = context.gradients;
     final radius = BorderRadius.circular(AppRadius.xl);
 
-    return Stack(
+    final card = Stack(
       children: [
         Positioned.fill(
           child: DecoratedBox(
             decoration: AppShapes.decoration(
-              gradient: gradients.darkGlow,
+              gradient: gradients.darkGlow.withOpacity(AppOpacity.frostedCard),
               borderRadius: radius,
             ),
           ),
@@ -33,7 +36,7 @@ class ActiveProgramCard extends StatelessWidget {
         Positioned.fill(
           child: DecoratedBox(
             decoration: AppShapes.decoration(
-              gradient: gradients.cardSheen,
+              gradient: gradients.cardSheen.withOpacity(AppOpacity.frostedCard),
               borderRadius: radius,
             ),
           ),
@@ -125,5 +128,8 @@ class ActiveProgramCard extends StatelessWidget {
         ),
       ],
     );
+
+    if (onTap == null) return card;
+    return PressScale(onTap: onTap, child: card);
   }
 }

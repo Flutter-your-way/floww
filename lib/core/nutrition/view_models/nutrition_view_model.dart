@@ -34,6 +34,8 @@ class NutritionViewModel extends ChangeNotifier {
       onError: (Object error) => debugPrint('recent food logs failed: $error'),
     );
     _dayRollover = DayRolloverTimer(_onNewDay);
+    _dietPlan = _dietPlanService.cachedProgress;
+    _dietPlanLoaded = _dietPlan != null;
     loadDietPlan();
   }
 
@@ -56,6 +58,7 @@ class NutritionViewModel extends ChangeNotifier {
   String? _errorMessage;
   List<FoodLog> _recentLogs = const [];
   DietPlanProgress? _dietPlan;
+  bool _dietPlanLoaded = false;
   StreamSubscription<NutritionLogs>? _daySubscription;
   StreamSubscription<List<FoodLog>>? _recentSubscription;
   StreamSubscription<NutritionGoal>? _goalSubscription;
@@ -108,7 +111,7 @@ class NutritionViewModel extends ChangeNotifier {
   bool get showFlowImpact => dayStatus == NutritionDayStatus.past;
 
   bool get showDietPlan =>
-      dayStatus == NutritionDayStatus.today && _day.hasFood;
+      dayStatus == NutritionDayStatus.today && _day.hasFood && _dietPlanLoaded;
 
   bool get showRecentFoods => canLog && _recentLogs.isNotEmpty;
 
@@ -414,6 +417,7 @@ class NutritionViewModel extends ChangeNotifier {
       debugPrint('loadDietPlan failed: $e');
       _dietPlan = null;
     }
+    _dietPlanLoaded = true;
     notifyListeners();
   }
 
@@ -468,20 +472,17 @@ class NutritionViewModel extends ChangeNotifier {
   }
 
   void _watchGoal() {
-    _goalSubscription = _goalService.watch().listen(
-      (goal) {
-        if (goal.calories == _goal.calories &&
-            goal.proteinG == _goal.proteinG &&
-            goal.waterMl == _goal.waterMl) {
-          return;
-        }
-        _goal = goal;
-        _watchSelectedDay();
-        loadDietPlan();
-        notifyListeners();
-      },
-      onError: (Object error) => debugPrint('nutrition goal failed: $error'),
-    );
+    _goalSubscription = _goalService.watch().listen((goal) {
+      if (goal.calories == _goal.calories &&
+          goal.proteinG == _goal.proteinG &&
+          goal.waterMl == _goal.waterMl) {
+        return;
+      }
+      _goal = goal;
+      _watchSelectedDay();
+      loadDietPlan();
+      notifyListeners();
+    }, onError: (Object error) => debugPrint('nutrition goal failed: $error'));
   }
 
   void _watchSelectedDay() {

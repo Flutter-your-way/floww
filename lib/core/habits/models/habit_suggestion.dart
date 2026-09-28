@@ -7,6 +7,8 @@ class HabitSuggestion {
     required this.target,
     required this.metric,
     required this.icon,
+    this.goalType = HabitGoalType.build,
+    this.source = HabitSource.manual,
     this.description,
     this.about,
   });
@@ -16,6 +18,8 @@ class HabitSuggestion {
   final double target;
   final HabitMetric metric;
   final HabitIconKind icon;
+  final HabitGoalType goalType;
+  final HabitSource source;
   final String? description;
   final String? about;
 }

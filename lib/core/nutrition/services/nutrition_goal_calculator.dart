@@ -59,9 +59,7 @@ class NutritionGoalCalculator {
         _sexOffset(account.biologicalSex);
 
     final maintenance = bmr * _activityMultiplier(account);
-    final calories = _clampCalories(
-      maintenance * _goalFactor(account.goal),
-    );
+    final calories = _clampCalories(maintenance * _goalFactor(account.goal));
 
     final proteinG = weightKg * _proteinPerKg(account.goal);
     final fatG = calories * _fatCalorieShare / _fatKcalPerGram;

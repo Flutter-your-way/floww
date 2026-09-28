@@ -7,6 +7,8 @@ import 'package:floww/core/habits/models/habit_detail.dart';
 import 'package:floww/core/habits/services/habit_catalog_data.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
 
+enum _DayOutcome { hit, miss, skip }
+
 class HabitSnapshot {
   HabitSnapshot._(this.definitions, this._byDay);
 
@@ -18,7 +20,6 @@ class HabitSnapshot {
   static final empty = HabitSnapshot._(const [], const {});
 
   static const int _weekWindowDays = 7;
-  static const int _minutesPerHour = 60;
 
   final List<HabitDefinition> definitions;
   final Map<String, HabitDayLog> _byDay;
@@ -31,10 +32,13 @@ class HabitSnapshot {
   late final HabitStats stats = HabitStats(
     currentStreakDays: currentStreak(),
     longestStreakDays: longestStreak(),
-    weeklyAverageMinutes: weeklyAverageMinutes(),
+    weeklyCompletionPercent: weeklyAveragePercent(),
   );
 
-  bool get hasHabits => definitions.isNotEmpty;
+  List<HabitDefinition> get activeDefinitions =>
+      definitions.where((definition) => !definition.isArchived).toList();
+
+  bool get hasHabits => activeDefinitions.isNotEmpty;
 
   HabitDayLog? logOf(DateTime date) => _byDay[AppDateUtils.dateKey(date)];
 
@@ -52,7 +56,8 @@ class HabitSnapshot {
     if (!day.isBefore(_today)) {
       return [
         for (final definition in definitions)
-          definition.toHabit(value: log?.entryOf(definition.id)?.value ?? 0),
+          if (_notArchivedOn(definition, day))
+            _habitOf(definition, day, log?.entryOf(definition.id)?.value ?? 0),
       ];
     }
 
@@ -61,10 +66,13 @@ class HabitSnapshot {
         for (final entry in log.entries)
           Habit(
             id: entry.id,
-            title: entry.title,
+            title: HabitDefinition.titleOf(entry.title),
             value: entry.value,
             target: entry.target,
             metric: HabitDefinition.metricOf(entry.metric),
+            goalType: entry.isLimit ? HabitGoalType.limit : HabitGoalType.build,
+            source: definitionOf(entry.id)?.source ?? HabitSource.manual,
+            isDue: entry.due,
             description: definitionOf(entry.id)?.description,
           ),
       ];
@@ -72,43 +80,83 @@ class HabitSnapshot {
 
     return [
       for (final definition in definitions)
-        if (definition.existedOn(day)) definition.toHabit(),
+        if (definition.activeOn(day)) _habitOf(definition, day, 0),
     ];
   }
 
-  int trackedCountFor(DateTime date) {
-    final log = logOf(date);
-    if (log != null && log.entries.isNotEmpty) return log.entries.length;
-    return definitions.where((definition) => definition.existedOn(date)).length;
+  bool _notArchivedOn(HabitDefinition definition, DateTime day) {
+    final archivedAt = definition.archivedAt;
+    return archivedAt == null || day.isBefore(archivedAt);
   }
 
-  double completionFor(DateTime date, {String? habitId}) {
-    final habits = habitsFor(date);
-    if (habitId != null) {
-      final habit = habits.where((habit) => habit.id == habitId).firstOrNull;
-      return habit?.progress ?? 0;
+  Habit _habitOf(HabitDefinition definition, DateTime day, double value) {
+    final habit = definition.toHabit(value: value);
+    return habit.copyWith(isDue: _isDueOn(definition, day, habit.isCompleted));
+  }
+
+  bool _isDueOn(HabitDefinition definition, DateTime day, bool isCompleted) {
+    final schedule = definition.schedule;
+    if (!schedule.isFlexible) return schedule.isScheduledOn(day);
+    if (isCompleted) return true;
+
+    var done = 0;
+    var cursor = AppDateUtils.startOfWeek(day);
+    while (cursor.isBefore(day)) {
+      if (logOf(cursor)?.entryOf(definition.id)?.isCompleted ?? false) done++;
+      cursor = AppDateUtils.addDays(cursor, 1);
     }
-    if (habits.isEmpty) return 0;
-    final total = habits.fold<double>(0, (sum, habit) => sum + habit.progress);
-    return total / habits.length;
+    if (done >= schedule.timesPerWeek) return false;
+
+    final daysLeft = DateTime.daysPerWeek - day.weekday + 1;
+    return daysLeft <= schedule.timesPerWeek - done;
+  }
+
+  Habit? _habitOn(DateTime date, String habitId) =>
+      habitsFor(date).where((habit) => habit.id == habitId).firstOrNull;
+
+  List<Habit> _dueHabits(DateTime date) =>
+      habitsFor(date).where((habit) => habit.isDue).toList();
+
+  double completionFor(DateTime date, {String? habitId}) {
+    if (habitId != null) return _habitOn(date, habitId)?.progress ?? 0;
+    final due = _dueHabits(date);
+    if (due.isEmpty) return 0;
+    final total = due.fold<double>(0, (sum, habit) => sum + habit.progress);
+    return total / due.length;
   }
 
   HabitDay dayFor(DateTime date, {String? habitId}) {
     final day = AppDateUtils.dateOnly(date);
-    if (day.isAfter(_today) || !_isTracked(day, habitId)) {
+    if (day.isAfter(_today)) return _dayOf(day, HabitDayStatus.upcoming);
+
+    if (habitId != null) {
+      final habit = _habitOn(day, habitId);
+      if (habit == null) return _dayOf(day, HabitDayStatus.upcoming);
+      if (!habit.isDue && !habit.isCompleted) {
+        return _dayOf(day, HabitDayStatus.rest);
+      }
       return HabitDay(
         date: day,
-        completion: 0,
-        status: HabitDayStatus.upcoming,
+        completion: habit.progress,
+        status: _statusOf(day, habit.progress),
       );
     }
-    final completion = completionFor(day, habitId: habitId);
+
+    final habits = habitsFor(day);
+    if (habits.isEmpty) return _dayOf(day, HabitDayStatus.upcoming);
+    if (!habits.any((habit) => habit.isDue)) {
+      return _dayOf(day, HabitDayStatus.rest);
+    }
+    final completion = completionFor(day);
     return HabitDay(
       date: day,
       completion: completion,
       status: _statusOf(day, completion),
     );
   }
+
+  HabitDay _dayOf(DateTime day, HabitDayStatus status) =>
+      HabitDay(date: day, completion: 0, status: status);
 
   List<HabitDay> weekFor(DateTime date, {String? habitId}) {
     final start = AppDateUtils.startOfWeek(date);
@@ -127,14 +175,35 @@ class HabitSnapshot {
     ];
   }
 
+  _DayOutcome _outcomeOf(DateTime day, String? habitId) {
+    if (habitId != null) {
+      final habit = _habitOn(day, habitId);
+      if (habit == null) return _DayOutcome.skip;
+      if (habit.isCompleted) return _DayOutcome.hit;
+      return habit.isDue ? _DayOutcome.miss : _DayOutcome.skip;
+    }
+    final due = _dueHabits(day);
+    if (due.isEmpty) return _DayOutcome.skip;
+    return due.every((habit) => habit.isCompleted)
+        ? _DayOutcome.hit
+        : _DayOutcome.miss;
+  }
+
   int currentStreak({String? habitId}) {
-    final today = _today;
-    var cursor = _isComplete(today, habitId)
-        ? today
-        : AppDateUtils.addDays(today, -1);
+    final first = _firstTrackedDay(habitId);
+    var cursor = _outcomeOf(_today, habitId) == _DayOutcome.hit
+        ? _today
+        : AppDateUtils.addDays(_today, -1);
     var streak = 0;
-    while (_isComplete(cursor, habitId)) {
-      streak++;
+    while (!cursor.isBefore(first)) {
+      switch (_outcomeOf(cursor, habitId)) {
+        case _DayOutcome.hit:
+          streak++;
+        case _DayOutcome.miss:
+          return streak;
+        case _DayOutcome.skip:
+          break;
+      }
       cursor = AppDateUtils.addDays(cursor, -1);
     }
     return streak;
@@ -144,11 +213,14 @@ class HabitSnapshot {
     var longest = 0;
     var running = 0;
     for (final day in _trackedRange(habitId)) {
-      if (_isComplete(day, habitId)) {
-        running++;
-        if (running > longest) longest = running;
-      } else {
-        running = 0;
+      switch (_outcomeOf(day, habitId)) {
+        case _DayOutcome.hit:
+          running++;
+          if (running > longest) longest = running;
+        case _DayOutcome.miss:
+          if (!AppDateUtils.isSameDay(day, _today)) running = 0;
+        case _DayOutcome.skip:
+          break;
       }
     }
     return longest;
@@ -157,41 +229,31 @@ class HabitSnapshot {
   int totalCompletions({String? habitId}) {
     var total = 0;
     for (final day in _trackedRange(habitId)) {
-      if (_isComplete(day, habitId)) total++;
+      if (_outcomeOf(day, habitId) == _DayOutcome.hit) total++;
     }
     return total;
-  }
-
-  int weeklyAverageMinutes() {
-    var minutes = 0.0;
-    var trackedDays = 0;
-    for (final day in _lastWeek()) {
-      if (trackedCountFor(day) == 0) continue;
-      trackedDays++;
-      for (final entry in logOf(day)?.entries ?? const <HabitLogEntry>[]) {
-        minutes += switch (HabitDefinition.metricOf(entry.metric)) {
-          HabitMetric.minutes => entry.value,
-          HabitMetric.hours => entry.value * _minutesPerHour,
-          _ => 0,
-        };
-      }
-    }
-    return trackedDays == 0 ? 0 : (minutes / trackedDays).round();
   }
 
   int weeklyAveragePercent({String? habitId}) {
     var total = 0.0;
     var trackedDays = 0;
     for (final day in _lastWeek()) {
-      if (!_isTracked(day, habitId)) continue;
+      if (habitId != null) {
+        final habit = _habitOn(day, habitId);
+        if (habit == null || (!habit.isDue && !habit.isCompleted)) continue;
+        trackedDays++;
+        total += habit.progress;
+        continue;
+      }
+      if (_dueHabits(day).isEmpty) continue;
       trackedDays++;
-      total += completionFor(day, habitId: habitId);
+      total += completionFor(day);
     }
     return trackedDays == 0 ? 0 : (total / trackedDays * 100).round();
   }
 
   List<HabitStreak> habitStreaks() => [
-    for (final definition in definitions)
+    for (final definition in activeDefinitions)
       HabitStreak(
         title: definition.title,
         days: currentStreak(habitId: definition.id),
@@ -212,6 +274,9 @@ class HabitSnapshot {
       target: definition.target,
       metric: definition.metric,
       icon: definition.icon,
+      schedule: definition.schedule,
+      goalType: definition.goalType,
+      source: definition.source,
       currentStreakDays: currentStreak(habitId: id),
       longestStreakDays: longestStreak(habitId: id),
       weeklyAveragePercent: weeklyAveragePercent(habitId: id),
@@ -252,16 +317,6 @@ class HabitSnapshot {
     }
     return first;
   }
-
-  bool _isTracked(DateTime date, String? habitId) {
-    if (habitId == null) return trackedCountFor(date) > 0;
-    if (logOf(date)?.entryOf(habitId) != null) return true;
-    final definition = definitionOf(habitId);
-    return definition != null && definition.existedOn(date);
-  }
-
-  bool _isComplete(DateTime date, String? habitId) =>
-      _isTracked(date, habitId) && completionFor(date, habitId: habitId) >= 1;
 
   HabitDayStatus _statusOf(DateTime date, double completion) {
     if (completion >= 1) return HabitDayStatus.completed;

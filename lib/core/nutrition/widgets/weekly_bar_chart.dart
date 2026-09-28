@@ -129,10 +129,7 @@ class WeeklyBarPainter extends CustomPainter {
     final badgeRect = Rect.fromCenter(
       center: Offset(
         size.width / 2,
-        math.max(
-          notchesBar ? barTop : barTop - cutHeight / 2,
-          cutHeight / 2,
-        ),
+        math.max(notchesBar ? barTop : barTop - cutHeight / 2, cutHeight / 2),
       ),
       width: textPainter.width + AppSpacing.md,
       height: WeeklyBarChart.badgeHeight,
@@ -142,13 +139,12 @@ class WeeklyBarPainter extends CustomPainter {
       barPath = Path.combine(
         PathOperation.difference,
         barPath,
-        Path()
-          ..addRRect(
-            RRect.fromRectAndRadius(
-              badgeRect.inflate(AppSpacing.xs),
-              badgeRadius,
-            ),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(
+            badgeRect.inflate(AppSpacing.xs),
+            badgeRadius,
           ),
+        ),
       );
     }
 

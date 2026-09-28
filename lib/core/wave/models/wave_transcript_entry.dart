@@ -25,6 +25,7 @@ class WaveTranscriptEntry {
     this.isResolved = false,
     this.feeling,
     this.swap,
+    this.action,
   });
 
   factory WaveTranscriptEntry.fromJson(Map<String, dynamic> json) =>
@@ -40,6 +41,7 @@ class WaveTranscriptEntry {
         isResolved: json['isResolved'] as bool? ?? false,
         feeling: json['feeling'] as String?,
         swap: _swapOf(json['swap']),
+        action: WaveConfirmationAction.values.asNameMap()[json['action']],
       );
 
   final String id;
@@ -51,6 +53,7 @@ class WaveTranscriptEntry {
   final bool isResolved;
   final String? feeling;
   final WaveInjurySwap? swap;
+  final WaveConfirmationAction? action;
 
   WaveTranscriptEntry copyWith({bool? isResolved, String? feeling}) =>
       WaveTranscriptEntry(
@@ -63,6 +66,7 @@ class WaveTranscriptEntry {
         isResolved: isResolved ?? this.isResolved,
         feeling: feeling ?? this.feeling,
         swap: swap,
+        action: action,
       );
 
   Map<String, dynamic> toJson() => {
@@ -75,6 +79,7 @@ class WaveTranscriptEntry {
     'isResolved': isResolved,
     if (feeling != null) 'feeling': feeling,
     if (swap != null) 'swap': _swapJson(swap!),
+    if (action != null) 'action': action!.name,
   };
 
   static WaveInjurySwap? _swapOf(Object? value) {

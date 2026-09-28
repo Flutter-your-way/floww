@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:smooth_corner/smooth_corner.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
@@ -34,8 +33,7 @@ class WaveCard extends StatelessWidget {
           width: AppSizes.s1,
         ),
       ),
-      child: SmoothClipRRect(
-        smoothness: AppShapes.smoothness,
+      child: ClipRSuperellipse(
         borderRadius: radius,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,10 +83,7 @@ class WaveCardDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: AppSizes.s1,
-      color: context.colors.borderSubtle,
-    );
+    return Container(height: AppSizes.s1, color: context.colors.borderSubtle);
   }
 }
 
@@ -97,10 +92,7 @@ class WaveCardVerticalDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: AppSizes.s1,
-      color: context.colors.borderSubtle,
-    );
+    return Container(width: AppSizes.s1, color: context.colors.borderSubtle);
   }
 }
 

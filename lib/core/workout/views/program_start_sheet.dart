@@ -1,198 +1,127 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
+import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
+import 'package:floww/config/widgets/buttons/select_buttons/weekday_picker.dart';
+import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
-import 'package:floww/core/workout/models/workout_view_data.dart';
-import 'package:floww/core/workout/widgets/workout_stat_tile.dart';
+import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
+import 'package:floww/core/workout/models/program_start_config.dart';
+import 'package:floww/core/workout/view_models/program_start_view_model.dart';
+import 'package:floww/core/workout/widgets/selectable_chip.dart';
+import 'package:floww/core/workout/widgets/value_stepper.dart';
 
 class ProgramStartSheet extends StatelessWidget {
-  const ProgramStartSheet({super.key, required this.detail, this.onStart});
+  const ProgramStartSheet({super.key, required this.onStart});
 
   static Future<void> show({
     required BuildContext context,
-    required ProgramDetailItem detail,
-    VoidCallback? onStart,
+    required ProgramStartSetup setup,
+    required ValueChanged<ProgramStartConfig> onStart,
   }) {
     return showAppFloatingSheet<void>(
       context: context,
-      builder: (_) => ProgramStartSheet(detail: detail, onStart: onStart),
+      builder: (_) => ChangeNotifierProvider(
+        create: (_) => ProgramStartViewModel(setup),
+        child: ProgramStartSheet(onStart: onStart),
+      ),
     );
   }
 
-  final ProgramDetailItem detail;
-  final VoidCallback? onStart;
+  final ValueChanged<ProgramStartConfig> onStart;
+
+  void _toggle(ProgramStartViewModel viewModel, int weekday) {
+    if (!viewModel.toggleWeekday(weekday)) HapticManager.warning();
+  }
+
+  void _submit(BuildContext context, ProgramStartViewModel viewModel) {
+    HapticManager.success();
+    final config = viewModel.config;
+    Navigator.of(context).maybePop();
+    onStart(config);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    final warning = detail.warning;
+    return Consumer<ProgramStartViewModel>(
+      builder: (context, viewModel, child) {
+        final colors = context.colors;
 
-    return AppFloatingSheet(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        return AppFloatingSheet(
+          child: AppSheetPanel(
+            title: viewModel.title,
+            subtitle: viewModel.subtitle,
+            onClose: () => Navigator.of(context).maybePop(),
+            body: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: AppSizes.s56,
-                  height: AppSizes.s56,
-                  alignment: Alignment.center,
-                  decoration: AppShapes.decoration(
-                    color: colors.bgTinted,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    side: BorderSide(
-                      color: colors.borderGlow,
-                      width: AppSizes.s1,
+                Row(
+                  children: [
+                    Expanded(child: SectionLabel(label: viewModel.daysLabel)),
+                    Text(
+                      viewModel.daysHint,
+                      style: AppTypography.labelSmallMedium.copyWith(
+                        color: viewModel.isDaysComplete
+                            ? colors.textSecondary
+                            : colors.accentOrange,
+                      ),
                     ),
-                  ),
-                  child: Icon(
-                    Icons.bolt,
-                    size: AppSizes.s28,
-                    color: colors.primaryAlt,
-                  ),
+                  ],
                 ),
-                SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        detail.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.headlineSmall,
-                      ),
-                      SizedBox(height: AppSpacing.xs),
-                      Text(
-                        detail.description,
-                        style: context.textTheme.bodyMedium?.copyWith(
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+                SizedBox(height: AppSpacing.md),
+                WeekdayPicker(
+                  items: viewModel.weekdayItems,
+                  onToggle: (weekday) => _toggle(viewModel, weekday),
                 ),
-                SizedBox(width: AppSpacing.md),
-                CircularHeaderButton(
-                  icon: Icons.close_rounded,
-                  size: AppSizes.s36,
-                  iconSize: AppSizes.s20,
-                  backgroundColor: colors.backgroundPrimary,
-                  onPressed: () => Navigator.of(context).maybePop(),
+                SizedBox(height: AppSpacing.xl2),
+                SectionLabel(label: viewModel.lengthLabel),
+                SizedBox(height: AppSpacing.md),
+                ValueStepper(
+                  target: viewModel.weeksTarget,
+                  onAdjust: viewModel.adjustWeeks,
+                ),
+                SizedBox(height: AppSpacing.xl2),
+                SectionLabel(label: viewModel.startLabel),
+                SizedBox(height: AppSpacing.md),
+                Wrap(
+                  spacing: AppSpacing.md,
+                  runSpacing: AppSpacing.md,
+                  children: [
+                    for (final option in viewModel.startOptions)
+                      SelectableChip(
+                        label: option.label,
+                        isSelected: option.isSelected,
+                        onTap: () {
+                          HapticManager.selection();
+                          viewModel.selectStartDay(option.value);
+                        },
+                      ),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.xl),
+                Text(
+                  viewModel.summary,
+                  style: AppTypography.bodySmallRegularTight.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: AppSpacing.xl2),
-            _ProgramStatsBox(stats: detail.stats),
-            if (warning != null) ...[
-              SizedBox(height: AppSpacing.lg),
-              _ProgramWarningBox(message: warning),
-            ],
-            SizedBox(height: AppSpacing.xl2),
-            Align(
-              child: IntrinsicWidth(
-                child: PillButton(
-                  label: detail.startLabel,
-                  icon: Icons.play_arrow_rounded,
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
-                  onPressed: onStart,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ProgramStatsBox extends StatelessWidget {
-  const _ProgramStatsBox({required this.stats});
-
-  final List<WorkoutStatItem> stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppShapes.decoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: colors.borderGlow, width: AppSizes.s1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          for (var i = 0; i < stats.length; i++) ...[
-            if (i > 0) ...[
-              SizedBox(width: AppSpacing.lg),
-              Container(
-                width: AppSizes.s1,
-                height: AppSizes.s44,
-                color: colors.borderMedium,
-              ),
-              SizedBox(width: AppSpacing.lg),
-            ],
-            Expanded(
-              child: WorkoutStatTile(
-                stat: stats[i],
-                titleStyle: context.textTheme.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgramWarningBox extends StatelessWidget {
-  const _ProgramWarningBox({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppShapes.decoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: colors.accentOrange, width: AppSizes.s1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            size: AppSizes.s16,
-            color: colors.accentOrangeLight,
-          ),
-          SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Text(
-              message,
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: colors.accentOrange,
-              ),
+            footer: PillButton(
+              label: viewModel.submitLabel,
+              icon: Icons.play_arrow_rounded,
+              onPressed: viewModel.canStart
+                  ? () => _submit(context, viewModel)
+                  : null,
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

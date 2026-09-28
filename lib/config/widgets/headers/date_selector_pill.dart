@@ -27,7 +27,7 @@ class DateSelectorPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final contentColor = context.colors.backgroundSecondary;
+    final contentColor = context.colors.textPrimary;
 
     return Container(
       height: AppSizes.s36,
@@ -35,6 +35,10 @@ class DateSelectorPill extends StatelessWidget {
       decoration: AppShapes.decoration(
         color: context.colors.surfaceTranslucent,
         borderRadius: BorderRadius.circular(AppRadius.xl3),
+        side: BorderSide(
+          color: context.colors.borderAccent,
+          width: AppSizes.s1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -84,9 +88,7 @@ class _PillArrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = context.colors.backgroundSurface.withValues(
-      alpha: AppOpacity.mutedIcon,
-    );
+    final color = context.colors.textPrimary;
 
     return GestureDetector(
       onTap: onTap,

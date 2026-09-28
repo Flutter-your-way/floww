@@ -18,7 +18,7 @@ class ScreenTitle extends StatelessWidget {
         Text(
           eyebrow,
           style: AppTypography.heading4SemiBold.copyWith(
-            color: context.colors.backgroundSecondary,
+            color: context.colors.textPrimary,
           ),
         ),
         Text(
@@ -26,7 +26,7 @@ class ScreenTitle extends StatelessWidget {
           maxLines: AppLimits.displayNameMaxLines,
           overflow: TextOverflow.ellipsis,
           style: AppTypography.heading3ExtraBoldItalic.copyWith(
-            color: context.colors.backgroundSecondary,
+            color: context.colors.textPrimary,
           ),
         ),
       ],

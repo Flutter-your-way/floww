@@ -13,6 +13,8 @@ class WorkoutCatalogService extends WorkoutFirestore {
   static const String _loadFailure = 'Could not load your exercise library.';
   static const String _saveFailure =
       'Could not save this exercise. Please try again.';
+  static const String _programSaveFailure =
+      'Could not save this program. Please try again.';
 
   CollectionReference<Map<String, dynamic>> _exercises(String uid) =>
       collectionOf(uid, AppCollection.workoutExercises);
@@ -88,9 +90,9 @@ class WorkoutCatalogService extends WorkoutFirestore {
     await guard(
       'setAdded',
       _saveFailure,
-      () => _exercises(uid).doc(id).set({
-        'isAdded': isAdded,
-      }, SetOptions(merge: true)),
+      () => _exercises(
+        uid,
+      ).doc(id).set({'isAdded': isAdded}, SetOptions(merge: true)),
     );
   }
 
@@ -135,6 +137,26 @@ class WorkoutCatalogService extends WorkoutFirestore {
             WorkoutProgramEntity.fromJson,
           ),
         );
+  }
+
+  String newProgramId() => _programs(requireUserId).doc().id;
+
+  Future<void> saveProgram(WorkoutProgramEntity program) async {
+    final uid = requireUserId;
+    await guard(
+      'saveProgram',
+      _programSaveFailure,
+      () => _programs(uid).doc(program.id).set(program.toJson()),
+    );
+  }
+
+  Future<void> deleteProgram(String id) async {
+    final uid = requireUserId;
+    await guard(
+      'deleteProgram',
+      _programSaveFailure,
+      () => _programs(uid).doc(id).delete(),
+    );
   }
 
   Future<WorkoutProgramEntity?> programById(String id) async {

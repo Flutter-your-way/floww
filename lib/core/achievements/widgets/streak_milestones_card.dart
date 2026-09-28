@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/achievements/models/streak_milestone.dart';
@@ -31,15 +30,17 @@ class StreakMilestonesCard extends StatelessWidget {
         children: [
           CardHeader(
             title: 'Milestones',
-            titleStyle: AppTypography.heading4SemiBold,
+            titleStyle: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
             onTap: onSeeAll,
             trailing: _SeeAllLink(onTap: onSeeAll),
           ),
           for (final milestone in milestones) ...[
-            SizedBox(height: AppSpacing.xl),
+            SizedBox(height: AppSpacing.lg),
             StreakMilestoneRow(milestone: milestone),
             if (milestone != milestones.last) ...[
-              SizedBox(height: AppSpacing.xl),
+              SizedBox(height: AppSpacing.lg),
               Container(height: AppSizes.s1, color: colors.borderSubtle),
             ],
           ],
@@ -66,14 +67,14 @@ class _SeeAllLink extends StatelessWidget {
         children: [
           Text(
             'All milestones',
-            style: AppTypography.bodyMediumSemiBold.copyWith(
+            style: context.textTheme.labelMedium?.copyWith(
               color: colors.primary,
             ),
           ),
-          SizedBox(width: AppSpacing.xs),
+          SizedBox(width: AppSpacing.xxs),
           Icon(
             Icons.chevron_right_rounded,
-            size: AppSizes.s20,
+            size: AppSizes.s16,
             color: colors.primary,
           ),
         ],

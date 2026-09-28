@@ -80,6 +80,11 @@ class WorkoutSessionEntity {
     this.personalRecords = const [],
     this.notes = '',
     this.recoveryMood,
+    this.isTimerPaused = false,
+    this.timerResumedAt,
+    this.restEndsAt,
+    this.restRemainingSeconds = 0,
+    this.currentEntryId,
   });
 
   factory WorkoutSessionEntity.fromJson(Map<String, dynamic> json) =>
@@ -114,6 +119,12 @@ class WorkoutSessionEntity {
         personalRecords: _recordsOf(json['personalRecords']),
         notes: json['notes'] as String? ?? '',
         recoveryMood: _moodOf(json['recoveryMood'] as String?),
+        isTimerPaused: json['isTimerPaused'] as bool? ?? false,
+        timerResumedAt: _dateOf(json['timerResumedAt']),
+        restEndsAt: _dateOf(json['restEndsAt']),
+        restRemainingSeconds: (json['restRemainingSeconds'] as num? ?? 0)
+            .toInt(),
+        currentEntryId: json['currentEntryId'] as String?,
       );
 
   final String id;
@@ -146,12 +157,68 @@ class WorkoutSessionEntity {
   final List<PersonalRecordEntry> personalRecords;
   final String notes;
   final RecoveryMood? recoveryMood;
+  final bool isTimerPaused;
+  final DateTime? timerResumedAt;
+  final DateTime? restEndsAt;
+  final int restRemainingSeconds;
+  final String? currentEntryId;
 
   bool get isCompleted => status == WorkoutSessionStatus.completed;
 
   bool get isInProgress => status == WorkoutSessionStatus.inProgress;
 
   bool get hasHeartRate => averageHeartRate != null;
+
+  bool get isTimerRunning => isInProgress && !isTimerPaused;
+
+  int elapsedSecondsAt(DateTime now) {
+    final resumedAt = timerResumedAt;
+    if (!isTimerRunning || resumedAt == null) return durationSeconds;
+    final running = now.difference(resumedAt).inSeconds;
+    return durationSeconds + (running < 0 ? 0 : running);
+  }
+
+  WorkoutSessionEntity withPlannedSetsLogged(DateTime now) => copyWith(
+    exercises: [
+      for (final entry in exercises) entry.withPlannedSetsLogged(now),
+    ],
+  );
+
+  int restSecondsAt(DateTime now) {
+    if (isTimerPaused) return restRemainingSeconds;
+    final endsAt = restEndsAt;
+    if (endsAt == null) return 0;
+    final remaining = (endsAt.difference(now).inMilliseconds / 1000).ceil();
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  WorkoutSessionEntity restingFor(int seconds, DateTime now) => seconds <= 0
+      ? copyWith(clearRest: true)
+      : isTimerPaused
+      ? copyWith(restRemainingSeconds: seconds, clearRestEnd: true)
+      : copyWith(
+          restEndsAt: now.add(Duration(seconds: seconds)),
+          restRemainingSeconds: 0,
+        );
+
+  WorkoutSessionEntity pausedAt(DateTime now) => isTimerRunning
+      ? copyWith(
+          durationSeconds: elapsedSecondsAt(now),
+          isTimerPaused: true,
+          restRemainingSeconds: restSecondsAt(now),
+          clearRestEnd: true,
+        )
+      : this;
+
+  WorkoutSessionEntity resumedAt(DateTime now) {
+    final rest = restSecondsAt(now);
+    final resumed = copyWith(
+      isTimerPaused: false,
+      timerResumedAt: now,
+      clearRest: true,
+    );
+    return rest <= 0 ? resumed : resumed.restingFor(rest, now);
+  }
 
   int get plannedSets {
     var count = 0;
@@ -168,6 +235,14 @@ class WorkoutSessionEntity {
     List<WorkoutEntryEntity>? exercises,
     String? notes,
     RecoveryMood? recoveryMood,
+    bool? isTimerPaused,
+    DateTime? timerResumedAt,
+    DateTime? restEndsAt,
+    int? restRemainingSeconds,
+    String? currentEntryId,
+    bool clearRest = false,
+    bool clearRestEnd = false,
+    bool clearCurrentEntry = false,
   }) => WorkoutSessionEntity(
     id: id,
     workoutId: workoutId,
@@ -199,6 +274,17 @@ class WorkoutSessionEntity {
     personalRecords: personalRecords,
     notes: notes ?? this.notes,
     recoveryMood: recoveryMood ?? this.recoveryMood,
+    isTimerPaused: isTimerPaused ?? this.isTimerPaused,
+    timerResumedAt: timerResumedAt ?? this.timerResumedAt,
+    restEndsAt: clearRest || clearRestEnd
+        ? null
+        : restEndsAt ?? this.restEndsAt,
+    restRemainingSeconds: clearRest
+        ? 0
+        : restRemainingSeconds ?? this.restRemainingSeconds,
+    currentEntryId: clearCurrentEntry
+        ? null
+        : currentEntryId ?? this.currentEntryId,
   );
 
   Map<String, dynamic> toJson() => {
@@ -209,7 +295,6 @@ class WorkoutSessionEntity {
     'status': status.name,
     'startedAt': AppDateUtils.isoKey(startedAt),
     'completedAt': AppDateUtils.isoKey(completedAt),
-    'durationSeconds': durationSeconds,
     'exercises': [for (final exercise in exercises) exercise.toJson()],
     'focus': focus,
     'goal': goal,
@@ -234,7 +319,25 @@ class WorkoutSessionEntity {
     'personalRecords': [for (final record in personalRecords) record.toJson()],
     'notes': notes,
     if (recoveryMood != null) 'recoveryMood': recoveryMood!.name,
+    ...timerJson,
   };
+
+  Map<String, dynamic> get timerJson => {
+    'durationSeconds': durationSeconds,
+    'isTimerPaused': isTimerPaused,
+    if (timerResumedAt != null)
+      'timerResumedAt': AppDateUtils.isoKey(timerResumedAt!),
+    ...restJson,
+  };
+
+  Map<String, dynamic> get restJson => {
+    'restEndsAt': restEndsAt == null ? null : AppDateUtils.isoKey(restEndsAt!),
+    'restRemainingSeconds': restRemainingSeconds,
+    'currentEntryId': currentEntryId,
+  };
+
+  static DateTime? _dateOf(Object? value) =>
+      value is String ? DateTime.tryParse(value)?.toLocal() : null;
 
   static WorkoutSessionStatus _statusOf(String? value) =>
       WorkoutSessionStatus.values.firstWhere(

@@ -118,11 +118,11 @@ class HomeService {
     );
   }
 
-  Future<void> saveDailyFlow(DailyFlowEntry entry) =>
-      _progressService.saveDailyFlow([entry]);
-
-  Future<void> saveHabitDay(DateTime date, List<Habit> habits) =>
-      _habitService.saveDay(date, habits);
+  Future<void> saveHabitDay(
+    DateTime date,
+    List<Habit> habits, {
+    required Set<String> changedIds,
+  }) => _habitService.saveDay(date, habits, changedIds: changedIds);
 
   static Stream<Object?> _guarded<T>(
     Stream<T> source,

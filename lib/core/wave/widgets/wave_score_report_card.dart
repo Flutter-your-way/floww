@@ -150,24 +150,36 @@ class _ScoreFactorRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(factor.icon, size: AppSizes.s18, color: colors.textDim),
-            SizedBox(width: AppSpacing.md),
-            Flexible(
-              child: Text(
-                factor.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodyMediumBold.copyWith(
-                  color: factor.isLow ? colors.textPrimary : colors.textSubtle,
-                ),
+            Expanded(
+              child: Row(
+                children: [
+                  Icon(factor.icon, size: AppSizes.s18, color: colors.textDim),
+                  SizedBox(width: AppSpacing.md),
+                  Flexible(
+                    child: Text(
+                      factor.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodyMediumBold.copyWith(
+                        color: factor.isLow
+                            ? colors.textPrimary
+                            : colors.textSubtle,
+                      ),
+                    ),
+                  ),
+                  if (factor.isLow) ...[
+                    SizedBox(width: AppSpacing.md),
+                    const _LowFactorChip(),
+                  ],
+                ],
               ),
             ),
-            if (factor.isLow) ...[
-              SizedBox(width: AppSpacing.md),
-              const _LowFactorChip(),
-            ],
-            const Spacer(),
-            Text('${factor.value}', style: AppTypography.bodyMediumBold),
+            SizedBox(width: AppSpacing.md),
+            Text(
+              '${factor.value}',
+              textAlign: TextAlign.right,
+              style: AppTypography.bodyMediumBold,
+            ),
           ],
         ),
         SizedBox(height: AppSpacing.sm),

@@ -53,8 +53,8 @@ class AppLayoutSizes {
   const AppLayoutSizes();
 
   final double screenHorizontalPadding = AppSizes.s16;
+  final double topHeaderEdgeExtra = AppSizes.s4;
   final double topBlurSigma = AppSizes.s16;
-  final double topBlurBandExtra = AppSizes.s4;
   final int topBlurLayers = 6;
   final double topDividerOffset = AppSizes.s1;
   final double bottomScrimExtra = AppSizes.s20;

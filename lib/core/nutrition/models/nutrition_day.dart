@@ -76,12 +76,10 @@ class NutritionDay {
   List<FoodLog> logsFor(MealType meal) =>
       foodLogs.where((log) => log.mealType == meal).toList();
 
-  double caloriesFor(MealType meal) => logsFor(
-    meal,
-  ).fold(0, (total, log) => total + log.macros.calories);
+  double caloriesFor(MealType meal) =>
+      logsFor(meal).fold(0, (total, log) => total + log.macros.calories);
 
-  Set<MealType> get loggedMeals =>
-      foodLogs.map((log) => log.mealType).toSet();
+  Set<MealType> get loggedMeals => foodLogs.map((log) => log.mealType).toSet();
 
   DayLogStatus get logStatus {
     final meals = loggedMeals.length;

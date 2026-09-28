@@ -110,6 +110,11 @@ class HabitCalendarViewModel extends ChangeNotifier {
         label: 'Missed (${countOf(HabitDayStatus.missed)})',
         status: HabitDayStatus.missed,
       ),
+      if (countOf(HabitDayStatus.rest) > 0)
+        HabitLegendItem(
+          label: 'Rest (${countOf(HabitDayStatus.rest)})',
+          status: HabitDayStatus.rest,
+        ),
     ];
   }
 

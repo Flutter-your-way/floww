@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:smooth_corner/smooth_corner.dart';
 
 class AppShapes {
   AppShapes._();
 
-  static const double smoothness = 0.6;
-
-  static SmoothRectangleBorder border({
+  static RoundedSuperellipseBorder border({
     required BorderRadiusGeometry borderRadius,
     BorderSide side = BorderSide.none,
-  }) => SmoothRectangleBorder(
-    borderRadius: borderRadius,
-    smoothness: smoothness,
-    side: side,
-  );
+  }) => RoundedSuperellipseBorder(borderRadius: borderRadius, side: side);
 
   static ShapeDecoration decoration({
     required BorderRadiusGeometry borderRadius,

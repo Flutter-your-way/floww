@@ -113,7 +113,10 @@ class _MealRow extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(item.caloriesLabel, style: context.textTheme.labelMedium),
+                  Text(
+                    item.caloriesLabel,
+                    style: context.textTheme.labelMedium,
+                  ),
                   Text(item.shareLabel, style: captionStyle),
                 ],
               )

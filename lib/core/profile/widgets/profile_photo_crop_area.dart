@@ -6,6 +6,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/profile/models/profile_edit_data.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class ProfilePhotoCropArea extends StatelessWidget {
   const ProfilePhotoCropArea({
@@ -253,15 +254,6 @@ class _CropAreaLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        height: AppSizes.s24,
-        width: AppSizes.s24,
-        child: CircularProgressIndicator(
-          strokeWidth: AppSizes.s2,
-          color: context.colors.primary,
-        ),
-      ),
-    );
+    return const Center(child: AppSpinner());
   }
 }

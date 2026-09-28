@@ -27,7 +27,7 @@ class MuscleRecoveryRow extends StatelessWidget {
     return Row(
       children: [
         MuscleThumbnail(item: item, template: template),
-        SizedBox(width: AppSpacing.lg),
+        SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,24 +35,24 @@ class MuscleRecoveryRow extends StatelessWidget {
             children: [
               Text(
                 item.group.label,
-                style: AppTypography.bodyLargeSemiBold.copyWith(
+                style: AppTypography.labelMediumSemiBold.copyWith(
                   color: colors.textPrimary,
                 ),
               ),
               SizedBox(height: AppSpacing.xxs),
               Text(
                 subtitle,
-                style: AppTypography.bodyMediumRegular.copyWith(
+                style: AppTypography.bodyXSmallMedium.copyWith(
                   color: colors.textSecondary,
                 ),
               ),
             ],
           ),
         ),
-        SizedBox(width: AppSpacing.lg),
+        SizedBox(width: AppSpacing.md),
         Text(
           '${item.percent}%',
-          style: AppTypography.bodyXLargeBold.copyWith(
+          style: AppTypography.bodyMediumBold.copyWith(
             color: item.status.valueColor(colors),
           ),
         ),

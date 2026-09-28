@@ -13,11 +13,13 @@ class WaveChatHeader extends StatelessWidget {
     required this.title,
     required this.status,
     this.onClose,
+    this.onHistory,
   });
 
   final String title;
   final String status;
   final VoidCallback? onClose;
+  final VoidCallback? onHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,14 @@ class WaveChatHeader extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          SizedBox(width: AppSpacing.md),
+          CircularHeaderButton(
+            icon: Icons.history_rounded,
+            size: AppSizes.s32,
+            iconSize: AppSizes.s16,
+            backgroundColor: context.colors.backgroundElevated,
+            onPressed: onHistory,
           ),
           SizedBox(width: AppSpacing.md),
           CircularHeaderButton(

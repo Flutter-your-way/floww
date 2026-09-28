@@ -55,7 +55,9 @@ class ProfileUnitDropdown<T> extends StatelessWidget {
       ],
       child: Container(
         height: AppSizes.s44,
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        constraints: const BoxConstraints(minWidth: AppSizes.s80),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: AppShapes.decoration(
           color: colors.backgroundElevated,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -64,8 +66,13 @@ class ProfileUnitDropdown<T> extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(labelOf(value), style: AppTypography.bodyLargeSemiBold),
-            SizedBox(width: AppSpacing.md),
+            Text(
+              labelOf(value),
+              style: AppTypography.bodyLargeMedium.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
             Icon(
               Icons.keyboard_arrow_down_rounded,
               size: AppSizes.s20,

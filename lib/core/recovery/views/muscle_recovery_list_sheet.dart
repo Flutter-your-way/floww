@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/config/widgets/theme/sheet_theme.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
@@ -28,15 +29,15 @@ class MuscleRecoveryListSheet extends StatelessWidget {
     required BuildContext context,
     required MuscleRecoveryViewModel viewModel,
   }) {
-    final theme = Theme.of(context);
+    final forcedMode = SheetTheme.forcedModeOf(context);
 
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: context.colors.scrim,
-      builder: (_) => Theme(
-        data: theme,
+      builder: (_) => SheetTheme(
+        forcedMode: forcedMode,
         child: ChangeNotifierProvider<MuscleRecoveryViewModel>.value(
           value: viewModel,
           child: const MuscleRecoveryListSheet(),
@@ -68,7 +69,6 @@ class MuscleRecoveryListSheet extends StatelessWidget {
         ),
         child: AppSheetPanel(
           title: 'Muscle Recovery',
-          titleStyle: context.textTheme.headlineSmall,
           onClose: () => NavigationService.instance.pop(),
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,7 +81,7 @@ class MuscleRecoveryListSheet extends StatelessWidget {
                 labelOf: (status) => status?.label ?? 'All',
                 onSelected: viewModel.setFilter,
               ),
-              SizedBox(height: AppSpacing.xl2),
+              SizedBox(height: AppSpacing.xl),
               Row(
                 children: [
                   const Expanded(child: SectionLabel(label: 'Muscles')),
@@ -89,14 +89,14 @@ class MuscleRecoveryListSheet extends StatelessWidget {
                 ],
               ),
               for (var i = 0; i < items.length; i++) ...[
-                SizedBox(height: AppSpacing.xl),
+                SizedBox(height: AppSpacing.lg),
                 MuscleRecoveryRow(
                   item: items[i],
                   subtitle: viewModel.subtitleOf(items[i]),
                   template: viewModel.templateOf(items[i].group.primarySide)!,
                 ),
                 if (i < items.length - 1) ...[
-                  SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: AppSpacing.lg),
                   Container(height: AppSizes.s1, color: colors.borderSubtle),
                 ],
               ],

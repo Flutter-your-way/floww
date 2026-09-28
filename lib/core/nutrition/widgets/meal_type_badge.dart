@@ -6,7 +6,11 @@ import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
 class MealTypeBadge extends StatelessWidget {
-  const MealTypeBadge({super.key, required this.meal, this.size = AppSizes.s40});
+  const MealTypeBadge({
+    super.key,
+    required this.meal,
+    this.size = AppSizes.s40,
+  });
 
   final MealType meal;
   final double size;

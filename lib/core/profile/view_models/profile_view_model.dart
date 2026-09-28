@@ -192,6 +192,10 @@ class ProfileViewModel extends ChangeNotifier {
     ),
   ];
 
+  String get glassCardsTitle => 'Glass Cards';
+
+  String get glassCardsSubtitle => 'Frosted, see-through card surfaces';
+
   String get premiumBadgeLabel => 'PREMIUM';
 
   String get logOutLabel => 'Log Out';

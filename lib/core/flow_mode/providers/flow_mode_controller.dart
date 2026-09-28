@@ -50,6 +50,24 @@ class FlowModeController extends ChangeNotifier {
     _scheduleSettle(AppMotion.modeSettleDebounce);
   }
 
+  void resetSession() {
+    if (_disposed) return;
+    _settleTimer?.cancel();
+    _watchdogTimer?.cancel();
+    _score = null;
+    _hasBaseline = false;
+    _lastTransitionAt = null;
+
+    final transition = _activeTransition;
+    if (transition == null) return;
+    _activeTransition = null;
+    scheduleMicrotask(() {
+      if (_disposed) return;
+      _applyMode(transition.mode);
+      notifyListeners();
+    });
+  }
+
   void setAppActive(bool isActive) {
     if (_disposed || _isAppActive == isActive) return;
     _isAppActive = isActive;

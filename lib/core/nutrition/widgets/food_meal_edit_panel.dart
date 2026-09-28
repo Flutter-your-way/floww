@@ -15,6 +15,7 @@ class FoodMealEditPanel extends StatelessWidget {
     required this.microInputs,
     required this.onNameChanged,
     required this.onNutrientChanged,
+    this.subtitle = 'Adjust values before saving',
     this.isSaving = false,
     this.errorMessage,
     this.onClose,
@@ -27,6 +28,7 @@ class FoodMealEditPanel extends StatelessWidget {
   final List<NutrientInput> microInputs;
   final ValueChanged<String> onNameChanged;
   final void Function(FoodNutrient nutrient, String value) onNutrientChanged;
+  final String subtitle;
   final bool isSaving;
   final String? errorMessage;
   final VoidCallback? onClose;
@@ -37,7 +39,7 @@ class FoodMealEditPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppSheetPanel(
       title: 'Edit Nutrients',
-      subtitle: 'Adjust values before saving',
+      subtitle: subtitle,
       onClose: isSaving ? null : onClose,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -56,10 +58,7 @@ class FoodMealEditPanel extends StatelessWidget {
           SizedBox(height: AppSpacing.xl3),
           const SectionLabel(label: 'Micronutrients'),
           SizedBox(height: AppSpacing.md),
-          NutrientInputGrid(
-            inputs: microInputs,
-            onChanged: onNutrientChanged,
-          ),
+          NutrientInputGrid(inputs: microInputs, onChanged: onNutrientChanged),
         ],
       ),
       footer: FoodSheetActions(

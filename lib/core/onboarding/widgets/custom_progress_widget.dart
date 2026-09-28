@@ -76,7 +76,8 @@ class _CustomProgressWidgetState extends State<CustomProgressWidget> {
       children: [
         Text(
           widget.mainText,
-          style: widget.mainTextStyle?.copyWith(
+          style:
+              widget.mainTextStyle?.copyWith(
                 fontFeatures: const [FontFeature.tabularFigures()],
               ) ??
               const TextStyle(
@@ -92,7 +93,8 @@ class _CustomProgressWidgetState extends State<CustomProgressWidget> {
           const SizedBox(width: 8),
           Text(
             widget.suffixText!,
-            style: widget.suffixTextStyle ??
+            style:
+                widget.suffixTextStyle ??
                 const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w500,
@@ -137,7 +139,8 @@ class _CustomPillSliderState extends State<CustomPillSlider> {
 
   @override
   Widget build(BuildContext context) {
-    final fraction = ((widget.value - widget.min) / (widget.max - widget.min)).clamp(0.0, 1.0);
+    final fraction = ((widget.value - widget.min) / (widget.max - widget.min))
+        .clamp(0.0, 1.0);
     final themeColors = context.colors;
 
     return LayoutBuilder(
@@ -179,10 +182,7 @@ class _CustomPillSliderState extends State<CustomPillSlider> {
                   width: thumbX + (thumbWidth / 2),
                   decoration: AppShapes.decoration(
                     gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF84CC16),
-                        themeColors.primary,
-                      ],
+                      colors: [const Color(0xFF84CC16), themeColors.primary],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
@@ -209,4 +209,3 @@ class _CustomPillSliderState extends State<CustomPillSlider> {
     );
   }
 }
-

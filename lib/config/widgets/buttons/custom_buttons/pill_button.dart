@@ -6,6 +6,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/effects/inner_glow.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 enum PillButtonVariant { accent, neutral, bright, primary, outline, glass }
 
@@ -170,12 +171,10 @@ class _PillButtonState extends State<PillButton> {
                         ),
                 ),
                 child: widget.isLoading
-                    ? SizedBox.square(
-                        dimension: AppSizes.s20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: _loaderStroke,
-                          color: foreground,
-                        ),
+                    ? AppSpinner(
+                        size: AppSizes.s20,
+                        strokeWidth: _loaderStroke,
+                        color: foreground,
                       )
                     : widget.child ??
                           _PillButtonLabel(

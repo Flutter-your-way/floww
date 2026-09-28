@@ -26,20 +26,30 @@ class DietPlanService {
 
   static const double _completionThreshold = 0.8;
 
+  static DietPlanProgress? _cachedProgress;
+
   final NutritionLogService _logService;
   final SettingsService _settingsService;
+
+  DietPlanProgress? get cachedProgress => _cachedProgress;
 
   Future<DietPlanProgress?> loadProgress({
     required int targetCalories,
     bool startIfMissing = false,
   }) async {
     final uid = _logService.userId;
-    if (uid == null) return null;
+    if (uid == null) {
+      _cachedProgress = null;
+      return null;
+    }
 
     final today = AppDateUtils.dateOnly(DateTime.now());
     var startedAt = await _settingsService.dietPlanStartedAt();
     if (startedAt == null) {
-      if (!startIfMissing) return null;
+      if (!startIfMissing) {
+        _cachedProgress = null;
+        return null;
+      }
       startedAt = today;
       await _settingsService.setDietPlanStartedAt(today);
     }
@@ -68,10 +78,12 @@ class DietPlanService {
           day.dayNumber,
     };
 
-    return DietPlanProgress(
+    final progress = DietPlanProgress(
       plan: plan,
       completedDays: completedDays,
       currentDayNumber: plan.dayNumberFor(today),
     );
+    _cachedProgress = progress;
+    return progress;
   }
 }

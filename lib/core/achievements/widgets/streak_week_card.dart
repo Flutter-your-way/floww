@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/achievements/models/streak_day.dart';
@@ -32,7 +31,9 @@ class StreakWeekCard extends StatelessWidget {
         children: [
           CardHeader(
             title: 'This Week',
-            titleStyle: AppTypography.heading4SemiBold,
+            titleStyle: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
           SizedBox(height: AppSpacing.xl),
           Row(
@@ -70,7 +71,7 @@ class _DayColumn extends StatelessWidget {
       children: [
         Text(
           day.label,
-          style: AppTypography.bodySmallSemiBold.copyWith(
+          style: context.textTheme.labelMedium?.copyWith(
             color: context.colors.textSecondary,
           ),
         ),
@@ -96,7 +97,7 @@ class _LegendEntry extends StatelessWidget {
         SizedBox(width: AppSpacing.xs),
         Text(
           '${status.label} ($count)',
-          style: AppTypography.bodySmallMedium.copyWith(
+          style: context.textTheme.bodySmall?.copyWith(
             color: context.colors.textSecondary,
           ),
         ),

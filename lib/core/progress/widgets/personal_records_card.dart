@@ -24,10 +24,7 @@ class PersonalRecordsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CardHeader(
-            title: title,
-            titleStyle: AppTypography.heading4SemiBold,
-          ),
+          CardHeader(title: title, titleStyle: AppTypography.heading4SemiBold),
           SizedBox(height: AppSpacing.xl),
           IntrinsicHeight(
             child: Row(

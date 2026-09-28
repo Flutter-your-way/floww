@@ -40,23 +40,25 @@ class ActiveMetricPill extends StatelessWidget {
             Icon(icon, size: AppSizes.s16, color: colors.textSecondary),
             SizedBox(width: AppSpacing.sm),
           ],
-          Text.rich(
-            TextSpan(
-              style: AppTypography.bodyMediumMedium.copyWith(
-                color: colors.textSecondary,
-              ),
-              children: [
-                TextSpan(
-                  text: value,
-                  style: AppTypography.bodyMediumSemiBold.copyWith(
-                    color: colors.primary,
-                  ),
+          Flexible(
+            child: Text.rich(
+              TextSpan(
+                style: AppTypography.bodyMediumMedium.copyWith(
+                  color: colors.textSecondary,
                 ),
-                TextSpan(text: ' $label'),
-              ],
+                children: [
+                  TextSpan(
+                    text: value,
+                    style: AppTypography.bodyMediumSemiBold.copyWith(
+                      color: colors.primary,
+                    ),
+                  ),
+                  TextSpan(text: ' $label'),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

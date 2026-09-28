@@ -92,10 +92,7 @@ class _MacroColumnsRow extends StatelessWidget {
         for (var i = 0; i < shares.length; i++) ...[
           if (i > 0) SizedBox(width: AppSpacing.lg),
           Expanded(
-            child: _MacroColumn(
-              share: shares[i],
-              captionStyle: captionStyle,
-            ),
+            child: _MacroColumn(share: shares[i], captionStyle: captionStyle),
           ),
         ],
       ],

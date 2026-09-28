@@ -39,6 +39,7 @@ class TabContentSwitcher extends StatelessWidget {
       duration: duration,
       curve: AppMotion.tabSwitchSizeCurve,
       alignment: Alignment.topCenter,
+      clipBehavior: Clip.none,
       child: PageTransitionSwitcher(
         duration: duration,
         reverse: reverse,

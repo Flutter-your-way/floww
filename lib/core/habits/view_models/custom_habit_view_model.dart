@@ -3,12 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/models/habit_draft.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
+import 'package:floww/core/habits/view_models/habit_rules_view_model.dart';
 
 class CustomHabitViewModel extends ChangeNotifier {
+  CustomHabitViewModel(this._rules);
+
+  final HabitRulesViewModel _rules;
+
   String _name = '';
   String _description = '';
   String _target = '';
-  HabitMetric _metric = HabitMetric.minutes;
 
   String get title => 'Custom Habit';
 
@@ -28,20 +32,18 @@ class CustomHabitViewModel extends ChangeNotifier {
 
   String get submitLabel => 'Add Habit';
 
-  HabitMetric get metric => _metric;
+  HabitMetric get metric => _rules.metric;
 
   List<HabitMetric> get metrics => HabitMetric.values;
 
-  String get metricLabel => HabitLabels.unit(_metric);
+  String get metricLabel => HabitLabels.unit(_rules.metric);
 
   String labelOf(HabitMetric metric) => HabitLabels.unit(metric);
 
   double? get _targetValue => double.tryParse(_target.trim());
 
-  bool get canSubmit {
-    final target = _targetValue;
-    return _name.trim().isNotEmpty && target != null && target > 0;
-  }
+  bool get canSubmit =>
+      _name.trim().isNotEmpty && _rules.isValidTarget(_targetValue);
 
   void updateName(String value) {
     _name = value;
@@ -58,11 +60,7 @@ class CustomHabitViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void selectMetric(HabitMetric metric) {
-    if (metric == _metric) return;
-    _metric = metric;
-    notifyListeners();
-  }
+  void selectMetric(HabitMetric metric) => _rules.selectMetric(metric);
 
   HabitDraft? buildDraft() {
     final target = _targetValue;
@@ -71,7 +69,10 @@ class CustomHabitViewModel extends ChangeNotifier {
     return HabitDraft(
       title: _name.trim(),
       target: target,
-      metric: _metric,
+      metric: _rules.metric,
+      schedule: _rules.schedule,
+      goalType: _rules.goalType,
+      source: _rules.source,
       description: description.isEmpty ? null : description,
     );
   }

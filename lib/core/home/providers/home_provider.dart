@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
@@ -25,6 +24,7 @@ class HomeProvider extends ChangeNotifier {
     this._flowModeController, {
     MuscleMapService? muscleMapService,
   }) : _muscleMapService = muscleMapService ?? MuscleMapService() {
+    _flowModeController.resetSession();
     _greeting = _greetingForHour(DateTime.now().hour);
     _watchToday();
     _loadMuscleMap();
@@ -47,7 +47,6 @@ class HomeProvider extends ChangeNotifier {
   StreamSubscription<HomeRecords>? _subscription;
   HomeRecords _records = HomeRecords.empty;
   HomeSnapshot _snapshot = HomeSnapshot.empty;
-  DailyFlowEntry? _savedFlow;
   DateTime _date = AppDateUtils.dateOnly(DateTime.now());
   bool _isReady = false;
   bool _disposed = false;
@@ -115,7 +114,6 @@ class HomeProvider extends ChangeNotifier {
   void _watchToday() {
     _subscription?.cancel();
     _date = AppDateUtils.dateOnly(DateTime.now());
-    _savedFlow = null;
     _subscription = _service
         .watchRecords(_date)
         .listen(
@@ -130,7 +128,6 @@ class HomeProvider extends ChangeNotifier {
     _isReady = true;
     notifyListeners();
     _flowModeController.reportScore(_snapshot.flowScorePercent);
-    unawaited(_persistFlow(_snapshot.todayFlowEntry));
   }
 
   Future<void> toggleHabit(String id) async {
@@ -140,37 +137,14 @@ class HomeProvider extends ChangeNotifier {
 
     final updated = [
       for (final entry in habits)
-        if (entry.id == id)
-          entry.copyWith(value: entry.isCompleted ? 0 : entry.target)
-        else
-          entry,
+        if (entry.id == id) entry.toggled() else entry,
     ];
 
     try {
-      await _service.saveHabitDay(_date, updated);
+      await _service.saveHabitDay(_date, updated, changedIds: {id});
     } on HabitException catch (e) {
       debugPrint('Home habit toggle failed: ${e.message}');
     }
-  }
-
-  Future<void> _persistFlow(DailyFlowEntry? entry) async {
-    if (entry == null || !entry.hasActivity) return;
-
-    final stored = _storedFlowFor(_date);
-    if (stored != null && stored.sameValuesAs(entry)) return;
-
-    final saved = _savedFlow;
-    if (saved != null && saved.sameValuesAs(entry)) return;
-
-    _savedFlow = entry;
-    await _service.saveDailyFlow(entry);
-  }
-
-  DailyFlowEntry? _storedFlowFor(DateTime date) {
-    for (final entry in _records.flowHistory) {
-      if (AppDateUtils.isSameDay(entry.date, date)) return entry;
-    }
-    return null;
   }
 
   @override
@@ -183,6 +157,7 @@ class HomeProvider extends ChangeNotifier {
     _disposed = true;
     _dayRollover.cancel();
     _subscription?.cancel();
+    _flowModeController.resetSession();
     super.dispose();
   }
 }

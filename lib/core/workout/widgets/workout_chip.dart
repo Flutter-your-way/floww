@@ -9,7 +9,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/effects/inner_glow.dart';
 
-enum WorkoutChipTone { muted, accent, filled }
+enum WorkoutChipTone { muted, accent, filled, alert }
 
 class WorkoutChip extends StatelessWidget {
   const WorkoutChip({
@@ -31,10 +31,12 @@ class WorkoutChip extends StatelessWidget {
     final icon = this.icon;
     final isAccent = tone == WorkoutChipTone.accent;
     final isFilled = tone == WorkoutChipTone.filled;
+    final isAlert = tone == WorkoutChipTone.alert;
     final foreground = switch (tone) {
       WorkoutChipTone.muted => colors.textSecondary,
       WorkoutChipTone.accent => colors.primaryAlt,
       WorkoutChipTone.filled => colors.backgroundPrimary,
+      WorkoutChipTone.alert => colors.destructiveBorder,
     };
 
     final chip = Stack(
@@ -45,13 +47,19 @@ class WorkoutChip extends StatelessWidget {
             vertical: AppSpacing.sm,
           ),
           decoration: AppShapes.decoration(
-            color: isFilled ? colors.primaryAlt : colors.borderSubtle,
+            color: isFilled
+                ? colors.primaryAlt
+                : isAlert
+                ? colors.destructiveTint
+                : colors.borderSubtle,
             borderRadius: BorderRadius.circular(AppRadius.full),
             side: isFilled
                 ? BorderSide.none
                 : BorderSide(
                     color: isAccent
                         ? colors.borderMedium
+                        : isAlert
+                        ? colors.destructiveOutline
                         : colors.surfaceTranslucent,
                     width: AppSizes.s1,
                   ),

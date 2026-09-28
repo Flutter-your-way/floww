@@ -13,6 +13,7 @@ class AddExerciseViewModel extends ChangeNotifier {
     required WorkoutCatalogService service,
     required List<AddExerciseSectionOption> sections,
     String? initialSectionId,
+    this.submitLabel = 'Add to Workout',
   }) : _service = service,
        _sections = sections {
     _sectionId =
@@ -35,6 +36,7 @@ class AddExerciseViewModel extends ChangeNotifier {
 
   final WorkoutCatalogService _service;
   final List<AddExerciseSectionOption> _sections;
+  final String submitLabel;
 
   List<ExerciseCatalogEntry> _catalog = const [];
   bool _isLoading = true;
@@ -83,8 +85,6 @@ class AddExerciseViewModel extends ChangeNotifier {
   String get weightLabel => 'Weight';
 
   String get bodyweightLabel => 'Bodyweight';
-
-  String get submitLabel => 'Add to Workout';
 
   String get emptyResultsMessage => 'No exercises match that search.';
 

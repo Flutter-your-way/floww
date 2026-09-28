@@ -95,7 +95,10 @@ class _AppCollapsibleContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [SizedBox(height: gap), child],
+      children: [
+        SizedBox(height: gap),
+        child,
+      ],
     );
   }
 }

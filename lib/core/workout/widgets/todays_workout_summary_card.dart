@@ -8,6 +8,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
+import 'package:floww/config/widgets/chips/app_status_chip.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/widgets/workout_stat_tile.dart';
 
@@ -46,6 +47,7 @@ class _IdentityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final statusLabel = workout.statusLabel;
 
     return Row(
       children: [
@@ -89,6 +91,14 @@ class _IdentityRow extends StatelessWidget {
             ],
           ),
         ),
+        if (statusLabel != null) ...[
+          SizedBox(width: AppSpacing.md),
+          AppStatusChip(
+            label: statusLabel,
+            icon: workout.statusIcon,
+            variant: AppStatusChipVariant.outlined,
+          ),
+        ],
       ],
     );
   }

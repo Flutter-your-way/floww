@@ -16,6 +16,7 @@ class ScreenDateHeader extends StatelessWidget {
     this.onPreviousDay,
     this.onNextDay,
     this.onPickDate,
+    this.showDateSelector = true,
   });
 
   final String titlePrefix;
@@ -25,6 +26,7 @@ class ScreenDateHeader extends StatelessWidget {
   final VoidCallback? onPreviousDay;
   final VoidCallback? onNextDay;
   final VoidCallback? onPickDate;
+  final bool showDateSelector;
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +41,22 @@ class ScreenDateHeader extends StatelessWidget {
             child: ScreenTitle(eyebrow: titlePrefix, title: title),
           ),
         ),
-        SizedBox(width: AppSpacing.lg),
-        DateSelectorPill(
-          label: dateLabel,
-          direction: direction,
-          onPrevious: onPreviousDay,
-          onNext: onNextDay,
-          onTapDate: onPickDate,
+        AnimatedSwitcher(
+          duration: AppMotion.expand,
+          switchInCurve: AppMotion.expandCurve,
+          switchOutCurve: AppMotion.collapseCurve,
+          child: showDateSelector
+              ? Padding(
+                  padding: EdgeInsets.only(left: AppSpacing.lg),
+                  child: DateSelectorPill(
+                    label: dateLabel,
+                    direction: direction,
+                    onPrevious: onPreviousDay,
+                    onNext: onNextDay,
+                    onTapDate: onPickDate,
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
       ],
     );

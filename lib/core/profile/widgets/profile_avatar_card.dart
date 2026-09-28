@@ -11,6 +11,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/profile/widgets/profile_avatar_image.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class ProfileAvatarCard extends StatelessWidget {
   const ProfileAvatarCard({
@@ -44,20 +45,17 @@ class ProfileAvatarCard extends StatelessWidget {
     final errorMessage = this.errorMessage;
 
     return AppCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.xl3,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
+            textAlign: TextAlign.center,
             style: AppTypography.heading4SemiBold.copyWith(
               color: colors.textPrimary,
             ),
           ),
-          SizedBox(height: AppSpacing.xl2),
+          const SizedBox(height: AppSpacing.xl),
           PressScale(
             onTap: isBusy ? null : onTap,
             child: _ProfileAvatarPreview(
@@ -68,14 +66,14 @@ class ProfileAvatarCard extends StatelessWidget {
               isBusy: isBusy,
             ),
           ),
-          SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             actionLabel,
             style: AppTypography.labelLargeSemiBold.copyWith(
               color: colors.primary,
             ),
           ),
-          SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             hint,
             textAlign: TextAlign.center,
@@ -84,7 +82,7 @@ class ProfileAvatarCard extends StatelessWidget {
             ),
           ),
           if (errorMessage != null) ...[
-            SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               errorMessage,
               textAlign: TextAlign.center,
@@ -145,14 +143,7 @@ class _ProfileAvatarPreview extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Center(
-                  child: SizedBox(
-                    height: AppSizes.s20,
-                    width: AppSizes.s20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: AppSizes.s2,
-                      color: colors.primary,
-                    ),
-                  ),
+                  child: AppSpinner(size: AppSizes.s20, color: colors.primary),
                 ),
               ),
             ),

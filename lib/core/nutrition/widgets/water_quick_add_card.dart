@@ -6,7 +6,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
-import 'package:floww/core/nutrition/widgets/compact_text_field.dart';
+import 'package:floww/config/widgets/text_field/compact_text_field.dart';
 import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 

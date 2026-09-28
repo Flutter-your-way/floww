@@ -40,11 +40,27 @@ class HabitLogService {
         .map((snapshot) => _parseAll(snapshot.docs.map((doc) => doc.data())));
   }
 
-  Future<void> saveDay(DateTime date, List<Habit> habits) async {
+  Future<void> saveDay(
+    DateTime date,
+    List<Habit> habits, {
+    Set<String>? changedIds,
+  }) async {
     final uid = userId;
     if (uid == null) return;
 
     final day = AppDateUtils.dateOnly(date);
+    final document = _logs(uid).doc(AppDateUtils.dateKey(day));
+    final stored = changedIds == null
+        ? const <String, HabitLogEntry>{}
+        : await _storedEntries(document);
+
+    double valueOf(Habit habit) {
+      if (changedIds == null || changedIds.contains(habit.id)) {
+        return habit.value;
+      }
+      return stored[habit.id]?.value ?? habit.value;
+    }
+
     final log = HabitDayLog(
       date: day,
       entries: [
@@ -52,14 +68,31 @@ class HabitLogService {
           HabitLogEntry(
             id: habit.id,
             title: habit.title,
-            value: habit.value,
+            value: valueOf(habit),
             target: habit.target,
             metric: habit.metric.name,
+            goal: habit.isLimit ? HabitGoalMath.limit : HabitGoalMath.build,
+            due: habit.isDue,
           ),
       ],
     );
 
-    await _logs(uid).doc(AppDateUtils.dateKey(day)).set(log.toJson());
+    await document.set(log.toJson());
+  }
+
+  Future<Map<String, HabitLogEntry>> _storedEntries(
+    DocumentReference<Map<String, dynamic>> document,
+  ) async {
+    try {
+      final data = (await document.get()).data();
+      if (data == null) return const {};
+      return {
+        for (final entry in HabitDayLog.fromJson(data).entries) entry.id: entry,
+      };
+    } catch (e) {
+      debugPrint('Stored habit day unavailable, saving as shown: $e');
+      return const {};
+    }
   }
 
   List<HabitDayLog> _parseAll(Iterable<Map<String, dynamic>> documents) {

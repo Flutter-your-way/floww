@@ -6,7 +6,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_shapes.dart';
-import 'package:smooth_corner/smooth_corner.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class HealthIntegrationWidget extends StatelessWidget {
   const HealthIntegrationWidget({
@@ -36,8 +36,7 @@ class HealthIntegrationWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.xl4),
             color: colors.primary,
           ),
-          child: SmoothClipRRect(
-            smoothness: AppShapes.smoothness,
+          child: ClipRSuperellipse(
             borderRadius: BorderRadius.circular(AppRadius.xl4),
             child: Image.asset(AppImages.appIcon, fit: BoxFit.cover),
           ),
@@ -60,7 +59,9 @@ class HealthIntegrationWidget extends StatelessWidget {
               color: colors.backgroundSurface,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               side: BorderSide(
-                color: isConnected ? colors.primary : colors.backgroundSecondary,
+                color: isConnected
+                    ? colors.primary
+                    : colors.backgroundSecondary,
               ),
             ),
             child: Row(
@@ -144,14 +145,7 @@ class _ConnectPill extends StatelessWidget {
         ),
       ),
       child: isConnecting
-          ? SizedBox(
-              width: AppSizes.s16,
-              height: AppSizes.s16,
-              child: CircularProgressIndicator(
-                strokeWidth: AppSizes.s2,
-                color: colors.primary,
-              ),
-            )
+          ? AppSpinner(size: AppSizes.s16, color: colors.primary)
           : Text(
               isConnected ? 'Connected' : 'Connect',
               style: context.textTheme.bodyMedium?.copyWith(

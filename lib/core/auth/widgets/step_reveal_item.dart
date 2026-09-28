@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 class StepRevealItem extends StatelessWidget {
-  const StepRevealItem({super.key, required this.presence, required this.child});
+  const StepRevealItem({
+    super.key,
+    required this.presence,
+    required this.child,
+  });
 
   final Animation<double> presence;
   final Widget child;

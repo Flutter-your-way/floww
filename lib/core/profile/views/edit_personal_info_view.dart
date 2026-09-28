@@ -8,8 +8,10 @@ import 'package:floww/navigation/app_router.dart';
 import 'package:floww/config/constants/app_constants.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
@@ -142,7 +144,7 @@ class EditPersonalInfoView extends StatelessWidget {
               else ...[
                 if (errorMessage != null) ...[
                   AppErrorCard(message: errorMessage, onRetry: viewModel.load),
-                  SizedBox(height: AppSpacing.xl2),
+                  const SizedBox(height: AppSpacing.xl2),
                 ],
                 ProfileAvatarCard(
                   title: viewModel.avatarTitle,
@@ -155,19 +157,19 @@ class EditPersonalInfoView extends StatelessWidget {
                   isBusy: viewModel.isAvatarBusy,
                   onTap: () => _changeAvatar(context, viewModel),
                 ),
-                SizedBox(height: AppSpacing.xl2),
+                const SizedBox(height: AppSpacing.xl2),
                 _PersonalDetailsCard(viewModel: viewModel),
-                SizedBox(height: AppSpacing.xl2),
+                const SizedBox(height: AppSpacing.xl2),
                 ProfileChoiceCard(
                   group: viewModel.goalGroup,
                   onSelected: viewModel.selectGoal,
                 ),
-                SizedBox(height: AppSpacing.xl2),
+                const SizedBox(height: AppSpacing.xl2),
                 ProfileChoiceCard(
                   group: viewModel.dietGroup,
                   onSelected: viewModel.selectDiet,
                 ),
-                SizedBox(height: AppSpacing.xl2),
+                const SizedBox(height: AppSpacing.xl2),
                 ProfileChoiceCard(
                   group: viewModel.experienceGroup,
                   onSelected: viewModel.selectExperience,
@@ -189,13 +191,14 @@ class _PersonalDetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.xl2,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          CardHeader(
+            title: viewModel.detailsTitle,
+            titleStyle: AppTypography.heading4SemiBold,
+          ),
+          const SizedBox(height: AppSpacing.xl),
           ProfileEditField(
             label: viewModel.nameLabel,
             hint: viewModel.nameHint,
@@ -203,7 +206,7 @@ class _PersonalDetailsCard extends StatelessWidget {
             onChanged: viewModel.updateName,
             maxLength: AppLimits.displayNameMaxLength,
           ),
-          SizedBox(height: AppSpacing.xl2),
+          const SizedBox(height: AppSpacing.xl2),
           ProfileEditField(
             label: viewModel.heightLabel,
             hint: viewModel.heightHint,
@@ -217,7 +220,7 @@ class _PersonalDetailsCard extends StatelessWidget {
               onSelected: viewModel.selectHeightUnit,
             ),
           ),
-          SizedBox(height: AppSpacing.xl2),
+          const SizedBox(height: AppSpacing.xl2),
           ProfileEditField(
             label: viewModel.weightLabel,
             hint: viewModel.weightHint,

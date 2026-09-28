@@ -11,8 +11,10 @@ import 'package:floww/core/habits/models/habit_draft.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/view_models/habit_details_view_model.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
+import 'package:floww/core/habits/view_models/habit_rules_view_model.dart';
 import 'package:floww/core/habits/views/habit_option_sheet.dart';
 import 'package:floww/core/habits/widgets/habit_metric_selector.dart';
+import 'package:floww/core/habits/widgets/habit_rules_fields.dart';
 import 'package:floww/core/habits/widgets/habit_text_field.dart';
 
 class EditHabitSheet extends StatefulWidget {
@@ -40,7 +42,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   late final TextEditingController _name;
   late final TextEditingController _description;
   late final TextEditingController _target;
-  late HabitMetric _metric;
+  late final HabitRulesViewModel _rules;
 
   @override
   void initState() {
@@ -49,31 +51,37 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
     _name = TextEditingController(text: _viewModel.initialName);
     _description = TextEditingController(text: _viewModel.initialDescription);
     _target = TextEditingController(text: _viewModel.initialTarget);
-    _metric = _viewModel.initialMetric;
+    _rules = HabitRulesViewModel(
+      metric: _viewModel.initialMetric,
+      goalType: _viewModel.initialGoalType,
+      schedule: _viewModel.initialSchedule,
+      source: _viewModel.initialSource,
+    )..addListener(_onRulesChanged);
   }
+
+  void _onRulesChanged() => setState(() {});
 
   @override
   void dispose() {
     _name.dispose();
     _description.dispose();
     _target.dispose();
+    _rules
+      ..removeListener(_onRulesChanged)
+      ..dispose();
     super.dispose();
   }
 
   double? get _targetValue => double.tryParse(_target.text.trim());
 
-  bool get _canSubmit {
-    final target = _targetValue;
-    return _name.text.trim().isNotEmpty && target != null && target > 0;
-  }
+  bool get _canSubmit =>
+      _name.text.trim().isNotEmpty && _rules.isValidTarget(_targetValue);
 
   void _selectMetric(String id) {
-    final metric = HabitMetric.values.firstWhere(
-      (metric) => metric.name == id,
-      orElse: () => _metric,
-    );
-    if (metric == _metric) return;
-    setState(() => _metric = metric);
+    final metric = HabitMetric.values
+        .where((metric) => metric.name == id)
+        .firstOrNull;
+    if (metric != null) _rules.selectMetric(metric);
   }
 
   void _openMetrics() {
@@ -86,7 +94,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
         for (final metric in HabitMetric.values)
           HabitOptionItem(id: metric.name, label: HabitLabels.unit(metric)),
       ],
-      selectedId: _metric.name,
+      selectedId: _rules.metric.name,
       onSelect: _selectMetric,
     );
   }
@@ -100,7 +108,10 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
       HabitDraft(
         title: _name.text.trim(),
         target: target,
-        metric: _metric,
+        metric: _rules.metric,
+        schedule: _rules.schedule,
+        goalType: _rules.goalType,
+        source: _rules.source,
         description: description.isEmpty ? null : description,
       ),
     );
@@ -146,9 +157,14 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 isNumeric: true,
                 onChanged: (value) => setState(() {}),
                 trailing: HabitMetricSelector(
-                  label: HabitLabels.unit(_metric),
+                  label: HabitLabels.unit(_rules.metric),
                   onPressed: _openMetrics,
                 ),
+              ),
+              SizedBox(height: AppSpacing.xl2),
+              ChangeNotifierProvider.value(
+                value: _rules,
+                child: const HabitRulesFields(),
               ),
               SizedBox(height: AppSpacing.xl2),
               Align(

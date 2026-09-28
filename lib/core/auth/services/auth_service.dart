@@ -163,6 +163,15 @@ class AuthService {
     }
   }
 
+  Map<String, dynamic>? _decodeBody(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } on FormatException {
+      return null;
+    }
+  }
+
   Future<void> _requestAccountDeletion(User user) async {
     final client = HttpClient()..connectionTimeout = AppApi.connectTimeout;
     try {
@@ -177,11 +186,19 @@ class AuthService {
 
       if (response.statusCode == HttpStatus.ok) return;
 
-      final json = jsonDecode(body) as Map<String, dynamic>;
-      final error = json['error'] as Map<String, dynamic>?;
       debugPrint('deleteAccount rejected: ${response.statusCode} $body');
+
+      final json = _decodeBody(body);
+      if (json == null) {
+        throw AuthException(
+          'Our server is having trouble right now. '
+          'Please try again in a moment.',
+        );
+      }
+
+      final error = json['error'];
       throw AuthException(
-        error?['message'] as String? ??
+        (error is Map<String, dynamic> ? error['message'] as String? : null) ??
             'Could not delete your account. Please try again.',
       );
     } on AuthException {
@@ -191,9 +208,7 @@ class AuthService {
         'This is taking too long. Check your connection and try again.',
       );
     } on IOException {
-      throw AuthException(
-        'No connection. Check your internet and try again.',
-      );
+      throw AuthException('No connection. Check your internet and try again.');
     } catch (e, stackTrace) {
       debugPrint('deleteAccount request failed: $e\n$stackTrace');
       throw AuthException('Could not delete your account. Please try again.');
@@ -293,6 +308,16 @@ class AuthService {
       });
     } catch (_) {
       return;
+    }
+  }
+
+  Future<void> syncDeviceClock(String uid) async {
+    try {
+      await _usersCollection.doc(uid).update({
+        'utcOffsetMinutes': DateTime.now().timeZoneOffset.inMinutes,
+      });
+    } catch (e) {
+      debugPrint('syncDeviceClock skipped: $e');
     }
   }
 

@@ -76,12 +76,10 @@ class AchievementsService {
   AuthService? _authServiceCache;
 
   ProgressService get _progressService =>
-      _injectedProgressService ??
-      (_progressServiceCache ??= ProgressService());
+      _injectedProgressService ?? (_progressServiceCache ??= ProgressService());
 
   HabitLogService get _habitLogService =>
-      _injectedHabitLogService ??
-      (_habitLogServiceCache ??= HabitLogService());
+      _injectedHabitLogService ?? (_habitLogServiceCache ??= HabitLogService());
 
   WorkoutSessionService get _sessionService =>
       _injectedSessionService ??
@@ -145,13 +143,13 @@ class AchievementsService {
       'iron_will': completed.length >= 50,
       'century_lifter': completed.length >= 100,
       'habit_starter': records.habitDays.any((day) => day.entries.isNotEmpty),
-      'daily_driver': _habitStreakOf(records.habitDays, today) >=
-          dailyDriverDays,
+      'daily_driver':
+          _habitStreakOf(records.habitDays, today) >= dailyDriverDays,
       'habit_stack': records.habitDays.any(
         (day) => day.entries.length >= habitStackSize,
       ),
-      'routine_master': _completedHabitLogsOf(records.habitDays) >=
-          routineMasterLogs,
+      'routine_master':
+          _completedHabitLogsOf(records.habitDays) >= routineMasterLogs,
       'personal_best': completed.any(
         (session) => session.personalRecords.isNotEmpty,
       ),
@@ -184,9 +182,8 @@ class AchievementsService {
 
     var monthCompleted = 0;
     for (var day = trackedStart.day; day <= today.day; day++) {
-      final entry = flow[AppDateUtils.dateKey(
-        DateTime(today.year, today.month, day),
-      )];
+      final entry =
+          flow[AppDateUtils.dateKey(DateTime(today.year, today.month, day))];
       if (entry?.hasActivity ?? false) monthCompleted++;
     }
 
@@ -217,9 +214,8 @@ class AchievementsService {
     return earliest;
   }
 
-  static Map<String, DailyFlowEntry> flowByDay(List<DailyFlowEntry> history) => {
-    for (final entry in history) AppDateUtils.dateKey(entry.date): entry,
-  };
+  static Map<String, DailyFlowEntry> flowByDay(List<DailyFlowEntry> history) =>
+      {for (final entry in history) AppDateUtils.dateKey(entry.date): entry};
 
   static int currentStreakOf(Map<String, DailyFlowEntry> flow, DateTime today) {
     var cursor = today;
@@ -236,7 +232,10 @@ class AchievementsService {
 
   static int longestStreakOf(Map<String, DailyFlowEntry> flow) {
     final days =
-        flow.values.where((entry) => entry.hasActivity).map((entry) => entry.date).toList()
+        flow.values
+            .where((entry) => entry.hasActivity)
+            .map((entry) => entry.date)
+            .toList()
           ..sort();
     var longest = 0;
     var running = 0;

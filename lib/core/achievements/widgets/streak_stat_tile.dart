@@ -16,8 +16,8 @@ class StreakStatTile extends StatelessWidget {
     return AppCard(
       variant: AppCardVariant.subtle,
       padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.xl,
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,16 +27,16 @@ class StreakStatTile extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.bodySmallMedium.copyWith(
+            style: context.textTheme.bodySmall?.copyWith(
               color: context.colors.textSecondary,
             ),
           ),
-          SizedBox(height: AppSpacing.xs),
+          SizedBox(height: AppSpacing.xxs),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.heading3Bold,
+            style: AppTypography.bodyXLargeBold,
           ),
         ],
       ),

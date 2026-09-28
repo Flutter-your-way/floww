@@ -16,6 +16,7 @@ import '../models/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
 import 'custom_progress_widget.dart';
 import 'custom_date_time_selector.dart';
+import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 
 class OnboardingQuestionRenderer extends StatefulWidget {
   final OnboardingQuestion question;
@@ -423,9 +424,7 @@ class _OnboardingQuestionRendererState
         );
 
       case InputType.loading:
-        return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF84CC16)),
-        );
+        return const AppSectionLoader();
 
       case InputType.summary:
         return Center(

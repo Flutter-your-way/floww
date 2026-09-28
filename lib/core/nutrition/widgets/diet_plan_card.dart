@@ -60,7 +60,7 @@ class DietPlanCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: AppSpacing.sm),
-            AppProgressBar(progress: progress),
+            AppProgressBar(progress: progress, animated: true),
           ],
         ),
       ),

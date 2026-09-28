@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:smooth_corner/smooth_corner.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
-import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 
@@ -22,8 +20,7 @@ class ConnectedAppLogo extends StatelessWidget {
     final iconAsset = this.iconAsset;
     final wordmark = this.wordmark;
 
-    return SmoothClipRRect(
-      smoothness: AppShapes.smoothness,
+    return ClipRSuperellipse(
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: SizedBox.square(
         dimension: AppSizes.s44,

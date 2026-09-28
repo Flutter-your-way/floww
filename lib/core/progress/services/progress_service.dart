@@ -249,25 +249,6 @@ class ProgressService {
     );
   }
 
-  Future<void> saveDailyFlow(List<DailyFlowEntry> entries) async {
-    final uid = userId;
-    if (uid == null || entries.isEmpty) return;
-
-    final batch = _firestore.batch();
-    for (final entry in entries) {
-      batch.set(
-        _dailyFlow(uid).doc(AppDateUtils.dateKey(entry.date)),
-        entry.toJson(),
-      );
-    }
-
-    try {
-      await batch.commit();
-    } catch (e, stackTrace) {
-      debugPrint('saveDailyFlow failed: $e\n$stackTrace');
-    }
-  }
-
   Future<void> saveState(ProgressState state) async {
     final uid = userId;
     if (uid == null) return;

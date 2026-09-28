@@ -137,11 +137,7 @@ class _BriefStatGrid extends StatelessWidget {
 }
 
 class _BriefStatCell extends StatelessWidget {
-  const _BriefStatCell({
-    required this.label,
-    required this.value,
-    this.detail,
-  });
+  const _BriefStatCell({required this.label, required this.value, this.detail});
 
   final String label;
   final Widget value;

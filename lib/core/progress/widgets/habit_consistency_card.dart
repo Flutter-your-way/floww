@@ -39,10 +39,7 @@ class HabitConsistencyCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CardHeader(
-            title: title,
-            titleStyle: AppTypography.heading4SemiBold,
-          ),
+          CardHeader(title: title, titleStyle: AppTypography.heading4SemiBold),
           if (strongestHabit != null && weakestHabit != null) ...[
             SizedBox(height: AppSpacing.lg),
             Row(

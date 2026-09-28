@@ -1,4 +1,5 @@
 import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_schedule.dart';
 
 class HabitDetail {
   const HabitDetail({
@@ -9,6 +10,9 @@ class HabitDetail {
     required this.target,
     required this.metric,
     required this.icon,
+    required this.schedule,
+    required this.goalType,
+    required this.source,
     required this.currentStreakDays,
     required this.longestStreakDays,
     required this.weeklyAveragePercent,
@@ -22,6 +26,9 @@ class HabitDetail {
   final double target;
   final HabitMetric metric;
   final HabitIconKind icon;
+  final HabitSchedule schedule;
+  final HabitGoalType goalType;
+  final HabitSource source;
   final int currentStreakDays;
   final int longestStreakDays;
   final int weeklyAveragePercent;

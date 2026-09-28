@@ -1,6 +1,7 @@
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_motion.dart';
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -47,7 +48,9 @@ class FlowScoreCard extends StatelessWidget {
         decoration: AppShapes.decoration(
           borderRadius: BorderRadius.circular(AppRadius.xl),
           side: BorderSide(color: context.colors.borderGlow, width: 1),
-          gradient: context.gradients.darkGlow,
+          gradient: context.gradients.darkGlow.withOpacity(
+            AppOpacity.frostedCard,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -59,7 +62,9 @@ class FlowScoreCard extends StatelessWidget {
                     center: Alignment.topRight,
                     radius: 1.0,
                     colors: [
-                      context.colors.backgroundSurface,
+                      context.colors.backgroundSurface.withValues(
+                        alpha: AppOpacity.frostedCard,
+                      ),
                       context.colors.backgroundSurface.withValues(alpha: 0),
                     ],
                   ),

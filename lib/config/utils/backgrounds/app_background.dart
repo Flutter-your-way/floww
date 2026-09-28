@@ -3,10 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/theme_controller.dart';
+import 'package:floww/config/widgets/effects/edge_fade_mask.dart';
 
 enum AppBackgroundMode {
   defaultMode,
@@ -93,33 +94,22 @@ class AppBackground extends StatelessWidget {
   String get _modeKey => '${mode.name}_$isInner';
 
   BoxDecoration get _decoration {
-    if (mode == AppBackgroundMode.defaultMode) {
-      return const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF14110B), Color(0xFF0A0A0A)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      );
+    final tokens = _tokens;
+    if (tokens == null) {
+      return const BoxDecoration(gradient: AppGradientTokens.defaultBackground);
     }
 
     return BoxDecoration(
-      image: DecorationImage(image: AssetImage(_imagePath), fit: BoxFit.cover),
+      gradient: isInner ? tokens.innerBackground : tokens.mainBackground,
     );
   }
 
-  String get _imagePath {
-    switch (mode) {
-      case AppBackgroundMode.flow:
-        return isInner ? AppImages.flowInner : AppImages.flowMain;
-      case AppBackgroundMode.steady:
-        return isInner ? AppImages.steadyInner : AppImages.steadyMain;
-      case AppBackgroundMode.restore:
-        return isInner ? AppImages.restoreInner : AppImages.restoreMain;
-      default:
-        return AppImages.flowMain;
-    }
-  }
+  AppGradientTokens? get _tokens => switch (mode) {
+    AppBackgroundMode.flow => AppGradientTokens.flow,
+    AppBackgroundMode.steady => AppGradientTokens.steady,
+    AppBackgroundMode.restore => AppGradientTokens.restore,
+    AppBackgroundMode.defaultMode => null,
+  };
 }
 
 class _BackgroundLayer extends StatefulWidget {
@@ -222,10 +212,15 @@ class _ListBackgroundState extends State<_ListBackground> {
           bottom: false,
           left: false,
           right: false,
-          child: ListView(
-            controller: _controller,
-            padding: widget.padding,
-            children: widget.children,
+          child: EdgeFadeMask(
+            bottomInset: MediaQuery.viewPaddingOf(context).bottom,
+            fadeBottom: true,
+            child: ListView.builder(
+              controller: _controller,
+              padding: widget.padding,
+              itemCount: widget.children.length,
+              itemBuilder: (context, index) => widget.children[index],
+            ),
           ),
         ),
       ],
@@ -278,9 +273,13 @@ class _ScrollableBackgroundState extends State<_ScrollableBackground> {
           bottom: false,
           left: false,
           right: false,
-          child: SingleChildScrollView(
-            controller: _controller,
-            child: widget.child,
+          child: EdgeFadeMask(
+            bottomInset: MediaQuery.viewPaddingOf(context).bottom,
+            fadeBottom: true,
+            child: SingleChildScrollView(
+              controller: _controller,
+              child: widget.child,
+            ),
           ),
         ),
       ],

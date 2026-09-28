@@ -1,5 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:floww/core/workout/models/program_start_config.dart';
+import 'package:floww/core/workout/view_models/program_editor_view_model.dart';
+import 'package:floww/core/workout/views/program_editor_view.dart';
+
 import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/achievements/view_models/achievements_view_model.dart';
 import 'package:floww/core/achievements/views/achievements_view.dart';
@@ -61,6 +65,8 @@ import 'package:floww/core/settings/views/units_view.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
+import 'package:floww/core/workout/services/workout_alert_service.dart';
+import 'package:floww/core/workout/services/workout_readiness_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/view_models/active_workout_view_model.dart';
 import 'package:floww/core/workout/view_models/todays_workout_view_model.dart';
@@ -98,10 +104,8 @@ class AppRouterConfig {
         );
       case AppRouter.accountSetup:
         return MaterialPageRoute(
-          builder: (_) => const ForcedThemeMode(
-            mode: AppThemeMode.flow,
-            child: AuthView(),
-          ),
+          builder: (_) =>
+              const ForcedThemeMode(mode: AppThemeMode.flow, child: AuthView()),
         );
       case AppRouter.onboardingQuestion:
         return MaterialPageRoute(
@@ -188,6 +192,8 @@ class AppRouterConfig {
             create: (_) => TodaysWorkoutViewModel(
               WorkoutPlanService(WorkoutCatalogService()),
               WorkoutProgramService(),
+              WorkoutSessionService(),
+              WorkoutReadinessService(),
               date,
             )..load(),
             child: const TodaysWorkoutView(),
@@ -201,9 +207,27 @@ class AppRouterConfig {
               WorkoutSessionService(),
               WorkoutPlanService(WorkoutCatalogService()),
               WorkoutProgramService(),
+              WorkoutCatalogService(),
+              WorkoutReadinessService(),
+              WorkoutAlertService(),
               date,
             )..load(),
             child: const ActiveWorkoutView(),
+          ),
+        );
+      case AppRouter.programEditor:
+        final args =
+            settings.arguments as ProgramEditorArgs? ??
+            const ProgramEditorArgs();
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => ProgramEditorViewModel(
+              WorkoutCatalogService(),
+              WorkoutProgramService(),
+              WorkoutPlanService(WorkoutCatalogService()),
+              args,
+            )..load(),
+            child: const ProgramEditorView(),
           ),
         );
       case AppRouter.muscleRecovery:

@@ -46,13 +46,7 @@ class _FoodScanSweepState extends State<FoodScanSweep>
         final lineY = lerpDouble(widget.top, widget.bottom, _progress.value)!;
         return Stack(
           children: [
-            Positioned(
-              top: lineY,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: blur!,
-            ),
+            Positioned(top: lineY, left: 0, right: 0, bottom: 0, child: blur!),
             Positioned(
               top: lineY - _lineThickness / 2,
               left: 0,

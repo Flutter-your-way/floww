@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:floww/config/entities/user_model.dart';
+import 'package:floww/config/services/avatar_cache_service.dart';
 import 'package:floww/core/auth/services/auth_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
@@ -26,14 +27,23 @@ class AuthViewModel extends ChangeNotifier {
     return name.characters.first.toUpperCase();
   }
 
+  void _preloadAvatar() {
+    final avatarUrl = this.avatarUrl;
+    if (avatarUrl == null) return;
+    AvatarCacheService.instance.prefetch(avatarUrl);
+    unawaited(AvatarCacheService.instance.retainOnly(avatarUrl));
+  }
+
   void _watchAvatar() {
     _avatarSubscription?.cancel();
     if (currentUser == null) return;
+    _preloadAvatar();
 
     _avatarSubscription = _authService.watchAvatarUrl().listen((avatarUrl) {
       final user = currentUser;
       if (user == null || user.avatarUrl == avatarUrl) return;
       currentUser = user.withAvatarUrl(avatarUrl);
+      _preloadAvatar();
       if (!_disposed) notifyListeners();
     }, onError: (Object error) => debugPrint('avatar watch failed: $error'));
   }
@@ -51,6 +61,8 @@ class AuthViewModel extends ChangeNotifier {
   Future<UserModel?> restoreSession() async {
     try {
       currentUser = await _authService.fetchCurrentUserProfile();
+      final uid = currentUser?.uid;
+      if (uid != null) unawaited(_authService.syncDeviceClock(uid));
     } catch (_) {
       currentUser = null;
     }
@@ -67,6 +79,7 @@ class AuthViewModel extends ChangeNotifier {
     try {
       currentUser = await _authService.signInWithGoogle();
       await _authService.registerFcmToken(currentUser!.uid);
+      unawaited(_authService.syncDeviceClock(currentUser!.uid));
       _watchAvatar();
       return true;
     } on AuthException catch (e) {
@@ -86,6 +99,7 @@ class AuthViewModel extends ChangeNotifier {
     try {
       currentUser = await _authService.signInWithApple();
       await _authService.registerFcmToken(currentUser!.uid);
+      unawaited(_authService.syncDeviceClock(currentUser!.uid));
       _watchAvatar();
       return true;
     } on AuthException catch (e) {

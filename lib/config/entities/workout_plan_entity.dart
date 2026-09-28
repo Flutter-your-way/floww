@@ -1,5 +1,6 @@
 import 'package:floww/config/entities/workout_exercise_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/workout/models/set_type.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 
 class LoggedSetEntry {
@@ -7,24 +8,63 @@ class LoggedSetEntry {
     required this.reps,
     required this.loggedAt,
     this.weightKg,
+    this.repsInReserve,
+    this.type = SetType.working,
+    this.durationSeconds,
   });
 
   factory LoggedSetEntry.fromJson(Map<String, dynamic> json) => LoggedSetEntry(
     reps: (json['reps'] as num? ?? 0).toInt(),
     loggedAt: DateTime.parse(json['loggedAt'] as String).toLocal(),
     weightKg: (json['weightKg'] as num?)?.toDouble(),
+    repsInReserve: (json['repsInReserve'] as num?)?.toInt(),
+    type: SetType.fromId(json['type'] as String?),
+    durationSeconds: (json['durationSeconds'] as num?)?.toInt(),
   );
+
+  static const int secondsPerEffortRep = 3;
 
   final int reps;
   final DateTime loggedAt;
   final double? weightKg;
+  final int? repsInReserve;
+  final SetType type;
+  final int? durationSeconds;
 
-  double get volumeKg => (weightKg ?? 0) * reps;
+  bool get isWorking => type.countsTowardVolume;
+
+  double get volumeKg => isWorking ? (weightKg ?? 0) * reps : 0;
+
+  double get effortReps => reps + (durationSeconds ?? 0) / secondsPerEffortRep;
+
+  double? get estimatedOneRepMaxKg {
+    final weight = weightKg;
+    if (!isWorking || weight == null || weight <= 0 || reps <= 0) return null;
+    return WorkoutEntryEntity.estimatedOneRepMax(weight, reps);
+  }
+
+  LoggedSetEntry copyWith({
+    int? reps,
+    double? weightKg,
+    int? repsInReserve,
+    SetType? type,
+    int? durationSeconds,
+  }) => LoggedSetEntry(
+    reps: reps ?? this.reps,
+    loggedAt: loggedAt,
+    weightKg: weightKg ?? this.weightKg,
+    repsInReserve: repsInReserve ?? this.repsInReserve,
+    type: type ?? this.type,
+    durationSeconds: durationSeconds ?? this.durationSeconds,
+  );
 
   Map<String, dynamic> toJson() => {
     'reps': reps,
     'loggedAt': AppDateUtils.isoKey(loggedAt),
     if (weightKg != null) 'weightKg': weightKg,
+    if (repsInReserve != null) 'repsInReserve': repsInReserve,
+    'type': type.id,
+    if (durationSeconds != null) 'durationSeconds': durationSeconds,
   };
 }
 
@@ -47,6 +87,8 @@ class WorkoutEntryEntity {
     this.equipmentItems = const [],
     this.sets = const [],
     this.isSkipped = false,
+    this.trackingMode = TrackingMode.reps,
+    this.groupId,
   });
 
   factory WorkoutEntryEntity.fromCatalog(
@@ -76,6 +118,7 @@ class WorkoutEntryEntity {
     mistakes: exercise.mistakes,
     guidelines: exercise.guidelines,
     equipmentItems: exercise.equipmentItems,
+    trackingMode: exercise.trackingMode,
   );
 
   factory WorkoutEntryEntity.fromJson(Map<String, dynamic> json) =>
@@ -97,7 +140,11 @@ class WorkoutEntryEntity {
         equipmentItems: ExerciseCatalogEntry.cuesOf(json['equipmentItems']),
         sets: _setsOf(json['sets']),
         isSkipped: json['isSkipped'] as bool? ?? false,
+        trackingMode: TrackingMode.fromId(json['trackingMode'] as String?),
+        groupId: json['groupId'] as String?,
       );
+
+  static const int _epleyDivisor = 30;
 
   final String id;
   final String exerciseId;
@@ -116,15 +163,49 @@ class WorkoutEntryEntity {
   final List<ExerciseCueEntry> equipmentItems;
   final List<LoggedSetEntry> sets;
   final bool isSkipped;
+  final TrackingMode trackingMode;
+  final String? groupId;
+
+  static double estimatedOneRepMax(double weightKg, int reps) =>
+      reps == 1 ? weightKg : weightKg * (1 + reps / _epleyDivisor);
 
   bool get isBodyweight => targetWeightKg == null;
 
-  bool get isComplete => sets.length >= targetSets;
+  bool get isTimed => trackingMode == TrackingMode.duration;
+
+  bool get isSuperset => groupId != null;
+
+  List<LoggedSetEntry> get workingSets => [
+    for (final set in sets)
+      if (set.isWorking) set,
+  ];
+
+  int get workingSetCount => workingSets.length;
+
+  bool get isComplete => workingSetCount >= targetSets;
+
+  bool get isDone => isSkipped || isComplete;
 
   int get completedReps {
     var total = 0;
-    for (final set in sets) {
+    for (final set in workingSets) {
       total += set.reps;
+    }
+    return total;
+  }
+
+  int get completedSeconds {
+    var total = 0;
+    for (final set in workingSets) {
+      total += set.durationSeconds ?? 0;
+    }
+    return total;
+  }
+
+  double get completedEffortReps {
+    var total = 0.0;
+    for (final set in workingSets) {
+      total += set.effortReps;
     }
     return total;
   }
@@ -141,7 +222,7 @@ class WorkoutEntryEntity {
 
   double? get bestSetWeightKg {
     double? best;
-    for (final set in sets) {
+    for (final set in workingSets) {
       final weight = set.weightKg;
       if (weight == null) continue;
       if (best == null || weight > best) best = weight;
@@ -151,37 +232,90 @@ class WorkoutEntryEntity {
 
   int get bestSetReps {
     var best = 0;
-    for (final set in sets) {
+    for (final set in workingSets) {
       if (set.reps > best) best = set.reps;
     }
     return best;
   }
 
+  int get bestSetSeconds {
+    var best = 0;
+    for (final set in workingSets) {
+      final seconds = set.durationSeconds ?? 0;
+      if (seconds > best) best = seconds;
+    }
+    return best;
+  }
+
+  double? get bestEstimatedOneRepMaxKg {
+    double? best;
+    for (final set in workingSets) {
+      final value = set.estimatedOneRepMaxKg;
+      if (value == null) continue;
+      if (best == null || value > best) best = value;
+    }
+    return best;
+  }
+
+  LoggedSetEntry plannedSet(DateTime now) => LoggedSetEntry(
+    reps: isTimed ? 0 : targetReps,
+    loggedAt: now,
+    weightKg: targetWeightKg,
+    repsInReserve: repsInReserve,
+    durationSeconds: isTimed ? targetReps : null,
+  );
+
+  WorkoutEntryEntity withPlannedSetsLogged(DateTime now) {
+    if (isDone) return this;
+    return copyWith(
+      sets: [
+        ...sets,
+        for (var i = workingSetCount; i < targetSets; i++) plannedSet(now),
+      ],
+    );
+  }
+
   WorkoutEntryEntity copyWith({
+    String? id,
+    String? exerciseId,
+    String? name,
     List<LoggedSetEntry>? sets,
     bool? isSkipped,
     int? targetSets,
     int? targetReps,
     int? restSeconds,
+    int? repsInReserve,
     double? targetWeightKg,
+    String? imageUrl,
+    double? met,
+    Map<String, double>? muscleShares,
+    List<ExerciseCueEntry>? mistakes,
+    List<ExerciseCueEntry>? guidelines,
+    List<ExerciseCueEntry>? equipmentItems,
+    TrackingMode? trackingMode,
+    String? groupId,
+    bool clearGroup = false,
+    bool clearWeight = false,
   }) => WorkoutEntryEntity(
-    id: id,
-    exerciseId: exerciseId,
-    name: name,
+    id: id ?? this.id,
+    exerciseId: exerciseId ?? this.exerciseId,
+    name: name ?? this.name,
     section: section,
     targetSets: targetSets ?? this.targetSets,
     targetReps: targetReps ?? this.targetReps,
     restSeconds: restSeconds ?? this.restSeconds,
-    repsInReserve: repsInReserve,
-    met: met,
-    muscleShares: muscleShares,
-    targetWeightKg: targetWeightKg ?? this.targetWeightKg,
-    imageUrl: imageUrl,
-    mistakes: mistakes,
-    guidelines: guidelines,
-    equipmentItems: equipmentItems,
+    repsInReserve: repsInReserve ?? this.repsInReserve,
+    met: met ?? this.met,
+    muscleShares: muscleShares ?? this.muscleShares,
+    targetWeightKg: clearWeight ? null : targetWeightKg ?? this.targetWeightKg,
+    imageUrl: imageUrl ?? this.imageUrl,
+    mistakes: mistakes ?? this.mistakes,
+    guidelines: guidelines ?? this.guidelines,
+    equipmentItems: equipmentItems ?? this.equipmentItems,
     sets: sets ?? this.sets,
     isSkipped: isSkipped ?? this.isSkipped,
+    trackingMode: trackingMode ?? this.trackingMode,
+    groupId: clearGroup ? null : groupId ?? this.groupId,
   );
 
   Map<String, dynamic> toJson() => {
@@ -202,6 +336,8 @@ class WorkoutEntryEntity {
     'equipmentItems': [for (final cue in equipmentItems) cue.toJson()],
     'sets': [for (final set in sets) set.toJson()],
     'isSkipped': isSkipped,
+    'trackingMode': trackingMode.id,
+    if (groupId != null) 'groupId': groupId,
   };
 
   static List<LoggedSetEntry> _setsOf(Object? value) {
@@ -226,6 +362,8 @@ class WorkoutPlanEntity {
     this.programId,
     this.programLabel = '',
     this.sessionId,
+    this.isAdapted = false,
+    this.isDeload = false,
   });
 
   factory WorkoutPlanEntity.fromJson(Map<String, dynamic> json) =>
@@ -241,6 +379,8 @@ class WorkoutPlanEntity {
         programId: json['programId'] as String?,
         programLabel: json['programLabel'] as String? ?? '',
         sessionId: json['sessionId'] as String?,
+        isAdapted: json['isAdapted'] as bool? ?? false,
+        isDeload: json['isDeload'] as bool? ?? false,
       );
 
   final String id;
@@ -254,6 +394,8 @@ class WorkoutPlanEntity {
   final String? programId;
   final String programLabel;
   final String? sessionId;
+  final bool isAdapted;
+  final bool isDeload;
 
   int get totalSets {
     var count = 0;
@@ -264,19 +406,28 @@ class WorkoutPlanEntity {
   }
 
   WorkoutPlanEntity copyWithExercises(List<WorkoutEntryEntity> exercises) =>
-      WorkoutPlanEntity(
-        id: id,
-        date: date,
-        name: name,
-        focus: focus,
-        goal: goal,
-        insight: insight,
-        durationMinutes: durationMinutes,
-        exercises: exercises,
-        programId: programId,
-        programLabel: programLabel,
-        sessionId: sessionId,
-      );
+      copyWith(exercises: exercises);
+
+  WorkoutPlanEntity copyWith({
+    DateTime? date,
+    String? insight,
+    List<WorkoutEntryEntity>? exercises,
+    bool? isAdapted,
+  }) => WorkoutPlanEntity(
+    id: id,
+    date: date ?? this.date,
+    name: name,
+    focus: focus,
+    goal: goal,
+    insight: insight ?? this.insight,
+    durationMinutes: durationMinutes,
+    exercises: exercises ?? this.exercises,
+    programId: programId,
+    programLabel: programLabel,
+    sessionId: sessionId,
+    isAdapted: isAdapted ?? this.isAdapted,
+    isDeload: isDeload,
+  );
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -290,6 +441,8 @@ class WorkoutPlanEntity {
     if (programId != null) 'programId': programId,
     'programLabel': programLabel,
     if (sessionId != null) 'sessionId': sessionId,
+    'isAdapted': isAdapted,
+    'isDeload': isDeload,
   };
 
   static List<WorkoutEntryEntity> entriesOf(Object? value) {

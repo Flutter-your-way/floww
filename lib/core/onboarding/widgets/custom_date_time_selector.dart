@@ -23,7 +23,9 @@ class CustomDateTimeSelector extends StatelessWidget {
   });
 
   String _formatTime(DateTime time) {
-    final hour = time.hour == 0 ? 12 : (time.hour > 12 ? time.hour - 12 : time.hour);
+    final hour = time.hour == 0
+        ? 12
+        : (time.hour > 12 ? time.hour - 12 : time.hour);
     final minute = time.minute.toString().padLeft(2, '0');
     final period = time.hour >= 12 ? "PM" : "AM";
     return "$hour:$minute $period";
@@ -31,8 +33,18 @@ class CustomDateTimeSelector extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return "${months[date.month - 1]} ${date.day}, ${date.year}";
   }
@@ -41,7 +53,7 @@ class CustomDateTimeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeColors = context.colors;
     const backgroundColor = Color(0xFF1F1F1F);
-    
+
     String displayValue;
     if (currentValue != null) {
       if (isYearOnly) {
@@ -80,14 +92,10 @@ class CustomDateTimeSelector extends StatelessWidget {
                 color: themeColors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                leadingIcon,
-                color: themeColors.primary,
-                size: 24,
-              ),
+              child: Icon(leadingIcon, color: themeColors.primary, size: 24),
             ),
             const SizedBox(width: 16),
-            
+
             // Title
             Expanded(
               child: Text(
@@ -98,7 +106,7 @@ class CustomDateTimeSelector extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Value Box
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -119,7 +127,9 @@ class CustomDateTimeSelector extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Icon(
-                    isDate ? Icons.calendar_today_outlined : CupertinoIcons.clock,
+                    isDate
+                        ? Icons.calendar_today_outlined
+                        : CupertinoIcons.clock,
                     color: Colors.white.withValues(alpha: 0.5),
                     size: 16,
                   ),
@@ -150,8 +160,8 @@ class CustomDateTimeSelector extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isYearOnly 
-                          ? "Select Year" 
+                      isYearOnly
+                          ? "Select Year"
                           : (isDate ? "Select Date" : "Select Time"),
                       style: const TextStyle(
                         fontSize: 18,
@@ -159,10 +169,7 @@ class CustomDateTimeSelector extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(
-                        Icons.check,
-                        color: context.colors.primary,
-                      ),
+                      icon: Icon(Icons.check, color: context.colors.primary),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
@@ -181,7 +188,9 @@ class CustomDateTimeSelector extends StatelessWidget {
                           ),
                         ),
                         child: CupertinoDatePicker(
-                          mode: isDate ? CupertinoDatePickerMode.date : CupertinoDatePickerMode.time,
+                          mode: isDate
+                              ? CupertinoDatePickerMode.date
+                              : CupertinoDatePickerMode.time,
                           initialDateTime: currentValue ?? DateTime.now(),
                           onDateTimeChanged: onChanged,
                         ),
@@ -212,10 +221,7 @@ class CustomDateTimeSelector extends StatelessWidget {
         return Center(
           child: Text(
             (currentYear - index).toString(),
-            style: TextStyle(
-              color: context.colors.textPrimary,
-              fontSize: 24,
-            ),
+            style: TextStyle(color: context.colors.textPrimary, fontSize: 24),
           ),
         );
       }),

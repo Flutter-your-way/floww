@@ -15,6 +15,7 @@ class HabitCatalogData {
       target: 45,
       metric: HabitMetric.minutes,
       icon: HabitIconKind.dumbbell,
+      source: HabitSource.workout,
       description: 'At least 45 min workout',
       about:
           'Regular training promotes your strength and a good mental status. '
@@ -26,6 +27,7 @@ class HabitCatalogData {
       target: 10000,
       metric: HabitMetric.steps,
       icon: HabitIconKind.walk,
+      source: HabitSource.steps,
       description: '10,000 steps a day',
       about:
           'Walking outdoors keeps your circulation active and your head '
@@ -37,6 +39,7 @@ class HabitCatalogData {
       target: 3,
       metric: HabitMetric.liters,
       icon: HabitIconKind.water,
+      source: HabitSource.water,
       description: '3L of water daily',
       about:
           'Staying hydrated supports recovery, focus and appetite control. '
@@ -110,10 +113,11 @@ class HabitCatalogData {
     ),
     HabitSuggestion(
       id: 'sleep',
-      title: 'Sleep 8h',
+      title: 'Sleep',
       target: 8,
       metric: HabitMetric.hours,
       icon: HabitIconKind.sleep,
+      source: HabitSource.sleep,
       description: '8 hours of sleep',
       about:
           'Sleep is the single biggest lever on recovery, appetite and mood. '
@@ -122,13 +126,26 @@ class HabitCatalogData {
     HabitSuggestion(
       id: 'no_sugar',
       title: 'No Sugar',
-      target: 1,
+      target: 0,
       metric: HabitMetric.sessions,
       icon: HabitIconKind.noSugar,
-      description: 'A day without added sugar',
+      goalType: HabitGoalType.limit,
+      description: 'Zero sweets or sugary drinks',
       about:
           'Cutting added sugar steadies your energy across the day and makes '
           'hunger far easier to read.',
+    ),
+    HabitSuggestion(
+      id: 'screen_time',
+      title: 'Screen Time',
+      target: 2,
+      metric: HabitMetric.hours,
+      icon: HabitIconKind.screenFree,
+      goalType: HabitGoalType.limit,
+      description: 'Under 2 hours of leisure screens',
+      about:
+          'Capping leisure screen time frees up hours for movement, rest and '
+          'people. Stay under the limit and the day counts.',
     ),
   ];
 
@@ -141,7 +158,7 @@ class HabitCatalogData {
     HabitSuggestionGroup(
       id: 'focus',
       title: 'Sharpen Focus',
-      suggestionIds: ['reading', 'journaling'],
+      suggestionIds: ['reading', 'journaling', 'screen_time'],
     ),
     HabitSuggestionGroup(
       id: 'discipline',

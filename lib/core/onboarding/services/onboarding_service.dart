@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:floww/config/constants/app_collection.dart';
+import 'package:floww/config/constants/app_api.dart';
 import 'package:floww/config/entities/onboarding_details_entity.dart';
+import 'package:floww/config/services/app_api_client.dart';
 
 class OnboardingException implements Exception {
   OnboardingException(this.message);
@@ -14,14 +14,12 @@ class OnboardingException implements Exception {
 }
 
 class OnboardingService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  OnboardingService({AppApiClient? apiClient})
+    : _apiClient = apiClient ?? AppApiClient();
 
-  CollectionReference<Map<String, dynamic>> get _usersCollection =>
-      _firestore.collection(AppCollection.users);
+  final AppApiClient _apiClient;
 
-  CollectionReference<Map<String, dynamic>> get _onboardingDetailsCollection =>
-      _firestore.collection(AppCollection.onboardingDetails);
+  FirebaseAuth get _auth => FirebaseAuth.instance;
 
   Future<void> submitOnboardingAnswers(Map<String, dynamic> answers) async {
     try {
@@ -36,11 +34,10 @@ class OnboardingService {
         updatedAt: now,
       );
 
-      await _onboardingDetailsCollection.doc(uid).set(entity.toJson());
-      await _usersCollection.doc(uid).update({
-        'answersSubmitted': true,
-        'updatedAt': now.toIso8601String(),
-      });
+      await _apiClient.post(
+        AppApi.submitOnboarding,
+        body: {'details': entity.toJson()},
+      );
     } catch (e, stackTrace) {
       debugPrint('submitOnboardingAnswers failed: $e\n$stackTrace');
       throw OnboardingException(
@@ -51,17 +48,10 @@ class OnboardingService {
 
   Future<void> markWearablesStepDone(bool connected) async {
     try {
-      final uid = _auth.currentUser!.uid;
-      final now = DateTime.now();
-
-      await _onboardingDetailsCollection.doc(uid).update({
-        'targetsPermissions.wearablesConnected': connected,
-        'updatedAt': now.toIso8601String(),
-      });
-      await _usersCollection.doc(uid).update({
-        'onboardingCompleted': true,
-        'updatedAt': now.toIso8601String(),
-      });
+      await _apiClient.post(
+        AppApi.completeOnboarding,
+        body: {'wearablesConnected': connected},
+      );
     } catch (e, stackTrace) {
       debugPrint('markWearablesStepDone failed: $e\n$stackTrace');
       throw OnboardingException('Something went wrong. Please try again.');

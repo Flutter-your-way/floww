@@ -47,6 +47,8 @@ class EditPersonalInfoViewModel extends ChangeNotifier {
 
   String get avatarSheetTitle => 'Profile photo';
 
+  String get detailsTitle => 'Body Details';
+
   String get nameLabel => 'Your Name';
 
   String get nameHint => 'Your name';

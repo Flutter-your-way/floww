@@ -187,6 +187,126 @@ class WorkoutHistoryItem {
   final bool isHighlighted;
 }
 
+enum WorkoutDayMark { completed, partial, missed, rest, planned }
+
+class WorkoutDayMarkItem {
+  const WorkoutDayMarkItem({
+    required this.label,
+    required this.mark,
+    required this.isToday,
+  });
+
+  final String label;
+  final WorkoutDayMark mark;
+  final bool isToday;
+}
+
+class WorkoutConsistencyStat {
+  const WorkoutConsistencyStat({
+    required this.value,
+    required this.label,
+    required this.tone,
+  });
+
+  final String value;
+  final String label;
+  final WorkoutStatTone tone;
+}
+
+class WorkoutConsistencyItem {
+  const WorkoutConsistencyItem({
+    required this.periodLabel,
+    required this.headline,
+    required this.caption,
+    required this.progress,
+    required this.stats,
+    required this.weekdayLabels,
+    required this.days,
+    required this.legend,
+    this.insight,
+  });
+
+  final String periodLabel;
+  final String headline;
+  final String caption;
+  final double? progress;
+  final List<WorkoutConsistencyStat> stats;
+  final List<String> weekdayLabels;
+  final List<WorkoutDayMarkItem> days;
+  final List<WorkoutDayMark> legend;
+  final String? insight;
+}
+
+class MissedExerciseItem {
+  const MissedExerciseItem({required this.name, required this.targetLabel});
+
+  final String name;
+  final String targetLabel;
+}
+
+class MissedWorkoutItem {
+  const MissedWorkoutItem({
+    required this.date,
+    required this.name,
+    required this.dateLabel,
+    required this.detailLabel,
+    required this.metrics,
+    required this.adviceTitle,
+    required this.advice,
+    required this.adviceTone,
+    required this.musclesLabel,
+    required this.exercises,
+    required this.goal,
+    this.actionLabel,
+  });
+
+  final DateTime date;
+  final String name;
+  final String dateLabel;
+  final String detailLabel;
+  final List<WorkoutMetricItem> metrics;
+  final String adviceTitle;
+  final String advice;
+  final WorkoutStatTone adviceTone;
+  final String musclesLabel;
+  final List<MissedExerciseItem> exercises;
+  final String goal;
+  final String? actionLabel;
+}
+
+class WorkoutHistoryEntryItem {
+  const WorkoutHistoryEntryItem.session(WorkoutHistoryItem this.session)
+    : missed = null;
+
+  const WorkoutHistoryEntryItem.missed(MissedWorkoutItem this.missed)
+    : session = null;
+
+  final WorkoutHistoryItem? session;
+  final MissedWorkoutItem? missed;
+}
+
+class WorkoutHistoryWeekItem {
+  const WorkoutHistoryWeekItem({
+    required this.title,
+    required this.summaryLabel,
+    required this.entries,
+  });
+
+  final String title;
+  final String? summaryLabel;
+  final List<WorkoutHistoryEntryItem> entries;
+}
+
+class WorkoutHistoryOverviewItem {
+  const WorkoutHistoryOverviewItem({
+    required this.consistency,
+    required this.weeks,
+  });
+
+  final WorkoutConsistencyItem? consistency;
+  final List<WorkoutHistoryWeekItem> weeks;
+}
+
 class WorkoutOverviewItem {
   const WorkoutOverviewItem({
     required this.summary,
@@ -287,32 +407,81 @@ class ActiveProgramItem {
   final double progress;
 }
 
+class ProgramScheduleItem {
+  const ProgramScheduleItem({
+    required this.weekdayLabel,
+    required this.name,
+    required this.detail,
+  });
+
+  final String weekdayLabel;
+  final String name;
+  final String detail;
+}
+
 class ProgramDetailItem {
   const ProgramDetailItem({
     required this.id,
     required this.name,
     required this.description,
+    required this.icon,
     required this.stats,
+    required this.schedule,
     required this.warning,
-    required this.startLabel,
+    required this.isActive,
+    required this.isCustom,
   });
 
   final String id;
   final String name;
   final String description;
+  final IconData icon;
   final List<WorkoutStatItem> stats;
+  final List<ProgramScheduleItem> schedule;
   final String? warning;
-  final String startLabel;
+  final bool isActive;
+  final bool isCustom;
+}
+
+class ProgramWeekdayItem {
+  const ProgramWeekdayItem({required this.label, required this.isTraining});
+
+  final String label;
+  final bool isTraining;
 }
 
 class ProgramItem {
   const ProgramItem({
     required this.id,
     required this.name,
-    required this.detail,
+    required this.description,
+    required this.icon,
+    required this.metaLabel,
+    required this.scheduleLabel,
+    required this.weekdays,
+    required this.badgeLabel,
+    required this.isActive,
   });
 
   final String id;
   final String name;
-  final String detail;
+  final String description;
+  final IconData icon;
+  final String metaLabel;
+  final String scheduleLabel;
+  final List<ProgramWeekdayItem> weekdays;
+  final String? badgeLabel;
+  final bool isActive;
+}
+
+class ProgramFilterItem<T> {
+  const ProgramFilterItem({
+    required this.value,
+    required this.label,
+    required this.isSelected,
+  });
+
+  final T value;
+  final String label;
+  final bool isSelected;
 }

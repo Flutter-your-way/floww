@@ -1,6 +1,11 @@
 double _toDouble(Object? value) => (value as num).toDouble();
 
-enum FoodSource { scan, manual }
+Map<String, dynamic> _scaledJson(Map<String, dynamic> json, double factor) => {
+  for (final entry in json.entries)
+    entry.key: (entry.value as num).toDouble() * factor,
+};
+
+enum FoodSource { scan, manual, described }
 
 class MacroNutrients {
   const MacroNutrients({
@@ -72,6 +77,9 @@ class MacroNutrients {
     cholesterolMg: cholesterolMg,
     waterMl: waterMl ?? this.waterMl,
   );
+
+  MacroNutrients scaled(double factor) =>
+      MacroNutrients.fromJson(_scaledJson(toJson(), factor));
 
   Map<String, dynamic> toJson() => {
     'calories': calories,
@@ -156,6 +164,9 @@ class Vitamins {
     vitaminKMcg: _toDouble(json['vitaminKMcg']),
     cholineMg: _toDouble(json['cholineMg']),
   );
+
+  Vitamins scaled(double factor) =>
+      Vitamins.fromJson(_scaledJson(toJson(), factor));
 
   Map<String, dynamic> toJson() => {
     'vitaminAMcg': vitaminAMcg,
@@ -244,6 +255,9 @@ class Minerals {
     iodineMcg: iodineMcg,
   );
 
+  Minerals scaled(double factor) =>
+      Minerals.fromJson(_scaledJson(toJson(), factor));
+
   Map<String, dynamic> toJson() => {
     'calciumMg': calciumMg,
     'ironMg': ironMg,
@@ -283,6 +297,12 @@ class FoodNutrition {
         minerals: minerals ?? this.minerals,
       );
 
+  FoodNutrition scaled(double factor) => FoodNutrition(
+    macros: macros.scaled(factor),
+    vitamins: vitamins.scaled(factor),
+    minerals: minerals.scaled(factor),
+  );
+
   Map<String, dynamic> toJson() => {
     'macros': macros.toJson(),
     'vitamins': vitamins.toJson(),
@@ -317,6 +337,16 @@ class FoodIngredient {
     proteinG: _toDouble(json['proteinG']),
     carbsG: _toDouble(json['carbsG']),
     fatG: _toDouble(json['fatG']),
+  );
+
+  FoodIngredient scaled(double factor) => FoodIngredient(
+    name: name,
+    quantity: quantity,
+    weightG: weightG * factor,
+    calories: calories * factor,
+    proteinG: proteinG * factor,
+    carbsG: carbsG * factor,
+    fatG: fatG * factor,
   );
 
   Map<String, dynamic> toJson() => {
@@ -405,6 +435,24 @@ class FoodModel {
     promptVersion: promptVersion,
     createdAt: createdAt ?? this.createdAt,
   );
+
+  FoodModel scaled(double factor, {required String servingDescription}) =>
+      FoodModel(
+        id: id,
+        userId: userId,
+        name: name,
+        description: description,
+        servingDescription: servingDescription,
+        servingWeightG: servingWeightG * factor,
+        confidence: confidence,
+        healthScore: healthScore,
+        ingredients: [for (final item in ingredients) item.scaled(factor)],
+        nutrition: nutrition.scaled(factor),
+        source: source,
+        aiModel: aiModel,
+        promptVersion: promptVersion,
+        createdAt: createdAt,
+      );
 
   Map<String, dynamic> toJson() => {
     'id': id,

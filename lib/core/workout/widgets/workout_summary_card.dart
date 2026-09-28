@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
@@ -29,7 +30,7 @@ class WorkoutSummaryCard extends StatelessWidget {
         Positioned.fill(
           child: DecoratedBox(
             decoration: AppShapes.decoration(
-              gradient: gradients.darkGlow,
+              gradient: gradients.darkGlow.withOpacity(AppOpacity.frostedCard),
               borderRadius: radius,
             ),
           ),
@@ -37,7 +38,7 @@ class WorkoutSummaryCard extends StatelessWidget {
         Positioned.fill(
           child: DecoratedBox(
             decoration: AppShapes.decoration(
-              gradient: gradients.cardSheen,
+              gradient: gradients.cardSheen.withOpacity(AppOpacity.frostedCard),
               borderRadius: radius,
             ),
           ),

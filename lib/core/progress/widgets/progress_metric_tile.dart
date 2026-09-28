@@ -46,9 +46,7 @@ class ProgressMetricTile extends StatelessWidget {
           SizedBox(height: AppSpacing.xs),
           Text(
             value,
-            style: AppTypography.bodyXLargeBold.copyWith(
-              color: valueColor,
-            ),
+            style: AppTypography.bodyXLargeBold.copyWith(color: valueColor),
           ),
           SizedBox(height: AppSpacing.xs),
           Text(

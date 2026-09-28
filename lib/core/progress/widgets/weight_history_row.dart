@@ -7,6 +7,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/core/progress/models/progress_view_data.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class WeightHistoryRow extends StatelessWidget {
   const WeightHistoryRow({
@@ -87,12 +88,10 @@ class _RemoveButton extends StatelessWidget {
       return SizedBox.square(
         dimension: AppSizes.s32,
         child: Center(
-          child: SizedBox.square(
-            dimension: AppSizes.s16,
-            child: CircularProgressIndicator(
-              strokeWidth: _loaderStroke,
-              color: colors.destructiveBorder,
-            ),
+          child: AppSpinner(
+            size: AppSizes.s16,
+            strokeWidth: _loaderStroke,
+            color: colors.destructiveBorder,
           ),
         ),
       );

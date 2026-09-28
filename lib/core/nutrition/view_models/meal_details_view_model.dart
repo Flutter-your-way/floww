@@ -20,14 +20,11 @@ class MealDetailsViewModel extends ChangeNotifier {
     this._meal,
     this._goalService,
   ) : _day = NutritionDay(date: _date, goal: NutritionGoal.defaults) {
-    _goalSubscription = _goalService.watch().listen(
-      (goal) {
-        _goal = goal;
-        _day = _day.copyWithGoal(goal);
-        notifyListeners();
-      },
-      onError: (Object error) => debugPrint('meal goal failed: $error'),
-    );
+    _goalSubscription = _goalService.watch().listen((goal) {
+      _goal = goal;
+      _day = _day.copyWithGoal(goal);
+      notifyListeners();
+    }, onError: (Object error) => debugPrint('meal goal failed: $error'));
     _subscription = _logService
         .watchLogs(_date, AppDateUtils.addDays(_date, 1))
         .listen(
@@ -73,8 +70,7 @@ class MealDetailsViewModel extends ChangeNotifier {
 
   String? get errorMessage => _errorMessage;
 
-  bool get canEdit =>
-      !_date.isBefore(AppDateUtils.dateOnly(DateTime.now()));
+  bool get canEdit => !_date.isBefore(AppDateUtils.dateOnly(DateTime.now()));
 
   List<FoodLog> get _logs => _day.logsFor(_meal);
 

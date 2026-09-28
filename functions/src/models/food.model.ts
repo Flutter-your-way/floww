@@ -75,7 +75,7 @@ export const foodAnalysisSchema = z.object({
   nutrition: foodNutritionSchema,
 });
 
-export const foodSourceSchema = z.enum(["scan", "manual"]);
+export const foodSourceSchema = z.enum(["scan", "manual", "described"]);
 
 export const foodModelSchema = foodAnalysisSchema.omit({isFood: true}).extend({
   id: z.string(),
@@ -94,3 +94,20 @@ export type FoodIngredient = z.infer<typeof foodIngredientSchema>;
 export type FoodAnalysis = z.infer<typeof foodAnalysisSchema>;
 export type FoodSource = z.infer<typeof foodSourceSchema>;
 export type FoodModel = z.infer<typeof foodModelSchema>;
+
+export const catalogFoodSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  serving: z.string(),
+  weightG: z.number(),
+  calories: z.number(),
+  proteinG: z.number(),
+  carbsG: z.number(),
+  fatG: z.number(),
+  fiberG: z.number(),
+  sugarG: z.number(),
+  sodiumMg: z.number(),
+  waterMl: z.number(),
+});
+
+export type CatalogFood = z.infer<typeof catalogFoodSchema>;

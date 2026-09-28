@@ -6,6 +6,8 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/images/cached_avatar_image.dart';
+import 'package:floww/config/widgets/placeholders/app_pulse_placeholder.dart';
 
 class ProfileAvatarImage extends StatelessWidget {
   const ProfileAvatarImage({
@@ -30,6 +32,7 @@ class ProfileAvatarImage extends StatelessWidget {
     final colors = context.colors;
     final imageUrl = this.imageUrl;
     final imageBytes = this.imageBytes;
+    final cacheSize = (size * MediaQuery.devicePixelRatioOf(context)).round();
 
     return Container(
       height: size,
@@ -47,16 +50,17 @@ class ProfileAvatarImage extends StatelessWidget {
           fit: BoxFit.cover,
           width: size,
           height: size,
+          cacheWidth: cacheSize,
           errorBuilder: (context, error, stackTrace) =>
               _ProfileAvatarInitial(initial: initial, style: initialStyle),
         ),
-        (_, final String url) => Image.network(
-          url,
-          fit: BoxFit.cover,
-          width: size,
-          height: size,
-          errorBuilder: (context, error, stackTrace) =>
-              _ProfileAvatarInitial(initial: initial, style: initialStyle),
+        (_, final String url) => CachedAvatarImage(
+          url: url,
+          size: size,
+          placeholder: AppPulsePlaceholder(
+            child: _ProfileAvatarInitial(initial: initial, style: initialStyle),
+          ),
+          error: _ProfileAvatarInitial(initial: initial, style: initialStyle),
         ),
         _ => _ProfileAvatarInitial(initial: initial, style: initialStyle),
       },

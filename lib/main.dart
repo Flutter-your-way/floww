@@ -17,6 +17,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config/theme/app_theme.dart';
+import 'config/theme/card_style_controller.dart';
 import 'config/theme/theme_controller.dart';
 import 'navigation/app_router.dart';
 import 'navigation/services/navigation_service.dart';
@@ -32,19 +33,28 @@ Future<void> main() async {
     (e) => e.name == (prefs.getString('app_theme_mode') ?? 'flow'),
     orElse: () => AppThemeMode.flow,
   );
-  runApp(MainApp(initialMode: saved));
+  final isGlass = CardStyleController.load(prefs);
+  runApp(MainApp(initialMode: saved, initialGlass: isGlass));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key, required this.initialMode});
+  const MainApp({
+    super.key,
+    required this.initialMode,
+    this.initialGlass = CardStyleController.defaultIsGlass,
+  });
 
   final AppThemeMode initialMode;
+  final bool initialGlass;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeModeController(initialMode)),
+        ChangeNotifierProvider(
+          create: (_) => CardStyleController(initialGlass),
+        ),
         ChangeNotifierProxyProvider<ThemeModeController, FlowModeController>(
           create: (context) =>
               FlowModeController(context.read<ThemeModeController>()),

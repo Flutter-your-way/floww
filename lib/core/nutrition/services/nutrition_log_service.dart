@@ -46,11 +46,10 @@ class NutritionLogService {
       .doc(uid)
       .collection(AppCollection.foodLogs);
 
-  CollectionReference<Map<String, dynamic>> _waterLogs(String uid) =>
-      _firestore
-          .collection(AppCollection.users)
-          .doc(uid)
-          .collection(AppCollection.waterLogs);
+  CollectionReference<Map<String, dynamic>> _waterLogs(String uid) => _firestore
+      .collection(AppCollection.users)
+      .doc(uid)
+      .collection(AppCollection.waterLogs);
 
   Query<Map<String, dynamic>> _between(
     CollectionReference<Map<String, dynamic>> collection,
@@ -61,12 +60,14 @@ class NutritionLogService {
       .where(_loggedAtField, isLessThan: AppDateUtils.isoKey(to))
       .orderBy(_loggedAtField);
 
-  static List<FoodLog> _foodLogsOf(QuerySnapshot<Map<String, dynamic>> snapshot) =>
-      parseDocuments(snapshot.docs.map((doc) => doc.data()), FoodLog.fromJson);
+  static List<FoodLog> _foodLogsOf(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) => parseDocuments(snapshot.docs.map((doc) => doc.data()), FoodLog.fromJson);
 
   static List<WaterLog> _waterLogsOf(
     QuerySnapshot<Map<String, dynamic>> snapshot,
-  ) => parseDocuments(snapshot.docs.map((doc) => doc.data()), WaterLog.fromJson);
+  ) =>
+      parseDocuments(snapshot.docs.map((doc) => doc.data()), WaterLog.fromJson);
 
   String newFoodLogId() => _foodLogs(_requireUserId).doc().id;
 

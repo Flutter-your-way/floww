@@ -5,20 +5,27 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
 import 'package:floww/config/widgets/images/remote_image.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/widgets/active_metric_pill.dart';
 
 class ActiveExerciseHeroCard extends StatelessWidget {
-  const ActiveExerciseHeroCard({super.key, required this.exercise});
+  const ActiveExerciseHeroCard({
+    super.key,
+    required this.exercise,
+    required this.onOptions,
+  });
 
   static const double _aspectRatio = 3 / 4;
 
   final ActiveExerciseItem exercise;
+  final VoidCallback onOptions;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final supersetLabel = exercise.supersetLabel;
 
     return AspectRatio(
       aspectRatio: _aspectRatio,
@@ -41,6 +48,31 @@ class ActiveExerciseHeroCard extends StatelessWidget {
                 gradient: context.gradients.cameraScrim,
               ),
             ),
+            Positioned(
+              top: AppSpacing.xl,
+              right: AppSpacing.xl,
+              child: CircularHeaderButton(
+                icon: Icons.more_horiz_rounded,
+                iconColor: colors.textPrimary,
+                backgroundColor: colors.surfaceTranslucent,
+                borderColor: colors.borderMedium,
+                onPressed: onOptions,
+              ),
+            ),
+            if (supersetLabel != null)
+              Positioned(
+                top: AppSpacing.xl,
+                left: AppSpacing.xl,
+                right: AppSizes.s72,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ActiveMetricPill(
+                    icon: Icons.link_rounded,
+                    value: 'Superset',
+                    label: supersetLabel,
+                  ),
+                ),
+              ),
             Positioned(
               left: AppSpacing.xl,
               right: AppSpacing.xl,

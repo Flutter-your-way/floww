@@ -8,6 +8,7 @@ import {
   onboardingDetailsCollection,
   usersCollection,
 } from "../constants/collections";
+import {DELETION_FLAG} from "../helpers/user.clock.helper";
 
 const AUTH_USER_NOT_FOUND = "auth/user-not-found";
 
@@ -15,6 +16,10 @@ export const handleDeleteAccount = async (req: Request, res: Response) => {
   const uid = req.user.uid;
 
   try {
+    await usersCollection.doc(uid).set(
+      {[DELETION_FLAG]: new Date().toISOString()},
+      {merge: true},
+    );
     await firestore.recursiveDelete(usersCollection.doc(uid));
     await onboardingDetailsCollection.doc(uid).delete();
 

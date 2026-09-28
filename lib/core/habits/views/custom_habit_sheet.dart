@@ -8,6 +8,8 @@ import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_header.dart';
 import 'package:floww/core/habits/models/habit_draft.dart';
 import 'package:floww/core/habits/view_models/custom_habit_view_model.dart';
+import 'package:floww/core/habits/view_models/habit_rules_view_model.dart';
+import 'package:floww/core/habits/widgets/habit_rules_fields.dart';
 import 'package:floww/core/habits/widgets/habit_text_field.dart';
 import 'package:floww/core/habits/widgets/habit_unit_dropdown.dart';
 
@@ -24,8 +26,14 @@ class CustomHabitSheet extends StatelessWidget {
   }) {
     return showAppFloatingSheet<void>(
       context: context,
-      builder: (_) => ChangeNotifierProvider(
-        create: (_) => CustomHabitViewModel(),
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => HabitRulesViewModel()),
+          ChangeNotifierProvider(
+            create: (context) =>
+                CustomHabitViewModel(context.read<HabitRulesViewModel>()),
+          ),
+        ],
         child: CustomHabitSheet(onCreate: onCreate),
       ),
     );
@@ -44,8 +52,8 @@ class CustomHabitSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<CustomHabitViewModel>(
-      builder: (context, viewModel, child) {
+    return Consumer2<CustomHabitViewModel, HabitRulesViewModel>(
+      builder: (context, viewModel, rules, child) {
         return AppFloatingSheet(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.xl),
@@ -86,6 +94,8 @@ class CustomHabitSheet extends StatelessWidget {
                       onSelected: viewModel.selectMetric,
                     ),
                   ),
+                  SizedBox(height: AppSpacing.xl2),
+                  const HabitRulesFields(),
                   SizedBox(height: AppSpacing.xl2),
                   Align(
                     child: IntrinsicWidth(

@@ -4,6 +4,7 @@ class AppCollection {
   static const String users = 'users';
   static const String onboardingDetails = 'onboarding_details';
   static const String foodLogs = 'food_logs';
+  static const String customFoods = 'custom_foods';
   static const String waterLogs = 'water_logs';
   static const String invoices = 'invoices';
   static const String weightLogs = 'weight_logs';
@@ -20,6 +21,7 @@ class AppCollection {
   static const String progress = 'progress';
   static const String progressState = 'state';
   static const String waveMessages = 'wave_messages';
+  static const String waveDays = 'wave_days';
   static const String settings = 'settings';
   static const String settingsDoc = 'preferences';
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/animations/rolling_text.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/micronutrient_progress.dart';
 
@@ -48,23 +49,27 @@ class _MicronutrientRow extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(child: AppProgressBar(progress: item.progress)),
+          Expanded(
+            child: AppProgressBar(progress: item.progress, animated: true),
+          ),
           SizedBox(
             width: AppSizes.s96,
-            child: Text.rich(
-              TextSpan(
-                text: item.amount,
-                style: context.textTheme.labelMedium,
-                children: [
-                  TextSpan(
-                    text: ' / ${item.goal}',
-                    style: context.textTheme.labelSmall?.copyWith(
-                      color: context.colors.textMuted,
-                    ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                RollingText(
+                  text: item.amount,
+                  style: context.textTheme.labelMedium,
+                ),
+                Text(
+                  ' / ${item.goal}',
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color: context.colors.textMuted,
                   ),
-                ],
-              ),
-              textAlign: TextAlign.end,
+                ),
+              ],
             ),
           ),
         ],

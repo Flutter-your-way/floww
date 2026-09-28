@@ -1,16 +1,38 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
+import 'package:floww/core/nutrition/models/custom_food.dart';
 import 'package:floww/core/nutrition/models/food_log.dart';
 import 'package:floww/core/nutrition/models/food_model.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/micronutrient_progress.dart';
 import 'package:floww/core/nutrition/models/nutrient_input.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
+import 'package:floww/core/nutrition/models/portion_unit.dart';
+import 'package:floww/core/nutrition/services/custom_food_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
+import 'package:floww/core/nutrition/view_models/portion_selection.dart';
 
 class FoodScanResultViewModel extends ChangeNotifier {
-  FoodScanResultViewModel(this._food, this._goal, this._logService, this._date);
+  FoodScanResultViewModel(
+    FoodModel food,
+    this._goal,
+    this._logService,
+    this._date, {
+    MealType? meal,
+    CustomFoodService? customFoodService,
+  }) : _meal = meal,
+       _customFoodService = customFoodService ?? CustomFoodService(),
+       _baseFood = food,
+       _food = food,
+       portion = PortionSelection(
+         serving: food.servingDescription,
+         weightG: food.servingWeightG,
+       ) {
+    _rescale();
+  }
 
   static const _macroNutrients = [
     FoodNutrient.calories,
@@ -28,8 +50,12 @@ class FoodScanResultViewModel extends ChangeNotifier {
 
   final NutritionGoal _goal;
   final NutritionLogService _logService;
+  final CustomFoodService _customFoodService;
   final DateTime _date;
+  final MealType? _meal;
 
+  final PortionSelection portion;
+  FoodModel _baseFood;
   FoodModel _food;
   bool _isEditing = false;
   bool _isEdited = false;
@@ -49,9 +75,25 @@ class FoodScanResultViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   bool get canSave =>
-      !_isSaving && (!_isEditing || _draftName.trim().isNotEmpty);
+      !_isSaving &&
+      portion.isValid &&
+      (!_isEditing || _draftName.trim().isNotEmpty);
+
+  String get portionHint => 'WAVE estimated ${portion.baseLabel}';
+
+  String get servingLabel => portion.summaryLabel;
+
+  String get editSubtitle => 'Values for ${portion.summaryLabel}';
 
   MacroNutrients get _macros => _food.nutrition.macros;
+
+  bool get _isDescribed => _food.source == FoodSource.described;
+
+  String get title => _isDescribed ? 'WAVE Estimate' : 'AI Food Scan';
+
+  String get subtitle => _isDescribed
+      ? 'WAVE estimated your meal from its description'
+      : 'WAVE analyses your meal photo';
 
   String get mealName => _isEdited ? _food.name : '${_food.name} (estimated)';
 
@@ -81,6 +123,32 @@ class FoodScanResultViewModel extends ChangeNotifier {
   List<NutrientInput> get macroInputs => _macroNutrients.map(_inputOf).toList();
 
   List<NutrientInput> get microInputs => _microNutrients.map(_inputOf).toList();
+
+  void selectUnit(PortionUnit unit) =>
+      _updatePortion(() => portion.selectUnit(unit));
+
+  void selectPreset(double value) =>
+      _updatePortion(() => portion.setAmount(value));
+
+  void updateAmount(String text) =>
+      _updatePortion(() => portion.updateAmount(text));
+
+  void incrementPortion() => _updatePortion(portion.increment);
+
+  void decrementPortion() => _updatePortion(portion.decrement);
+
+  void _updatePortion(VoidCallback change) {
+    change();
+    _rescale();
+    notifyListeners();
+  }
+
+  void _rescale() {
+    _food = _baseFood.scaled(
+      portion.factor,
+      servingDescription: portion.servingLabel,
+    );
+  }
 
   void startEditing() {
     _draftName = _food.name;
@@ -122,10 +190,11 @@ class FoodScanResultViewModel extends ChangeNotifier {
       await _logService.addFoodLog(
         FoodLog(
           food: _food,
-          mealType: MealType.forTime(loggedAt),
+          mealType: _meal ?? MealType.forTime(loggedAt),
           loggedAt: loggedAt,
         ),
       );
+      unawaited(_saveToMyFoods());
       return true;
     } on NutritionLogException catch (e) {
       _errorMessage = e.message;
@@ -133,6 +202,16 @@ class FoodScanResultViewModel extends ChangeNotifier {
     } finally {
       _isSaving = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _saveToMyFoods() async {
+    try {
+      await _customFoodService.saveEstimate(
+        CustomFoodDraft.fromFood(_baseFood),
+      );
+    } catch (e) {
+      debugPrint('save estimate to my foods failed: $e');
     }
   }
 
@@ -150,7 +229,7 @@ class FoodScanResultViewModel extends ChangeNotifier {
       return double.tryParse(text ?? '') ?? 0;
     }
 
-    _food = _food.copyWith(
+    final edited = _food.copyWith(
       name: name,
       nutrition: _food.nutrition.copyWith(
         macros: _macros.copyWith(
@@ -167,6 +246,14 @@ class FoodScanResultViewModel extends ChangeNotifier {
         ),
       ),
     );
+    final factor = portion.factor;
+    _baseFood = factor > 0
+        ? edited.scaled(
+            1 / factor,
+            servingDescription: _baseFood.servingDescription,
+          )
+        : edited;
+    _rescale();
     _isEdited = true;
   }
 

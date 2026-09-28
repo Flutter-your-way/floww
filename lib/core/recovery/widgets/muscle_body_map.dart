@@ -46,10 +46,7 @@ class MuscleBodyMap extends StatelessWidget {
           constraints.maxWidth / viewBox.width,
           constraints.maxHeight / viewBox.height,
         );
-        final figureSize = Size(
-          viewBox.width * scale,
-          viewBox.height * scale,
-        );
+        final figureSize = Size(viewBox.width * scale, viewBox.height * scale);
 
         return Center(
           child: SizedBox.fromSize(

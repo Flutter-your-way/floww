@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
@@ -8,6 +7,7 @@ import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/widgets/workout_chip.dart';
+import 'package:floww/core/workout/widgets/workout_metric_row.dart';
 
 class WorkoutHistoryCard extends StatelessWidget {
   const WorkoutHistoryCard({super.key, required this.session, this.onTap});
@@ -80,18 +80,7 @@ class WorkoutHistoryCard extends StatelessWidget {
           SizedBox(height: AppSpacing.xl),
           Row(
             children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    for (var i = 0; i < session.metrics.length; i++) ...[
-                      if (i > 0) SizedBox(width: AppSpacing.xl2),
-                      Flexible(
-                        child: _HistoryMetric(metric: session.metrics[i]),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+              Expanded(child: WorkoutMetricRow(metrics: session.metrics)),
               if (statusLabel != null) ...[
                 SizedBox(width: AppSpacing.lg),
                 WorkoutChip(label: statusLabel),
@@ -104,34 +93,5 @@ class WorkoutHistoryCard extends StatelessWidget {
 
     if (onTap == null) return card;
     return PressScale(onTap: onTap, child: card);
-  }
-}
-
-class _HistoryMetric extends StatelessWidget {
-  const _HistoryMetric({required this.metric});
-
-  final WorkoutMetricItem metric;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(metric.icon, size: AppSizes.s16, color: colors.textSecondary),
-        SizedBox(width: AppSpacing.sm),
-        Flexible(
-          child: Text(
-            metric.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.bodySmallRegularTight.copyWith(
-              color: colors.textMuted,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

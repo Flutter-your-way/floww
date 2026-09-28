@@ -16,6 +16,8 @@ class RemoteImage extends StatelessWidget {
   final double fallbackIconSize;
   final BoxFit fit;
 
+  static const double _decodeHeadroom = 2;
+
   @override
   Widget build(BuildContext context) {
     final url = this.url;
@@ -24,14 +26,36 @@ class RemoteImage extends StatelessWidget {
       return _Fallback(icon: fallbackIcon, size: fallbackIconSize);
     }
 
-    return Image.network(
-      url,
-      fit: fit,
-      loadingBuilder: (context, child, progress) => progress == null
-          ? child
-          : _Fallback(icon: fallbackIcon, size: fallbackIconSize),
-      errorBuilder: (context, error, stackTrace) =>
-          _Fallback(icon: fallbackIcon, size: fallbackIconSize),
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) => Image(
+        image: _providerFor(url, constraints.biggest, devicePixelRatio),
+        fit: fit,
+        loadingBuilder: (context, child, progress) => progress == null
+            ? child
+            : _Fallback(icon: fallbackIcon, size: fallbackIconSize),
+        errorBuilder: (context, error, stackTrace) =>
+            _Fallback(icon: fallbackIcon, size: fallbackIconSize),
+      ),
+    );
+  }
+
+  static ImageProvider _providerFor(
+    String url,
+    Size size,
+    double devicePixelRatio,
+  ) {
+    final network = NetworkImage(url);
+    if (!size.isFinite || size.isEmpty) return network;
+
+    final extent = (size.longestSide * devicePixelRatio * _decodeHeadroom)
+        .round();
+    return ResizeImage(
+      network,
+      width: extent,
+      height: extent,
+      policy: ResizeImagePolicy.fit,
     );
   }
 }

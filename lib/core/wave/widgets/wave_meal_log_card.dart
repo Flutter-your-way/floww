@@ -283,17 +283,11 @@ class _MealTotalsRow extends StatelessWidget {
             color: colors.carbsAccent,
           ),
           SizedBox(width: AppSpacing.lg),
-          _MacroTotal(
-            value: totals.fat,
-            unit: 'fat',
-            color: colors.fatAccent,
-          ),
+          _MacroTotal(value: totals.fat, unit: 'fat', color: colors.fatAccent),
           const Spacer(),
           Text(
             totals.itemCountLabel,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: colors.textDim,
-            ),
+            style: context.textTheme.bodySmall?.copyWith(color: colors.textDim),
           ),
         ],
       ),

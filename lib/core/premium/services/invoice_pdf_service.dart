@@ -121,8 +121,7 @@ class InvoicePdfService {
     }
 
     final issuedOn = generatedOn ?? DateTime.now();
-    final ordered = [...invoices]
-      ..sort((a, b) => b.paidAt.compareTo(a.paidAt));
+    final ordered = [...invoices]..sort((a, b) => b.paidAt.compareTo(a.paidAt));
     final paid = ordered.where((invoice) => invoice.isPaid).toList();
     final total = paid.fold(0, (sum, invoice) => sum + invoice.amount);
     final currency = ordered.first.currency;
@@ -158,9 +157,7 @@ class InvoicePdfService {
             value: CurrencyFormatter.withCode(total, currency),
           ),
           pw.SizedBox(height: _blockGap),
-          _footer(
-            isSimulated: ordered.any((invoice) => invoice.isSimulated),
-          ),
+          _footer(isSimulated: ordered.any((invoice) => invoice.isSimulated)),
         ],
       ),
     );
@@ -174,9 +171,7 @@ class InvoicePdfService {
       return InvoiceDocument(bytes: bytes, fileName: fileName);
     } catch (e, stackTrace) {
       debugPrint('invoice pdf failed: $e\n$stackTrace');
-      throw InvoicePdfException(
-        'Could not create the PDF. Please try again.',
-      );
+      throw InvoicePdfException('Could not create the PDF. Please try again.');
     }
   }
 
@@ -270,10 +265,7 @@ class InvoicePdfService {
       if (customer.uid.isNotEmpty)
         pw.Text(
           'Account ${customer.uid}',
-          style: const pw.TextStyle(
-            fontSize: _captionSize,
-            color: _inkSubtle,
-          ),
+          style: const pw.TextStyle(fontSize: _captionSize, color: _inkSubtle),
         ),
     ],
   );
@@ -296,11 +288,7 @@ class InvoicePdfService {
             billingPeriod(invoice),
             amountLabel(invoice),
           ]),
-          _tableRow([
-            'Plan code',
-            invoice.planId,
-            '',
-          ], isQuiet: true),
+          _tableRow(['Plan code', invoice.planId, ''], isQuiet: true),
         ],
       ),
     ],
@@ -457,10 +445,7 @@ class InvoicePdfService {
         pw.Text(
           'Billing is in test mode. This record was created by a simulated '
           'checkout and no card was charged.',
-          style: const pw.TextStyle(
-            fontSize: _captionSize,
-            color: _inkSubtle,
-          ),
+          style: const pw.TextStyle(fontSize: _captionSize, color: _inkSubtle),
         ),
       pw.SizedBox(height: 2),
       pw.Text(

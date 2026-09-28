@@ -26,8 +26,8 @@ class SelectableChip extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.xl2,
-          vertical: AppSpacing.lg,
+          horizontal: AppSpacing.xl,
+          vertical: AppSpacing.md,
         ),
         decoration: AppShapes.decoration(
           color: isSelected ? colors.bgTinted : colors.backgroundSurface,
@@ -38,7 +38,7 @@ class SelectableChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: context.textTheme.bodyLarge?.copyWith(
+          style: context.textTheme.bodyMedium?.copyWith(
             color: isSelected ? colors.primaryAlt : colors.textSecondary,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
           ),

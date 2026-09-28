@@ -16,6 +16,7 @@ class CompactTextField extends StatefulWidget {
     this.keyboardType,
     this.inputFormatters,
     this.autofocus = false,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   final String hintText;
@@ -26,6 +27,7 @@ class CompactTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final bool autofocus;
+  final TextCapitalization textCapitalization;
 
   @override
   State<CompactTextField> createState() => _CompactTextFieldState();
@@ -59,6 +61,7 @@ class _CompactTextFieldState extends State<CompactTextField> {
       onSubmitted: widget.onSubmitted,
       keyboardType: widget.keyboardType,
       inputFormatters: widget.inputFormatters,
+      textCapitalization: widget.textCapitalization,
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       cursorColor: colors.primary,
       style: context.textTheme.bodyMedium,

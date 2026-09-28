@@ -106,8 +106,10 @@ class _AuthViewState extends State<AuthView> {
                         ),
                         isLoading: viewModel.isGoogleLoading,
                         isDisabled: viewModel.isBusy,
-                        onPressed: () =>
-                            _handleSignIn(viewModel, viewModel.signInWithGoogle),
+                        onPressed: () => _handleSignIn(
+                          viewModel,
+                          viewModel.signInWithGoogle,
+                        ),
                       ),
                       if (Platform.isIOS) ...[
                         SizedBox(height: AppSpacing.lg),

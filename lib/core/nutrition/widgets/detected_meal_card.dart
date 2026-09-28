@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/animations/animated_value_text.dart';
+import 'package:floww/config/widgets/animations/rolling_text.dart';
 import 'package:floww/core/nutrition/models/micronutrient_progress.dart';
 import 'package:floww/core/nutrition/widgets/micronutrient_progress_list.dart';
 import 'package:floww/config/widgets/headers/section_label.dart';
@@ -11,6 +13,7 @@ class DetectedMealCard extends StatelessWidget {
   const DetectedMealCard({
     super.key,
     required this.mealName,
+    required this.servingLabel,
     required this.calories,
     required this.dailyGoal,
     required this.protein,
@@ -20,6 +23,7 @@ class DetectedMealCard extends StatelessWidget {
   });
 
   final String mealName;
+  final String servingLabel;
   final String calories;
   final String dailyGoal;
   final String protein;
@@ -53,6 +57,8 @@ class DetectedMealCard extends StatelessWidget {
           ),
           SizedBox(height: AppSpacing.xs),
           Text(mealName, style: context.textTheme.titleMedium),
+          SizedBox(height: AppSpacing.xxs),
+          _ServingLabel(label: servingLabel),
           SizedBox(height: AppSpacing.xl),
           _CaloriesSummary(calories: calories, dailyGoal: dailyGoal),
           SizedBox(height: AppSpacing.xl3),
@@ -114,17 +120,14 @@ class _CaloriesSummary extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Total Calories',
-                style: context.textTheme.bodyMedium,
-              ),
+              Text('Total Calories', style: context.textTheme.bodyMedium),
               SizedBox(height: AppSpacing.xs),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(
-                    calories,
+                  RollingText(
+                    text: calories,
                     style: context.textTheme.headlineSmall?.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w700,
@@ -142,8 +145,8 @@ class _CaloriesSummary extends StatelessWidget {
           children: [
             Text('Daily Goal', style: captionStyle),
             SizedBox(height: AppSpacing.xs),
-            Text(
-              dailyGoal,
+            RollingText(
+              text: dailyGoal,
               style: context.textTheme.labelLarge?.copyWith(
                 color: colors.primary,
               ),
@@ -187,8 +190,8 @@ class _MacroTile extends StatelessWidget {
             ),
           ),
           SizedBox(height: AppSpacing.xs),
-          Text(
-            value,
+          RollingText(
+            text: value,
             style: context.textTheme.titleMedium?.copyWith(
               color: color,
               fontWeight: FontWeight.w700,
@@ -196,6 +199,36 @@ class _MacroTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ServingLabel extends StatelessWidget {
+  const _ServingLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Row(
+      children: [
+        Icon(
+          Icons.scale_outlined,
+          size: AppSizes.s14,
+          color: colors.textSecondary,
+        ),
+        SizedBox(width: AppSpacing.xs),
+        Flexible(
+          child: AnimatedValueText(
+            value: label,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

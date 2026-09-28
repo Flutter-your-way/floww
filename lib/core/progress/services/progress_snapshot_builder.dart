@@ -9,12 +9,10 @@ import 'package:floww/core/progress/services/progress_service.dart';
 class ProgressSnapshotResult {
   const ProgressSnapshotResult({
     required this.snapshot,
-    required this.pendingFlowWrites,
     required this.flowHistory,
   });
 
   final ProgressSnapshot snapshot;
-  final List<DailyFlowEntry> pendingFlowWrites;
   final List<DailyFlowEntry> flowHistory;
 }
 
@@ -101,13 +99,11 @@ class ProgressSnapshotBuilder {
     }
 
     final flow = <String, DailyFlowEntry>{...storedFlow};
-    final pendingFlowWrites = <DailyFlowEntry>[];
     final weekStart = AppDateUtils.startOfWeek(today);
     computedFlow.forEach((key, entry) {
       if (storedFlow.containsKey(key)) return;
       if (!entry.hasActivity) return;
       flow[key] = entry;
-      if (!entry.date.isBefore(weekStart)) pendingFlowWrites.add(entry);
     });
 
     final weekDays = [
@@ -155,7 +151,6 @@ class ProgressSnapshotBuilder {
         records: _records(flow, today),
         checklist: _checklist(records, flow),
       ),
-      pendingFlowWrites: pendingFlowWrites,
       flowHistory: flow.values.toList(),
     );
   }

@@ -22,7 +22,7 @@ class RecentFoodLogsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onBackground = context.colors.backgroundSecondary;
+    final onBackground = context.colors.textPrimary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

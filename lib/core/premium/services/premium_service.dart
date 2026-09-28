@@ -4,8 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_api.dart';
 import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/constants/app_subscription.dart';
+import 'package:floww/config/services/app_api_client.dart';
 import 'package:floww/core/premium/models/premium_view_data.dart';
 
 class PremiumException implements Exception {
@@ -18,7 +20,10 @@ class PremiumException implements Exception {
 }
 
 class PremiumService {
-  PremiumService();
+  PremiumService({AppApiClient? apiClient})
+    : _apiClient = apiClient ?? AppApiClient();
+
+  final AppApiClient _apiClient;
 
   static const int monthlyPrice = AppSubscription.monthlyPrice;
   static const int yearlyPrice = AppSubscription.yearlyPrice;
@@ -138,75 +143,47 @@ class PremiumService {
     );
   }
 
-  Future<SubscriptionEntity> subscribe(
-    SubscriptionTerm term, {
-    DateTime? from,
-  }) async {
+  Future<SubscriptionEntity> subscribe(SubscriptionTerm term) async {
     final uid = _requireUserId;
-    final plan = planFor(term);
-    final start = from ?? DateTime.now();
-
-    final subscription = SubscriptionEntity(
-      uid: uid,
-      status: SubscriptionStatus.active,
-      term: term,
-      price: plan.price,
-      periodLabel: plan.periodLabel,
-      planLabel: plan.planLabel,
-      startedAt: start,
-      renewsOn: term.periodEndFrom(start),
-      isSimulated: true,
-      updatedAt: start,
-      planId: plan.planId,
-      trialEndsOn: start.add(const Duration(days: AppSubscription.trialDays)),
+    final data = await _call(
+      'subscribe',
+      'Could not start your plan. Please try again.',
+      AppApi.subscribePremium,
+      {'term': term.name},
     );
-
-    await _write('subscribe', 'Could not start your plan. Please try again.', () {
-      final invoiceDoc = _invoices(uid).doc();
-      final invoice = SubscriptionInvoiceEntity(
-        id: invoiceDoc.id,
-        amount: plan.price,
-        planLabel: plan.planLabel,
-        paidAt: start,
-        isPaid: true,
-        isSimulated: true,
-        planId: plan.planId,
-      );
-
-      final batch = _firestore.batch();
-      batch.set(
-        _userDoc(uid),
-        subscription.toUserFields(),
-        SetOptions(merge: true),
-      );
-      batch.set(invoiceDoc, invoice.toJson());
-      return batch.commit();
+    final subscription = subscriptionOf(uid, {
+      SubscriptionFields.planName: planFor(term).planLabel,
+      SubscriptionFields.subscription: data[SubscriptionFields.subscription],
     });
-
+    if (subscription == null) {
+      throw PremiumException('Could not start your plan. Please try again.');
+    }
     return subscription;
   }
 
   Future<void> cancel() async {
-    final uid = _requireUserId;
-    final now = DateTime.now();
-
-    await _write('cancel', 'Could not cancel your plan. Please try again.', () {
-      return _userDoc(uid).update(SubscriptionEntity.cancelledFields(now));
-    });
+    _requireUserId;
+    await _call(
+      'cancel',
+      'Could not cancel your plan. Please try again.',
+      AppApi.cancelPremium,
+      const {},
+    );
   }
 
-  Future<void> _write(
+  Future<Map<String, dynamic>> _call(
     String operation,
     String failureMessage,
-    Future<void> Function() action,
+    String path,
+    Map<String, dynamic> body,
   ) async {
     try {
-      await action();
-    } on PremiumException {
-      rethrow;
-    } catch (e, stackTrace) {
-      debugPrint('$operation failed: $e\n$stackTrace');
-      throw PremiumException(failureMessage);
+      return await _apiClient.post(path, body: body);
+    } on AppApiException catch (e) {
+      debugPrint('$operation failed: ${e.message}');
+      throw PremiumException(
+        e.kind == AppApiErrorKind.network ? e.message : failureMessage,
+      );
     }
   }
 

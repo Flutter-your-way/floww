@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
@@ -39,7 +40,9 @@ class HabitScoreCard extends StatelessWidget {
       child: Container(
         decoration: AppShapes.decoration(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          gradient: context.gradients.darkGlow,
+          gradient: context.gradients.darkGlow.withOpacity(
+            AppOpacity.frostedCard,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -47,7 +50,9 @@ class HabitScoreCard extends StatelessWidget {
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: context.gradients.cardSheen,
+                  gradient: context.gradients.cardSheen.withOpacity(
+                    AppOpacity.frostedCard,
+                  ),
                 ),
               ),
             ),

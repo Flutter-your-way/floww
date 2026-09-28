@@ -25,9 +25,7 @@ class WavePlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return WaveCard(
       sections: [
-        WaveCardSection(
-          child: Text(title, style: AppTypography.bodyLargeBold),
-        ),
+        WaveCardSection(child: Text(title, style: AppTypography.bodyLargeBold)),
         for (final item in items)
           _PlanRow(item: item, onAction: () => onAction(item)),
       ],

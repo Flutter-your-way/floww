@@ -2,6 +2,9 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:floww/config/widgets/theme/sheet_theme.dart';
+import 'package:floww/config/constants/app_motion.dart';
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -10,8 +13,9 @@ import 'package:floww/config/theme/app_shapes.dart';
 Future<T?> showAppFloatingSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
+  bool centered = false,
 }) {
-  final theme = Theme.of(context);
+  final forcedMode = SheetTheme.forcedModeOf(context);
 
   return showGeneralDialog<T>(
     context: context,
@@ -19,8 +23,8 @@ Future<T?> showAppFloatingSheet<T>({
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: Colors.transparent,
     transitionDuration: AppFloatingSheet.transitionDuration,
-    pageBuilder: (context, animation, secondaryAnimation) => Theme(
-      data: theme,
+    pageBuilder: (context, animation, secondaryAnimation) => SheetTheme(
+      forcedMode: forcedMode,
       child: Builder(builder: builder),
     ),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -29,8 +33,8 @@ Future<T?> showAppFloatingSheet<T>({
         curve: Curves.easeOutCubic,
         reverseCurve: Curves.easeInCubic,
       );
-      return Theme(
-        data: theme,
+      return SheetTheme(
+        forcedMode: forcedMode,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -40,13 +44,25 @@ Future<T?> showAppFloatingSheet<T>({
                 child: const _SheetBackdrop(),
               ),
             ),
-            SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 1),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            ),
+            if (centered)
+              FadeTransition(
+                opacity: curved,
+                child: ScaleTransition(
+                  scale: Tween<double>(
+                    begin: AppMotion.popRevealScale,
+                    end: 1,
+                  ).animate(curved),
+                  child: child,
+                ),
+              )
+            else
+              SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(curved),
+                child: child,
+              ),
           ],
         ),
       );
@@ -55,12 +71,20 @@ Future<T?> showAppFloatingSheet<T>({
 }
 
 class AppFloatingSheet extends StatelessWidget {
-  const AppFloatingSheet({super.key, required this.child});
+  const AppFloatingSheet({
+    super.key,
+    required this.child,
+    this.frosted = false,
+    this.alignment = Alignment.bottomCenter,
+  });
 
   static const transitionDuration = Duration(milliseconds: 320);
   static const _resizeDuration = Duration(milliseconds: 250);
+  static const double _frostBlurSigma = AppSizes.s24;
 
   final Widget child;
+  final bool frosted;
+  final AlignmentGeometry alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -80,26 +104,47 @@ class AppFloatingSheet extends StatelessWidget {
         bottom: bottom,
       ),
       child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Material(
-          type: MaterialType.transparency,
-          child: Container(
-            clipBehavior: Clip.antiAlias,
-            decoration: AppShapes.decoration(
-              color: context.colors.backgroundSecondary,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-            ),
-            child: AnimatedSize(
-              duration: _resizeDuration,
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.bottomCenter,
-              child: AnimatedSwitcher(
-                duration: _resizeDuration,
-                layoutBuilder: (current, previous) => Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [...previous, ?current],
+        alignment: alignment,
+        child: MediaQuery.removePadding(
+          context: context,
+          removeTop: true,
+          removeBottom: true,
+          removeLeft: true,
+          removeRight: true,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: AppShapes.decoration(
+                color: frosted
+                    ? context.colors.backgroundSecondary.withValues(
+                        alpha: AppOpacity.frostedSheet,
+                      )
+                    : context.colors.backgroundSecondary,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                side: frosted
+                    ? BorderSide(color: context.colors.borderGlow, width: 1)
+                    : BorderSide.none,
+              ),
+              child: BackdropFilter(
+                enabled: frosted,
+                filter: ImageFilter.blur(
+                  sigmaX: _frostBlurSigma,
+                  sigmaY: _frostBlurSigma,
                 ),
-                child: child,
+                child: AnimatedSize(
+                  duration: _resizeDuration,
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.bottomCenter,
+                  child: AnimatedSwitcher(
+                    duration: _resizeDuration,
+                    layoutBuilder: (current, previous) => Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [...previous, ?current],
+                    ),
+                    child: child,
+                  ),
+                ),
               ),
             ),
           ),

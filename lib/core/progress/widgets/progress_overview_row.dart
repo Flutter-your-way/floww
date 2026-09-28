@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
@@ -42,7 +43,9 @@ class ProgressOverviewCard extends StatelessWidget {
       height: _height,
       clipBehavior: Clip.antiAlias,
       decoration: AppShapes.decoration(
-        gradient: context.gradients.darkGlow,
+        gradient: context.gradients.darkGlow.withOpacity(
+          AppOpacity.frostedCard,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Stack(
@@ -50,7 +53,9 @@ class ProgressOverviewCard extends StatelessWidget {
         children: [
           DecoratedBox(
             decoration: AppShapes.decoration(
-              gradient: context.gradients.cardSheen,
+              gradient: context.gradients.cardSheen.withOpacity(
+                AppOpacity.frostedCard,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
           ),

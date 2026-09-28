@@ -10,12 +10,17 @@ class WaveReplyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WaveCard(
-      sections: [
-        WaveCardSection(
-          child: Text(text, style: context.textTheme.bodyMedium),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: IntrinsicWidth(
+        child: WaveCard(
+          sections: [
+            WaveCardSection(
+              child: Text(text, style: context.textTheme.bodyMedium),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

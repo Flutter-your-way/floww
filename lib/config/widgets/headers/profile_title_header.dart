@@ -7,6 +7,8 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/effects/liquid_glass.dart';
 import 'package:floww/config/widgets/headers/screen_title.dart';
+import 'package:floww/config/widgets/images/cached_avatar_image.dart';
+import 'package:floww/config/widgets/placeholders/app_pulse_placeholder.dart';
 
 class ProfileTitleHeader extends StatelessWidget {
   const ProfileTitleHeader({
@@ -79,7 +81,7 @@ class _StreakBadge extends StatelessWidget {
               Text(
                 '$count',
                 style: context.textTheme.bodyMedium?.copyWith(
-                  color: context.colors.backgroundPrimary,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -122,14 +124,11 @@ class _UserAvatar extends StatelessWidget {
       child: ClipOval(
         child: avatarUrl == null
             ? fallback
-            : Image.network(
-                avatarUrl,
-                fit: BoxFit.cover,
-                width: AppSizes.s40,
-                height: AppSizes.s40,
-                loadingBuilder: (context, child, progress) =>
-                    progress == null ? child : fallback,
-                errorBuilder: (context, error, stackTrace) => fallback,
+            : CachedAvatarImage(
+                url: avatarUrl,
+                size: AppSizes.s40,
+                placeholder: AppPulsePlaceholder(child: fallback),
+                error: fallback,
               ),
       ),
     );

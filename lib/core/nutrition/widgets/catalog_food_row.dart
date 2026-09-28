@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class CatalogFoodRow extends StatelessWidget {
   const CatalogFoodRow({
@@ -11,7 +12,7 @@ class CatalogFoodRow extends StatelessWidget {
     required this.caloriesLabel,
     required this.isAdded,
     required this.isSaving,
-    this.onToggle,
+    this.onTap,
   });
 
   final String name;
@@ -19,14 +20,14 @@ class CatalogFoodRow extends StatelessWidget {
   final String caloriesLabel;
   final bool isAdded;
   final bool isSaving;
-  final VoidCallback? onToggle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
     return GestureDetector(
-      onTap: isSaving ? null : onToggle,
+      onTap: isSaving ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -39,7 +40,9 @@ class CatalogFoodRow extends StatelessWidget {
                   Text(
                     name,
                     style: context.textTheme.bodyMedium?.copyWith(
-                      color: isAdded ? colors.textSecondary : colors.textPrimary,
+                      color: isAdded
+                          ? colors.textSecondary
+                          : colors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -64,14 +67,9 @@ class CatalogFoodRow extends StatelessWidget {
             SizedBox.square(
               dimension: AppSizes.s24,
               child: isSaving
-                  ? CircularProgressIndicator(
-                      strokeWidth: AppSizes.s2,
-                      color: colors.primary,
-                    )
+                  ? AppSpinner(color: colors.primary)
                   : Icon(
-                      isAdded
-                          ? Icons.check_circle_rounded
-                          : Icons.add_rounded,
+                      isAdded ? Icons.check_circle_rounded : Icons.add_rounded,
                       color: colors.primary,
                       size: AppSizes.s24,
                     ),

@@ -7,11 +7,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 
 class DataSafetyCard extends StatelessWidget {
-  const DataSafetyCard({
-    super.key,
-    required this.title,
-    required this.message,
-  });
+  const DataSafetyCard({super.key, required this.title, required this.message});
 
   final String title;
   final String message;

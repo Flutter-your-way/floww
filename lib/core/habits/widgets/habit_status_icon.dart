@@ -36,6 +36,12 @@ class HabitStatusIcon extends StatelessWidget {
           size: size,
           color: colors.destructive,
         );
+      case HabitDayStatus.rest:
+        return Icon(
+          Icons.remove_circle_rounded,
+          size: size,
+          color: colors.textQuiet,
+        );
       case HabitDayStatus.upcoming:
         return Icon(
           Icons.circle_rounded,

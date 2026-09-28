@@ -33,12 +33,14 @@ class OnboardingProvider extends ChangeNotifier {
         // Just in case it's stored as a list
         final type = trainingType.first.toString().toLowerCase();
         if (type == 'gym') phases.add(OnboardingData.gymPhase);
-        if (type == 'calisthenics') phases.add(OnboardingData.calisthenicsPhase);
+        if (type == 'calisthenics')
+          phases.add(OnboardingData.calisthenicsPhase);
         if (type == 'yoga') phases.add(OnboardingData.yogaPhase);
       } else if (trainingType is String) {
         final type = trainingType.toLowerCase();
         if (type == 'gym') phases.add(OnboardingData.gymPhase);
-        if (type == 'calisthenics') phases.add(OnboardingData.calisthenicsPhase);
+        if (type == 'calisthenics')
+          phases.add(OnboardingData.calisthenicsPhase);
         if (type == 'yoga') phases.add(OnboardingData.yogaPhase);
       }
     }
@@ -49,7 +51,8 @@ class OnboardingProvider extends ChangeNotifier {
   }
 
   OnboardingPhase get currentPhase => activePhases[_currentPhaseIndex];
-  OnboardingQuestion get currentQuestion => currentPhase.questions[_currentQuestionIndex];
+  OnboardingQuestion get currentQuestion =>
+      currentPhase.questions[_currentQuestionIndex];
 
   /// Progress across all active phases (0.0 to 1.0)
   double get globalProgress {
@@ -78,20 +81,20 @@ class OnboardingProvider extends ChangeNotifier {
     _answers[questionId] = answer;
     notifyListeners();
   }
-  
+
   /// Helper for Multi-Select toggling
   void toggleMultiSelectAnswer(String questionId, String option) {
     List<String> currentList = [];
     if (_answers[questionId] != null) {
       currentList = List<String>.from(_answers[questionId]);
     }
-    
+
     if (currentList.contains(option)) {
       currentList.remove(option);
     } else {
       currentList.add(option);
     }
-    
+
     _answers[questionId] = currentList;
     notifyListeners();
   }
@@ -158,11 +161,13 @@ class OnboardingProvider extends ChangeNotifier {
       );
     }
   }
-  
+
   /// Validates if the current question has an answer so the Continue button can be enabled
   bool get canContinue {
     if (currentQuestion.inputType == InputType.multiQuestion) {
-      if (currentQuestion.subQuestions == null || currentQuestion.subQuestions!.isEmpty) return true;
+      if (currentQuestion.subQuestions == null ||
+          currentQuestion.subQuestions!.isEmpty)
+        return true;
       for (final subQ in currentQuestion.subQuestions!) {
         final ans = _answers[subQ.id];
         if (ans == null) return false;

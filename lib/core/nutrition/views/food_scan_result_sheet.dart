@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/core/nutrition/models/food_model.dart';
+import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/food_scan_result_view_model.dart';
 import 'package:floww/core/nutrition/widgets/food_meal_edit_panel.dart';
 import 'package:floww/core/nutrition/widgets/food_scan_review_panel.dart';
+import 'package:floww/core/nutrition/widgets/portion_picker.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 class FoodScanResultSheet extends StatelessWidget {
@@ -19,12 +21,18 @@ class FoodScanResultSheet extends StatelessWidget {
     required FoodModel food,
     required NutritionGoal goal,
     required DateTime date,
+    MealType? meal,
   }) {
     return showAppFloatingSheet<void>(
       context: context,
       builder: (_) => ChangeNotifierProvider(
-        create: (_) =>
-            FoodScanResultViewModel(food, goal, NutritionLogService(), date),
+        create: (_) => FoodScanResultViewModel(
+          food,
+          goal,
+          NutritionLogService(),
+          date,
+          meal: meal,
+        ),
         child: const FoodScanResultSheet(),
       ),
     );
@@ -60,6 +68,7 @@ class FoodScanResultSheet extends StatelessWidget {
                 ? FoodMealEditPanel(
                     key: const ValueKey(FoodMealEditPanel),
                     mealName: viewModel.draftName,
+                    subtitle: viewModel.editSubtitle,
                     macroInputs: viewModel.macroInputs,
                     microInputs: viewModel.microInputs,
                     onNameChanged: viewModel.updateName,
@@ -72,7 +81,19 @@ class FoodScanResultSheet extends StatelessWidget {
                   )
                 : FoodScanReviewPanel(
                     key: const ValueKey(FoodScanReviewPanel),
+                    title: viewModel.title,
+                    subtitle: viewModel.subtitle,
                     mealName: viewModel.mealName,
+                    servingLabel: viewModel.servingLabel,
+                    portionHint: viewModel.portionHint,
+                    portionPicker: PortionPicker(
+                      portion: viewModel.portion,
+                      onUnitSelected: viewModel.selectUnit,
+                      onAmountChanged: viewModel.updateAmount,
+                      onPresetSelected: viewModel.selectPreset,
+                      onIncrement: viewModel.incrementPortion,
+                      onDecrement: viewModel.decrementPortion,
+                    ),
                     calories: viewModel.caloriesLabel,
                     dailyGoal: viewModel.dailyGoalLabel,
                     protein: viewModel.proteinLabel,

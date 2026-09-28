@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -6,15 +7,19 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
-class NutritionEmptyStateCard extends StatelessWidget {
-  const NutritionEmptyStateCard({
+class AppEmptyStateCard extends StatelessWidget {
+  const AppEmptyStateCard({
     super.key,
     required this.title,
     required this.message,
+    this.icon = Icons.calendar_today_rounded,
+    this.iconAsset,
   });
 
   final String title;
   final String message;
+  final IconData icon;
+  final String? iconAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +36,8 @@ class NutritionEmptyStateCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.xl),
               side: BorderSide(color: context.colors.borderSubtle),
             ),
-            child: Icon(
-              Icons.calendar_today_rounded,
-              color: context.colors.textSecondary,
-              size: AppSizes.s28,
-            ),
+            alignment: Alignment.center,
+            child: _EmptyStateIcon(icon: icon, iconAsset: iconAsset),
           ),
           SizedBox(width: AppSpacing.lg),
           Expanded(
@@ -60,6 +62,28 @@ class NutritionEmptyStateCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EmptyStateIcon extends StatelessWidget {
+  const _EmptyStateIcon({required this.icon, this.iconAsset});
+
+  final IconData icon;
+  final String? iconAsset;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.colors.textSecondary;
+    final asset = iconAsset;
+    if (asset == null) {
+      return Icon(icon, color: color, size: AppSizes.s28);
+    }
+    return SvgPicture.asset(
+      asset,
+      width: AppSizes.s28,
+      height: AppSizes.s28,
+      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
     );
   }
 }

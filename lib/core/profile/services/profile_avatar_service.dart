@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/constants/app_storage.dart';
+import 'package:floww/config/services/avatar_cache_service.dart';
 import 'package:floww/core/profile/models/profile_edit_data.dart';
 import 'package:floww/core/profile/services/profile_service.dart';
 
@@ -78,6 +79,7 @@ class ProfileAvatarService {
         },
       );
       final url = await _avatarRef(uid).getDownloadURL();
+      unawaited(AvatarCacheService.instance.store(url, bytes));
 
       await _firestore.collection(AppCollection.users).doc(uid).set({
         'avatarUrl': url,
@@ -124,6 +126,8 @@ class ProfileAvatarService {
       debugPrint('removeAvatar failed: $e\n$stackTrace');
       throw ProfileException('Could not remove your photo. Please try again.');
     }
+
+    unawaited(AvatarCacheService.instance.retainOnly(null));
 
     try {
       await _avatarRef(uid).delete();

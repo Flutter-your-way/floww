@@ -16,17 +16,33 @@ class AppMotion {
   static const Curve expandCurve = Curves.easeOutCubic;
   static const Curve collapseCurve = Curves.easeInCubic;
   static const double pressScale = 0.98;
+  static const Curve pop = Curves.easeOutBack;
   static const Curve fadeIn = Interval(0, 0.6, curve: Curves.easeOut);
 
   static const double slideDistance = AppSizes.s32;
   static const double slideDistanceSmall = AppSizes.s12;
   static const double slideDistanceTab = AppSizes.s24;
 
+  static const Duration stepper = Duration(milliseconds: 260);
+  static const Curve stepperCurve = Cubic(0.2, 1, 0.3, 1);
+  static const Curve stepperExitCurve = Curves.easeIn;
+  static const double stepperSlide = 0.6;
+  static const double stepperScale = 0.88;
+  static const double stepperPressScale = 0.86;
+  static const Duration stepperRepeat = Duration(milliseconds: 90);
+
   static const Duration segment = Duration(milliseconds: 460);
   static const Duration segmentLabel = Duration(milliseconds: 320);
   static const Curve segmentCurve = Cubic(0.2, 1, 0.3, 1);
   static const double segmentStretch = 0.14;
   static const double segmentSquash = 0.5;
+
+  static const Duration composerGrow = Duration(milliseconds: 240);
+  static const Curve composerGrowCurve = Cubic(0.2, 1, 0.3, 1);
+
+  static const Duration waveTyping = Duration(milliseconds: 1100);
+  static const double waveTypingMinOpacity = 0.25;
+  static const double waveTypingStagger = 0.18;
 
   static const Duration tabSwitch = Duration(milliseconds: 420);
   static const Curve tabSwitchCurve = Curves.easeOutCubic;
@@ -43,6 +59,46 @@ class AppMotion {
     curve: Curves.easeIn,
   );
   static const double tabSwitchScale = 0.97;
+
+  static const Duration popReveal = Duration(milliseconds: 560);
+  static const Interval popRevealSize = Interval(
+    0,
+    0.55,
+    curve: Curves.easeInOutCubic,
+  );
+  static const Interval popRevealScaleIn = Interval(
+    0,
+    1,
+    curve: Curves.easeOutBack,
+  );
+  static const Interval popRevealScaleOut = Interval(
+    0.55,
+    1,
+    curve: Curves.easeOutCubic,
+  );
+  static const Interval popRevealFadeIn = Interval(
+    0,
+    0.5,
+    curve: Curves.easeOut,
+  );
+  static const Interval popRevealFadeOut = Interval(
+    0.55,
+    1,
+    curve: Curves.easeOut,
+  );
+  static const double popRevealScale = 0.9;
+
+  static const Duration tabReveal = Duration(milliseconds: 260);
+  static const Curve tabRevealCurve = Curves.easeOutCubic;
+
+  static const Duration spinnerReveal = Duration(milliseconds: 220);
+  static const Duration spinnerRevealDelay = Duration(milliseconds: 120);
+  static const Curve spinnerRevealCurve = Curves.easeOut;
+
+  static const Duration placeholderPulse = Duration(milliseconds: 900);
+  static const Curve placeholderPulseCurve = Curves.easeInOut;
+  static const Duration imageReveal = Duration(milliseconds: 240);
+  static const Curve imageRevealCurve = Curves.easeOut;
 
   static const Duration modeTransitionReduced = Duration(milliseconds: 900);
   static const Duration modeSettleDebounce = Duration(milliseconds: 250);

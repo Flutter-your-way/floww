@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
@@ -30,10 +31,10 @@ class ProfileChoiceCard extends StatelessWidget {
             title: group.title,
             titleStyle: AppTypography.heading4SemiBold,
           ),
-          SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.xl),
           Wrap(
-            spacing: AppSpacing.lg,
-            runSpacing: AppSpacing.lg,
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.md,
             children: [
               for (final choice in group.choices)
                 ProfileChoiceChip(
@@ -57,8 +58,6 @@ class ProfileChoiceChip extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Duration _duration = Duration(milliseconds: 180);
-
   final ProfileChoice choice;
   final bool isSelected;
   final VoidCallback onTap;
@@ -78,10 +77,10 @@ class ProfileChoiceChip extends StatelessWidget {
       onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: _duration,
+        duration: AppMotion.press,
         curve: Curves.easeOut,
-        height: AppSizes.s52,
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        height: AppSizes.s44,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: AppShapes.decoration(
           color: isSelected ? colors.bgTinted : colors.backgroundSurface,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -96,15 +95,15 @@ class ProfileChoiceChip extends StatelessWidget {
             if (icon != null) ...[
               Icon(
                 icon,
-                size: AppSizes.s20,
+                size: AppSizes.s18,
                 color: isSelected ? colors.primary : colors.textMuted,
               ),
-              SizedBox(width: AppSpacing.md),
+              const SizedBox(width: AppSpacing.sm),
             ],
             AnimatedDefaultTextStyle(
-              duration: _duration,
+              duration: AppMotion.press,
               curve: Curves.easeOut,
-              style: AppTypography.bodyLargeSemiBold.copyWith(
+              style: AppTypography.labelMediumSemiBold.copyWith(
                 color: foreground,
               ),
               child: Text(choice.label),

@@ -7,6 +7,8 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/images/cached_avatar_image.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class ProfilePhotoZoomArea extends StatelessWidget {
   const ProfilePhotoZoomArea({super.key, this.imageUrl, this.imageBytes});
@@ -36,14 +38,12 @@ class ProfilePhotoZoomArea extends StatelessWidget {
             errorBuilder: (context, error, stackTrace) =>
                 const _ProfilePhotoEmpty(message: _emptyMessage),
           ),
-          (_, final String url) => Image.network(
-            url,
+          (_, final String url) => CachedAvatarImage(
+            url: url,
             fit: BoxFit.contain,
             filterQuality: FilterQuality.high,
-            loadingBuilder: (context, child, progress) =>
-                progress == null ? child : const _ProfilePhotoLoader(),
-            errorBuilder: (context, error, stackTrace) =>
-                const _ProfilePhotoEmpty(message: _emptyMessage),
+            placeholder: const _ProfilePhotoLoader(),
+            error: const _ProfilePhotoEmpty(message: _emptyMessage),
           ),
           _ => const _ProfilePhotoEmpty(message: _emptyMessage),
         },
@@ -57,16 +57,7 @@ class _ProfilePhotoLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        height: AppSizes.s24,
-        width: AppSizes.s24,
-        child: CircularProgressIndicator(
-          strokeWidth: AppSizes.s2,
-          color: context.colors.primary,
-        ),
-      ),
-    );
+    return const Center(child: AppSpinner());
   }
 }
 

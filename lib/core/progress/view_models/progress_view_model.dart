@@ -64,9 +64,6 @@ class ProgressViewModel extends ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     notifyListeners();
-    if (result.pendingFlowWrites.isNotEmpty) {
-      unawaited(_service.saveDailyFlow(result.pendingFlowWrites));
-    }
   }
 
   String get eyebrow => 'Your';
@@ -353,8 +350,7 @@ class ProgressViewModel extends ChangeNotifier {
       for (var index = entries.length - 1; index >= 0; index -= 1)
         WeightHistoryItem(
           id: entries[index].id,
-          valueLabel:
-              '${entries[index].weight.toStringAsFixed(1)} $weightUnit',
+          valueLabel: '${entries[index].weight.toStringAsFixed(1)} $weightUnit',
           dateLabel: AppDateUtils.monthDay(entries[index].date),
           isLatest: index == entries.length - 1,
         ),

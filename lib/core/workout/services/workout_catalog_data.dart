@@ -2,12 +2,14 @@ import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/entities/workout_exercise_entity.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/core/workout/models/exercise.dart';
+import 'package:floww/core/workout/models/program_goal.dart';
+import 'package:floww/core/workout/models/set_type.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 
 class WorkoutCatalogData {
   WorkoutCatalogData._();
 
-  static const int version = 1;
+  static const int version = 3;
 
   static const List<ExerciseCatalogEntry> exercises = [
     ExerciseCatalogEntry(
@@ -562,6 +564,7 @@ class WorkoutCatalogData {
       defaultReps: 45,
       defaultRestSeconds: 45,
       defaultRepsInReserve: 2,
+      trackingMode: TrackingMode.duration,
       mistakes: [
         ExerciseCueEntry(text: 'Hips rising too high'),
         ExerciseCueEntry(text: 'Lower back sagging'),
@@ -570,7 +573,7 @@ class WorkoutCatalogData {
       guidelines: [
         ExerciseCueEntry(text: 'Elbows under the shoulders'),
         ExerciseCueEntry(text: 'Squeeze glutes and brace the abs'),
-        ExerciseCueEntry(text: 'Count each second as one rep'),
+        ExerciseCueEntry(text: 'Log the seconds you held the effort'),
       ],
       equipmentItems: [ExerciseCueEntry(label: 'Space', text: 'Floor mat')],
     ),
@@ -631,6 +634,7 @@ class WorkoutCatalogData {
       defaultReps: 30,
       defaultRestSeconds: 30,
       defaultRepsInReserve: 5,
+      trackingMode: TrackingMode.duration,
       mistakes: [
         ExerciseCueEntry(text: 'Arching the lower back'),
         ExerciseCueEntry(text: 'Bouncing into the stretch'),
@@ -639,7 +643,7 @@ class WorkoutCatalogData {
       guidelines: [
         ExerciseCueEntry(text: 'Half-kneeling, tuck the pelvis under'),
         ExerciseCueEntry(text: 'Push the hips gently forward'),
-        ExerciseCueEntry(text: 'Hold and breathe, one second per rep'),
+        ExerciseCueEntry(text: 'Hold and breathe for the full time'),
       ],
       equipmentItems: [ExerciseCueEntry(label: 'Space', text: 'Floor mat')],
     ),
@@ -654,6 +658,7 @@ class WorkoutCatalogData {
       defaultReps: 30,
       defaultRestSeconds: 30,
       defaultRepsInReserve: 5,
+      trackingMode: TrackingMode.duration,
       mistakes: [
         ExerciseCueEntry(text: 'Rounding the spine to reach further'),
         ExerciseCueEntry(text: 'Locking the knee hard'),
@@ -662,7 +667,7 @@ class WorkoutCatalogData {
       guidelines: [
         ExerciseCueEntry(text: 'Hinge from the hips with a flat back'),
         ExerciseCueEntry(text: 'Stop at a mild stretch'),
-        ExerciseCueEntry(text: 'Hold and breathe, one second per rep'),
+        ExerciseCueEntry(text: 'Hold and breathe for the full time'),
       ],
       equipmentItems: [ExerciseCueEntry(label: 'Space', text: 'Floor mat')],
     ),
@@ -677,6 +682,7 @@ class WorkoutCatalogData {
       defaultReps: 45,
       defaultRestSeconds: 30,
       defaultRepsInReserve: 5,
+      trackingMode: TrackingMode.duration,
       mistakes: [
         ExerciseCueEntry(text: 'Rolling too fast to feel anything'),
         ExerciseCueEntry(text: 'Parking on a joint'),
@@ -685,11 +691,9 @@ class WorkoutCatalogData {
       guidelines: [
         ExerciseCueEntry(text: 'Roll slowly from hip to knee'),
         ExerciseCueEntry(text: 'Pause on tender spots and breathe'),
-        ExerciseCueEntry(text: 'Count each second as one rep'),
+        ExerciseCueEntry(text: 'Log the seconds you held the effort'),
       ],
-      equipmentItems: [
-        ExerciseCueEntry(label: 'Roller', text: 'Foam roller'),
-      ],
+      equipmentItems: [ExerciseCueEntry(label: 'Roller', text: 'Foam roller')],
     ),
     ExerciseCatalogEntry(
       id: 'rowing-machine',
@@ -702,6 +706,7 @@ class WorkoutCatalogData {
       defaultReps: 120,
       defaultRestSeconds: 90,
       defaultRepsInReserve: 3,
+      trackingMode: TrackingMode.duration,
       mistakes: [
         ExerciseCueEntry(text: 'Pulling with the arms first'),
         ExerciseCueEntry(text: 'Rounding the back at the catch'),
@@ -710,7 +715,7 @@ class WorkoutCatalogData {
       guidelines: [
         ExerciseCueEntry(text: 'Drive with the legs, then hinge, then pull'),
         ExerciseCueEntry(text: 'Return in the reverse order'),
-        ExerciseCueEntry(text: 'Count each second as one rep'),
+        ExerciseCueEntry(text: 'Log the seconds you held the effort'),
       ],
       equipmentItems: [ExerciseCueEntry(label: 'Machine', text: 'Rower')],
     ),
@@ -725,6 +730,7 @@ class WorkoutCatalogData {
       defaultReps: 60,
       defaultRestSeconds: 90,
       defaultRepsInReserve: 2,
+      trackingMode: TrackingMode.duration,
       mistakes: [
         ExerciseCueEntry(text: 'Holding the handrails while running'),
         ExerciseCueEntry(text: 'Starting the interval too fast'),
@@ -733,7 +739,7 @@ class WorkoutCatalogData {
       guidelines: [
         ExerciseCueEntry(text: 'Warm up for three minutes first'),
         ExerciseCueEntry(text: 'Hold a hard but repeatable pace'),
-        ExerciseCueEntry(text: 'Count each second as one rep'),
+        ExerciseCueEntry(text: 'Log the seconds you held the effort'),
       ],
       equipmentItems: [ExerciseCueEntry(label: 'Machine', text: 'Treadmill')],
     ),
@@ -759,19 +765,19 @@ class WorkoutCatalogData {
         ExerciseCueEntry(text: 'Snap the hips to float it up'),
         ExerciseCueEntry(text: 'Finish with a hard glute squeeze'),
       ],
-      equipmentItems: [
-        ExerciseCueEntry(label: 'Kettlebell', text: 'One bell'),
-      ],
+      equipmentItems: [ExerciseCueEntry(label: 'Kettlebell', text: 'One bell')],
     ),
   ];
 
   static const List<WorkoutProgramEntity> programs = [
     WorkoutProgramEntity(
       id: 'strength-builder',
+      goal: ProgramGoal.strength,
       name: 'Strength Builder',
       description: 'Progressive barbell strength across four sessions a week',
       level: 'Intermediate',
       weeks: 12,
+      deloadEvery: 4,
       days: [
         ProgramDayEntry(
           weekday: DateTime.monday,
@@ -925,10 +931,12 @@ class WorkoutCatalogData {
     ),
     WorkoutProgramEntity(
       id: 'fat-loss-shred',
+      goal: ProgramGoal.fatLoss,
       name: 'Fat Loss Shred',
       description: 'High-intensity metabolic conditioning',
       level: 'Intermediate',
       weeks: 8,
+      deloadEvery: 4,
       days: [
         ProgramDayEntry(
           weekday: DateTime.monday,
@@ -1055,10 +1063,12 @@ class WorkoutCatalogData {
     ),
     WorkoutProgramEntity(
       id: 'muscle-hypertrophy',
+      goal: ProgramGoal.muscle,
       name: 'Muscle Hypertrophy',
       description: 'Volume-focused strength and size work',
       level: 'Advanced',
       weeks: 16,
+      deloadEvery: 4,
       days: [
         ProgramDayEntry(
           weekday: DateTime.monday,
@@ -1225,6 +1235,7 @@ class WorkoutCatalogData {
     ),
     WorkoutProgramEntity(
       id: 'cardio-base',
+      goal: ProgramGoal.cardio,
       name: 'Cardio Base',
       description: 'Low-intensity aerobic base building',
       level: 'All Levels',
@@ -1278,6 +1289,664 @@ class WorkoutCatalogData {
             ProgramExerciseEntry(
               exerciseId: 'plank',
               section: WorkoutSectionKind.coolDown,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hamstring-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+      ],
+    ),
+    WorkoutProgramEntity(
+      id: 'beginner-full-body',
+      goal: ProgramGoal.strength,
+      name: 'Beginner Full Body',
+      description: 'Three full-body sessions to learn the big lifts',
+      level: 'Beginner',
+      weeks: 8,
+      days: [
+        ProgramDayEntry(
+          weekday: DateTime.monday,
+          name: 'Full Body A',
+          focus: 'Strength',
+          goal: 'Own the squat pattern.',
+          durationMinutes: 45,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'barbell-back-squat',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'barbell-bench-press',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'barbell-row',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'plank',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.wednesday,
+          name: 'Full Body B',
+          focus: 'Strength',
+          goal: 'Smooth, controlled reps.',
+          durationMinutes: 45,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'foam-roll-quads',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'romanian-deadlift',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'overhead-press',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'lat-pulldown',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hamstring-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.friday,
+          name: 'Full Body C',
+          focus: 'Strength',
+          goal: 'Finish the week strong.',
+          durationMinutes: 45,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'leg-press',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'incline-db-press',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'seated-cable-row',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hip-flexor-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+      ],
+    ),
+    WorkoutProgramEntity(
+      id: 'upper-lower-split',
+      goal: ProgramGoal.muscle,
+      name: 'Upper / Lower Split',
+      description: 'Four balanced sessions alternating upper and lower body',
+      level: 'Intermediate',
+      weeks: 10,
+      deloadEvery: 4,
+      days: [
+        ProgramDayEntry(
+          weekday: DateTime.monday,
+          name: 'Upper Strength',
+          focus: 'Strength',
+          goal: 'Heavy presses and rows.',
+          durationMinutes: 55,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'push-up',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'barbell-bench-press',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+              reps: 6,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'barbell-row',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+              reps: 6,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'overhead-press',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+              reps: 8,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'pull-up',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'face-pull',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.tuesday,
+          name: 'Lower Strength',
+          focus: 'Strength',
+          goal: 'Brace hard on every rep.',
+          durationMinutes: 55,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'barbell-back-squat',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+              reps: 6,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'romanian-deadlift',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+              reps: 8,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'standing-calf-raise',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hamstring-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.thursday,
+          name: 'Upper Volume',
+          focus: 'Hypertrophy',
+          goal: 'Chase the pump.',
+          durationMinutes: 50,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'push-up',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'incline-db-press',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+              reps: 10,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'lat-pulldown',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+              reps: 12,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'lateral-raise',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+              reps: 15,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'barbell-curl',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'triceps-pushdown',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.friday,
+          name: 'Lower Volume',
+          focus: 'Hypertrophy',
+          goal: 'Control the lowering phase.',
+          durationMinutes: 50,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'foam-roll-quads',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'leg-press',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+              reps: 12,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'walking-lunge',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'leg-extension',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+              reps: 15,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hip-flexor-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+      ],
+    ),
+    WorkoutProgramEntity(
+      id: 'home-bodyweight',
+      goal: ProgramGoal.home,
+      name: 'Home Bodyweight',
+      description: 'No gym needed, just floor space and consistency',
+      level: 'Beginner',
+      weeks: 6,
+      days: [
+        ProgramDayEntry(
+          weekday: DateTime.monday,
+          name: 'Push & Core',
+          focus: 'Bodyweight',
+          goal: 'Quality reps over speed.',
+          durationMinutes: 30,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'push-up',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'plank',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hip-flexor-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.wednesday,
+          name: 'Legs at Home',
+          focus: 'Bodyweight',
+          goal: 'Slow down each rep.',
+          durationMinutes: 30,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'walking-lunge',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+              reps: 20,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hamstring-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.saturday,
+          name: 'Full Body Burn',
+          focus: 'Bodyweight',
+          goal: 'Keep the rest short.',
+          durationMinutes: 30,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'push-up',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'walking-lunge',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'push-up',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'plank',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'foam-roll-quads',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+      ],
+    ),
+    WorkoutProgramEntity(
+      id: 'glute-leg-focus',
+      goal: ProgramGoal.muscle,
+      name: 'Glute & Leg Focus',
+      description: 'Lower-body emphasis with a light upper day',
+      level: 'Intermediate',
+      weeks: 8,
+      deloadEvery: 4,
+      days: [
+        ProgramDayEntry(
+          weekday: DateTime.monday,
+          name: 'Glutes & Hamstrings',
+          focus: 'Posterior',
+          goal: 'Feel the hips drive.',
+          durationMinutes: 50,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'romanian-deadlift',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'kettlebell-swing',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'walking-lunge',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hamstring-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.wednesday,
+          name: 'Upper Maintenance',
+          focus: 'Upper',
+          goal: 'Keep it crisp.',
+          durationMinutes: 40,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'push-up',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'lat-pulldown',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'incline-db-press',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'face-pull',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'plank',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.friday,
+          name: 'Quads & Calves',
+          focus: 'Anterior',
+          goal: 'Full depth, full control.',
+          durationMinutes: 50,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'foam-roll-quads',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'barbell-back-squat',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'leg-press',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'leg-extension',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'standing-calf-raise',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hip-flexor-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+      ],
+    ),
+    WorkoutProgramEntity(
+      id: 'conditioning-express',
+      goal: ProgramGoal.fatLoss,
+      name: 'Conditioning Express',
+      description: 'Short, sweaty sessions for busy weeks',
+      level: 'Beginner',
+      weeks: 6,
+      days: [
+        ProgramDayEntry(
+          weekday: DateTime.tuesday,
+          name: 'Swing & Row',
+          focus: 'Conditioning',
+          goal: 'Stay moving the whole time.',
+          durationMinutes: 25,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'kettlebell-swing',
+              section: WorkoutSectionKind.main,
+              sets: 4,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'rowing-machine',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'plank',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.thursday,
+          name: 'Interval Blast',
+          focus: 'Conditioning',
+          goal: 'Go hard, recover, repeat.',
+          durationMinutes: 25,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'walking-lunge',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'treadmill-intervals',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'push-up',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hamstring-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.saturday,
+          name: 'Full Body Finisher',
+          focus: 'Conditioning',
+          goal: 'Empty the tank safely.',
+          durationMinutes: 25,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'kettlebell-swing',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'push-up',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'walking-lunge',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'foam-roll-quads',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+      ],
+    ),
+    WorkoutProgramEntity(
+      id: 'core-mobility',
+      goal: ProgramGoal.mobility,
+      name: 'Core & Mobility',
+      description: 'Move better and build a stronger midsection',
+      level: 'All Levels',
+      weeks: 4,
+      days: [
+        ProgramDayEntry(
+          weekday: DateTime.monday,
+          name: 'Core Control',
+          focus: 'Core',
+          goal: 'Breathe behind the brace.',
+          durationMinutes: 25,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'foam-roll-quads',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'plank',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hanging-leg-raise',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hip-flexor-stretch',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.wednesday,
+          name: 'Hips & Hamstrings',
+          focus: 'Mobility',
+          goal: 'Ease into each stretch.',
+          durationMinutes: 20,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hip-flexor-stretch',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hamstring-stretch',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'foam-roll-quads',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.friday,
+          name: 'Core & Flow',
+          focus: 'Core',
+          goal: 'Slow and deliberate.',
+          durationMinutes: 25,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'bodyweight-squat',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'plank',
+              section: WorkoutSectionKind.main,
+              sets: 3,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'hanging-leg-raise',
+              section: WorkoutSectionKind.main,
+              sets: 3,
             ),
             ProgramExerciseEntry(
               exerciseId: 'hamstring-stretch',

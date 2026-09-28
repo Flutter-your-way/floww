@@ -74,7 +74,7 @@ class _WorkoutTab extends StatelessWidget {
           label,
           maxLines: 1,
           style: context.textTheme.titleMedium?.copyWith(
-            color: isSelected ? colors.primary : colors.backgroundPrimary,
+            color: isSelected ? colors.primary : colors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),

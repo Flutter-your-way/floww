@@ -8,6 +8,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/core/workout/models/workout_completion.dart';
 import 'package:floww/core/workout/models/workout_completion_view_data.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class ShareTargetRow extends StatelessWidget {
   const ShareTargetRow({
@@ -128,10 +129,6 @@ class _ShareTargetSpinner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: _size,
-      height: _size,
-      child: CircularProgressIndicator(strokeWidth: _strokeWidth, color: color),
-    );
+    return AppSpinner(size: _size, strokeWidth: _strokeWidth, color: color);
   }
 }

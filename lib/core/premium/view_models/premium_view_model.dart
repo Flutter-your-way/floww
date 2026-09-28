@@ -142,9 +142,8 @@ class PremiumViewModel extends ChangeNotifier {
 
   bool get hasPayments => paymentsSummary != null;
 
-  String get totalPaidLabel => CurrencyFormatter.rupees(
-    paymentsSummary?.totalPaid ?? 0,
-  );
+  String get totalPaidLabel =>
+      CurrencyFormatter.rupees(paymentsSummary?.totalPaid ?? 0);
 
   String get totalPaidCaption => 'Total paid to date';
 
@@ -189,13 +188,12 @@ class PremiumViewModel extends ChangeNotifier {
 
   String? get savedMessage => _savedMessage;
 
-  String savedLocationLabel(SavedFileLocation location) =>
-      switch (location) {
-        SavedFileLocation.downloads => 'Downloads › Floww',
-        SavedFileLocation.appFolder when Platform.isAndroid =>
-          'the Floww app folder',
-        SavedFileLocation.appFolder => 'Files › On My iPhone › Floww',
-      };
+  String savedLocationLabel(SavedFileLocation location) => switch (location) {
+    SavedFileLocation.downloads => 'Downloads › Floww',
+    SavedFileLocation.appFolder when Platform.isAndroid =>
+      'the Floww app folder',
+    SavedFileLocation.appFolder => 'Files › On My iPhone › Floww',
+  };
 
   Future<bool> downloadInvoice(String invoiceId) async {
     if (isBusyWithPdf) return false;

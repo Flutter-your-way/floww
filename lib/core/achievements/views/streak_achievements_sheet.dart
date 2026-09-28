@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/core/achievements/models/streak_summary.dart';
@@ -43,9 +41,6 @@ class StreakAchievementsSheet extends StatelessWidget {
         ),
         child: AppSheetPanel(
           title: 'Streak & Achievements',
-          titleStyle: context.textTheme.displaySmall,
-          closeButtonSize: AppSizes.s36,
-          closeIconSize: AppSizes.s18,
           onClose: () => NavigationService.instance.pop(),
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

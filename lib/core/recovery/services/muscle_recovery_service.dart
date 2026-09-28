@@ -104,5 +104,6 @@ class MuscleRecoveryService {
       _groupsByName[name.trim().toLowerCase()];
 
   static int _percentOf(double fatigue) =>
-      fullRecoveryPercent - (fatigue.clamp(0.0, 1.0) * fullRecoveryPercent).round();
+      fullRecoveryPercent -
+      (fatigue.clamp(0.0, 1.0) * fullRecoveryPercent).round();
 }

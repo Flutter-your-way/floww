@@ -1,4 +1,4 @@
-enum HabitDayStatus { completed, partial, missed, upcoming }
+enum HabitDayStatus { completed, partial, missed, rest, upcoming }
 
 class HabitDay {
   const HabitDay({
@@ -23,10 +23,10 @@ class HabitStats {
   const HabitStats({
     required this.currentStreakDays,
     required this.longestStreakDays,
-    required this.weeklyAverageMinutes,
+    required this.weeklyCompletionPercent,
   });
 
   final int currentStreakDays;
   final int longestStreakDays;
-  final int weeklyAverageMinutes;
+  final int weeklyCompletionPercent;
 }

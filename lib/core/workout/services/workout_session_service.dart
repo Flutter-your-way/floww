@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
+import 'package:floww/config/constants/app_api.dart';
 import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/weight_log_entity.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
+import 'package:floww/config/services/app_api_client.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/health/services/health_service.dart';
 import 'package:floww/core/progress/services/flow_score_calculator.dart';
@@ -25,8 +28,9 @@ class WorkoutCompletionResult {
 }
 
 class WorkoutSessionService extends WorkoutFirestore {
-  WorkoutSessionService({HealthService? healthService})
-    : _healthService = healthService ?? HealthService();
+  WorkoutSessionService({HealthService? healthService, AppApiClient? apiClient})
+    : _healthService = healthService ?? HealthService(),
+      _apiClient = apiClient ?? AppApiClient();
 
   static const String _loadFailure = 'Could not load your workout sessions.';
   static const String _saveFailure =
@@ -37,12 +41,16 @@ class WorkoutSessionService extends WorkoutFirestore {
   static const int _heartRateBuckets = 11;
 
   final HealthService _healthService;
+  final AppApiClient _apiClient;
 
   CollectionReference<Map<String, dynamic>> _sessions(String uid) =>
       collectionOf(uid, AppCollection.workoutSessions);
 
   CollectionReference<Map<String, dynamic>> _weightLogs(String uid) =>
       collectionOf(uid, AppCollection.weightLogs);
+
+  CollectionReference<Map<String, dynamic>> _plans(String uid) =>
+      collectionOf(uid, AppCollection.workoutPlans);
 
   CollectionReference<Map<String, dynamic>> _dailyFlow(String uid) =>
       collectionOf(uid, AppCollection.dailyFlow);
@@ -79,10 +87,9 @@ class WorkoutSessionService extends WorkoutFirestore {
     final uid = userId;
     if (uid == null) return const [];
     return guard('loadRecentSessions', _loadFailure, () async {
-      final snapshot = await _sessions(uid)
-          .orderBy(_startedAtField, descending: true)
-          .limit(_historyLimit)
-          .get();
+      final snapshot = await _sessions(
+        uid,
+      ).orderBy(_startedAtField, descending: true).limit(_historyLimit).get();
       return _sessionsOf(snapshot);
     });
   }
@@ -101,9 +108,9 @@ class WorkoutSessionService extends WorkoutFirestore {
     final uid = userId;
     if (uid == null) return null;
     return guard('loadInProgressSession', _loadFailure, () async {
-      final snapshot = await _sessions(uid)
-          .where(_dateField, isEqualTo: AppDateUtils.dateKey(date))
-          .get();
+      final snapshot = await _sessions(
+        uid,
+      ).where(_dateField, isEqualTo: AppDateUtils.dateKey(date)).get();
       for (final session in _sessionsOf(snapshot)) {
         if (session.isInProgress) return session;
       }
@@ -133,6 +140,7 @@ class WorkoutSessionService extends WorkoutFirestore {
       insight: plan.insight,
       programId: plan.programId,
       programLabel: plan.programLabel,
+      timerResumedAt: now,
     );
 
     await guard(
@@ -151,23 +159,75 @@ class WorkoutSessionService extends WorkoutFirestore {
       _saveFailure,
       () => _sessions(uid).doc(session.id).set({
         'exercises': [for (final entry in session.exercises) entry.toJson()],
-        'durationSeconds': session.durationSeconds,
         'completedAt': AppDateUtils.isoKey(DateTime.now()),
         'volumeKg': totals.volumeKg,
         'totalSets': totals.totalSets,
         'totalReps': totals.totalReps,
         'exerciseCount': totals.exerciseCount,
+        ...session.restJson,
       }, SetOptions(merge: true)),
+    );
+  }
+
+  Future<void> saveTimer(WorkoutSessionEntity session) async {
+    final uid = requireUserId;
+    await guard(
+      'saveTimer',
+      _saveFailure,
+      () => _sessions(uid).doc(session.id).set({
+        ...session.timerJson,
+        ...session.restJson,
+      }, SetOptions(merge: true)),
+    );
+  }
+
+  Future<void> cancelSession(String id) async {
+    final uid = requireUserId;
+    await guard(
+      'cancelSession',
+      _saveFailure,
+      () => _sessions(uid).doc(id).delete(),
     );
   }
 
   Future<WorkoutCompletionResult> completeSession(
     WorkoutSessionEntity session,
   ) async {
+    final heartRate = await _heartRateSamples(
+      session.startedAt,
+      DateTime.now(),
+    );
+    try {
+      final data = await _apiClient.post(
+        AppApi.completeWorkout,
+        body: {
+          'sessionId': session.id,
+          'durationSeconds': session.durationSeconds,
+          'exercises': [for (final entry in session.exercises) entry.toJson()],
+          'heartRate': heartRate.toJson(),
+        },
+      );
+      return WorkoutCompletionResult(
+        session: WorkoutSessionEntity.fromJson(
+          Map<String, dynamic>.from(data['session'] as Map),
+        ),
+        flowScoreBefore: (data['flowScoreBefore'] as num? ?? 0).toInt(),
+        flowScoreAfter: (data['flowScoreAfter'] as num? ?? 0).toInt(),
+      );
+    } on AppApiException catch (e) {
+      if (!e.isRetryableOffline) throw WorkoutException(e.message);
+      debugPrint('completeSession saving locally: ${e.message}');
+      return _completeLocally(session, heartRate);
+    }
+  }
+
+  Future<WorkoutCompletionResult> _completeLocally(
+    WorkoutSessionEntity session,
+    _HeartRateSummary heartRate,
+  ) async {
     final uid = requireUserId;
     final totals = WorkoutMetrics.totalsOf(session.exercises);
     final bodyWeightKg = await _bodyWeightKg(uid);
-    final completedAt = DateTime.now();
     final history = await loadRecentSessions();
     final previous = [
       for (final entry in history)
@@ -183,8 +243,7 @@ class WorkoutSessionService extends WorkoutFirestore {
       exercises: session.exercises,
       previousBests: WorkoutMetrics.bestsOf(previous),
     );
-    final heartRate = await _heartRateSamples(session.startedAt, completedAt);
-    final flow = await _updateFlowScore(
+    final flow = await _estimateFlowScore(
       uid,
       date: session.date,
       totalSets: totals.totalSets,
@@ -193,8 +252,12 @@ class WorkoutSessionService extends WorkoutFirestore {
 
     final payload = <String, dynamic>{
       'status': WorkoutSessionStatus.completed.name,
-      'completedAt': AppDateUtils.isoKey(completedAt),
+      'completedAt': AppDateUtils.isoKey(DateTime.now()),
       'durationSeconds': session.durationSeconds,
+      'isTimerPaused': true,
+      'restEndsAt': null,
+      'restRemainingSeconds': 0,
+      'currentEntryId': null,
       'exercises': [for (final entry in session.exercises) entry.toJson()],
       'volumeKg': totals.volumeKg,
       'totalSets': totals.totalSets,
@@ -219,7 +282,8 @@ class WorkoutSessionService extends WorkoutFirestore {
     await guard(
       'completeSession',
       _saveFailure,
-      () => _sessions(uid).doc(session.id).set(payload, SetOptions(merge: true)),
+      () =>
+          _sessions(uid).doc(session.id).set(payload, SetOptions(merge: true)),
     );
 
     final completed = await loadSession(session.id);
@@ -230,12 +294,40 @@ class WorkoutSessionService extends WorkoutFirestore {
     );
   }
 
+  Future<void> unlogSession(WorkoutSessionEntity session) async {
+    try {
+      await _apiClient.post(
+        AppApi.unlogWorkout,
+        body: {'sessionId': session.id},
+      );
+    } on AppApiException catch (e) {
+      if (!e.isRetryableOffline) throw WorkoutException(e.message);
+      debugPrint('unlogSession saving locally: ${e.message}');
+      await _unlogLocally(session);
+    }
+  }
+
+  Future<void> _unlogLocally(WorkoutSessionEntity session) async {
+    final uid = requireUserId;
+    final plan = _plans(uid).doc(AppDateUtils.dateKey(session.date));
+    await guard('unlogSession', _saveFailure, () async {
+      final stored = await plan.get();
+      final batch = firestore.batch();
+      batch.delete(_sessions(uid).doc(session.id));
+      if (stored.data()?['sessionId'] == session.id) {
+        batch.update(plan, {'sessionId': FieldValue.delete()});
+      }
+      await batch.commit();
+    });
+  }
+
   Future<void> updateNotes(String id, String notes) async {
     final uid = requireUserId;
     await guard(
       'updateNotes',
       _saveFailure,
-      () => _sessions(uid).doc(id).set({'notes': notes}, SetOptions(merge: true)),
+      () =>
+          _sessions(uid).doc(id).set({'notes': notes}, SetOptions(merge: true)),
     );
   }
 
@@ -270,10 +362,9 @@ class WorkoutSessionService extends WorkoutFirestore {
 
   Future<double> _bodyWeightKg(String uid) async {
     try {
-      final logs = await _weightLogs(uid)
-          .orderBy('loggedAt', descending: true)
-          .limit(1)
-          .get();
+      final logs = await _weightLogs(
+        uid,
+      ).orderBy('loggedAt', descending: true).limit(1).get();
       if (logs.docs.isNotEmpty) {
         return WeightLog.fromJson(logs.docs.first.data()).weightKg;
       }
@@ -321,18 +412,18 @@ class WorkoutSessionService extends WorkoutFirestore {
     ];
   }
 
-  Future<_FlowScoreChange> _updateFlowScore(
+  Future<_FlowScoreChange> _estimateFlowScore(
     String uid, {
     required DateTime date,
     required int totalSets,
     required List<WorkoutSessionEntity> previousSessions,
   }) async {
     const calculator = FlowScoreCalculator();
-    final key = AppDateUtils.dateKey(date);
 
     try {
-      final document = _dailyFlow(uid).doc(key);
-      final stored = await document.get();
+      final stored = await _dailyFlow(
+        uid,
+      ).doc(AppDateUtils.dateKey(date)).get();
       final data = stored.data();
       final entry = data == null
           ? DailyFlowEntry.empty(date)
@@ -347,7 +438,6 @@ class WorkoutSessionService extends WorkoutFirestore {
 
       final before = calculator.withWorkoutSets(entry, priorSets);
       final after = calculator.withWorkoutSets(entry, priorSets + totalSets);
-      await document.set(after.toJson());
       return _FlowScoreChange(before.score, after.score);
     } catch (_) {
       return const _FlowScoreChange(0, 0);
@@ -370,6 +460,12 @@ class _HeartRateSummary {
   final int? average;
   final int? peak;
   final List<int> samples;
+
+  Map<String, dynamic> toJson() => {
+    if (average != null && average! > 0) 'average': average,
+    if (peak != null && peak! > 0) 'peak': peak,
+    'samples': samples,
+  };
 }
 
 class _FlowScoreChange {

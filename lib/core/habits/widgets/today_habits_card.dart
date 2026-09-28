@@ -30,14 +30,12 @@ class TodayHabitsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CardHeader(
-            title: title,
-            titleStyle: AppTypography.heading4SemiBold,
-          ),
+          CardHeader(title: title, titleStyle: AppTypography.heading4SemiBold),
           SizedBox(height: AppSpacing.xl),
           for (var index = 0; index < items.length; index++) ...[
             if (index > 0) SizedBox(height: AppSpacing.xl),
             HabitProgressRow(
+              key: ValueKey(items[index].id),
               item: items[index],
               onToggle: onToggle == null ? null : () => onToggle(items[index]),
               onOpen: onOpen == null ? null : () => onOpen(items[index]),

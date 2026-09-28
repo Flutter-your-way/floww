@@ -65,10 +65,12 @@ class WaveConfirmationMessage extends WaveMessage {
     required super.timestamp,
     required this.title,
     required this.detail,
+    this.action,
   });
 
   final String title;
   final String detail;
+  final WaveConfirmationAction? action;
 }
 
 class WaveCheckInMessage extends WaveMessage {

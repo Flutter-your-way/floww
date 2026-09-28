@@ -39,9 +39,7 @@ class _OnboardingQuestionViewState extends State<OnboardingQuestionView> {
   Future<void> _handleContinue(OnboardingProvider provider) async {
     final completed = await provider.nextQuestion(_pageController);
     if (completed && mounted) {
-      NavigationService.instance.pushAndRemoveUntil(
-        AppRouter.connectWearables,
-      );
+      NavigationService.instance.pushAndRemoveUntil(AppRouter.connectWearables);
     }
   }
 

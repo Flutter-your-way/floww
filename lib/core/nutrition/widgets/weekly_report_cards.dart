@@ -334,9 +334,7 @@ class WeeklyMetricCard extends StatelessWidget {
       decoration: AppShapes.decoration(
         color: context.colors.backgroundPrimary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(
-          color: color.withValues(alpha: AppOpacity.tintBorder),
-        ),
+        side: BorderSide(color: color.withValues(alpha: AppOpacity.tintBorder)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,11 +385,7 @@ class WeeklyMetricCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppSpacing.md),
-          AppProgressBar(
-            progress: progress,
-            color: color,
-            height: AppSizes.s8,
-          ),
+          AppProgressBar(progress: progress, color: color, height: AppSizes.s8),
         ],
       ),
     );

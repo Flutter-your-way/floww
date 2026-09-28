@@ -4,10 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
 import 'package:floww/core/nutrition/view_models/diet_plan_view_model.dart';
 import 'package:floww/core/nutrition/widgets/diet_plan_widgets.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_empty_state_card.dart';
+import 'package:floww/config/widgets/cards/app_empty_state_card.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 class DietPlanView extends StatelessWidget {
@@ -22,16 +23,9 @@ class DietPlanView extends StatelessWidget {
           onBack: () => NavigationService.instance.pop(),
           children: [
             if (viewModel.isLoading)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.xl5),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: context.colors.primary,
-                  ),
-                ),
-              )
+              const AppSectionLoader()
             else if (!viewModel.hasPlan)
-              NutritionEmptyStateCard(
+              AppEmptyStateCard(
                 title: 'No diet plan yet',
                 message: viewModel.emptyMessage,
               )

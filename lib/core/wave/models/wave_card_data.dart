@@ -27,7 +27,9 @@ class WaveDailyBrief {
   final List<String> focusItems;
 }
 
-enum WavePlanAction { startWorkout, logMeal, logWater }
+enum WavePlanAction { startWorkout, resumeWorkout, logMeal, logWater }
+
+enum WaveConfirmationAction { openWorkout }
 
 class WavePlanItem {
   const WavePlanItem({
@@ -92,11 +94,9 @@ class WaveScoreReport {
   final String potentialLabel;
   final List<WaveScoreFactor> factors;
 
-  int get lowFactorCount =>
-      factors.where((factor) => factor.isLow).length;
+  int get lowFactorCount => factors.where((factor) => factor.isLow).length;
 
-  String get summary =>
-      '$lowFactorCount factors pulling your score down';
+  String get summary => '$lowFactorCount factors pulling your score down';
 }
 
 enum WaveFeeling {

@@ -2,14 +2,45 @@ import express, {Application, RequestHandler} from "express";
 import {logger} from "firebase-functions";
 import {onRequest} from "firebase-functions/https";
 import morgan from "morgan";
-import {openAiApiKey} from "./src/constants/secrets";
+import {openAiApiKey, usdaApiKey} from "./src/constants/secrets";
 import {handleDeleteAccount} from "./src/handlers/account.handler";
-import {handleScanFood} from "./src/handlers/food.handler";
+import {
+  handleDescribeFood,
+  handleScanFood,
+  handleSearchFood,
+} from "./src/handlers/food.handler";
+import {
+  handleCompleteOnboarding,
+  handleSubmitOnboarding,
+} from "./src/handlers/onboarding.handler";
+import {
+  handleCancelSubscription,
+  handleSubscribe,
+} from "./src/handlers/premium.handler";
+import {handleWaveChat} from "./src/handlers/wave.handler";
+import {
+  handleCompleteWorkout,
+  handleUnlogWorkout,
+} from "./src/handlers/workout.handler";
 import {authenticate} from "./src/middlewares/auth.middleware";
 import {
   errorHandler,
   notFoundHandler,
 } from "./src/middlewares/error.middleware";
+
+export {
+  onFoodLogWritten,
+  onHabitLogWritten,
+  onHabitWritten,
+  onWaterLogWritten,
+  onWorkoutSessionWritten,
+} from "./src/triggers/activity.trigger";
+export {
+  onOnboardingDetailsWritten,
+  onWeightLogWritten,
+} from "./src/triggers/profile.trigger";
+export {expireSubscriptions} from "./src/scheduled/subscriptions.schedule";
+export {sendScheduledReminders} from "./src/scheduled/reminders.schedule";
 
 type HttpMethod = "post" | "delete";
 
@@ -48,6 +79,36 @@ export const scanFood = onRequest(
   createApp("post", handleScanFood),
 );
 
+export const searchFood = onRequest(
+  {
+    cors: true,
+    secrets: [usdaApiKey],
+    memory: "256MiB",
+    timeoutSeconds: 30,
+  },
+  createApp("post", handleSearchFood),
+);
+
+export const describeFood = onRequest(
+  {
+    cors: true,
+    secrets: [openAiApiKey],
+    memory: "512MiB",
+    timeoutSeconds: 120,
+  },
+  createApp("post", handleDescribeFood),
+);
+
+export const waveChat = onRequest(
+  {
+    cors: true,
+    secrets: [openAiApiKey],
+    memory: "512MiB",
+    timeoutSeconds: 120,
+  },
+  createApp("post", handleWaveChat),
+);
+
 export const deleteAccount = onRequest(
   {
     cors: true,
@@ -55,4 +116,40 @@ export const deleteAccount = onRequest(
     timeoutSeconds: 300,
   },
   createApp("delete", handleDeleteAccount),
+);
+
+const lightOptions = {
+  cors: true,
+  memory: "256MiB" as const,
+  timeoutSeconds: 60,
+};
+
+export const completeWorkout = onRequest(
+  lightOptions,
+  createApp("post", handleCompleteWorkout),
+);
+
+export const unlogWorkout = onRequest(
+  lightOptions,
+  createApp("post", handleUnlogWorkout),
+);
+
+export const submitOnboarding = onRequest(
+  lightOptions,
+  createApp("post", handleSubmitOnboarding),
+);
+
+export const completeOnboarding = onRequest(
+  lightOptions,
+  createApp("post", handleCompleteOnboarding),
+);
+
+export const subscribePremium = onRequest(
+  lightOptions,
+  createApp("post", handleSubscribe),
+);
+
+export const cancelPremium = onRequest(
+  lightOptions,
+  createApp("post", handleCancelSubscription),
 );

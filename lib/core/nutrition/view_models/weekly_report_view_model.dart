@@ -16,14 +16,11 @@ class WeeklyReportViewModel extends ChangeNotifier {
   WeeklyReportViewModel(this._logService, DateTime date, this._goalService)
     : _weekStart = AppDateUtils.startOfWeek(date) {
     _days = _buildWeek(const NutritionLogs(foods: [], waters: []));
-    _goalSubscription = _goalService.watch().listen(
-      (goal) {
-        _goal = goal;
-        _days = [for (final day in _days) day.copyWithGoal(goal)];
-        notifyListeners();
-      },
-      onError: (Object error) => debugPrint('weekly goal failed: $error'),
-    );
+    _goalSubscription = _goalService.watch().listen((goal) {
+      _goal = goal;
+      _days = [for (final day in _days) day.copyWithGoal(goal)];
+      notifyListeners();
+    }, onError: (Object error) => debugPrint('weekly goal failed: $error'));
     _subscription = _logService
         .watchLogs(_weekStart, AppDateUtils.addDays(_weekStart, _daysInWeek))
         .listen(
@@ -199,8 +196,7 @@ class WeeklyReportViewModel extends ChangeNotifier {
     FlowCategory? weakest;
     var largestGap = 0;
     for (final category in FlowCategory.values) {
-      final gap =
-          category.maxPerDay * _daysInWeek - _weeklyPoints(category);
+      final gap = category.maxPerDay * _daysInWeek - _weeklyPoints(category);
       if (gap > largestGap) {
         largestGap = gap;
         weakest = category;

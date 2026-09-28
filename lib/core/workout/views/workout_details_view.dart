@@ -7,6 +7,7 @@ import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
+import 'package:floww/config/widgets/sheets/app_confirm_sheet.dart';
 import 'package:floww/core/workout/view_models/workout_details_view_model.dart';
 import 'package:floww/core/workout/views/add_exercise_sheet.dart';
 import 'package:floww/core/workout/views/edit_notes_sheet.dart';
@@ -20,6 +21,25 @@ class WorkoutDetailsView extends StatelessWidget {
   const WorkoutDetailsView({super.key});
 
   void _placeholderAction() => HapticManager.light();
+
+  Future<void> _confirmUnlog(
+    BuildContext context,
+    WorkoutDetailsViewModel viewModel,
+  ) async {
+    HapticManager.light();
+    final choice = await AppConfirmSheet.show(
+      context,
+      title: viewModel.unlogTitle,
+      message: viewModel.unlogMessage,
+      confirmLabel: viewModel.unlogConfirmLabel,
+      alternateLabel: viewModel.unlogCancelLabel,
+      icon: Icons.delete_outline_rounded,
+      isDestructive: true,
+    );
+    if (choice != AppConfirmChoice.confirm) return;
+    HapticManager.medium();
+    if (await viewModel.unlog()) NavigationService.instance.pop();
+  }
 
   void _openEditNotes(BuildContext context, WorkoutDetailsViewModel viewModel) {
     HapticManager.light();
@@ -56,7 +76,9 @@ class WorkoutDetailsView extends StatelessWidget {
         return InnerPageScaffold(
           title: viewModel.title,
           onBack: () => NavigationService.instance.pop(),
-          onMore: _placeholderAction,
+          onMore: viewModel.canUnlog
+              ? () => _confirmUnlog(context, viewModel)
+              : _placeholderAction,
           children: [
             if (viewModel.isLoading)
               const AppSectionLoader()

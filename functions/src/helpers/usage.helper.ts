@@ -1,9 +1,23 @@
 import {FieldValue} from "firebase-admin/firestore";
 import {ApiError} from "../common/api.error";
 import {todayKey} from "../common/utils";
-import {aiUsageCollection, firestore} from "../constants/collections";
+import {
+  aiUsageCollection,
+  firestore,
+  usersCollection,
+} from "../constants/collections";
+import {hasPremiumAccess} from "./premium.helper";
 
-export type AiFeature = "foodScan";
+export type AiFeature =
+  | "foodScan"
+  | "foodDescribe"
+  | "foodSearch"
+  | "waveChat";
+
+export interface AiDailyLimits {
+  premium: number;
+  free: number;
+}
 
 export interface AiTokenUsage {
   inputTokens: number;
@@ -16,11 +30,17 @@ const usageDoc = (uid: string) =>
 export const reserveAiQuota = async (
   uid: string,
   feature: AiFeature,
-  dailyLimit: number,
+  limits: AiDailyLimits,
 ): Promise<void> => {
   const ref = usageDoc(uid);
   await firestore.runTransaction(async (transaction) => {
-    const snapshot = await transaction.get(ref);
+    const [snapshot, user] = await Promise.all([
+      transaction.get(ref),
+      transaction.get(usersCollection.doc(uid)),
+    ]);
+    const dailyLimit = hasPremiumAccess(user.data()) ?
+      limits.premium :
+      limits.free;
     const used: number = snapshot.get(`${feature}.requests`) ?? 0;
     if (used >= dailyLimit) {
       throw new ApiError(

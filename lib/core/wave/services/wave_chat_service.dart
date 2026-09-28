@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/entities/workout_plan_entity.dart';
+import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_definition.dart';
+import 'package:floww/core/habits/models/habit_draft.dart';
+import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
+import 'package:floww/core/nutrition/models/custom_food.dart';
 import 'package:floww/core/nutrition/models/diet_plan.dart';
 import 'package:floww/core/nutrition/models/food_catalog.dart';
 import 'package:floww/core/nutrition/models/food_log.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
+import 'package:floww/core/nutrition/services/custom_food_service.dart';
 import 'package:floww/core/nutrition/services/diet_plan_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/recovery/models/muscle_group.dart';
@@ -15,6 +23,7 @@ import 'package:floww/core/wave/models/wave_context.dart';
 import 'package:floww/core/wave/models/wave_quick_action.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
+import 'package:floww/core/workout/services/workout_session_service.dart';
 
 class WaveChatService {
   WaveChatService({
@@ -22,7 +31,13 @@ class WaveChatService {
     DietPlanService? dietPlanService,
     WorkoutCatalogService? catalogService,
     WorkoutPlanService? planService,
-  }) : _logService = logService ?? NutritionLogService(),
+    HabitService? habitService,
+    CustomFoodService? customFoodService,
+    WorkoutSessionService? sessionService,
+  }) : _sessionService = sessionService ?? WorkoutSessionService(),
+       _logService = logService ?? NutritionLogService(),
+       _habitService = habitService ?? HabitService(),
+       _customFoodService = customFoodService ?? CustomFoodService(),
        _catalogService = catalogService ?? WorkoutCatalogService() {
     _dietPlanService = dietPlanService ?? DietPlanService(_logService);
     _planService = planService ?? WorkoutPlanService(_catalogService);
@@ -56,6 +71,9 @@ class WaveChatService {
   ];
 
   final NutritionLogService _logService;
+  final HabitService _habitService;
+  final CustomFoodService _customFoodService;
+  final WorkoutSessionService _sessionService;
   final WorkoutCatalogService _catalogService;
   late final DietPlanService _dietPlanService;
   late final WorkoutPlanService _planService;
@@ -98,8 +116,14 @@ class WaveChatService {
         detail: workout == null
             ? 'No session scheduled for today'
             : '${workout.durationLabel} · ${workout.intensityLabel}',
-        actionLabel: workout == null ? 'Browse Workouts' : 'Start Workout',
-        action: WavePlanAction.startWorkout,
+        actionLabel: context.hasActiveWorkout
+            ? 'Resume Workout'
+            : workout == null
+            ? 'Browse Workouts'
+            : 'Start Workout',
+        action: context.hasActiveWorkout
+            ? WavePlanAction.resumeWorkout
+            : WavePlanAction.startWorkout,
       ),
       WavePlanItem(
         emoji: '🍽️',
@@ -170,7 +194,7 @@ class WaveChatService {
     return foods;
   }
 
-  WaveMealSlot currentMealSlot() => _slotOf(MealType.forTime(DateTime.now()));
+  WaveMealSlot currentMealSlot() => slotOf(MealType.forTime(DateTime.now()));
 
   MuscleGroup? painAreaOf(String text) {
     final normalized = text.toLowerCase();
@@ -258,6 +282,213 @@ class WaveChatService {
   Future<void> logWater(double amountMl) =>
       _logService.addWaterLog(amountMl, DateTime.now());
 
+  Future<int> completeHabits({String? title}) async {
+    final records = await _habitService.watchRecords().first;
+    final today = AppDateUtils.dateOnly(DateTime.now());
+    final habits = HabitSnapshot.of(records).habitsFor(today);
+    if (habits.isEmpty) return 0;
+
+    final wanted = title?.trim().toLowerCase();
+    final changedIds = <String>{};
+
+    final updated = [
+      for (final habit in habits)
+        if (_matchesHabit(habit, wanted) && !habit.isCompleted)
+          () {
+            changedIds.add(habit.id);
+            return habit.completed();
+          }()
+        else
+          habit,
+    ];
+
+    if (changedIds.isEmpty) return 0;
+    await _habitService.saveDay(today, updated, changedIds: changedIds);
+    return changedIds.length;
+  }
+
+  Future<int> uncompleteHabits({required String title}) async {
+    final records = await _habitService.watchRecords().first;
+    final today = AppDateUtils.dateOnly(DateTime.now());
+    final habits = HabitSnapshot.of(records).habitsFor(today);
+    final wanted = title.trim().toLowerCase();
+    final changedIds = <String>{};
+
+    final updated = [
+      for (final habit in habits)
+        if (_matchesHabit(habit, wanted) && habit.isCompleted)
+          () {
+            changedIds.add(habit.id);
+            return habit.reopened();
+          }()
+        else
+          habit,
+    ];
+
+    if (changedIds.isEmpty) return 0;
+    await _habitService.saveDay(today, updated, changedIds: changedIds);
+    return changedIds.length;
+  }
+
+  Future<void> addHabit(HabitDraft draft) => _habitService.createHabit(draft);
+
+  Future<bool> editHabit(String title, HabitDraft draft) async {
+    final definition = await _habitDefinition(title);
+    if (definition == null) return false;
+    await _habitService.updateHabit(
+      definition.id,
+      HabitDraft(
+        title: draft.title,
+        target: draft.target,
+        metric: draft.metric,
+        schedule: definition.schedule,
+        goalType: definition.goalType,
+        source: definition.source.supports(draft.metric)
+            ? definition.source
+            : HabitSource.manual,
+        description: draft.description,
+      ),
+    );
+    return true;
+  }
+
+  Future<bool> deleteHabit(String title) async {
+    final definition = await _habitDefinition(title);
+    if (definition == null) return false;
+    await _habitService.deleteHabit(definition.id);
+    return true;
+  }
+
+  Future<HabitDefinition?> _habitDefinition(String title) async {
+    final records = await _habitService.watchRecords().first;
+    final wanted = title.trim().toLowerCase();
+    return records.habits
+        .where(
+          (definition) =>
+              definition.title.toLowerCase().contains(wanted) ||
+              wanted.contains(definition.title.toLowerCase()),
+        )
+        .firstOrNull;
+  }
+
+  Future<double> unlogWater(WaveContext context, double amountMl) async {
+    final logs = [...context.todayWaters]
+      ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+    if (logs.isEmpty) return 0;
+
+    if (amountMl <= 0) {
+      await _logService.deleteWaterLog(logs.first.id);
+      return logs.first.amountMl;
+    }
+
+    var removed = 0.0;
+    for (final log in logs) {
+      if (removed >= amountMl) break;
+      await _logService.deleteWaterLog(log.id);
+      removed += log.amountMl;
+    }
+    return removed;
+  }
+
+  Future<CustomFood> createFood(CustomFoodDraft draft) =>
+      _customFoodService.create(draft);
+
+  Future<WaveQuickFood?> findFood(WaveContext context, String name) async {
+    final wanted = name.trim().toLowerCase();
+    if (wanted.isEmpty) return null;
+
+    for (final food in context.customFoods) {
+      if (_matchesName(food.name, wanted)) {
+        return WaveQuickFood.fromCatalog(food.catalog);
+      }
+    }
+    for (final food in FoodCatalog.items) {
+      if (_matchesName(food.name, wanted)) {
+        return WaveQuickFood.fromCatalog(food);
+      }
+    }
+    for (final log in context.recentLogs.reversed) {
+      if (_matchesName(log.food.name, wanted)) {
+        return WaveQuickFood.fromLoggedFood(log.food);
+      }
+    }
+    return null;
+  }
+
+  Future<int> logFood(
+    WaveQuickFood food,
+    WaveMealSlot slot, {
+    int servings = 1,
+  }) async {
+    var logged = 0;
+    for (var index = 0; index < servings; index++) {
+      logged += await logFoods([food], slot);
+    }
+    return logged;
+  }
+
+  Future<String?> unlogFood(WaveContext context, String name) async {
+    final wanted = name.trim().toLowerCase();
+    final logs = [...context.todayFoods]
+      ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+
+    for (final log in logs) {
+      if (_matchesName(log.food.name, wanted)) {
+        await _logService.deleteFoodLog(log.id);
+        return log.food.name;
+      }
+    }
+    return null;
+  }
+
+  Future<String?> startWorkout(WaveContext context) async {
+    final plan = context.plan;
+    if (plan == null) return null;
+
+    final today = AppDateUtils.dateOnly(DateTime.now());
+    final existing = await _sessionService.loadInProgressSession(today);
+    if (existing != null) return existing.name;
+
+    final session = await _sessionService.startSession(plan);
+    await _planService.linkSession(today, session.id);
+    return session.name;
+  }
+
+  Future<String?> completeWorkout() async {
+    final today = AppDateUtils.dateOnly(DateTime.now());
+    final session = await _sessionService.loadInProgressSession(today);
+    if (session == null) return null;
+
+    final now = DateTime.now();
+    await _sessionService.completeSession(
+      session
+          .withPlannedSetsLogged(now)
+          .copyWith(durationSeconds: session.elapsedSecondsAt(now)),
+    );
+    return session.name;
+  }
+
+  Future<String?> cancelWorkout() async {
+    final today = AppDateUtils.dateOnly(DateTime.now());
+    final session = await _sessionService.loadInProgressSession(today);
+    if (session == null) return null;
+
+    await _sessionService.cancelSession(session.id);
+    await _planService.unlinkSession(session.date);
+    return session.name;
+  }
+
+  static bool _matchesName(String value, String wanted) {
+    final name = value.toLowerCase();
+    return name.contains(wanted) || wanted.contains(name);
+  }
+
+  static bool _matchesHabit(Habit habit, String? wanted) {
+    if (wanted == null || wanted.isEmpty) return true;
+    return habit.title.toLowerCase().contains(wanted) ||
+        wanted.contains(habit.title.toLowerCase());
+  }
+
   Future<int> logFoods(List<WaveQuickFood> foods, WaveMealSlot slot) async {
     final userId = _logService.userId;
     if (userId == null || foods.isEmpty) return 0;
@@ -305,7 +536,7 @@ class WaveChatService {
       meals: [
         for (final meal in day.meals)
           WaveDietMeal(
-            emoji: _slotOf(meal.mealType).emoji,
+            emoji: slotOf(meal.mealType).emoji,
             name: meal.name,
             calories: meal.calories,
           ),
@@ -350,11 +581,12 @@ class WaveChatService {
     _ => Icons.insights_rounded,
   };
 
-  static IconData _recoveryIcon(RecoveryMetricAccent accent) => switch (accent) {
-    RecoveryMetricAccent.sleep => Icons.bed_outlined,
-    RecoveryMetricAccent.hrv => Icons.monitor_heart_outlined,
-    RecoveryMetricAccent.energy => Icons.local_fire_department_outlined,
-  };
+  static IconData _recoveryIcon(RecoveryMetricAccent accent) =>
+      switch (accent) {
+        RecoveryMetricAccent.sleep => Icons.bed_outlined,
+        RecoveryMetricAccent.hrv => Icons.monitor_heart_outlined,
+        RecoveryMetricAccent.energy => Icons.local_fire_department_outlined,
+      };
 
   static catalog.MuscleGroup _coarseGroupOf(MuscleGroup area) => switch (area) {
     MuscleGroup.chest => catalog.MuscleGroup.chest,
@@ -369,7 +601,7 @@ class WaveChatService {
     MuscleGroup.adductors => catalog.MuscleGroup.legs,
   };
 
-  static WaveMealSlot _slotOf(MealType meal) => switch (meal) {
+  static WaveMealSlot slotOf(MealType meal) => switch (meal) {
     MealType.breakfast => WaveMealSlot.breakfast,
     MealType.lunch => WaveMealSlot.lunch,
     MealType.dinner => WaveMealSlot.dinner,
@@ -410,4 +642,3 @@ class _PlanTarget {
   final MuscleGroup group;
   final double share;
 }
-

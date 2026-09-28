@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/config/widgets/theme/sheet_theme.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
@@ -18,13 +19,16 @@ import 'package:floww/core/wave/view_models/wave_chat_view_model.dart';
 import 'package:floww/core/wave/widgets/wave_card.dart';
 import 'package:floww/core/wave/widgets/wave_chat_header.dart';
 import 'package:floww/core/wave/widgets/wave_composer.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
+import 'package:floww/core/wave/views/wave_history_sheet.dart';
 import 'package:floww/core/wave/widgets/wave_message_item.dart';
+import 'package:floww/core/wave/widgets/wave_typing_indicator.dart';
 import 'package:floww/core/wave/widgets/wave_quick_action_bar.dart';
 import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 Future<void> showWaveChatSheet(BuildContext context) {
-  final theme = Theme.of(context);
+  final forcedMode = SheetTheme.forcedModeOf(context);
 
   return showGeneralDialog<void>(
     context: context,
@@ -33,7 +37,7 @@ Future<void> showWaveChatSheet(BuildContext context) {
     barrierColor: Colors.transparent,
     transitionDuration: AppMotion.expand,
     pageBuilder: (context, animation, secondaryAnimation) =>
-        Theme(data: theme, child: const WaveChatSheet()),
+        SheetTheme(forcedMode: forcedMode, child: const WaveChatSheet()),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       final curved = CurvedAnimation(
         parent: animation,
@@ -41,8 +45,8 @@ Future<void> showWaveChatSheet(BuildContext context) {
         reverseCurve: AppMotion.collapseCurve,
       );
 
-      return Theme(
-        data: theme,
+      return SheetTheme(
+        forcedMode: forcedMode,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -77,11 +81,32 @@ class WaveChatSheet extends StatelessWidget {
       case WavePlanAction.startWorkout:
         _close();
         NavigationService.instance.push(AppRouter.todaysWorkout);
+      case WavePlanAction.resumeWorkout:
+        _openActiveWorkout();
       case WavePlanAction.logMeal:
         viewModel.sendQuickAction(WaveQuickAction.logMeal);
       case WavePlanAction.logWater:
         viewModel.logWater();
     }
+  }
+
+  Future<void> _openHistory(
+    BuildContext context,
+    WaveChatViewModel viewModel,
+  ) async {
+    HapticManager.light();
+    final day = await WaveHistorySheet.show(
+      context,
+      days: viewModel.days,
+      selectedDay: viewModel.selectedDay,
+    );
+    if (day != null) viewModel.selectDay(day);
+  }
+
+  void _openActiveWorkout() {
+    HapticManager.medium();
+    _close();
+    NavigationService.instance.push(AppRouter.activeWorkout);
   }
 
   void _openNutrition() {
@@ -125,59 +150,90 @@ class WaveChatSheet extends StatelessWidget {
                       title: WaveChatViewModel.title,
                       status: viewModel.statusLabel,
                       onClose: _close,
+                      onHistory: () => _openHistory(context, viewModel),
                     ),
                     const WaveCardDivider(),
                     Expanded(
                       child: ListView.separated(
                         controller: viewModel.scrollController,
+                        reverse: true,
                         padding: EdgeInsets.symmetric(
                           horizontal: AppSpacing.xl,
                           vertical: AppSpacing.xl,
                         ),
-                        itemCount: viewModel.messages.length,
+                        itemCount:
+                            viewModel.messages.length +
+                            (viewModel.isBusy ? 1 : 0),
                         separatorBuilder: (context, index) =>
                             SizedBox(height: AppSpacing.xl),
                         itemBuilder: (context, index) {
-                          final message = viewModel.messages[index];
+                          if (viewModel.isBusy && index == 0) {
+                            return const WaveTypingIndicator();
+                          }
+                          final offset = viewModel.isBusy ? 1 : 0;
+                          final messages = viewModel.messages;
+                          final message =
+                              messages[messages.length - 1 - (index - offset)];
                           return WaveMessageItem(
                             message: message,
                             viewModel: viewModel,
                             onPlanAction: (item) =>
                                 _handlePlanAction(viewModel, item),
                             onOpenNutrition: _openNutrition,
+                            onOpenWorkout: _openActiveWorkout,
                           );
                         },
                       ),
                     ),
-                    SizedBox(height: AppSpacing.md),
-                    WaveQuickActionBar(
-                      actions: viewModel.quickActions,
-                      onSelected: (action) {
-                        HapticManager.light();
-                        viewModel.sendQuickAction(action);
-                      },
+                    AnimatedSize(
+                      duration: AppMotion.composerGrow,
+                      curve: AppMotion.composerGrowCurve,
+                      alignment: Alignment.bottomCenter,
+                      child: viewModel.showQuickActions
+                          ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(height: AppSpacing.md),
+                                WaveQuickActionBar(
+                                  actions: viewModel.quickActions,
+                                  onSelected: (action) {
+                                    HapticManager.light();
+                                    viewModel.sendQuickAction(action);
+                                  },
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
                     ),
-                    SizedBox(height: AppSpacing.xl),
+                    SizedBox(height: AppSpacing.md),
                     const WaveCardDivider(),
                     Padding(
                       padding: EdgeInsets.only(
                         left: AppSpacing.xl,
                         right: AppSpacing.xl,
-                        top: AppSpacing.xl,
-                        bottom:
-                            viewInsets.bottom +
-                            viewPadding.bottom +
-                            AppSpacing.md,
+                        top: AppSpacing.md,
+                        bottom: viewInsets.bottom + viewPadding.bottom,
                       ),
-                      child: WaveComposer(
-                        controller: viewModel.composer,
-                        hintText: WaveChatViewModel.composerHint,
-                        canSend: viewModel.canSend,
-                        onSubmit: () {
-                          HapticManager.light();
-                          viewModel.submitComposer();
-                        },
-                      ),
+                      child: viewModel.isViewingToday
+                          ? WaveComposer(
+                              controller: viewModel.composer,
+                              hintText: WaveChatViewModel.composerHint,
+                              canSend: viewModel.canSend,
+                              onSubmit: () {
+                                HapticManager.light();
+                                viewModel.submitComposer();
+                              },
+                            )
+                          : PillButton(
+                              variant: PillButtonVariant.neutral,
+                              label: 'Back to Today',
+                              height: AppSizes.s48,
+                              labelColor: context.colors.primary,
+                              onPressed: () {
+                                HapticManager.light();
+                                viewModel.goToToday();
+                              },
+                            ),
                     ),
                   ],
                 );

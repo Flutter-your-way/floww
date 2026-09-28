@@ -8,6 +8,9 @@ class HabitRowItem {
     required this.progressLabel,
     required this.progress,
     required this.isCompleted,
+    this.tagLabel,
+    this.isRest = false,
+    this.isAuto = false,
   });
 
   final String id;
@@ -15,6 +18,9 @@ class HabitRowItem {
   final String progressLabel;
   final double progress;
   final bool isCompleted;
+  final String? tagLabel;
+  final bool isRest;
+  final bool isAuto;
 }
 
 class WeekdayProgressItem {

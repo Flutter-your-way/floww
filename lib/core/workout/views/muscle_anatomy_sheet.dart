@@ -34,7 +34,6 @@ class MuscleAnatomySheet extends StatelessWidget {
     return AppFloatingSheet(
       child: AppSheetPanel(
         title: 'Muscle Anatomy',
-        titleStyle: context.textTheme.headlineSmall,
         subtitle: anatomy.subtitle,
         onClose: () => NavigationService.instance.pop(),
         body: Column(
@@ -44,8 +43,8 @@ class MuscleAnatomySheet extends StatelessWidget {
             AppCard(
               variant: AppCardVariant.sunken,
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xl,
-                vertical: AppSpacing.xl2,
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.xl,
               ),
               child: MuscleFigures(
                 height: AppSizes.s160,
@@ -84,21 +83,22 @@ class _ActivationDetailCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SectionLabel(label: 'Activation Detail'),
-          SizedBox(height: AppSpacing.xl),
+          SizedBox(height: AppSpacing.lg),
           for (var i = 0; i < muscles.length; i++) ...[
             if (i > 0) ...[
-              SizedBox(height: AppSpacing.xl),
+              SizedBox(height: AppSpacing.lg),
               Container(height: AppSizes.s1, color: colors.borderSubtle),
-              SizedBox(height: AppSpacing.xl),
+              SizedBox(height: AppSpacing.lg),
             ],
             MuscleActivationRow(
               muscle: muscles[i],
-              nameStyle: AppTypography.heading4SemiBold.copyWith(
+              nameStyle: AppTypography.labelMediumSemiBold.copyWith(
                 color: colors.textPrimary,
               ),
-              valueStyle: AppTypography.bodyMediumRegular.copyWith(
+              valueStyle: AppTypography.bodyXSmallMedium.copyWith(
                 color: colors.textSecondary,
               ),
+              barHeight: AppSizes.s6,
             ),
           ],
         ],

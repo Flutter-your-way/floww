@@ -2,12 +2,26 @@ import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 
 class ExerciseBest {
-  const ExerciseBest({required this.weightKg, required this.reps});
+  const ExerciseBest({
+    required this.weightKg,
+    required this.reps,
+    this.seconds = 0,
+    this.oneRepMaxKg = 0,
+  });
 
   static const none = ExerciseBest(weightKg: 0, reps: 0);
 
   final double weightKg;
   final int reps;
+  final int seconds;
+  final double oneRepMaxKg;
+}
+
+class OneRepMaxPoint {
+  const OneRepMaxPoint({required this.date, required this.oneRepMaxKg});
+
+  final DateTime date;
+  final double oneRepMaxKg;
 }
 
 class WorkoutTotals {
@@ -47,12 +61,13 @@ class WorkoutMetrics {
     var metWeighted = 0.0;
 
     for (final exercise in exercises) {
-      if (exercise.sets.isEmpty) continue;
+      final working = exercise.workingSetCount;
+      if (working == 0) continue;
       count++;
-      sets += exercise.sets.length;
+      sets += working;
       reps += exercise.completedReps;
       volume += exercise.completedVolumeKg;
-      metWeighted += exercise.met * exercise.sets.length;
+      metWeighted += exercise.met * working;
     }
 
     return WorkoutTotals(
@@ -85,7 +100,9 @@ class WorkoutMetrics {
     final intensityScore =
         (totals.weightedMet / _targetMet).clamp(0.0, 1.0) * 0.5;
     final effect = 1 + setScore + durationScore + intensityScore;
-    return double.parse(effect.clamp(1.0, maxTrainingEffect).toStringAsFixed(1));
+    return double.parse(
+      effect.clamp(1.0, maxTrainingEffect).toStringAsFixed(1),
+    );
   }
 
   static String effectRatingOf(double effect) {
@@ -124,8 +141,8 @@ class WorkoutMetrics {
   ) {
     final scores = <String, double>{};
     for (final exercise in exercises) {
-      if (exercise.sets.isEmpty) continue;
-      final effort = exercise.completedReps.toDouble();
+      if (exercise.workingSetCount == 0) continue;
+      final effort = exercise.completedEffortReps;
       for (final entry in exercise.muscleShares.entries) {
         scores[entry.key] = (scores[entry.key] ?? 0) + entry.value * effort;
       }
@@ -144,7 +161,8 @@ class WorkoutMetrics {
         MuscleShareEntry(
           name: entry.key,
           share: double.parse(
-            ((entry.value / peak) * completion).clamp(0.0, 1.0)
+            ((entry.value / peak) * completion)
+                .clamp(0.0, 1.0)
                 .toStringAsFixed(2),
           ),
         ),
@@ -158,7 +176,7 @@ class WorkoutMetrics {
     var logged = 0;
     for (final exercise in exercises) {
       planned += exercise.targetSets;
-      logged += exercise.sets.length;
+      logged += exercise.workingSetCount;
     }
     if (planned == 0) return logged == 0 ? 0 : 1;
     return (logged / planned).clamp(0.0, 1.0);
@@ -170,9 +188,25 @@ class WorkoutMetrics {
   }) {
     final records = <PersonalRecordEntry>[];
     for (final exercise in exercises) {
-      if (exercise.sets.isEmpty) continue;
+      if (exercise.workingSetCount == 0) continue;
       final best = previousBests[exercise.exerciseId] ?? ExerciseBest.none;
       final weight = exercise.bestSetWeightKg;
+
+      if (exercise.isTimed) {
+        final seconds = exercise.bestSetSeconds;
+        if (seconds > best.seconds) {
+          final gain = best.seconds == 0 ? seconds : seconds - best.seconds;
+          records.add(
+            PersonalRecordEntry(
+              exerciseId: exercise.exerciseId,
+              exercise: exercise.name,
+              improvement: '+${gain}s',
+              glyph: '⏱️',
+            ),
+          );
+        }
+        continue;
+      }
 
       if (weight != null && weight > best.weightKg + _weightPrThresholdKg) {
         final gain = best.weightKg == 0 ? weight : weight - best.weightKg;
@@ -210,18 +244,48 @@ class WorkoutMetrics {
     final bests = <String, ExerciseBest>{};
     for (final session in sessions) {
       for (final exercise in session.exercises) {
-        for (final set in exercise.sets) {
+        for (final set in exercise.workingSets) {
           final current = bests[exercise.exerciseId] ?? ExerciseBest.none;
           final weight = set.weightKg ?? 0;
+          final seconds = set.durationSeconds ?? 0;
+          final oneRepMax = set.estimatedOneRepMaxKg ?? 0;
           bests[exercise.exerciseId] = ExerciseBest(
             weightKg: weight > current.weightKg ? weight : current.weightKg,
             reps: set.reps > current.reps ? set.reps : current.reps,
+            seconds: seconds > current.seconds ? seconds : current.seconds,
+            oneRepMaxKg: oneRepMax > current.oneRepMaxKg
+                ? oneRepMax
+                : current.oneRepMaxKg,
           );
         }
       }
     }
     return bests;
   }
+
+  static List<OneRepMaxPoint> oneRepMaxTrendOf(
+    List<WorkoutSessionEntity> sessions,
+    String exerciseId,
+  ) {
+    final points = <OneRepMaxPoint>[];
+    for (final session in sessions) {
+      if (!session.isCompleted) continue;
+      double? best;
+      for (final exercise in session.exercises) {
+        if (exercise.exerciseId != exerciseId) continue;
+        final value = exercise.bestEstimatedOneRepMaxKg;
+        if (value == null) continue;
+        if (best == null || value > best) best = value;
+      }
+      if (best != null) {
+        points.add(OneRepMaxPoint(date: session.date, oneRepMaxKg: best));
+      }
+    }
+    points.sort((a, b) => a.date.compareTo(b.date));
+    return points;
+  }
+
+  static String weightLabel(double value) => _weightLabel(value);
 
   static String _weightLabel(double value) =>
       value % 1 == 0 ? value.toStringAsFixed(0) : value.toStringAsFixed(1);

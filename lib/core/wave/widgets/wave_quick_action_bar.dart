@@ -26,10 +26,7 @@ class WaveQuickActionBar extends StatelessWidget {
         children: [
           for (final action in actions) ...[
             if (action != actions.first) SizedBox(width: AppSpacing.md),
-            _QuickActionChip(
-              action: action,
-              onTap: () => onSelected(action),
-            ),
+            _QuickActionChip(action: action, onTap: () => onSelected(action)),
           ],
         ],
       ),
@@ -54,7 +51,6 @@ class _QuickActionChip extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         alignment: Alignment.center,
         decoration: AppShapes.decoration(
-          color: colors.backgroundSecondary,
           borderRadius: BorderRadius.circular(AppRadius.full),
           side: BorderSide(color: colors.borderSubtle, width: AppSizes.s1),
         ),

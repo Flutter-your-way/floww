@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:floww/config/theme/app_mode_intensity.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class FlowModeAmbientLayer extends StatefulWidget {
@@ -11,61 +13,94 @@ class FlowModeAmbientLayer extends StatefulWidget {
   State<FlowModeAmbientLayer> createState() => _FlowModeAmbientLayerState();
 }
 
-class _FlowModeAmbientLayerState extends State<FlowModeAmbientLayer>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: AppModeIntensity.flow.ambientDriftPeriod,
+class _FlowModeAmbientLayerState extends State<FlowModeAmbientLayer> {
+  static const int _repaintsPerSecond = 15;
+  static const Duration _tickInterval = Duration(
+    microseconds: Duration.microsecondsPerSecond ~/ _repaintsPerSecond,
   );
+
+  final ValueNotifier<double> _phase = ValueNotifier(0);
+  final Stopwatch _clock = Stopwatch();
+  late final AppLifecycleListener _lifecycle;
+  ValueListenable<TickerModeData>? _tickerMode;
+  Timer? _timer;
+  Duration _period = AppModeIntensity.flow.ambientDriftPeriod;
+  bool _reducedMotion = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onStateChange: (_) => _syncMotion());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final tickerMode = TickerMode.getValuesNotifier(context);
+    if (tickerMode != _tickerMode) {
+      _tickerMode?.removeListener(_syncMotion);
+      _tickerMode = tickerMode..addListener(_syncMotion);
+    }
+    _reducedMotion = MediaQuery.disableAnimationsOf(context);
+    _syncMotion();
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _tickerMode?.removeListener(_syncMotion);
+    _lifecycle.dispose();
+    _timer?.cancel();
+    _phase.dispose();
     super.dispose();
   }
 
-  void _syncMotion(AppModeIntensity intensity, bool reducedMotion) {
-    if (reducedMotion) {
-      if (_controller.isAnimating) _controller.stop();
-      return;
-    }
-
-    if (_controller.duration != intensity.ambientDriftPeriod) {
-      _controller.duration = intensity.ambientDriftPeriod;
-      _controller.repeat();
-      return;
-    }
-
-    if (!_controller.isAnimating) _controller.repeat();
+  bool get _shouldAnimate {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    return !_reducedMotion &&
+        (_tickerMode?.value.enabled ?? true) &&
+        (lifecycle == null || lifecycle == AppLifecycleState.resumed);
   }
 
-  static const double _repaintsPerSecond = 15;
+  void _syncMotion() {
+    final shouldAnimate = _shouldAnimate;
+    if (shouldAnimate == (_timer != null)) return;
 
-  double _quantizedPhase(AppModeIntensity intensity) {
-    final steps =
-        (intensity.ambientDriftPeriod.inMilliseconds *
-                _repaintsPerSecond /
-                1000)
-            .round()
-            .clamp(1, 1000);
-    return (_controller.value * steps).floorToDouble() / steps;
+    if (shouldAnimate) {
+      _clock
+        ..reset()
+        ..start();
+      _timer = Timer.periodic(_tickInterval, (_) => _advance());
+    } else {
+      _timer?.cancel();
+      _timer = null;
+      _clock.stop();
+    }
+  }
+
+  void _advance() {
+    final elapsed = _clock.elapsedMicroseconds;
+    _clock
+      ..reset()
+      ..start();
+    final period = _period.inMicroseconds;
+    if (period <= 0) return;
+    _phase.value = (_phase.value + elapsed / period) % 1;
   }
 
   @override
   Widget build(BuildContext context) {
     final intensity = context.intensity;
-    final reducedMotion = MediaQuery.disableAnimationsOf(context);
-    _syncMotion(intensity, reducedMotion);
+    _period = intensity.ambientDriftPeriod;
 
     return IgnorePointer(
       child: RepaintBoundary(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) => CustomPaint(
+        child: ValueListenableBuilder<double>(
+          valueListenable: _phase,
+          builder: (context, phase, _) => CustomPaint(
             size: Size.infinite,
             isComplex: true,
             painter: _AmbientPainter(
-              phase: _quantizedPhase(intensity),
+              phase: phase,
               primary: context.colors.primary,
               deep: context.colors.primaryDeep,
               opacity: intensity.ambientOpacity,

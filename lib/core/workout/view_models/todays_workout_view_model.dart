@@ -1,21 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
+import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
+import 'package:floww/core/workout/models/workout_shift_offer.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
+import 'package:floww/core/workout/services/workout_readiness_service.dart';
+import 'package:floww/core/workout/services/workout_session_service.dart';
+import 'package:floww/core/workout/services/workout_shift_service.dart';
+
+enum TodaysWorkoutAction { start, resume, viewSummary }
 
 class TodaysWorkoutViewModel extends ChangeNotifier {
-  TodaysWorkoutViewModel(this._planService, this._programService, DateTime date)
-    : _date = AppDateUtils.dateOnly(date);
+  TodaysWorkoutViewModel(
+    this._planService,
+    this._programService,
+    this._sessionService,
+    this._readinessService,
+    DateTime date,
+  ) : _date = AppDateUtils.dateOnly(date),
+      _shiftService = WorkoutShiftService(_planService);
 
   static const int _secondsPerMinute = 60;
   static const String _loadFailure = 'Could not load your planned workout.';
+  static const String _shiftFailure = 'Could not move your schedule.';
 
   static const Map<String, IconData> _iconByKeyword = {
     'leg': Icons.sports_gymnastics,
@@ -41,9 +57,16 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
 
   final WorkoutPlanService _planService;
   final WorkoutProgramService _programService;
+  final WorkoutSessionService _sessionService;
+  final WorkoutReadinessService _readinessService;
+  final WorkoutShiftService _shiftService;
   final DateTime _date;
 
   WorkoutPlanEntity? _plan;
+  WorkoutShiftOffer? _shiftOffer;
+  WorkoutSessionEntity? _session;
+  StreamSubscription<List<WorkoutSessionEntity>>? _sessionSubscription;
+  bool _isShifting = false;
   WorkoutPlanEntity? _nextPlan;
   ActiveProgramEntry? _activeProgram;
   bool _isLoading = true;
@@ -85,7 +108,41 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
         '${AppDateUtils.dayMonth(next.date)}.';
   }
 
-  String get startLabel => 'Start Workout';
+  TodaysWorkoutAction get action {
+    final session = _session;
+    if (session == null) return TodaysWorkoutAction.start;
+    if (session.isCompleted) return TodaysWorkoutAction.viewSummary;
+    return TodaysWorkoutAction.resume;
+  }
+
+  String get startLabel => switch (action) {
+    TodaysWorkoutAction.start => 'Start Workout',
+    TodaysWorkoutAction.resume => 'Resume Workout',
+    TodaysWorkoutAction.viewSummary => 'View Summary',
+  };
+
+  String? get sessionId => _session?.id;
+
+  bool get isCompleted => _session?.isCompleted ?? false;
+
+  void _watchSessions() {
+    _sessionSubscription?.cancel();
+    _sessionSubscription = _sessionService.watchSessionsFor(_date).listen((
+      sessions,
+    ) {
+      _session = _primarySessionOf(sessions);
+      notifyListeners();
+    }, onError: (_) {});
+  }
+
+  WorkoutSessionEntity? _primarySessionOf(List<WorkoutSessionEntity> sessions) {
+    WorkoutSessionEntity? inProgress;
+    for (final session in sessions) {
+      if (session.isCompleted) return session;
+      if (session.isInProgress) inProgress ??= session;
+    }
+    return inProgress;
+  }
 
   Future<void> load() async {
     _isLoading = true;
@@ -94,20 +151,64 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     try {
       final state = await _programService.loadState();
       _activeProgram = state.activeProgram;
-      _plan = await _planService.ensurePlanFor(
+      final history = await _sessionService.loadRecentSessions();
+      _plan = await _planService.preparePlanFor(
         _date,
         activeProgram: state.activeProgram,
+        history: history,
+        readiness: () => _readinessService.assess(history),
+      );
+      _session = _primarySessionOf([
+        for (final session in history)
+          if (AppDateUtils.isSameDay(session.date, _date)) session,
+      ]);
+      _shiftOffer = await _shiftService.offerFor(
+        date: _date,
+        activeProgram: state.activeProgram,
+        sessions: history,
+        todayPlan: _plan,
       );
       _nextPlan = _plan == null && _activeProgram != null
           ? await _planService.nextPlanAfter(_date)
           : null;
       _errorMessage = null;
+      _watchSessions();
     } on WorkoutException catch (error) {
       _errorMessage = error.message;
     } catch (_) {
       _errorMessage = _loadFailure;
     }
     _isLoading = false;
+    notifyListeners();
+  }
+
+  bool get isShifting => _isShifting;
+
+  bool get canShift => _shiftOffer != null;
+
+  String get shiftTitle => _shiftOffer?.title ?? '';
+
+  String get shiftMessage => _shiftOffer?.message ?? '';
+
+  String get shiftLabel => _shiftOffer?.actionLabel ?? '';
+
+  Future<void> shiftSchedule() async {
+    final active = _activeProgram;
+    final offer = _shiftOffer;
+    if (active == null || offer == null || _isShifting) return;
+    _isShifting = true;
+    notifyListeners();
+    try {
+      await _shiftService.apply(offer, active);
+      _isShifting = false;
+      await load();
+      return;
+    } on WorkoutException catch (error) {
+      _errorMessage = error.message;
+    } catch (_) {
+      _errorMessage = _shiftFailure;
+    }
+    _isShifting = false;
     notifyListeners();
   }
 
@@ -125,6 +226,16 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     final plan = _plan;
     if (plan == null) return null;
     return TodayWorkoutItem(
+      statusLabel: switch (action) {
+        TodaysWorkoutAction.start => null,
+        TodaysWorkoutAction.resume => 'In Progress',
+        TodaysWorkoutAction.viewSummary => 'Completed',
+      },
+      statusIcon: switch (action) {
+        TodaysWorkoutAction.start => null,
+        TodaysWorkoutAction.resume => Icons.timelapse_rounded,
+        TodaysWorkoutAction.viewSummary => Icons.check_rounded,
+      },
       name: plan.name,
       icon: _workoutIcon,
       programLabel: plan.programLabel,
@@ -157,11 +268,12 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   }
 
   WorkoutExerciseItem _exerciseOf(WorkoutEntryEntity exercise) {
+    final unit = exercise.isTimed ? 'sec' : 'reps';
     return WorkoutExerciseItem(
       id: exercise.id,
       name: exercise.name,
       imageUrl: exercise.imageUrl,
-      setsLabel: '${exercise.targetSets} sets x ${exercise.targetReps} reps',
+      setsLabel: '${exercise.targetSets} sets x ${exercise.targetReps} $unit',
       weightLabel: exercise.isBodyweight
           ? 'BW'
           : '${NumberFormatter.grouped(exercise.targetWeightKg!.round())} kg',
@@ -186,6 +298,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _sessionSubscription?.cancel();
     super.dispose();
   }
 }

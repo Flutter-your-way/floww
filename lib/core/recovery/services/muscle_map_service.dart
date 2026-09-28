@@ -5,17 +5,37 @@ import 'package:floww/core/recovery/models/muscle_group.dart';
 import 'package:floww/core/recovery/services/muscle_map_data.dart';
 
 class MuscleMapTemplate {
-  const MuscleMapTemplate({
+  MuscleMapTemplate({
     required this.header,
     required this.shapes,
     required this.groupOfShape,
   });
 
+  static const int _paintCacheLimit = 48;
+
   final String header;
   final List<String> shapes;
   final Map<int, MuscleGroup> groupOfShape;
+  final Map<String, String> _painted = {};
 
   String paint(Map<MuscleGroup, Color> palette) {
+    final key = _paletteKey(palette);
+    final cached = _painted[key];
+    if (cached != null) return cached;
+
+    if (_painted.length >= _paintCacheLimit) _painted.clear();
+    return _painted[key] = _render(palette);
+  }
+
+  static String _paletteKey(Map<MuscleGroup, Color> palette) {
+    final entries = [
+      for (final entry in palette.entries)
+        '${entry.key.index}:${entry.value.toARGB32()}',
+    ]..sort();
+    return entries.join(',');
+  }
+
+  String _render(Map<MuscleGroup, Color> palette) {
     final buffer = StringBuffer(header);
     for (var i = 0; i < shapes.length; i++) {
       final shape = shapes[i];

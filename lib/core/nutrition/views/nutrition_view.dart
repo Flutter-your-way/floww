@@ -15,6 +15,7 @@ import 'package:floww/core/nutrition/view_models/nutrition_view_model.dart';
 import 'package:floww/core/nutrition/views/food_scan_result_sheet.dart';
 import 'package:floww/core/nutrition/views/log_food_sheet.dart';
 import 'package:floww/core/nutrition/views/macronutrients_sheet.dart';
+import 'package:floww/config/widgets/sheets/app_date_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
 import 'package:floww/core/nutrition/views/water_intake_sheet.dart';
 import 'package:floww/core/nutrition/widgets/calorie_summary_card.dart';
@@ -26,7 +27,7 @@ import 'package:floww/core/nutrition/widgets/macronutrients_card.dart';
 import 'package:floww/core/nutrition/widgets/meal_breakdown_card.dart';
 import 'package:floww/core/nutrition/widgets/micronutrient_tiles.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_action_buttons.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_empty_state_card.dart';
+import 'package:floww/config/widgets/cards/app_empty_state_card.dart';
 import 'package:floww/config/widgets/effects/luminosity_layer.dart';
 import 'package:floww/config/widgets/headers/screen_date_header.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
@@ -43,8 +44,8 @@ class NutritionView extends StatelessWidget {
     BuildContext context,
     NutritionViewModel viewModel,
   ) async {
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await AppDateSheet.show(
+      context,
       initialDate: viewModel.selectedDate,
       firstDate: viewModel.firstSelectableDate,
       lastDate: viewModel.lastSelectableDate,
@@ -170,7 +171,7 @@ class NutritionView extends StatelessWidget {
                                     SizedBox(height: AppSpacing.lg),
                                   ],
                                   if (viewModel.showEmptyState) ...[
-                                    NutritionEmptyStateCard(
+                                    AppEmptyStateCard(
                                       title: viewModel.emptyTitle,
                                       message: viewModel.emptyMessage,
                                     ),

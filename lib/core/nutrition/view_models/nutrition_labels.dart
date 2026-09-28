@@ -15,6 +15,13 @@ class NutritionLabels {
     return '${text}g';
   }
 
+  static String quantity(double value) {
+    final rounded = (value * 100).round() / 100;
+    if (rounded == rounded.roundToDouble()) return rounded.toInt().toString();
+    final text = rounded.toStringAsFixed(2);
+    return text.endsWith('0') ? text.substring(0, text.length - 1) : text;
+  }
+
   static String kcal(double value) => '${number(value)} kcal';
 
   static String milligrams(double value) => '${number(value)}mg';

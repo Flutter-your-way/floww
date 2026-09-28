@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/core/achievements/models/streak_milestone.dart';
 
 class StreakMilestoneRow extends StatelessWidget {
@@ -28,14 +27,16 @@ class StreakMilestoneRow extends StatelessWidget {
                 milestone.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodyLargeSemiBold,
+                style: context.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               SizedBox(height: AppSpacing.xxs),
               Text(
                 milestone.description,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodySmallMedium.copyWith(
+                style: context.textTheme.labelSmall?.copyWith(
                   color: colors.textSecondary,
                 ),
               ),
@@ -55,14 +56,14 @@ class _MilestoneBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: AppSizes.s44,
-      width: AppSizes.s44,
+      height: AppSizes.s36,
+      width: AppSizes.s36,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: context.colors.backgroundSurface,
         shape: BoxShape.circle,
       ),
-      child: Text(emoji, style: AppTypography.heading4),
+      child: Text(emoji, style: context.textTheme.bodyLarge),
     );
   }
 }

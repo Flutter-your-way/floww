@@ -1,4 +1,5 @@
 import 'package:floww/core/workout/models/exercise.dart';
+import 'package:floww/core/workout/models/set_type.dart';
 
 class ExerciseCueEntry {
   const ExerciseCueEntry({required this.text, this.label});
@@ -37,6 +38,7 @@ class ExerciseCatalogEntry {
     this.equipmentItems = const [],
     this.isCustom = false,
     this.isAdded = false,
+    this.trackingMode = TrackingMode.reps,
   });
 
   factory ExerciseCatalogEntry.fromJson(Map<String, dynamic> json) =>
@@ -59,6 +61,7 @@ class ExerciseCatalogEntry {
         equipmentItems: cuesOf(json['equipmentItems']),
         isCustom: json['isCustom'] as bool? ?? false,
         isAdded: json['isAdded'] as bool? ?? false,
+        trackingMode: TrackingMode.fromId(json['trackingMode'] as String?),
       );
 
   static const double _fallbackMet = 5;
@@ -80,8 +83,15 @@ class ExerciseCatalogEntry {
   final List<ExerciseCueEntry> equipmentItems;
   final bool isCustom;
   final bool isAdded;
+  final TrackingMode trackingMode;
+
+  static const double _upperBodyStepKg = 2.5;
+  static const double _lowerBodyStepKg = 5;
 
   bool get isBodyweight => equipment == Equipment.bodyweight;
+
+  double get weightStepKg =>
+      group == MuscleGroup.legs ? _lowerBodyStepKg : _upperBodyStepKg;
 
   ExerciseCatalogEntry copyWith({bool? isAdded}) => ExerciseCatalogEntry(
     id: id,
@@ -101,6 +111,7 @@ class ExerciseCatalogEntry {
     equipmentItems: equipmentItems,
     isCustom: isCustom,
     isAdded: isAdded ?? this.isAdded,
+    trackingMode: trackingMode,
   );
 
   Map<String, dynamic> toJson() => {
@@ -121,6 +132,7 @@ class ExerciseCatalogEntry {
     'equipmentItems': [for (final cue in equipmentItems) cue.toJson()],
     'isCustom': isCustom,
     'isAdded': isAdded,
+    'trackingMode': trackingMode.id,
   };
 
   Map<String, dynamic> toCatalogJson() {

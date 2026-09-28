@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/card_style_controller.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/workout/models/exercise_view_data.dart';
@@ -24,6 +27,9 @@ class MuscleGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isGlass = context.select<CardStyleController, bool>(
+      (controller) => controller.isGlass,
+    );
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -35,7 +41,13 @@ class MuscleGroupCard extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             child: Row(
               children: [
-                const WorkoutIconTile(),
+                WorkoutIconTile(
+                  backgroundColor: isGlass
+                      ? colors.textPrimary.withValues(
+                          alpha: AppOpacity.frostedTile,
+                        )
+                      : null,
+                ),
                 SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Column(
@@ -82,6 +94,7 @@ class MuscleGroupCard extends StatelessWidget {
               ),
               _ExerciseRow(
                 exercise: exercise,
+                isGlass: isGlass,
                 onToggle: onToggleExercise == null
                     ? null
                     : () => onToggleExercise!(exercise.id),
@@ -94,9 +107,14 @@ class MuscleGroupCard extends StatelessWidget {
 }
 
 class _ExerciseRow extends StatelessWidget {
-  const _ExerciseRow({required this.exercise, this.onToggle});
+  const _ExerciseRow({
+    required this.exercise,
+    required this.isGlass,
+    this.onToggle,
+  });
 
   final ExerciseRowItem exercise;
+  final bool isGlass;
   final VoidCallback? onToggle;
 
   @override
@@ -158,6 +176,8 @@ class _ExerciseRow extends StatelessWidget {
             decoration: AppShapes.decoration(
               color: exercise.isAdded
                   ? colors.backgroundElevated
+                  : isGlass
+                  ? colors.textPrimary.withValues(alpha: AppOpacity.frostedTile)
                   : colors.backgroundSurface,
               borderRadius: BorderRadius.circular(AppRadius.md),
               side: BorderSide(color: colors.borderSubtle, width: AppSizes.s1),

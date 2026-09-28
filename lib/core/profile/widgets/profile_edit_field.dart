@@ -43,9 +43,9 @@ class ProfileEditField extends StatelessWidget {
             color: colors.textSubtle,
           ),
         ),
-        SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.md),
         Container(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
             vertical: AppSpacing.md,
           ),
@@ -78,7 +78,7 @@ class ProfileEditField extends StatelessWidget {
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
+                    contentPadding: const EdgeInsets.symmetric(
                       vertical: AppSpacing.lg,
                     ),
                     hintText: hint,
@@ -89,7 +89,7 @@ class ProfileEditField extends StatelessWidget {
                 ),
               ),
               if (trailing != null) ...[
-                SizedBox(width: AppSpacing.lg),
+                const SizedBox(width: AppSpacing.lg),
                 trailing,
               ],
             ],

@@ -25,7 +25,12 @@ enum WaveQuickAction {
 
   List<String> get keywords => switch (this) {
     WaveQuickAction.todayPlan => const ['today', 'plan', 'what should'],
-    WaveQuickAction.shoulderPain => const ['shoulder', 'hurt', 'pain', 'injury'],
+    WaveQuickAction.shoulderPain => const [
+      'shoulder',
+      'hurt',
+      'pain',
+      'injury',
+    ],
     WaveQuickAction.finishedWorkout => const [
       'finished',
       'done',

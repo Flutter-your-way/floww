@@ -24,7 +24,7 @@ class ExercisePickerRow extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
-          vertical: AppSpacing.lg,
+          vertical: AppSpacing.md,
         ),
         decoration: AppShapes.decoration(
           color: isSelected ? colors.bgTinted : colors.backgroundSurface,
@@ -44,7 +44,7 @@ class ExercisePickerRow extends StatelessWidget {
                     exercise.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodyLargeSemiBoldTight.copyWith(
+                    style: AppTypography.labelMediumSemiBold.copyWith(
                       color: isSelected
                           ? colors.primaryAlt
                           : colors.textPrimary,
@@ -55,7 +55,7 @@ class ExercisePickerRow extends StatelessWidget {
                     exercise.detailLabel,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySmallRegularTight.copyWith(
+                    style: AppTypography.bodyXSmallMedium.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
@@ -83,8 +83,8 @@ class ExercisePickerRow extends StatelessWidget {
             ],
             SizedBox(width: AppSpacing.md),
             Container(
-              width: AppSizes.s24,
-              height: AppSizes.s24,
+              width: AppSizes.s20,
+              height: AppSizes.s20,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -95,7 +95,7 @@ class ExercisePickerRow extends StatelessWidget {
                 ),
               ),
               child: isSelected
-                  ? Icon(Icons.check, size: AppSizes.s14, color: colors.primary)
+                  ? Icon(Icons.check, size: AppSizes.s12, color: colors.primary)
                   : null,
             ),
           ],
