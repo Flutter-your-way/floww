@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
@@ -104,7 +106,10 @@ class WorkoutSessionService extends WorkoutFirestore {
     });
   }
 
-  Future<WorkoutSessionEntity?> loadInProgressSession(DateTime date) async {
+  Future<WorkoutSessionEntity?> loadInProgressSession(
+    DateTime date, {
+    DateTime? planDate,
+  }) async {
     final uid = userId;
     if (uid == null) return null;
     return guard('loadInProgressSession', _loadFailure, () async {
@@ -112,16 +117,27 @@ class WorkoutSessionService extends WorkoutFirestore {
         uid,
       ).where(_dateField, isEqualTo: AppDateUtils.dateKey(date)).get();
       for (final session in _sessionsOf(snapshot)) {
-        if (session.isInProgress) return session;
+        if (!session.isInProgress) continue;
+        if (planDate == null ||
+            AppDateUtils.isSameDay(session.scheduledDate, planDate)) {
+          return session;
+        }
       }
       return null;
     });
   }
 
-  Future<WorkoutSessionEntity> startSession(WorkoutPlanEntity plan) async {
+  Future<WorkoutSessionEntity> startSession(
+    WorkoutPlanEntity plan, {
+    DateTime? on,
+    bool lookupExisting = true,
+  }) async {
     final uid = requireUserId;
-    final existing = await loadInProgressSession(plan.date);
-    if (existing != null) return existing;
+    final date = AppDateUtils.dateOnly(on ?? plan.date);
+    if (lookupExisting) {
+      final existing = await loadInProgressSession(date, planDate: plan.date);
+      if (existing != null) return existing;
+    }
 
     final now = DateTime.now();
     final document = _sessions(uid).doc();
@@ -129,7 +145,7 @@ class WorkoutSessionService extends WorkoutFirestore {
       id: document.id,
       workoutId: plan.id,
       name: plan.name,
-      date: plan.date,
+      date: date,
       status: WorkoutSessionStatus.inProgress,
       startedAt: now,
       completedAt: now,
@@ -140,13 +156,15 @@ class WorkoutSessionService extends WorkoutFirestore {
       insight: plan.insight,
       programId: plan.programId,
       programLabel: plan.programLabel,
-      timerResumedAt: now,
+      planDate: AppDateUtils.isSameDay(date, plan.date) ? null : plan.date,
     );
 
-    await guard(
-      'startSession',
-      _saveFailure,
-      () => document.set(session.toJson()),
+    unawaited(
+      guard(
+        'startSession',
+        _saveFailure,
+        () => document.set(session.toJson()),
+      ).catchError((Object _) {}),
     );
     return session;
   }
@@ -247,6 +265,7 @@ class WorkoutSessionService extends WorkoutFirestore {
       uid,
       date: session.date,
       totalSets: totals.totalSets,
+      plannedSets: session.plannedSets,
       previousSessions: previous,
     );
 
@@ -261,6 +280,7 @@ class WorkoutSessionService extends WorkoutFirestore {
       'exercises': [for (final entry in session.exercises) entry.toJson()],
       'volumeKg': totals.volumeKg,
       'totalSets': totals.totalSets,
+      'plannedSets': session.plannedSets,
       'totalReps': totals.totalReps,
       'exerciseCount': totals.exerciseCount,
       'caloriesKcal': WorkoutMetrics.caloriesOf(
@@ -309,7 +329,7 @@ class WorkoutSessionService extends WorkoutFirestore {
 
   Future<void> _unlogLocally(WorkoutSessionEntity session) async {
     final uid = requireUserId;
-    final plan = _plans(uid).doc(AppDateUtils.dateKey(session.date));
+    final plan = _plans(uid).doc(AppDateUtils.dateKey(session.scheduledDate));
     await guard('unlogSession', _saveFailure, () async {
       final stored = await plan.get();
       final batch = firestore.batch();
@@ -416,6 +436,7 @@ class WorkoutSessionService extends WorkoutFirestore {
     String uid, {
     required DateTime date,
     required int totalSets,
+    required int plannedSets,
     required List<WorkoutSessionEntity> previousSessions,
   }) async {
     const calculator = FlowScoreCalculator();
@@ -430,14 +451,24 @@ class WorkoutSessionService extends WorkoutFirestore {
           : DailyFlowEntry.fromJson(data);
 
       var priorSets = 0;
+      var priorPlanned = 0;
       for (final session in previousSessions) {
         if (AppDateUtils.isSameDay(session.date, date)) {
           priorSets += session.totalSets;
+          priorPlanned += session.plannedSets;
         }
       }
 
-      final before = calculator.withWorkoutSets(entry, priorSets);
-      final after = calculator.withWorkoutSets(entry, priorSets + totalSets);
+      final before = calculator.withWorkoutSets(
+        entry,
+        priorSets,
+        plannedSets: priorPlanned,
+      );
+      final after = calculator.withWorkoutSets(
+        entry,
+        priorSets + totalSets,
+        plannedSets: priorPlanned + plannedSets,
+      );
       return _FlowScoreChange(before.score, after.score);
     } catch (_) {
       return const _FlowScoreChange(0, 0);

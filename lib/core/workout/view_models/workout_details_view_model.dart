@@ -7,6 +7,7 @@ import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
+import 'package:floww/core/workout/services/workout_catalog_data.dart';
 import 'package:floww/core/workout/models/add_exercise_view_data.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
@@ -100,7 +101,7 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
         WorkoutStatItem(
           icon: Icons.schedule,
           title: 'DURATION',
-          value: _durationLabel(session.elapsedSecondsAt(DateTime.now())),
+          value: _durationLabel(session.trackedSeconds),
           unit: 'min',
         ),
         WorkoutStatItem(
@@ -213,7 +214,8 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
     return WorkoutExerciseItem(
       id: exercise.id,
       name: exercise.name,
-      imageUrl: exercise.imageUrl,
+      imageUrl:
+          exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
       setsLabel: logged == 0
           ? '0/${exercise.targetSets} sets x ${exercise.targetReps} $unit'
           : '$logged/${exercise.targetSets} sets · ${_loggedLabel(exercise)}',

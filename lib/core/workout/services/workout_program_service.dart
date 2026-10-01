@@ -28,13 +28,19 @@ class WorkoutProgramService extends WorkoutFirestore {
     DateTime? startDate,
     int? weeks,
     List<int> weekdays = const [],
-  }) => ActiveProgramEntry(
-    id: program.id,
-    name: program.name,
-    level: program.level,
-    startedAt: startDate ?? DateTime.now(),
-    totalWeeks: weeks ?? program.weeks,
-    daysPerWeek: program.sessionsPerWeek,
-    weekdays: weekdays,
-  );
+  }) {
+    final isFixed = program.hasFixedLength;
+    return ActiveProgramEntry(
+      id: program.id,
+      name: program.name,
+      level: program.level,
+      startedAt: startDate ?? DateTime.now(),
+      totalWeeks: isFixed
+          ? (program.lengthDays / DateTime.daysPerWeek).ceil()
+          : weeks ?? program.weeks,
+      daysPerWeek: program.sessionsPerWeek,
+      weekdays: weekdays,
+      totalDays: isFixed ? program.lengthDays : 0,
+    );
+  }
 }

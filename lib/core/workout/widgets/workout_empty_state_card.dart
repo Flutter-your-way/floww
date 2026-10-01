@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
@@ -12,11 +13,13 @@ class WorkoutEmptyStateCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
+    this.iconAsset,
   });
 
   final IconData icon;
   final String title;
   final String message;
+  final String? iconAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +32,18 @@ class WorkoutEmptyStateCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: context.colors.textMuted, size: AppSizes.s24),
+          if (iconAsset case final asset?)
+            SvgPicture.asset(
+              asset,
+              width: AppSizes.s32,
+              height: AppSizes.s32,
+              colorFilter: ColorFilter.mode(
+                context.colors.textMuted,
+                BlendMode.srcIn,
+              ),
+            )
+          else
+            Icon(icon, color: context.colors.textMuted, size: AppSizes.s24),
           SizedBox(height: AppSpacing.lg),
           Text(
             title,

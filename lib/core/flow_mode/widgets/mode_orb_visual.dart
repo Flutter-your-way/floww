@@ -19,7 +19,9 @@ class ModeOrbVisual extends StatelessWidget {
     required this.reducedMotion,
   });
 
-  static const double _orbSize = AppSizes.s160 * 1.75;
+  static const double _orbSize = AppSizes.s160 * 2.6;
+  static const double _orbSpeed = 1.3;
+  static const Alignment _orbAnchor = Alignment(0, -0.25);
   static const double _haloSpread = 1.5;
   static const double _entryScale = 0.74;
   static const double _fadeRate = 3;
@@ -41,7 +43,8 @@ class ModeOrbVisual extends StatelessWidget {
     final scale = _entryScale + (1 - _entryScale) * _entry;
 
     return RepaintBoundary(
-      child: Center(
+      child: Align(
+        alignment: _orbAnchor,
         child: SizedBox.square(
           dimension: _orbSize,
           child: Stack(
@@ -59,9 +62,7 @@ class ModeOrbVisual extends StatelessWidget {
                   child: AnimatedOrb(
                     size: _orbSize,
                     palette: AppOrbPalette.of(mode),
-                    spin: reducedMotion ? 0 : intensity.orbSpin,
-                    orbit: reducedMotion ? 0 : intensity.orbOrbit,
-                    ringGlow: intensity.orbRingGlow,
+                    speed: _orbSpeed,
                     animate: !reducedMotion,
                   ),
                 ),

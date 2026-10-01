@@ -132,6 +132,9 @@ export const totalsOf = (entries: WorkoutEntry[]): WorkoutTotals => {
   };
 };
 
+export const plannedSetsOf = (entries: WorkoutEntry[]): number =>
+  entries.reduce((total, entry) => total + Math.max(0, entry.targetSets), 0);
+
 export const caloriesOf = (
   totals: WorkoutTotals,
   durationSeconds: number,

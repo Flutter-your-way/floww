@@ -30,6 +30,7 @@ class _AppPalette {
 
   static const textPrimary = Color(0xFFFFFFFF);
   static const textSecondary = Color(0x80FFFFFF);
+  static const glassStroke = Color(0xC5FFFFFF);
   static const textTertiary = Color(0x33FFFFFF);
   static const textFaint = Color(0x59FFFFFF);
   static const textMuted = Color(0xFF999999);
@@ -217,6 +218,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     this.brandLight = _AppPalette.brandLight,
     this.onBrandLight = _AppPalette.onBrandLight,
     this.glassSurface = _AppPalette.textSecondary,
+    this.glassStroke = _AppPalette.glassStroke,
     this.scrim = _AppPalette.scrim,
     this.proteinAccent = _AppPalette.proteinAccent,
     this.carbsAccent = _AppPalette.carbsAccent,
@@ -267,6 +269,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color brandLight;
   final Color onBrandLight;
   final Color glassSurface;
+  final Color glassStroke;
   final Color scrim;
   final Color proteinAccent;
   final Color carbsAccent;
@@ -365,6 +368,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? brandLight,
     Color? onBrandLight,
     Color? glassSurface,
+    Color? glassStroke,
     Color? scrim,
     Color? proteinAccent,
     Color? carbsAccent,
@@ -414,6 +418,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       brandLight: brandLight ?? this.brandLight,
       onBrandLight: onBrandLight ?? this.onBrandLight,
       glassSurface: glassSurface ?? this.glassSurface,
+      glassStroke: glassStroke ?? this.glassStroke,
       scrim: scrim ?? this.scrim,
       proteinAccent: proteinAccent ?? this.proteinAccent,
       carbsAccent: carbsAccent ?? this.carbsAccent,
@@ -496,6 +501,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       brandLight: Color.lerp(brandLight, other.brandLight, t)!,
       onBrandLight: Color.lerp(onBrandLight, other.onBrandLight, t)!,
       glassSurface: Color.lerp(glassSurface, other.glassSurface, t)!,
+      glassStroke: Color.lerp(glassStroke, other.glassStroke, t)!,
       scrim: Color.lerp(scrim, other.scrim, t)!,
       proteinAccent: Color.lerp(proteinAccent, other.proteinAccent, t)!,
       carbsAccent: Color.lerp(carbsAccent, other.carbsAccent, t)!,
@@ -587,6 +593,42 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     colors: [Color(0xFF14110B), _AppPalette.backgroundPrimary],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
+  );
+
+  static const analysisBackground = LinearGradient(
+    colors: [
+      Color(0xFF14110B),
+      Color(0xFF14110B),
+      Color(0xFF2B3614),
+      Color(0xFF55711F),
+    ],
+    stops: [0.0, 0.42, 0.72, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment(0.35, 1.0),
+  );
+
+  static const blueprintBackground = LinearGradient(
+    colors: [
+      Color(0xFF4A6418),
+      Color(0xFF263015),
+      Color(0xFF171915),
+      Color(0xFF1C1D1A),
+      Color(0xFF252B19),
+      Color(0xFF3E4D1F),
+      Color(0xFF1E2216),
+    ],
+    stops: [0.0, 0.12, 0.26, 0.4, 0.58, 0.8, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const flowScoreFill = LinearGradient(
+    colors: [
+      Color(0xFF84CC16),
+      Color(0xFFC3FF3D),
+      Color(0xFFF4FCE3),
+    ],
+    stops: [0.0, 0.5, 1.0],
   );
 
   static const double topFadeExtent = 0.08;

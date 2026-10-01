@@ -16,6 +16,7 @@ class ConnectedAppsCard extends StatelessWidget {
     required this.connectLabel,
     required this.connectedLabel,
     required this.isPending,
+    required this.isEnabled,
     this.onToggle,
   });
 
@@ -23,6 +24,7 @@ class ConnectedAppsCard extends StatelessWidget {
   final String connectLabel;
   final String connectedLabel;
   final bool Function(String id) isPending;
+  final bool Function(String id) isEnabled;
   final ValueChanged<ConnectedAppItem>? onToggle;
 
   @override
@@ -47,7 +49,9 @@ class ConnectedAppsCard extends StatelessWidget {
               connectLabel: connectLabel,
               connectedLabel: connectedLabel,
               isPending: isPending(app.id),
-              onToggle: onToggle == null ? null : () => onToggle(app),
+              onToggle: onToggle == null || !isEnabled(app.id)
+                  ? null
+                  : () => onToggle(app),
             ),
           ],
         ],

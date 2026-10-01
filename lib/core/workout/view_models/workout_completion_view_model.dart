@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
+import 'package:floww/config/utils/share/instagram_stories_service.dart';
 import 'package:floww/config/utils/share/share_service.dart';
 import 'package:floww/core/nutrition/services/food_camera_service.dart';
 import 'package:floww/core/nutrition/services/photo_library_service.dart';
@@ -20,10 +21,10 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
   WorkoutCompletionViewModel(
     this._service,
     this._result, {
-    ShareService shareService = const ShareService(),
+    this._shareService = const ShareService(),
+    this._storiesService = const InstagramStoriesService(),
     PhotoLibraryService? photoLibraryService,
-  }) : _shareService = shareService,
-       _photoLibraryService = photoLibraryService ?? PhotoLibraryService();
+  }) : _photoLibraryService = photoLibraryService ?? PhotoLibraryService();
 
   static const int _secondsPerMinute = 60;
   static const int _photoCardIndex = 1;
@@ -38,6 +39,7 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
   final WorkoutSessionService _service;
   final WorkoutCompletionResult _result;
   final ShareService _shareService;
+  final InstagramStoriesService _storiesService;
   final PhotoLibraryService _photoLibraryService;
 
   int _sharePageIndex = 0;
@@ -260,6 +262,7 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
           );
           _statusMessage = _savedMessage;
         case ShareTarget.stories:
+          await _shareToStories(await capture());
         case ShareTarget.strava:
         case ShareTarget.share:
           await _shareService.shareImage(
@@ -279,6 +282,15 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
       _busyTarget = null;
       notifyListeners();
     }
+  }
+
+  Future<void> _shareToStories(Uint8List bytes) async {
+    if (await _storiesService.shareSticker(bytes)) return;
+    await _shareService.shareImage(
+      bytes,
+      name: _shareFileName,
+      text: _shareText,
+    );
   }
 
   Future<void> _pickSharePhoto() async {

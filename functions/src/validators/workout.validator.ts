@@ -19,3 +19,7 @@ export const completeWorkoutValidator = z.object({
 });
 
 export const unlogWorkoutValidator = z.object({sessionId});
+
+export const generateWorkoutPlanValidator = z.object({
+  useAi: z.boolean().optional(),
+});

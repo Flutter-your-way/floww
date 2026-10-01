@@ -5,13 +5,13 @@ precision highp float;
 
 // ---- uniforms: set with setFloat() in exactly this order ----
 uniform vec2  uSize;      // 0,1  widget size in logical px
-uniform float uTime;      // 2    seconds, monotonically increasing
+uniform float uTime;      // 2    seconds, wraps at LOOP
 uniform vec2  uCenter;    // 3,4  orb centre in uv          -> 0.5185, 0.5000
 uniform float uCoreR;     // 5    sphere radius, height-units -> 0.247
-uniform float uSpin;      // 6    sphere rotation rad/s  0.2 .. 1.2  (try 0.55)
+uniform float uFlow;      // 6    integrated spin clock, wraps at LOOP
 uniform float uTilt;      // 7    sphere axis tilt rad  -0.5 .. 0.5  (try 0.18)
 uniform float uPulse;     // 8    glow breathing        0.0 .. 1.0   (try 1.0)
-uniform float uOrbit;     // 9    bubble speed multiplier 0.3 .. 2.0 (try 1.0)
+uniform float uOrbitClock;// 9    integrated bubble clock, wraps at LOOP
 uniform float uRingGlow;  // 10   overall ring intensity 0.4 .. 1.6  (try 0.85)
 uniform vec3  uColDark;   // 11,12,13  palette: deepest shadow
 uniform vec3  uColMid;    // 14,15,16  palette: body colour
@@ -23,6 +23,15 @@ uniform sampler2D uTexture; // restore.png
 out vec4 fragColor;
 
 const int RING_COUNT = 8;
+
+// must equal AppOrb.loop; every angular speed is snapped to whole cycles per
+// LOOP so the clocks wrap without a visible jump
+const float LOOP = 120.0;
+const float TAU = 6.28318530718;
+
+float snapRate(float w) {
+    return max(floor(w * LOOP / TAU + 0.5), 1.0) * TAU / LOOP;
+}
 
 // radius, sin(inclination), roll, angular speed
 vec4 ringA(int i) {
@@ -99,7 +108,7 @@ vec3 orbitRings(vec2 q, float coreR, float t, vec3 tint) {
         float z = R * sin(ph) * sqrt(max(1.0 - si * si, 0.0));
 
         // travelling head: the whole ring stays visible, one arc glows hot
-        float head = 0.5 + 0.5 * cos(ph - t * spd);
+        float head = 0.5 + 0.5 * cos(ph - t * snapRate(spd));
         float mHead = 0.38 + 0.62 * head * head;
 
         float hidden = step(z, 0.0) * step(pixelR, coreR * 0.97);
@@ -114,7 +123,7 @@ vec3 orbitRings(vec2 q, float coreR, float t, vec3 tint) {
 // Bubbles riding the same tracks, so they follow the lines instead of
 // drifting independently of them.
 // ---------------------------------------------------------------------
-vec3 orbitBubbles(vec2 q, float coreR, float t, float speed, vec3 tint) {
+vec3 orbitBubbles(vec2 q, float coreR, float clock, vec3 tint) {
     vec3 acc = vec3(0.0);
     for (int k = 0; k < 26; k++) {
         float fk = float(k);
@@ -130,7 +139,7 @@ vec3 orbitBubbles(vec2 q, float coreR, float t, float speed, vec3 tint) {
         float si = ra.y, roll = ra.z;
         float ci = sqrt(max(1.0 - si * si, 0.0));
 
-        float ph = h2 * 6.28318 + t * ra.w * speed * (0.8 + 0.4 * h3);
+        float ph = h2 * TAU + clock * snapRate(ra.w * (0.8 + 0.4 * h3));
         vec2 p0 = vec2(R * cos(ph), -R * si * sin(ph));
         float z = R * sin(ph) * ci;
         vec2 sp = rot2(p0, roll);
@@ -165,7 +174,7 @@ void main() {
     float ct = cos(uTilt), st = sin(uTilt);
     n.yz = mat2(ct, -st, st, ct) * n.yz;
 
-    float th = t * uSpin;
+    float th = uFlow * snapRate(1.0);
     float cs = cos(th), sn = sin(th);
     vec3 m = vec3(n.x * cs - n.z * sn, n.y, n.x * sn + n.z * cs);
 
@@ -201,8 +210,8 @@ void main() {
 
     float coreMask = smoothstep(uCoreR * 1.02, uCoreR * 0.94, r);
 
-    float beat  = 0.5 + 0.5 * sin(t * 1.30);
-    float beat2 = 0.5 + 0.5 * sin(t * 0.47 + 1.9);
+    float beat  = 0.5 + 0.5 * sin(t * snapRate(1.30));
+    float beat2 = 0.5 + 0.5 * sin(t * snapRate(0.47) + 1.9);
     core *= 1.0 + uPulse * (0.09 * beat + 0.05 * beat2);
 
     // ================= everything outside the sphere =================
@@ -210,7 +219,7 @@ void main() {
               * exp(-pow((r - uCoreR * 0.99) / (uCoreR * 0.30), 2.0)) * 0.30;
 
     vec3 rings   = orbitRings(q, uCoreR, t, uColRing) * uRingGlow;
-    vec3 bubbles = orbitBubbles(q, uCoreR, t, uOrbit,
+    vec3 bubbles = orbitBubbles(q, uCoreR, uOrbitClock,
                                mix(uColRing, uColHot, 0.20)) * 0.85;
 
     // ================= composite (premultiplied) =================

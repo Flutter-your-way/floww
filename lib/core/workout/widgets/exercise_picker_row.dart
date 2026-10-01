@@ -62,6 +62,14 @@ class ExercisePickerRow extends StatelessWidget {
                 ],
               ),
             ),
+            if (exercise.isSaved) ...[
+              SizedBox(width: AppSpacing.md),
+              Icon(
+                Icons.star_rounded,
+                size: AppSizes.s16,
+                color: colors.primaryAlt,
+              ),
+            ],
             if (exercise.isCustom) ...[
               SizedBox(width: AppSpacing.md),
               Container(

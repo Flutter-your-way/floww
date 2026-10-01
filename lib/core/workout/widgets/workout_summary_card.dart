@@ -1,3 +1,5 @@
+import 'package:floww/config/widgets/animations/app_card_pop.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_opacity.dart';
@@ -7,17 +9,24 @@ import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
+import 'package:floww/config/widgets/images/app_photo_tile.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/widgets/workout_chip.dart';
 import 'package:floww/core/workout/widgets/workout_stat_tile.dart';
 
 class WorkoutSummaryCard extends StatelessWidget {
-  const WorkoutSummaryCard({super.key, required this.summary, this.onInfo});
+  const WorkoutSummaryCard({
+    super.key,
+    required this.summary,
+    this.onInfo,
+    this.onTap,
+  });
 
   static const double _statRowHeight = AppSizes.s56;
 
   final WorkoutSummaryItem summary;
   final VoidCallback? onInfo;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -25,59 +34,68 @@ class WorkoutSummaryCard extends StatelessWidget {
     final gradients = context.gradients;
     final radius = BorderRadius.circular(AppRadius.xl);
 
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: AppShapes.decoration(
-              gradient: gradients.darkGlow.withOpacity(AppOpacity.frostedCard),
-              borderRadius: radius,
-            ),
-          ),
-        ),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: AppShapes.decoration(
-              gradient: gradients.cardSheen.withOpacity(AppOpacity.frostedCard),
-              borderRadius: radius,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CardHeader(
-                title: 'Workout Summary',
-                onTap: onInfo,
-                icon: Icons.bolt,
-                iconColor: colors.textPrimary,
-                titleStyle: AppTypography.heading4SemiBold.copyWith(
-                  color: colors.textPrimary,
-                ),
-                titleTrailing: Icon(
-                  Icons.info_outline,
-                  size: AppSizes.s16,
-                  color: colors.textSecondary,
+    return AppCardPop(
+      child: PressScale(
+        onTap: onTap,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: AppShapes.decoration(
+                  gradient: gradients.darkGlow.withOpacity(
+                    AppOpacity.frostedCard,
+                  ),
+                  borderRadius: radius,
                 ),
               ),
-              SizedBox(height: AppSpacing.lg),
-              _WorkoutIdentityRow(summary: summary),
-              SizedBox(height: AppSpacing.xl),
-              _StatRow(
-                stats: summary.stats.take(2).toList(),
-                alignment: CrossAxisAlignment.start,
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: AppShapes.decoration(
+                  gradient: gradients.cardSheen.withOpacity(
+                    AppOpacity.frostedCard,
+                  ),
+                  borderRadius: radius,
+                ),
               ),
-              Container(height: AppSizes.s1, color: colors.borderMedium),
-              _StatRow(
-                stats: summary.stats.skip(2).toList(),
-                alignment: CrossAxisAlignment.end,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CardHeader(
+                    title: 'Workout Summary',
+                    onTap: onInfo,
+                    icon: Icons.bolt,
+                    iconColor: colors.textPrimary,
+                    titleStyle: AppTypography.heading4SemiBold.copyWith(
+                      color: colors.textPrimary,
+                    ),
+                    titleTrailing: Icon(
+                      Icons.info_outline,
+                      size: AppSizes.s16,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.lg),
+                  _WorkoutIdentityRow(summary: summary),
+                  SizedBox(height: AppSpacing.xl),
+                  _StatRow(
+                    stats: summary.stats.take(2).toList(),
+                    alignment: CrossAxisAlignment.start,
+                  ),
+                  Container(height: AppSizes.s1, color: colors.borderMedium),
+                  _StatRow(
+                    stats: summary.stats.skip(2).toList(),
+                    alignment: CrossAxisAlignment.end,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -90,23 +108,27 @@ class _WorkoutIdentityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final imageUrl = summary.imageUrl;
 
     return Row(
       children: [
-        Container(
-          width: AppSizes.s48,
-          height: AppSizes.s48,
-          alignment: Alignment.center,
-          decoration: AppShapes.decoration(
-            color: colors.bgTinted,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+        if (imageUrl != null)
+          AppPhotoTile(url: imageUrl, fallbackIcon: Icons.fitness_center)
+        else
+          Container(
+            width: AppSizes.s48,
+            height: AppSizes.s48,
+            alignment: Alignment.center,
+            decoration: AppShapes.decoration(
+              color: colors.bgTinted,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              Icons.fitness_center,
+              size: AppSizes.s24,
+              color: colors.primaryAlt,
+            ),
           ),
-          child: Icon(
-            Icons.fitness_center,
-            size: AppSizes.s24,
-            color: colors.primaryAlt,
-          ),
-        ),
         SizedBox(width: AppSpacing.lg),
         Expanded(
           child: Column(

@@ -8,6 +8,7 @@ import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/macro_nutrient.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/widgets/macro_split_bar.dart';
+import 'package:floww/core/nutrition/widgets/macro_emoji.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
@@ -94,7 +95,8 @@ class MacroDetailCard extends StatelessWidget {
                     color: color.withValues(alpha: AppOpacity.tintBorder),
                   ),
                 ),
-                child: Icon(macro.icon, color: color, size: AppSizes.s20),
+                alignment: Alignment.center,
+                child: MacroEmoji(macro: macro, size: AppSizes.s20),
               ),
               SizedBox(width: AppSpacing.md),
               Expanded(

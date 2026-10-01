@@ -93,13 +93,32 @@ class RecoveryMetric {
     required this.valueLabel,
     required this.percent,
     required this.accent,
+    this.hasData = true,
   });
+
+  factory RecoveryMetric.missing(RecoveryMetricAccent accent) => RecoveryMetric(
+    emoji: switch (accent) {
+      RecoveryMetricAccent.sleep => '😴',
+      RecoveryMetricAccent.hrv => '💚',
+      RecoveryMetricAccent.energy => '⚡',
+    },
+    label: switch (accent) {
+      RecoveryMetricAccent.sleep => 'Sleep',
+      RecoveryMetricAccent.hrv => 'HRV',
+      RecoveryMetricAccent.energy => 'Energy',
+    },
+    valueLabel: 'No data',
+    percent: 0,
+    accent: accent,
+    hasData: false,
+  );
 
   final String emoji;
   final String label;
   final String valueLabel;
   final int percent;
   final RecoveryMetricAccent accent;
+  final bool hasData;
 }
 
 class RecoveryDetail {
@@ -120,6 +139,14 @@ class RecoveryDetail {
   final List<RecoveryMetric> metrics;
 
   bool get hasData => metrics.isNotEmpty;
+
+  List<RecoveryMetric> get displayMetrics => [
+    for (final accent in RecoveryMetricAccent.values)
+      metrics.firstWhere(
+        (metric) => metric.accent == accent,
+        orElse: () => RecoveryMetric.missing(accent),
+      ),
+  ];
 }
 
 class HabitItem {
@@ -142,12 +169,14 @@ class WorkoutRecommendation {
     required this.durationLabel,
     required this.intensityLabel,
     required this.reasons,
+    this.imageUrl,
   });
 
   final String title;
   final String durationLabel;
   final String intensityLabel;
   final List<String> reasons;
+  final String? imageUrl;
 }
 
 class CompletedWorkoutStat {
@@ -169,6 +198,7 @@ class CompletedWorkout {
     required this.completedLabel,
     required this.stats,
     required this.highlights,
+    this.imageUrl,
   });
 
   final String sessionId;
@@ -176,6 +206,7 @@ class CompletedWorkout {
   final String completedLabel;
   final List<CompletedWorkoutStat> stats;
   final List<String> highlights;
+  final String? imageUrl;
 }
 
 class NutritionSummary {
@@ -256,6 +287,7 @@ class HomeSnapshot {
     required this.userName,
     required this.streakCount,
     required this.flowScorePercent,
+    required this.displayFlowScorePercent,
     required this.flowScoreBreakdown,
     required this.flowScoreBoosts,
     required this.recovery,
@@ -274,6 +306,7 @@ class HomeSnapshot {
     userName: '',
     streakCount: 0,
     flowScorePercent: 0,
+    displayFlowScorePercent: 0,
     flowScoreBreakdown: FlowScoreBreakdown.empty,
     flowScoreBoosts: [],
     recovery: RecoveryDetail.empty,
@@ -297,6 +330,7 @@ class HomeSnapshot {
   final String userName;
   final int streakCount;
   final int flowScorePercent;
+  final int displayFlowScorePercent;
   final FlowScoreBreakdown flowScoreBreakdown;
   final List<FlowScoreBoost> flowScoreBoosts;
   final RecoveryDetail recovery;

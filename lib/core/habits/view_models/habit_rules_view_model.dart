@@ -8,14 +8,11 @@ import 'package:floww/core/habits/view_models/habit_labels.dart';
 
 class HabitRulesViewModel extends ChangeNotifier {
   HabitRulesViewModel({
-    HabitMetric metric = HabitMetric.minutes,
-    HabitGoalType goalType = HabitGoalType.build,
-    HabitSchedule schedule = const HabitSchedule.daily(),
-    HabitSource source = HabitSource.manual,
-  }) : _metric = metric,
-       _goalType = goalType,
-       _schedule = schedule,
-       _source = source;
+    this._metric = HabitMetric.minutes,
+    this._goalType = HabitGoalType.build,
+    this._schedule = const HabitSchedule.daily(),
+    this._source = HabitSource.manual,
+  });
 
   static const List<int> _defaultWeekdays = [
     DateTime.monday,

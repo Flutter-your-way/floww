@@ -36,6 +36,10 @@ class NutritionLabels {
   static String count(int value, String singular, String plural) =>
       '$value ${value == 1 ? singular : plural}';
 
+  static String microLine(double fiberG, double sugarG, double sodiumMg) =>
+      'Fiber ${preciseGrams(fiberG)} · Sugar ${preciseGrams(sugarG)} · '
+      'Sodium ${milligrams(sodiumMg)}';
+
   static String macroLine(double proteinG, double carbsG, double fatG) =>
       'P:${preciseGrams(proteinG)} · C:${preciseGrams(carbsG)} · '
       'F:${preciseGrams(fatG)}';

@@ -1,32 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
 
 class HomeCardEmptyState extends StatelessWidget {
   const HomeCardEmptyState({
     super.key,
-    required this.icon,
+    required this.iconAsset,
     required this.message,
     required this.buttonText,
     this.buttonIcon,
-    this.filled = false,
     this.onPressed,
   });
 
-  final IconData icon;
+  final String iconAsset;
   final String message;
   final String buttonText;
   final IconData? buttonIcon;
-  final bool filled;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: context.colors.textMuted, size: AppSizes.s40),
+        SvgPicture.asset(
+          iconAsset,
+          width: AppSizes.s40,
+          height: AppSizes.s40,
+          colorFilter: ColorFilter.mode(
+            context.colors.textMuted,
+            BlendMode.srcIn,
+          ),
+        ),
         SizedBox(height: AppSpacing.lg),
         Text(
           message,
@@ -36,11 +43,9 @@ class HomeCardEmptyState extends StatelessWidget {
           ),
         ),
         SizedBox(height: AppSpacing.xl),
-        CustomButton(
-          text: buttonText,
+        BrightActionButton(
+          label: buttonText,
           icon: buttonIcon,
-          backgroundColor: filled ? context.colors.textPrimary : null,
-          foregroundColor: filled ? context.colors.backgroundPrimary : null,
           onPressed: onPressed,
         ),
       ],

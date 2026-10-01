@@ -6,12 +6,15 @@ import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/nutrition/models/custom_food.dart';
 import 'package:floww/core/nutrition/models/food_log.dart';
 import 'package:floww/core/nutrition/models/food_model.dart';
+import 'package:floww/core/nutrition/models/food_photo_source.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/micronutrient_progress.dart';
 import 'package:floww/core/nutrition/models/nutrient_input.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/portion_unit.dart';
+import 'package:floww/core/nutrition/providers/food_photo_provider.dart';
 import 'package:floww/core/nutrition/services/custom_food_service.dart';
+import 'package:floww/core/nutrition/services/food_image_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/portion_selection.dart';
 
@@ -21,10 +24,11 @@ class FoodScanResultViewModel extends ChangeNotifier {
     this._goal,
     this._logService,
     this._date, {
-    MealType? meal,
+    this._meal,
     CustomFoodService? customFoodService,
-  }) : _meal = meal,
-       _customFoodService = customFoodService ?? CustomFoodService(),
+    this._photo,
+    this._photos,
+  }) : _customFoodService = customFoodService ?? CustomFoodService(),
        _baseFood = food,
        _food = food,
        portion = PortionSelection(
@@ -53,6 +57,8 @@ class FoodScanResultViewModel extends ChangeNotifier {
   final CustomFoodService _customFoodService;
   final DateTime _date;
   final MealType? _meal;
+  final Uint8List? _photo;
+  final FoodPhotoProvider? _photos;
 
   final PortionSelection portion;
   FoodModel _baseFood;
@@ -195,6 +201,7 @@ class FoodScanResultViewModel extends ChangeNotifier {
         ),
       );
       unawaited(_saveToMyFoods());
+      unawaited(_savePhoto());
       return true;
     } on NutritionLogException catch (e) {
       _errorMessage = e.message;
@@ -212,6 +219,17 @@ class FoodScanResultViewModel extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('save estimate to my foods failed: $e');
+    }
+  }
+
+  Future<void> _savePhoto() async {
+    final photo = _photo;
+    final photos = _photos;
+    if (photo == null || photos == null) return;
+    try {
+      await photos.savePhoto(_food.name, photo, FoodPhotoSource.scan);
+    } on FoodImageException catch (e) {
+      debugPrint('save scan photo failed: $e');
     }
   }
 

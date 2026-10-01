@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
-import 'package:floww/core/nutrition/widgets/meal_type_badge.dart';
+import 'package:floww/core/nutrition/widgets/meal_time_icon.dart';
 
 class MealBreakdownCard extends StatelessWidget {
   const MealBreakdownCard({
@@ -54,13 +53,9 @@ class MealBreakdownCard extends StatelessWidget {
           ],
           if (onAddMeal != null) ...[
             SizedBox(height: AppSpacing.lg),
-            PillButton(
-              variant: PillButtonVariant.bright,
-              height: AppSizes.s36,
+            BrightActionButton(
               label: 'ADD MEAL',
-              icon: Icons.add_circle,
-              iconColor: context.colors.primary,
-              labelStyle: AppTypography.bodySmallSemiBold,
+              icon: Icons.add_rounded,
               onPressed: onAddMeal,
             ),
           ],
@@ -92,7 +87,7 @@ class _MealRow extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
         child: Row(
           children: [
-            MealTypeBadge(meal: item.meal),
+            MealTimeIcon(meal: item.meal),
             SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(

@@ -151,6 +151,7 @@ class LogFoodSheet extends StatelessWidget {
                     ),
                   CatalogFoodRow(
                     name: results[i].displayName,
+                    photoName: results[i].name,
                     macrosLabel: viewModel.macrosLabelOf(results[i]),
                     caloriesLabel: viewModel.caloriesLabelOf(results[i]),
                     isAdded: viewModel.isAdded(results[i]),

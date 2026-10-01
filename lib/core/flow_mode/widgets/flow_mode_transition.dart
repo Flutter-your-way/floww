@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:floww/config/constants/app_motion.dart';
@@ -9,6 +10,7 @@ import 'package:floww/config/theme/app_theme.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/core/flow_mode/models/flow_mode_change.dart';
 import 'package:floww/core/flow_mode/widgets/mode_orb_visual.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +40,7 @@ class _FlowModeTransitionState extends State<FlowModeTransition>
 
   late final AppModeIntensity _intensity = AppModeIntensity.of(widget.mode);
   late final AppColorTokens _colors = AppTheme.colorsOf(widget.mode);
+  late final ThemeData _theme = AppTheme.buildTheme(widget.mode);
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: _intensity.transitionDuration,
@@ -47,6 +50,8 @@ class _FlowModeTransitionState extends State<FlowModeTransition>
   bool _started = false;
   bool _themeApplied = false;
   bool _burstFelt = false;
+  bool _released = false;
+  Timer? _holdTimer;
 
   @override
   void didChangeDependencies() {
@@ -62,7 +67,14 @@ class _FlowModeTransitionState extends State<FlowModeTransition>
     _controller.addListener(_onTick);
     _controller.addStatusListener(_onStatus);
     _playEntryHaptic();
-    _controller.forward();
+    _controller.animateTo(AppMotion.modeHoldPoint);
+  }
+
+  void _release() {
+    if (_released) return;
+    _released = true;
+    _holdTimer?.cancel();
+    if (!_controller.isAnimating) _controller.forward();
   }
 
   void _playEntryHaptic() {
@@ -94,11 +106,19 @@ class _FlowModeTransitionState extends State<FlowModeTransition>
   }
 
   void _onStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed) widget.onCompleted?.call();
+    if (status != AnimationStatus.completed) return;
+    if (_controller.value >= _controller.upperBound) {
+      widget.onCompleted?.call();
+    } else if (_released) {
+      _controller.forward();
+    } else {
+      _holdTimer = Timer(AppMotion.modeHold, _release);
+    }
   }
 
   @override
   void dispose() {
+    _holdTimer?.cancel();
     _controller.removeListener(_onTick);
     _controller.removeStatusListener(_onStatus);
     _controller.dispose();
@@ -109,13 +129,28 @@ class _FlowModeTransitionState extends State<FlowModeTransition>
   Widget build(BuildContext context) {
     return Material(
       type: MaterialType.transparency,
-      child: AbsorbPointer(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) => _buildFrame(context),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) => Stack(
+          fit: StackFit.expand,
+          children: [
+            AbsorbPointer(child: _buildFrame(context)),
+            _AcknowledgeButton(
+              theme: _theme,
+              progress: _actionProgress,
+              onPressed: _release,
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  double get _actionProgress {
+    final value = _controller.value;
+    final entry = AppMotion.modeActionIn.transform(value);
+    final exit = AppMotion.modeContentOut.transform(value);
+    return (entry * (1 - exit)).clamp(0.0, 1.0);
   }
 
   Widget _buildFrame(BuildContext context) {
@@ -203,6 +238,50 @@ class _FlowModeTransitionState extends State<FlowModeTransition>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AcknowledgeButton extends StatelessWidget {
+  const _AcknowledgeButton({
+    required this.theme,
+    required this.progress,
+    required this.onPressed,
+  });
+
+  final ThemeData theme;
+  final double progress;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (progress <= 0) return const SizedBox.shrink();
+
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl4,
+            vertical: AppSpacing.xl3,
+          ),
+          child: Opacity(
+            opacity: progress,
+            child: IgnorePointer(
+              ignoring: progress < 1,
+              child: Theme(
+                data: theme,
+                child: PillButton(
+                  variant: PillButtonVariant.primary,
+                  width: double.infinity,
+                  label: FlowModeCopy.acknowledge,
+                  onPressed: onPressed,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

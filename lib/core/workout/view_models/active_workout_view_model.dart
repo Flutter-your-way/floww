@@ -2,14 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/entities/workout_exercise_entity.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
+import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/workout/services/workout_catalog_data.dart';
+import 'package:floww/core/workout/models/active_workout_args.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/add_exercise_view_data.dart';
 import 'package:floww/core/workout/models/exercise_info.dart';
 import 'package:floww/core/workout/models/set_type.dart';
+import 'package:floww/core/workout/services/exercise_insights.dart';
 import 'package:floww/core/workout/services/workout_alert_service.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
@@ -17,6 +22,7 @@ import 'package:floww/core/workout/services/workout_metrics.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
 import 'package:floww/core/workout/services/workout_progression.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/workout/services/workout_readiness_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/view_models/workout_completion_view_model.dart';
@@ -59,11 +65,12 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     this._catalogService,
     this._readinessService,
     this._alertService,
-    DateTime date,
-  ) : _date = AppDateUtils.dateOnly(date);
+    this._access,
+    ActiveWorkoutArgs launch,
+  ) : _date = AppDateUtils.dateOnly(launch.date),
+      _launch = launch;
 
   static const Duration _tick = Duration(seconds: 1);
-  static const int _secondsPerMinute = 60;
   static const int _minReps = 0;
   static const int _maxReps = 100;
   static const int _minSeconds = 5;
@@ -80,14 +87,17 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   static const int _maxTargetSets = 10;
   static const String _loadFailure = 'Could not start this workout.';
   static const String _catalogFailure = 'Could not load alternatives.';
+  static const String _finishFailure = 'Could not save this workout.';
 
   final WorkoutSessionService _sessionService;
   final WorkoutPlanService _planService;
   final WorkoutProgramService _programService;
   final WorkoutCatalogService _catalogService;
   final WorkoutReadinessService _readinessService;
+  final PremiumAccessProvider _access;
   final WorkoutAlertService _alertService;
   final DateTime _date;
+  final ActiveWorkoutArgs _launch;
   final StreamController<void> _restEnded = StreamController<void>.broadcast();
 
   Timer? _timer;
@@ -104,6 +114,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   bool _isFinishing = false;
   bool _isFinished = false;
   bool _completionStarted = false;
+  bool _completionReady = false;
   bool _isCancelled = false;
   bool _isLoadingAlternatives = false;
   String? _errorMessage;
@@ -125,26 +136,32 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
 
   bool get isFinished => _isFinished;
 
+  bool get isFinishing => _isFinishing;
+
+  bool get showsFinishOverlay => _isFinishing || _isFinished;
+
   bool get shouldStartCompletion =>
-      _isFinished && !_completionStarted && _completion != null;
+      _isFinished &&
+      _completionReady &&
+      !_completionStarted &&
+      _completion != null;
 
   void markCompletionStarted() => _completionStarted = true;
 
   bool get isResting => _restRemaining > 0;
 
   Future<void> load() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+    final seededPlan = _launch.plan;
+    final seededHistory = _launch.history;
+    final isSeeded = seededPlan != null && seededHistory != null;
+    if (!isSeeded) {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+    }
     try {
-      final state = await _programService.loadState();
-      _history = await _sessionService.loadRecentSessions();
-      final plan = await _planService.preparePlanFor(
-        _date,
-        activeProgram: state.activeProgram,
-        history: _history,
-        readiness: () => _readinessService.assess(_history),
-      );
+      final plan = isSeeded ? seededPlan : await _preparePlan();
+      if (isSeeded) _history = seededHistory;
       if (plan == null) {
         _errorMessage =
             'There is no workout scheduled for this day. Start a program to '
@@ -153,13 +170,20 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      var session = await _sessionService.startSession(plan);
-      if (plan.sessionId != session.id) {
-        await _planService.linkSession(plan.date, session.id);
-      }
-      if (session.isTimerRunning && session.timerResumedAt == null) {
-        session = session.resumedAt(DateTime.now());
-        await _sessionService.saveTimer(session);
+      final session =
+          _launch.session ??
+          await _sessionService.startSession(
+            plan,
+            on: _date,
+            lookupExisting: !isSeeded,
+          );
+      if (plan.sessionId != session.id &&
+          AppDateUtils.isSameDay(plan.date, session.scheduledDate)) {
+        unawaited(
+          _planService
+              .linkSession(plan.date, session.id)
+              .catchError((Object _) {}),
+        );
       }
       _session = session;
       _bests = WorkoutMetrics.bestsOf([
@@ -183,6 +207,27 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<WorkoutPlanEntity?> _preparePlan() async {
+    final results = await Future.wait<Object>([
+      _programService.loadState(),
+      _sessionService.loadRecentSessions(),
+    ]);
+    final state = results[0] as WorkoutStateEntity;
+    _history = results[1] as List<WorkoutSessionEntity>;
+    return _planService.preparePlanFor(
+      _date,
+      activeProgram: state.activeProgram,
+      history: _history,
+      readiness: () => _readinessService.assess(_history),
+      adaptive: _access.canUse(PremiumCapability.adaptiveEngine),
+    );
+  }
+
+  List<String?> get imageUrls => [
+    for (final exercise in _exercises)
+      exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
+  ];
 
   WorkoutCompletionViewModel? completionViewModel() {
     final completion = _completion;
@@ -218,7 +263,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     return logged >= exercise.targetSets ? exercise.targetSets - 1 : logged;
   }
 
-  int get _elapsedSeconds => _session?.elapsedSecondsAt(DateTime.now()) ?? 0;
+  int get _activeSeconds => _session?.activeSeconds ?? 0;
 
   bool get _isPaused => _session?.isTimerPaused ?? false;
 
@@ -230,16 +275,12 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       final session = _session;
       if (remote == null || session == null || !remote.isInProgress) return;
       if (remote.isTimerPaused == session.isTimerPaused &&
-          remote.timerResumedAt == session.timerResumedAt &&
-          remote.durationSeconds == session.durationSeconds &&
           remote.restEndsAt == session.restEndsAt &&
           remote.restRemainingSeconds == session.restRemainingSeconds) {
         return;
       }
       _session = session.copyWith(
-        durationSeconds: remote.durationSeconds,
         isTimerPaused: remote.isTimerPaused,
-        timerResumedAt: remote.timerResumedAt,
         restEndsAt: remote.restEndsAt,
         restRemainingSeconds: remote.restRemainingSeconds,
         clearRestEnd: remote.restEndsAt == null,
@@ -263,7 +304,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     if (previous > 0 && _restRemaining == 0 && !_isPaused) {
       _restEnded.add(null);
     }
-    if (_isPaused && previous == _restRemaining) return;
+    if (previous == _restRemaining) return;
     notifyListeners();
   }
 
@@ -665,7 +706,10 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       if (_catalog.isEmpty) _catalog = await _catalogService.loadExercises();
-      _alternatives = WorkoutPlanService.alternativesOf(exercise, _catalog);
+      _alternatives = WorkoutPlanService.alternativesOf(exercise, [
+        for (final entry in _catalog)
+          if (entry.isAvailable) entry,
+      ]);
     } on WorkoutException catch (error) {
       _errorMessage = error.message;
     } catch (_) {
@@ -690,6 +734,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         detailLabel: '${exercise.group.label} · ${exercise.equipment.label}',
         isCustom: exercise.isCustom,
         isSelected: false,
+        isSaved: exercise.isAdded,
       ),
   ];
 
@@ -976,7 +1021,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     await _sessionSubscription?.cancel();
     try {
       await _sessionService.cancelSession(session.id);
-      await _planService.unlinkSession(session.date);
+      await _planService.unlinkSession(session.scheduledDate);
       unawaited(_alertService.cancelRestEnd());
       unawaited(_alertService.keepAwake(false));
       return true;
@@ -995,28 +1040,67 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     if (session == null || _isFinishing || _isFinished) return;
     _isFinishing = true;
     _timer?.cancel();
+    notifyListeners();
+    final minimumDisplay = Future<void>.delayed(AppMotion.workoutFinishMin);
     try {
       _completion = await _sessionService.completeSession(
-        session.copyWith(durationSeconds: _elapsedSeconds, clearRest: true),
+        session.copyWith(durationSeconds: _activeSeconds, clearRest: true),
       );
+      await minimumDisplay;
       _isFinished = true;
+      _isFinishing = false;
       _restRemaining = 0;
       unawaited(_alertService.cancelRestEnd());
       unawaited(_alertService.keepAwake(false));
+      notifyListeners();
+      await Future<void>.delayed(AppMotion.workoutFinishHold);
+      _completionReady = true;
+      notifyListeners();
     } on WorkoutException catch (error) {
       _errorMessage = error.message;
-      _startTicker();
-    } finally {
       _isFinishing = false;
+      _startTicker();
+      notifyListeners();
+    } catch (_) {
+      _errorMessage = _finishFailure;
+      _isFinishing = false;
+      _startTicker();
       notifyListeners();
     }
+  }
+
+  WorkoutFinishSummary get finishSummary {
+    final totals = WorkoutMetrics.totalsOf(_exercises);
+    final volume = totals.volumeKg.round();
+    final completion = _isFinished ? _completion : null;
+    final delta = completion == null
+        ? 0
+        : completion.flowScoreAfter - completion.flowScoreBefore;
+    return WorkoutFinishSummary(
+      statusLabel: _isFinished ? 'Saved' : 'Saving',
+      title: _session?.name ?? 'Workout',
+      stats: [
+        WorkoutFinishStat(
+          label: 'Duration',
+          value: _activeSeconds,
+          isClock: true,
+        ),
+        WorkoutFinishStat(label: 'Sets', value: totals.totalSets),
+        if (volume > 0)
+          WorkoutFinishStat(label: 'Volume', value: volume, unit: 'kg'),
+      ],
+      flowLabel: 'Flow Score',
+      flowValue: completion == null
+          ? null
+          : '${completion.flowScoreBefore} → ${completion.flowScoreAfter}',
+      flowDelta: delta == 0 ? null : '${delta > 0 ? '+' : ''}$delta',
+    );
   }
 
   ActiveWorkoutItem? get session {
     final exercise = _exercise;
     if (exercise == null) return null;
     return ActiveWorkoutItem(
-      timerLabel: _clockLabel(_elapsedSeconds),
       progress: _progress,
       exerciseLabel: 'Exercise ${_exerciseIndex + 1}/${_exercises.length}',
       setLabel: 'Set ${_setIndex + 1}/${exercise.targetSets}',
@@ -1024,7 +1108,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       isResting: isResting,
       isPaused: _isPaused,
       restSecondsLabel: '$_restRemaining',
-      primaryActionLabel: isResting ? 'Next Set' : 'Complete Set',
+      primaryActionLabel: isResting ? 'Complete Set' : 'Start Set',
       canShortenRest: _restRemaining > _restStepSeconds,
       nextUpLabel:
           'Up next: ${exercise.name} · Set ${_setIndex + 1}/'
@@ -1041,7 +1125,8 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
 
     return ActiveExerciseItem(
       name: exercise.name,
-      imageUrl: exercise.imageUrl,
+      imageUrl:
+          exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
       setsValue: '${_setIndex + 1}',
       setsLabel: '/ ${exercise.targetSets} sets',
       repsValue: '${exercise.targetReps}',
@@ -1135,18 +1220,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   String? _lastTimeLabelOf(WorkoutEntryEntity exercise) {
     final history = _historyOf(exercise);
     if (history.isEmpty) return null;
-    return _setsSummaryOf(history.first);
-  }
-
-  String _setsSummaryOf(WorkoutEntryEntity entry) {
-    final sets = entry.workingSets;
-    if (entry.isTimed) {
-      return sets.map((set) => '${set.durationSeconds ?? 0}s').join(', ');
-    }
-    final reps = sets.map((set) => '${set.reps}').join(', ');
-    final weight = entry.bestSetWeightKg;
-    if (weight == null) return '$reps reps';
-    return '$reps @ ${WorkoutMetrics.weightLabel(weight)}kg';
+    return ExerciseInsights.setsSummaryOf(history.first);
   }
 
   String? _supersetLabelOf(WorkoutEntryEntity exercise) {
@@ -1165,85 +1239,33 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   }
 
   List<ExerciseInfoSection> _sectionsOf(WorkoutEntryEntity exercise) => [
-    ExerciseInfoSection(
-      id: 'personal-best',
-      icon: Icons.emoji_events_outlined,
-      title: 'Personal Best',
-      tone: ExerciseInfoTone.neutral,
-      items: _personalBestItemsOf(exercise),
-      emptyMessage: 'No sets logged yet. This could be your first!',
-    ),
-    ExerciseInfoSection(
-      id: 'common-mistakes',
-      icon: Icons.warning_amber_rounded,
-      title: 'Common Mistakes',
-      tone: ExerciseInfoTone.negative,
-      items: [for (final cue in exercise.mistakes) _itemOfCue(cue)],
-      emptyMessage: 'No mistakes recorded for this movement.',
-    ),
-    ExerciseInfoSection(
-      id: 'guidelines',
-      icon: Icons.checklist_rounded,
-      title: 'Guidelines',
-      tone: ExerciseInfoTone.positive,
-      items: [for (final cue in exercise.guidelines) _itemOfCue(cue)],
-      emptyMessage: 'No guidelines recorded for this movement.',
-    ),
-    ExerciseInfoSection(
-      id: 'equipment',
-      icon: Icons.fitness_center,
-      title: 'Equipment Required',
-      tone: ExerciseInfoTone.positive,
-      items: [for (final cue in exercise.equipmentItems) _itemOfCue(cue)],
-      emptyMessage: 'No equipment needed.',
+    ExerciseInsights.personalBestSectionOf(_personalBestItemsOf(exercise)),
+    ...ExerciseInsights.techniqueSectionsOf(
+      mistakes: exercise.mistakes,
+      guidelines: exercise.guidelines,
+      equipmentItems: exercise.equipmentItems,
     ),
   ];
 
   List<ExerciseInfoItem> _personalBestItemsOf(WorkoutEntryEntity exercise) {
-    final best = _bests[exercise.exerciseId];
-    final history = _historyOf(exercise);
     final trend = WorkoutMetrics.oneRepMaxTrendOf([
       for (final entry in _history)
         if (entry.id != _session?.id) entry,
     ], exercise.exerciseId);
-    final label = WorkoutMetrics.weightLabel;
     return [
-      if (history.isNotEmpty)
-        ExerciseInfoItem(
-          label: 'Last time',
-          text: _setsSummaryOf(history.first),
-        ),
-      if (best != null && exercise.isTimed && best.seconds > 0)
-        ExerciseInfoItem(label: 'Longest hold', text: '${best.seconds}s'),
-      if (best != null && !exercise.isTimed && best.weightKg > 0)
-        ExerciseInfoItem(
-          label: 'Heaviest set',
-          text: '${label(best.weightKg)}kg',
-        ),
-      if (best != null &&
-          !exercise.isTimed &&
-          best.weightKg == 0 &&
-          best.reps > 0)
-        ExerciseInfoItem(label: 'Most reps', text: '${best.reps} reps'),
-      if (trend.isNotEmpty)
-        ExerciseInfoItem(label: 'Estimated 1RM', text: _trendLabelOf(trend)),
+      ...ExerciseInsights.recordItemsOf(
+        history: _historyOf(exercise),
+        best: _bests[exercise.exerciseId],
+        trend: trend,
+        isTimed: exercise.isTimed,
+      ),
       if (exercise.sets.isNotEmpty)
-        ExerciseInfoItem(label: 'This session', text: _setsSummaryOf(exercise)),
+        ExerciseInfoItem(
+          label: 'This session',
+          text: ExerciseInsights.setsSummaryOf(exercise),
+        ),
     ];
   }
-
-  String _trendLabelOf(List<OneRepMaxPoint> trend) {
-    final label = WorkoutMetrics.weightLabel;
-    final latest = trend.last.oneRepMaxKg;
-    if (trend.length < 2) return '${label(latest)}kg';
-    final change = latest - trend.first.oneRepMaxKg;
-    final sign = change >= 0 ? '+' : '−';
-    return '${label(latest)}kg ($sign${label(change.abs())}kg over '
-        '${trend.length} sessions)';
-  }
-
-  ExerciseInfoItem _itemOfCue(ExerciseCueEntry cue) =>
-      ExerciseInfoItem(text: cue.text, label: cue.label);
 
   ExerciseInfoSectionItem _sectionOf(ExerciseInfoSection section) {
     return ExerciseInfoSectionItem(
@@ -1268,13 +1290,6 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     }
     if (planned == 0) return 0;
     return (logged / planned).clamp(0.0, 1.0);
-  }
-
-  String _clockLabel(int seconds) {
-    final minutes = seconds ~/ _secondsPerMinute;
-    final remainder = seconds % _secondsPerMinute;
-    return '${minutes.toString().padLeft(2, '0')}:'
-        '${remainder.toString().padLeft(2, '0')}';
   }
 
   @override

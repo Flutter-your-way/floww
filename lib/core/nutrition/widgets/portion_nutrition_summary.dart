@@ -12,16 +12,19 @@ class PortionNutritionSummary extends StatelessWidget {
     required this.proteinLabel,
     required this.carbsLabel,
     required this.fatLabel,
+    this.microsLabel,
   });
 
   final String caloriesLabel;
   final String proteinLabel;
   final String carbsLabel;
   final String fatLabel;
+  final String? microsLabel;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final microsLabel = this.microsLabel;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -32,22 +35,37 @@ class PortionNutritionSummary extends StatelessWidget {
         color: colors.backgroundPrimary,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _MacroValue(prefix: 'P:', value: proteinLabel),
-          const _MacroSeparator(),
-          _MacroValue(prefix: 'C:', value: carbsLabel),
-          const _MacroSeparator(),
-          _MacroValue(prefix: 'F:', value: fatLabel),
-          const Spacer(),
-          SizedBox(width: AppSpacing.md),
-          RollingText(
-            text: caloriesLabel,
-            style: context.textTheme.titleMedium?.copyWith(
-              color: colors.accentOrange,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              _MacroValue(prefix: 'P:', value: proteinLabel),
+              const _MacroSeparator(),
+              _MacroValue(prefix: 'C:', value: carbsLabel),
+              const _MacroSeparator(),
+              _MacroValue(prefix: 'F:', value: fatLabel),
+              const Spacer(),
+              SizedBox(width: AppSpacing.md),
+              RollingText(
+                text: caloriesLabel,
+                style: context.textTheme.titleMedium?.copyWith(
+                  color: colors.accentOrange,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
+          if (microsLabel != null) ...[
+            SizedBox(height: AppSpacing.sm),
+            RollingText(
+              text: microsLabel,
+              style: context.textTheme.labelSmall?.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
+          ],
         ],
       ),
     );

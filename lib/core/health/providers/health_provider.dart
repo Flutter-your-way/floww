@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:floww/config/constants/app_images.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/health_snapshot.dart';
@@ -30,8 +31,19 @@ class HealthProvider extends ChangeNotifier {
   bool get isConnecting => _status == HealthConnectionStatus.connecting;
   bool get isUnavailable => _status == HealthConnectionStatus.unavailable;
 
+  String get sourceName => HealthService.sourceName;
+
+  bool get usesAppleHealth => HealthService.usesAppleHealth;
+
+  String get sourceIcon =>
+      usesAppleHealth ? AppImages.appleHealth : AppImages.healthConnectIcon;
+
+  String get syncSubtitle =>
+      'WAVE reads your sleep, steps and heart rate from your wearables '
+      'to adapt each day to you.';
+
   String? get statusLabel {
-    if (isConnecting) return 'Waiting for Apple Health…';
+    if (isConnecting) return 'Waiting for $sourceName…';
     if (isUnavailable) return 'Not available on this device';
     if (!isConnected) return null;
     if (_isSyncing) return 'Syncing…';
@@ -60,6 +72,15 @@ class HealthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (await _service.needsHealthConnectInstall()) {
+        _status = HealthConnectionStatus.unavailable;
+        _errorMessage =
+            'Install $sourceName from the Play Store, then tap Connect again.';
+        notifyListeners();
+        await _service.installHealthConnect();
+        return;
+      }
+
       if (!await _service.isSupported()) {
         _status = HealthConnectionStatus.unavailable;
         _errorMessage = 'Health data is not available on this device.';
@@ -71,7 +92,7 @@ class HealthProvider extends ChangeNotifier {
       if (!granted) {
         _status = HealthConnectionStatus.disconnected;
         _errorMessage =
-            'Apple Health access was not granted. You can enable it later in Settings.';
+            '$sourceName access was not granted. You can enable it later in Settings.';
         notifyListeners();
         return;
       }

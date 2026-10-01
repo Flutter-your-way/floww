@@ -83,17 +83,12 @@ class _NavTabButton extends StatefulWidget {
 }
 
 class _NavTabButtonState extends State<_NavTabButton>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late final AnimationController _selection = AnimationController(
     vsync: this,
     duration: AppGlass.indicatorPopIn,
     reverseDuration: AppGlass.indicatorPopOut,
     value: widget.isSelected ? 1 : 0,
-  );
-
-  late final AnimationController _burst = AnimationController(
-    vsync: this,
-    duration: AppGlass.indicatorBurst,
   );
 
   late final Animation<double> _pop = CurvedAnimation(
@@ -117,7 +112,6 @@ class _NavTabButtonState extends State<_NavTabButton>
     if (oldWidget.isSelected == widget.isSelected) return;
     if (widget.isSelected) {
       _selection.forward();
-      _burst.forward(from: 0);
       _scheduleSettleHaptic();
     } else {
       _selection.reverse();
@@ -141,7 +135,6 @@ class _NavTabButtonState extends State<_NavTabButton>
   void dispose() {
     _settleHaptic?.cancel();
     _selection.dispose();
-    _burst.dispose();
     super.dispose();
   }
 
@@ -169,7 +162,6 @@ class _NavTabButtonState extends State<_NavTabButton>
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
-                  _NavIndicatorBurst(animation: _burst),
                   _NavIndicatorPop(pop: _pop, fade: _fade),
                   _NavTabIcon(item: widget.item, pop: _pop),
                 ],
@@ -217,43 +209,6 @@ class _NavIndicatorPop extends StatelessWidget {
         );
       },
       child: const _IndicatorGlass(),
-    );
-  }
-}
-
-class _NavIndicatorBurst extends StatelessWidget {
-  const _NavIndicatorBurst({required this.animation});
-
-  final Animation<double> animation;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        final t = AppGlass.indicatorBurstCurve.transform(animation.value);
-        if (t <= 0 || t >= 1) return const SizedBox.shrink();
-
-        return Opacity(
-          opacity: AppGlass.indicatorBurstOpacity * (1 - t),
-          child: Transform.scale(
-            scale: 1 + AppGlass.indicatorBurstScale * t,
-            child: child,
-          ),
-        );
-      },
-      child: SizedBox.square(
-        dimension: AppGlass.indicatorSize,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: context.colors.primary,
-              width: AppGlass.indicatorBurstWidth,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

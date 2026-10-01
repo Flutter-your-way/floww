@@ -11,6 +11,7 @@ import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/effects/edge_fade_mask.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
+import 'package:floww/config/widgets/images/image_precacher.dart';
 import 'package:floww/config/widgets/sheets/app_confirm_sheet.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/view_models/active_workout_view_model.dart';
@@ -28,6 +29,7 @@ import 'package:floww/core/workout/widgets/rest_end_listener.dart';
 import 'package:floww/core/workout/widgets/rest_timer_card.dart';
 import 'package:floww/core/workout/widgets/set_input_card.dart';
 import 'package:floww/core/workout/widgets/set_progress_dots.dart';
+import 'package:floww/core/workout/widgets/workout_finish_overlay.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 class ActiveWorkoutView extends StatelessWidget {
@@ -140,108 +142,119 @@ class ActiveWorkoutView extends StatelessWidget {
 
         return RestEndListener(
           events: viewModel.restEnded,
-          child: Scaffold(
-            backgroundColor: context.colors.backgroundPrimary,
-            body: AppBackground(
-              mode: AppBackgroundMode.active(context),
-              isInner: true,
-              safeAreaTop: false,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Positioned.fill(
-                    child: EdgeFadeMask(
-                      topFadeEnd: contentTop,
-                      child: ListView(
-                        padding: EdgeInsets.only(
-                          top: contentTop,
-                          bottom:
-                              actionsBottom + _actionBarHeight + AppSpacing.xl3,
-                          left: horizontalPadding,
-                          right: horizontalPadding,
+          child: ImagePrecacher(
+            urls: viewModel.imageUrls,
+            child: Scaffold(
+              backgroundColor: context.colors.backgroundPrimary,
+              body: AppBackground(
+                mode: AppBackgroundMode.active(context),
+                isInner: true,
+                safeAreaTop: false,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Positioned.fill(
+                      child: EdgeFadeMask(
+                        topFadeEnd: contentTop,
+                        child: ListView(
+                          padding: EdgeInsets.only(
+                            top: contentTop,
+                            bottom:
+                                actionsBottom +
+                                _actionBarHeight +
+                                AppSpacing.xl3,
+                            left: horizontalPadding,
+                            right: horizontalPadding,
+                          ),
+                          children: [
+                            if (session.isResting)
+                              RestTimerCard(
+                                secondsLabel: session.restSecondsLabel,
+                                nextUpLabel: session.nextUpLabel,
+                                canShorten: session.canShortenRest,
+                                onSkip: viewModel.skipRest,
+                                onAdjust: (steps) {
+                                  HapticManager.selection();
+                                  viewModel.adjustRest(steps);
+                                },
+                              )
+                            else
+                              _ExerciseContent(
+                                exercise: session.exercise,
+                                viewModel: viewModel,
+                                onOptions: () =>
+                                    _openOptions(context, viewModel),
+                                onEditSet: (index) {
+                                  HapticManager.light();
+                                  EditSetSheet.show(context, viewModel, index);
+                                },
+                              ),
+                          ],
                         ),
+                      ),
+                    ),
+                    Positioned(
+                      top: viewPadding.top,
+                      left: horizontalPadding,
+                      right: horizontalPadding,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (session.isResting)
-                            RestTimerCard(
-                              secondsLabel: session.restSecondsLabel,
-                              nextUpLabel: session.nextUpLabel,
-                              canShorten: session.canShortenRest,
-                              onSkip: viewModel.skipRest,
-                              onAdjust: (steps) {
-                                HapticManager.selection();
-                                viewModel.adjustRest(steps);
-                              },
-                            )
-                          else
-                            _ExerciseContent(
-                              exercise: session.exercise,
-                              viewModel: viewModel,
-                              onOptions: () => _openOptions(context, viewModel),
-                              onEditSet: (index) {
-                                HapticManager.light();
-                                EditSetSheet.show(context, viewModel, index);
-                              },
-                            ),
+                          CustomHeader(
+                            onBackPressed: _exit,
+                            onClosePressed: () =>
+                                _confirmCancel(context, viewModel),
+                          ),
+                          ActiveWorkoutProgressHeader(
+                            progress: session.progress,
+                            exerciseLabel: session.exerciseLabel,
+                            setLabel: session.setLabel,
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: viewPadding.top,
-                    left: horizontalPadding,
-                    right: horizontalPadding,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CustomHeader(
-                          isTimerMode: true,
-                          timeText: session.timerLabel,
-                          onBackPressed: _exit,
-                          onClosePressed: () =>
-                              _confirmCancel(context, viewModel),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: BottomActionScrim(
+                        height:
+                            viewPadding.bottom +
+                            AppSizes.s72 +
+                            context.sizes.bottomScrimExtra,
+                      ),
+                    ),
+                    Positioned(
+                      left: horizontalPadding,
+                      right: horizontalPadding,
+                      bottom: actionsBottom,
+                      child: ActiveWorkoutActionBar(
+                        label: session.primaryActionLabel,
+                        isResting: session.isResting,
+                        isPaused: session.isPaused,
+                        onPrimary: () {
+                          HapticManager.medium();
+                          viewModel.completeSet();
+                        },
+                        onTogglePause: () {
+                          HapticManager.light();
+                          viewModel.togglePause();
+                        },
+                        onSkip: () {
+                          HapticManager.light();
+                          viewModel.skipExercise();
+                        },
+                      ),
+                    ),
+                    if (viewModel.showsFinishOverlay)
+                      Positioned.fill(
+                        child: WorkoutFinishOverlay(
+                          isDone: viewModel.isFinished,
+                          summary: viewModel.finishSummary,
                         ),
-                        ActiveWorkoutProgressHeader(
-                          progress: session.progress,
-                          exerciseLabel: session.exerciseLabel,
-                          setLabel: session.setLabel,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: BottomActionScrim(
-                      height:
-                          viewPadding.bottom +
-                          AppSizes.s72 +
-                          context.sizes.bottomScrimExtra,
-                    ),
-                  ),
-                  Positioned(
-                    left: horizontalPadding,
-                    right: horizontalPadding,
-                    bottom: actionsBottom,
-                    child: ActiveWorkoutActionBar(
-                      label: session.primaryActionLabel,
-                      isResting: session.isResting,
-                      isPaused: session.isPaused,
-                      onPrimary: () {
-                        HapticManager.medium();
-                        viewModel.completeSet();
-                      },
-                      onTogglePause: () {
-                        HapticManager.light();
-                        viewModel.togglePause();
-                      },
-                      onSkip: () {
-                        HapticManager.light();
-                        viewModel.skipExercise();
-                      },
-                    ),
-                  ),
-                ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

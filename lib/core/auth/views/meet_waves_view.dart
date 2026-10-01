@@ -1,20 +1,27 @@
 import 'dart:ui' as ui;
 
+import 'package:floww/config/constants/app_glass.dart';
 import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
+import 'package:floww/config/theme/app_orb_palette.dart';
+import 'package:floww/config/theme/app_shapes.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/effects/animated_orb.dart';
+import 'package:floww/config/widgets/effects/inner_glow.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
-import 'package:floww/core/auth/widgets/animated_reverse_ripple.dart';
 import 'package:floww/core/auth/widgets/custom_mode_card.dart';
 import 'package:floww/core/auth/widgets/mode_detail_reveal.dart';
-import 'package:floww/core/auth/widgets/step_reveal_item.dart';
+import 'package:floww/config/widgets/animations/step_reveal_item.dart';
 import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:floww/config/theme/app_shapes.dart';
+
+const double _meetWaveOrbSize = AppSizes.s160 * 3;
 
 Animation<double> _staggeredPresence(
   AnimationController controller, {
@@ -169,15 +176,14 @@ class _StepOneContent extends StatelessWidget {
                           child: SizedBox(
                             height: 300,
                             width: 300,
-                            child: AnimatedReverseRipple(
-                              duration: const Duration(milliseconds: 5000),
-                              isInward: false,
-                              ringCount: 5,
-                              rippleColor: AppColorTokens.flow.primary,
-                              minRadius: 30.0,
-                              maxRadius: 200.0,
-                              strokeWidth: 0.5,
-                              child: Image.asset(AppImages.ofb),
+                            child: const OverflowBox(
+                              maxWidth: _meetWaveOrbSize,
+                              maxHeight: _meetWaveOrbSize,
+                              child: AnimatedOrb(
+                                size: _meetWaveOrbSize,
+                                palette: AppOrbPalette.flow,
+                                showWave: true,
+                              ),
                             ),
                           ),
                         ),
@@ -224,55 +230,21 @@ class _StepOneContent extends StatelessWidget {
                       SizedBox(height: AppSpacing.xl),
                       StepRevealItem(
                         presence: _presence(4),
-                        child: Text(
-                          "A new kind of AI fitness coach — built around how you actually feel, every single day.",
-                          textAlign: TextAlign.center,
-                          style: context.textTheme.titleMedium?.copyWith(
-                            color: Colors.white30,
-                            fontFamily: 'PlusJakartaSans',
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: -0.15,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "A new kind of AI fitness coach — built around\nhow you actually feel, every single day.",
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyLargeRegular.copyWith(
+                              color: context.colors.textSecondary,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 68),
                       StepRevealItem(
                         presence: _presence(5),
-                        child: GestureDetector(
-                          onTap: onGetStarted,
-                          child: Container(
-                            height: 68,
-                            width: MediaQuery.sizeOf(context).width * 0.6,
-                            padding: EdgeInsets.symmetric(
-                              vertical: AppSpacing.xl,
-                              horizontal: AppSpacing.xl4,
-                            ),
-                            decoration: AppShapes.decoration(
-                              color: Colors.white.withValues(alpha: 0.5),
-                              side: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.5),
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                spacing: 4,
-                                children: [
-                                  Text(
-                                    "Get Started",
-                                    style: context.textTheme.displaySmall,
-                                  ),
-                                  const Icon(Icons.arrow_forward, size: 30),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                        child: _GetStartedButton(onTap: onGetStarted),
                       ),
                       const SizedBox(height: AppSizes.s32),
                     ],
@@ -282,6 +254,86 @@ class _StepOneContent extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _GetStartedButton extends StatelessWidget {
+  const _GetStartedButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  static const double _rimWidth = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final radius = BorderRadius.circular(AppRadius.full);
+    final shape = AppShapes.border(borderRadius: radius);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        height: AppSizes.s56,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ClipPath(
+                clipper: ShapeBorderClipper(shape: shape),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(
+                    sigmaX: AppGlass.blurSigmaLight,
+                    sigmaY: AppGlass.blurSigmaLight,
+                  ),
+                  child: DecoratedBox(
+                    decoration: AppShapes.decoration(
+                      color: colors.textPrimary.withValues(
+                        alpha: AppGlass.buttonFillOpacity,
+                      ),
+                      borderRadius: radius,
+                      side: BorderSide(
+                        color: colors.glassStroke,
+                        width: _rimWidth,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: InnerGlow(
+                color: colors.textPrimary.withValues(
+                  alpha: AppGlass.innerGlowOpacity,
+                ),
+                radius: AppRadius.full,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl4),
+              child: Center(
+                widthFactor: 1,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: AppSpacing.md,
+                  children: [
+                    Text(
+                      "Get Started",
+                      style: context.textTheme.headlineSmall?.copyWith(
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: AppSizes.s24,
+                      color: colors.textPrimary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -398,6 +450,10 @@ class _StepTwoContentState extends State<_StepTwoContent> {
     super.dispose();
   }
 
+  void _goToAccountSetup() {
+    NavigationService.instance.pushAndRemoveUntil(AppRouter.accountSetup);
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.sizeOf(context).height;
@@ -419,7 +475,19 @@ class _StepTwoContentState extends State<_StepTwoContent> {
                     children: [
                       StepRevealItem(
                         presence: widget.presence[0],
-                        child: const CustomHeader(title: "Welcome to Floww"),
+                        child: CustomHeader(
+                          title: "Welcome to Floww",
+                          trailing: PillButton(
+                            label: "Skip",
+                            variant: PillButtonVariant.outline,
+                            height: AppSizes.s36,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xl,
+                            ),
+                            labelStyle: context.textTheme.bodyMedium,
+                            onPressed: _goToAccountSetup,
+                          ),
+                        ),
                       ),
                       SizedBox(height: height * 0.06),
                       StepRevealItem(
@@ -509,11 +577,7 @@ class _StepTwoContentState extends State<_StepTwoContent> {
                                   : null,
                               onPressed: _phase == _StepTwoPhase.carousel
                                   ? _onContinue
-                                  : () {
-                                      NavigationService.instance.push(
-                                        AppRouter.accountSetup,
-                                      );
-                                    },
+                                  : _goToAccountSetup,
                             ),
                           ),
                         ),

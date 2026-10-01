@@ -1,5 +1,5 @@
 import {DocumentData} from "firebase-admin/firestore";
-import {listOf, numberOf, recordOf} from "../common/utils";
+import {clamp, listOf, numberOf, recordOf} from "../common/utils";
 import {
   TARGETS_DOC,
   USER_COLLECTIONS,
@@ -20,6 +20,11 @@ const FIBER_PER_THOUSAND = 14;
 const WATER_ML_PER_KG = 35;
 const SODIUM_MG = 2300;
 const ML_PER_LITER = 1000;
+const HEALTHY_BMI_CEILING = 25;
+const CM_PER_METER = 100;
+
+export const CALORIE_FACTOR_RANGE = {min: 0.85, max: 1.15};
+export const PROTEIN_PER_KG_RANGE = {min: 1.2, max: 2.4};
 
 export interface NutritionTargets {
   calories: number;
@@ -66,6 +71,13 @@ const PROTEIN_PER_KG: Record<string, number> = {
 };
 const MAINTENANCE_PROTEIN_PER_KG = 1.6;
 
+export const baselineProteinPerKgOf = (details: DocumentData): number => {
+  const goal = recordOf(details.goalsActivity).primaryGoal;
+  return typeof goal === "string" ?
+    PROTEIN_PER_KG[goal] ?? MAINTENANCE_PROTEIN_PER_KG :
+    MAINTENANCE_PROTEIN_PER_KG;
+};
+
 const TRAINING_SECTIONS: Record<string, string> = {
   Gym: "gymDetails",
   Calisthenics: "calisthenicsDetails",
@@ -96,6 +108,31 @@ const trainingDaysOf = (details: DocumentData): number | null => {
   const section = recordOf(details[key]);
   const days = listOf(section.trainingDays ?? section.practiceDays);
   return days.length > 0 ? days.length : null;
+};
+
+export const referenceWeightKgOf = (details: DocumentData): number | null => {
+  const profile = recordOf(details.profile);
+  const weightKg = positive(profile.weightKg);
+  const heightCm = positive(profile.heightCm);
+  if (weightKg === null) return null;
+  if (heightCm === null) return weightKg;
+  const heightM = heightCm / CM_PER_METER;
+  return Math.min(weightKg, HEALTHY_BMI_CEILING * heightM * heightM);
+};
+
+const adjustmentsOf = (details: DocumentData) => {
+  const blueprint = recordOf(details.blueprint);
+  const proteinPerKg = positive(blueprint.proteinPerKg);
+  return {
+    calorieFactor: clamp(
+      numberOf(blueprint.calorieFactor, 1),
+      CALORIE_FACTOR_RANGE.min,
+      CALORIE_FACTOR_RANGE.max,
+    ),
+    proteinPerKg: proteinPerKg === null ?
+      baselineProteinPerKgOf(details) :
+      clamp(proteinPerKg, PROTEIN_PER_KG_RANGE.min, PROTEIN_PER_KG_RANGE.max),
+  };
 };
 
 const waterOf = (liters: number | null, weightKg: number): number =>
@@ -139,14 +176,20 @@ export const nutritionTargetsOf = (
   const multiplier = (ACTIVITY[activityLevel] ?? DEFAULT_ACTIVITY) + bonus;
 
   const goal = typeof goals.primaryGoal === "string" ? goals.primaryGoal : "";
+  const adjustments = adjustmentsOf(details);
   const calories = Math.min(
-    Math.max(Math.round(bmr * multiplier * (GOAL_FACTORS[goal] ?? 1)),
-      MIN_CALORIES),
+    Math.max(
+      Math.round(
+        bmr * multiplier * (GOAL_FACTORS[goal] ?? 1) *
+          adjustments.calorieFactor,
+      ),
+      MIN_CALORIES,
+    ),
     MAX_CALORIES,
   );
 
-  const proteinG = weightKg * (PROTEIN_PER_KG[goal] ??
-    MAINTENANCE_PROTEIN_PER_KG);
+  const proteinG = (referenceWeightKgOf(details) ?? weightKg) *
+    adjustments.proteinPerKg;
   const fatG = calories * FAT_SHARE / FAT_KCAL;
   const carbsG = Math.max(
     0,

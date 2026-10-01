@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
-import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
-import 'package:floww/core/workout/widgets/muscle_activation_row.dart';
+import 'package:floww/core/workout/widgets/muscle_activation_card.dart';
 import 'package:floww/core/workout/widgets/muscle_figures.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
@@ -53,7 +50,7 @@ class MuscleAnatomySheet extends StatelessWidget {
               ),
             ),
             SizedBox(height: AppSpacing.lg),
-            _ActivationDetailCard(muscles: anatomy.muscles),
+            MuscleActivationCard(muscles: anatomy.muscles),
             SizedBox(height: AppSpacing.lg),
             TipCard.stacked(
               title: 'Recovery Tip',
@@ -62,46 +59,6 @@ class MuscleAnatomySheet extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ActivationDetailCard extends StatelessWidget {
-  const _ActivationDetailCard({required this.muscles});
-
-  final List<MuscleFocusEntry> muscles;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return AppCard(
-      variant: AppCardVariant.subtle,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SectionLabel(label: 'Activation Detail'),
-          SizedBox(height: AppSpacing.lg),
-          for (var i = 0; i < muscles.length; i++) ...[
-            if (i > 0) ...[
-              SizedBox(height: AppSpacing.lg),
-              Container(height: AppSizes.s1, color: colors.borderSubtle),
-              SizedBox(height: AppSpacing.lg),
-            ],
-            MuscleActivationRow(
-              muscle: muscles[i],
-              nameStyle: AppTypography.labelMediumSemiBold.copyWith(
-                color: colors.textPrimary,
-              ),
-              valueStyle: AppTypography.bodyXSmallMedium.copyWith(
-                color: colors.textSecondary,
-              ),
-              barHeight: AppSizes.s6,
-            ),
-          ],
-        ],
       ),
     );
   }

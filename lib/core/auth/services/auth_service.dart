@@ -12,6 +12,7 @@ import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/entities/user_model.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthException implements Exception {
@@ -30,6 +31,8 @@ class AuthCancelledException extends AuthException {
 class AuthService {
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
+  String? get currentUid => _auth.currentUser?.uid;
+
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   GoogleSignIn get _googleSignIn => GoogleSignIn.instance;
@@ -37,6 +40,18 @@ class AuthService {
   static Future<void>? _googleSignInSetup;
 
   static bool _googleSignInInitialized = false;
+
+  static const String _introSeenKey = 'app_intro_seen';
+
+  Future<bool> hasSeenIntro() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_introSeenKey) ?? false;
+  }
+
+  Future<void> markIntroSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_introSeenKey, true);
+  }
 
   Future<void> _ensureGoogleSignIn() {
     return _googleSignInSetup ??= _googleSignIn.initialize().then((_) {
@@ -318,18 +333,6 @@ class AuthService {
       });
     } catch (e) {
       debugPrint('syncDeviceClock skipped: $e');
-    }
-  }
-
-  Future<void> requestNotificationPermission() async {
-    try {
-      await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    } catch (_) {
-      return;
     }
   }
 

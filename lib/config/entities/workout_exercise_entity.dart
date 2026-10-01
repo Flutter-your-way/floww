@@ -38,6 +38,8 @@ class ExerciseCatalogEntry {
     this.equipmentItems = const [],
     this.isCustom = false,
     this.isAdded = false,
+    this.isPool = false,
+    this.isUnlocked = false,
     this.trackingMode = TrackingMode.reps,
   });
 
@@ -61,6 +63,8 @@ class ExerciseCatalogEntry {
         equipmentItems: cuesOf(json['equipmentItems']),
         isCustom: json['isCustom'] as bool? ?? false,
         isAdded: json['isAdded'] as bool? ?? false,
+        isPool: json['isPool'] as bool? ?? false,
+        isUnlocked: json['isUnlocked'] as bool? ?? false,
         trackingMode: TrackingMode.fromId(json['trackingMode'] as String?),
       );
 
@@ -83,12 +87,18 @@ class ExerciseCatalogEntry {
   final List<ExerciseCueEntry> equipmentItems;
   final bool isCustom;
   final bool isAdded;
+  final bool isPool;
+  final bool isUnlocked;
   final TrackingMode trackingMode;
 
   static const double _upperBodyStepKg = 2.5;
   static const double _lowerBodyStepKg = 5;
 
   bool get isBodyweight => equipment == Equipment.bodyweight;
+
+  bool get isTimed => trackingMode == TrackingMode.duration;
+
+  bool get isAvailable => !isPool || isUnlocked || isAdded;
 
   double get weightStepKg =>
       group == MuscleGroup.legs ? _lowerBodyStepKg : _upperBodyStepKg;
@@ -111,6 +121,8 @@ class ExerciseCatalogEntry {
     equipmentItems: equipmentItems,
     isCustom: isCustom,
     isAdded: isAdded ?? this.isAdded,
+    isPool: isPool,
+    isUnlocked: isUnlocked,
     trackingMode: trackingMode,
   );
 
@@ -132,12 +144,15 @@ class ExerciseCatalogEntry {
     'equipmentItems': [for (final cue in equipmentItems) cue.toJson()],
     'isCustom': isCustom,
     'isAdded': isAdded,
+    'isPool': isPool,
+    'isUnlocked': isUnlocked,
     'trackingMode': trackingMode.id,
   };
 
   Map<String, dynamic> toCatalogJson() {
     final json = toJson();
     json.remove('isAdded');
+    json.remove('isUnlocked');
     return json;
   }
 

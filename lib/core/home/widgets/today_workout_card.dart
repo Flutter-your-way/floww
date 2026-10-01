@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
+import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/custom_outlined_button.dart';
+import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_icon_tile.dart';
+import 'package:floww/config/widgets/images/app_photo_tile.dart';
 import 'package:floww/config/widgets/chips/app_status_chip.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
@@ -53,11 +56,10 @@ class TodayWorkoutCard extends StatelessWidget {
             )
           else if (workout == null)
             HomeCardEmptyState(
-              icon: Icons.directions_run,
+              iconAsset: AppImages.runIcon,
               message: 'No workout planned yet. Start your first session now.',
               buttonText: 'START WORKOUT',
-              buttonIcon: Icons.play_arrow,
-              filled: true,
+              buttonIcon: Icons.play_arrow_rounded,
               onPressed: onStartWorkout,
             )
           else
@@ -86,6 +88,7 @@ class _PlannedWorkoutBody extends StatelessWidget {
           icon: Icons.fitness_center,
           iconColor: context.colors.textPrimary,
           iconBackground: context.colors.backgroundElevated,
+          imageUrl: workout.imageUrl,
           title: workout.title,
           metrics: [
             _WorkoutMetric(
@@ -101,11 +104,9 @@ class _PlannedWorkoutBody extends StatelessWidget {
           lines: workout.reasons,
         ),
         SizedBox(height: AppSpacing.lg),
-        CustomButton(
-          text: 'START WORKOUT',
-          icon: Icons.play_arrow,
-          backgroundColor: context.colors.textPrimary,
-          foregroundColor: context.colors.backgroundPrimary,
+        BrightActionButton(
+          label: 'START WORKOUT',
+          icon: Icons.play_arrow_rounded,
           onPressed: onStartWorkout,
         ),
       ],
@@ -129,6 +130,7 @@ class _CompletedWorkoutBody extends StatelessWidget {
           iconColor: context.colors.primary,
           iconBackground: context.colors.tint,
           iconBorder: context.colors.borderGlow,
+          imageUrl: completed.imageUrl,
           title: completed.title,
           metrics: [
             _WorkoutMetric(
@@ -148,13 +150,14 @@ class _CompletedWorkoutBody extends StatelessWidget {
           ),
         ],
         SizedBox(height: AppSpacing.lg),
-        CustomOutlinedButton(
-          text: 'VIEW SUMMARY',
-          leading: Icon(
-            Icons.insights,
-            size: AppSizes.s20,
-            color: context.colors.textPrimary,
-          ),
+        PillButton(
+          variant: PillButtonVariant.outline,
+          width: double.infinity,
+          height: AppSizes.s44,
+          label: 'VIEW SUMMARY',
+          icon: Icons.insights,
+          iconColor: context.colors.textPrimary,
+          labelStyle: AppTypography.bodyMediumSemiBold,
           onPressed: onViewSummary,
         ),
       ],
@@ -178,6 +181,7 @@ class _WorkoutIdentityRow extends StatelessWidget {
     required this.title,
     required this.metrics,
     this.iconBorder,
+    this.imageUrl,
   });
 
   final IconData icon;
@@ -186,20 +190,31 @@ class _WorkoutIdentityRow extends StatelessWidget {
   final Color? iconBorder;
   final String title;
   final List<_WorkoutMetric> metrics;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = this.imageUrl;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppIconTile(
-          icon: icon,
-          size: AppSizes.s40,
-          radius: AppRadius.sm,
-          backgroundColor: iconBackground,
-          borderColor: iconBorder ?? Colors.transparent,
-          iconColor: iconColor,
-        ),
+        if (imageUrl != null)
+          AppPhotoTile(
+            url: imageUrl,
+            fallbackIcon: icon,
+            size: AppSizes.s40,
+            radius: AppRadius.sm,
+          )
+        else
+          AppIconTile(
+            icon: icon,
+            size: AppSizes.s40,
+            radius: AppRadius.sm,
+            backgroundColor: iconBackground,
+            borderColor: iconBorder ?? Colors.transparent,
+            iconColor: iconColor,
+          ),
         SizedBox(width: AppSpacing.lg),
         Expanded(
           child: Column(

@@ -24,11 +24,15 @@ class _SplashViewState extends State<SplashView> {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    final user = await context.read<AuthViewModel>().restoreSession();
+    final viewModel = context.read<AuthViewModel>();
+    final user = await viewModel.restoreSession();
+    final hasSeenIntro = await viewModel.hasSeenIntro();
     if (!mounted) return;
 
     if (user == null) {
-      NavigationService.instance.pushReplacement(AppRouter.meetWaves);
+      NavigationService.instance.pushReplacement(
+        hasSeenIntro ? AppRouter.accountSetup : AppRouter.meetWaves,
+      );
     } else {
       NavigationService.instance.pushAndRemoveUntil(
         AppRouter.routeAfterAuth(user),

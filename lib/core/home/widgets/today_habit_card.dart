@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -37,11 +38,11 @@ class TodayHabitCard extends StatelessWidget {
           SizedBox(height: AppSpacing.xl),
           if (habits.isEmpty)
             HomeCardEmptyState(
-              icon: Icons.assignment_outlined,
+              iconAsset: AppImages.clipboardIcon,
               message:
                   'No habits set up yet. Create habits to build your daily plan.',
-              buttonText: '+ CREATE FIRST HABIT',
-              filled: true,
+              buttonText: 'CREATE FIRST HABIT',
+              buttonIcon: Icons.add_rounded,
               onPressed: onCreateFirstHabit,
             )
           else

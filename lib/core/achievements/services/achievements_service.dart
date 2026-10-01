@@ -154,7 +154,9 @@ class AchievementsService {
         (session) => session.personalRecords.isNotEmpty,
       ),
       'volume_up': _bestWeeklyVolumeOf(completed) >= weeklyVolumeTargetKg,
-      'peak_flow': flow.values.any((entry) => entry.score >= peakFlowScore),
+      'peak_flow': flow.values.any(
+        (entry) => entry.hasActivity && entry.score >= peakFlowScore,
+      ),
       'recovery_pro': _isFullyRecovered(completed),
       'clean_plate': records.nutrition.foods.isNotEmpty,
       'hydrated': _hydratedDaysOf(records.nutrition) >= hydrationTargetDays,

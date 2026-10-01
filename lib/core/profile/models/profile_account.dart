@@ -21,6 +21,7 @@ class ProfileAccount {
     this.stepsTarget,
     this.sleepTargetHours,
     this.waterTargetLiters,
+    this.flowBaseline,
     this.memberSince,
     this.subscription,
   });
@@ -45,6 +46,7 @@ class ProfileAccount {
   final double? stepsTarget;
   final double? sleepTargetHours;
   final double? waterTargetLiters;
+  final int? flowBaseline;
   final DateTime? memberSince;
   final SubscriptionEntity? subscription;
 
@@ -81,6 +83,7 @@ class ProfileAccount {
     stepsTarget: stepsTarget,
     sleepTargetHours: sleepTargetHours,
     waterTargetLiters: waterTargetLiters,
+    flowBaseline: flowBaseline,
     memberSince: memberSince,
     subscription: subscription ?? this.subscription,
   );

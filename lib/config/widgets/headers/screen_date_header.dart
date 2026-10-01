@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/dates/date_change_direction.dart';
-import 'package:floww/config/widgets/animations/date_change_transition.dart';
 import 'package:floww/config/widgets/headers/date_selector_pill.dart';
 import 'package:floww/config/widgets/headers/screen_title.dart';
 
@@ -33,12 +32,10 @@ class ScreenDateHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: DateChangeTransition(
-            value: titlePrefix,
-            direction: direction,
-            duration: AppMotion.fast,
-            distance: AppMotion.slideDistanceSmall,
-            child: ScreenTitle(eyebrow: titlePrefix, title: title),
+          child: ScreenTitle(
+            eyebrow: titlePrefix,
+            title: title,
+            eyebrowDirection: direction,
           ),
         ),
         AnimatedSwitcher(

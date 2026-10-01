@@ -12,6 +12,7 @@ class CustomButton extends StatefulWidget {
     this.isLoading = false,
     this.isDisabled = false,
     this.icon,
+    this.trailingIcon,
     this.leading,
     this.width,
     this.backgroundColor,
@@ -23,6 +24,7 @@ class CustomButton extends StatefulWidget {
   final bool isLoading;
   final bool isDisabled;
   final IconData? icon;
+  final IconData? trailingIcon;
   final Widget? leading;
   final double? width;
   final Color? backgroundColor;
@@ -113,6 +115,14 @@ class _CustomButtonState extends State<CustomButton> {
                             color: foregroundColor,
                           ),
                         ),
+                        if (widget.trailingIcon != null) ...[
+                          const SizedBox(width: AppSizes.s12),
+                          Icon(
+                            widget.trailingIcon,
+                            color: foregroundColor,
+                            size: AppSizes.s24,
+                          ),
+                        ],
                       ],
                     ),
             ),

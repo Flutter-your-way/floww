@@ -121,6 +121,11 @@ class MealDetailsViewModel extends ChangeNotifier {
         proteinLabel: 'P ${NutritionLabels.grams(log.macros.proteinG)}',
         carbsLabel: 'C ${NutritionLabels.grams(log.macros.carbsG)}',
         fatLabel: 'F ${NutritionLabels.grams(log.macros.fatG)}',
+        microsLabel: NutritionLabels.microLine(
+          log.macros.fiberG,
+          log.macros.sugarG,
+          log.food.nutrition.minerals.sodiumMg,
+        ),
         isScanned: log.food.source == FoodSource.scan,
       ),
   ];

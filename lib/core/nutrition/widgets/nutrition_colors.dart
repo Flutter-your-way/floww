@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/nutrition/models/macro_nutrient.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
@@ -13,10 +14,10 @@ extension MacroNutrientStyle on MacroNutrient {
     MacroNutrient.fats => context.colors.fatAccent,
   };
 
-  IconData get icon => switch (this) {
-    MacroNutrient.protein => Icons.egg_alt_outlined,
-    MacroNutrient.carbs => Icons.grass_rounded,
-    MacroNutrient.fats => Icons.water_drop_outlined,
+  String get emoji => switch (this) {
+    MacroNutrient.protein => '🥚',
+    MacroNutrient.carbs => '🌾',
+    MacroNutrient.fats => '🥑',
   };
 }
 
@@ -26,6 +27,20 @@ extension MealTypeStyle on MealType {
     MealType.lunch => Icons.wb_sunny_rounded,
     MealType.dinner => Icons.nightlight_round,
     MealType.snacks => Icons.cookie_outlined,
+  };
+
+  String get iconAsset => switch (this) {
+    MealType.breakfast => AppImages.breakfastIcon,
+    MealType.lunch => AppImages.lunchIcon,
+    MealType.dinner => AppImages.dinnerIcon,
+    MealType.snacks => AppImages.snacksIcon,
+  };
+
+  String get photo => switch (this) {
+    MealType.breakfast => AppImages.breakfastPhoto,
+    MealType.lunch => AppImages.lunchPhoto,
+    MealType.dinner => AppImages.dinnerPhoto,
+    MealType.snacks => AppImages.snacksPhoto,
   };
 
   Color colorOf(BuildContext context) => switch (this) {
@@ -62,5 +77,15 @@ extension MicronutrientKindStyle on MicronutrientKind {
     MicronutrientKind.fiber => Icons.eco_rounded,
     MicronutrientKind.sugar => Icons.icecream_outlined,
     MicronutrientKind.sodium => Icons.grain_rounded,
+  };
+
+  bool get isLimit =>
+      this == MicronutrientKind.sugar || this == MicronutrientKind.sodium;
+
+  String get iconAsset => switch (this) {
+    MicronutrientKind.water => AppImages.waterIcon,
+    MicronutrientKind.fiber => AppImages.fiberIcon,
+    MicronutrientKind.sugar => AppImages.sugarIcon,
+    MicronutrientKind.sodium => AppImages.sodiumIcon,
   };
 }

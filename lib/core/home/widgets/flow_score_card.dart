@@ -1,3 +1,4 @@
+import 'package:floww/config/widgets/animations/app_card_pop.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_motion.dart';
@@ -34,10 +35,12 @@ class FlowScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onBreakdownTap,
-      child: _buildCard(context),
+    return AppCardPop(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onBreakdownTap,
+        child: _buildCard(context),
+      ),
     );
   }
 

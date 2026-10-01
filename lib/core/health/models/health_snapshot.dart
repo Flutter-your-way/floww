@@ -55,9 +55,7 @@ class HealthSnapshot {
     if (activeCaloriesKcal > 0 && parts.length < 3) {
       parts.add('$activeCaloriesKcal kcal');
     }
-    return parts.isEmpty
-        ? 'No Apple Health data logged today'
-        : parts.join(' · ');
+    return parts.isEmpty ? 'No health data logged today' : parts.join(' · ');
   }
 
   static String _grouped(int value) {

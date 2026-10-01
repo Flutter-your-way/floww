@@ -6,6 +6,8 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
+import 'package:floww/core/nutrition/views/food_photo_sheet.dart';
+import 'package:floww/core/nutrition/widgets/food_photo.dart';
 import 'package:floww/core/nutrition/models/food_catalog.dart';
 import 'package:floww/core/nutrition/models/food_log.dart';
 import 'package:floww/core/nutrition/models/food_portion_result.dart';
@@ -48,6 +50,11 @@ class FoodPortionSheet extends StatelessWidget {
           child: AppSheetPanel(
             title: viewModel.title,
             subtitle: viewModel.subtitle,
+            leading: FoodPhoto(
+              name: viewModel.title,
+              size: AppSizes.s48,
+              onTap: () => FoodPhotoSheet.show(context, viewModel.title),
+            ),
             onClose: () => NavigationService.instance.pop(),
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -67,6 +74,7 @@ class FoodPortionSheet extends StatelessWidget {
                   proteinLabel: viewModel.proteinLabel,
                   carbsLabel: viewModel.carbsLabel,
                   fatLabel: viewModel.fatLabel,
+                  microsLabel: viewModel.microsLabel,
                 ),
               ],
             ),

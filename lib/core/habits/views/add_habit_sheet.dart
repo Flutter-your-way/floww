@@ -8,6 +8,9 @@ import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
+import 'package:floww/core/premium/widgets/premium_gate.dart';
+import 'package:floww/core/premium/widgets/premium_locked_card.dart';
 import 'package:floww/core/habits/models/habit_suggestion.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/view_models/add_habit_view_model.dart';
@@ -69,15 +72,22 @@ class AddHabitSheet extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (viewModel.hasSuggestionGroup) ...[
-                  WaveSuggestionCard(
-                    label: viewModel.waveLabel,
-                    title: viewModel.groupTitle,
-                    actionLabel: viewModel.tryAnotherLabel,
-                    items: viewModel.groupItems,
-                    onTryAnother: viewModel.canTryAnother
-                        ? viewModel.nextGroup
-                        : null,
-                    onAdd: (item) => _add(context, viewModel, item),
+                  PremiumGate(
+                    capability: PremiumCapability.personalizedRecommendations,
+                    placeholder: const SizedBox.shrink(),
+                    locked: const PremiumLockedCard(
+                      capability: PremiumCapability.personalizedRecommendations,
+                    ),
+                    child: WaveSuggestionCard(
+                      label: viewModel.waveLabel,
+                      title: viewModel.groupTitle,
+                      actionLabel: viewModel.tryAnotherLabel,
+                      items: viewModel.groupItems,
+                      onTryAnother: viewModel.canTryAnother
+                          ? viewModel.nextGroup
+                          : null,
+                      onAdd: (item) => _add(context, viewModel, item),
+                    ),
                   ),
                   SizedBox(height: AppSpacing.xl),
                 ],

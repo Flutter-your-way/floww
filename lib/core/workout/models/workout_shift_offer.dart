@@ -19,8 +19,8 @@ class WorkoutShiftOffer {
       'Changed your mind? Bring ${plan.name} back to today and the rest of '
           'your program moves back with it.',
     WorkoutShiftKind.catchUp =>
-      'Shift your program back one day so ${plan.name} happens today and '
-          'nothing gets lost.',
+      'Add ${plan.name} to today alongside your scheduled session. Your '
+          'program stays on track and nothing gets lost.',
     WorkoutShiftKind.postpone =>
       'Move today\'s session to tomorrow. Every later session shifts by a day '
           'so your program stays in order.',
@@ -28,7 +28,7 @@ class WorkoutShiftOffer {
 
   String get actionLabel => switch (kind) {
     WorkoutShiftKind.restore => 'Bring it back to today',
-    WorkoutShiftKind.catchUp => 'Do it today',
+    WorkoutShiftKind.catchUp => 'Add to today',
     WorkoutShiftKind.postpone => 'Move to tomorrow',
   };
 }

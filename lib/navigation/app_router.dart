@@ -3,11 +3,12 @@ import 'package:floww/config/entities/user_model.dart';
 class AppRouter {
   AppRouter._();
 
-  static const String splash = '/splash';
+  static const String splash = '/';
   static const String meetWaves = '/meet_waves';
   static const String accountSetup = '/account_setup';
   static const String onboardingQuestion = '/onboardingQuestion';
   static const String connectWearables = '/connect_wearables';
+  static const String notificationPermission = '/notification_permission';
   static const String home = '/home';
   static const String foodScan = '/food_scan';
   static const String mealDetails = '/meal_details';
@@ -32,6 +33,8 @@ class AppRouter {
   static const String notificationSettings = '/notification_settings';
   static const String units = '/units';
   static const String privacyData = '/privacy_data';
+  static const String onboardingAnswers = '/onboarding_answers';
+  static const String editOnboardingAnswer = '/edit_onboarding_answer';
 
   static String routeAfterAuth(UserModel user) {
     if (user.onboardingCompleted) return home;

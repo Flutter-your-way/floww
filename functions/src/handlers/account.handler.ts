@@ -1,5 +1,6 @@
 import {Request, Response} from "express";
 import {getAuth} from "firebase-admin/auth";
+import {getStorage} from "firebase-admin/storage";
 import {logger} from "firebase-functions";
 import {ApiError, sendData} from "../common/api.error";
 import {
@@ -11,6 +12,7 @@ import {
 import {DELETION_FLAG} from "../helpers/user.clock.helper";
 
 const AUTH_USER_NOT_FOUND = "auth/user-not-found";
+const FOOD_IMAGES_PREFIX = "food_images";
 
 export const handleDeleteAccount = async (req: Request, res: Response) => {
   const uid = req.user.uid;
@@ -29,6 +31,11 @@ export const handleDeleteAccount = async (req: Request, res: Response) => {
     logger.error("handleDeleteAccount: data wipe failed", {uid, error});
     throw new ApiError("INTERNAL", "Could not delete your data.");
   }
+
+  await getStorage().bucket()
+    .deleteFiles({prefix: `${FOOD_IMAGES_PREFIX}/${uid}/`})
+    .catch((error) => logger.error(
+      "handleDeleteAccount: food photo wipe failed", {uid, error}));
 
   try {
     await getAuth().deleteUser(uid);

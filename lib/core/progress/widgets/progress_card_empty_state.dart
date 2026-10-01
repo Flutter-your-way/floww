@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 
 class ProgressCardEmptyState extends StatelessWidget {
   const ProgressCardEmptyState({
@@ -47,12 +47,9 @@ class ProgressCardEmptyState extends StatelessWidget {
           ),
         ),
         SizedBox(height: AppSpacing.xl),
-        PillButton(
-          variant: PillButtonVariant.bright,
-          height: AppSizes.s44,
+        BrightActionButton(
           icon: Icons.add_rounded,
           label: buttonLabel,
-          labelStyle: AppTypography.labelSmallSemiBold,
           onPressed: onPressed,
         ),
       ],

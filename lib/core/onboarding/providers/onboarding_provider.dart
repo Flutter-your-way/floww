@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_motion.dart';
 import '../data/onboarding_data.dart';
+import '../models/onboarding_analysis.dart';
 import '../models/onboarding_models.dart';
 import '../services/onboarding_service.dart';
 
 class OnboardingProvider extends ChangeNotifier {
-  OnboardingProvider({OnboardingService? onboardingService})
-    : _onboardingService = onboardingService ?? OnboardingService();
+  OnboardingProvider({
+    OnboardingService? onboardingService,
+    Map<String, dynamic>? initialAnswers,
+  }) : _onboardingService = onboardingService ?? OnboardingService() {
+    if (initialAnswers != null) _answers.addAll(initialAnswers);
+  }
 
   final OnboardingService _onboardingService;
 
@@ -16,43 +22,38 @@ class OnboardingProvider extends ChangeNotifier {
   bool isSubmitting = false;
   String? submitError;
 
+  OnboardingAnalysis? _analysis;
+  bool isAnalyzing = false;
+  String? analysisError;
+  int _analysisRun = 0;
+
   int get currentPhaseIndex => _currentPhaseIndex;
   int get currentQuestionIndex => _currentQuestionIndex;
   Map<String, dynamic> get answers => _answers;
+  OnboardingAnalysis? get analysis => _analysis;
 
-  /// Dynamically computes the list of active phases based on the user's answers.
-  List<OnboardingPhase> get activePhases {
-    List<OnboardingPhase> phases = [];
-    // Phases 1 through 4
-    phases.addAll(OnboardingData.corePhases);
-
-    // Dynamic Phase 4.1 based on Training Type selection
-    final trainingType = _answers['training_type'];
-    if (trainingType != null) {
-      if (trainingType is List && trainingType.isNotEmpty) {
-        // Just in case it's stored as a list
-        final type = trainingType.first.toString().toLowerCase();
-        if (type == 'gym') phases.add(OnboardingData.gymPhase);
-        if (type == 'calisthenics')
-          phases.add(OnboardingData.calisthenicsPhase);
-        if (type == 'yoga') phases.add(OnboardingData.yogaPhase);
-      } else if (trainingType is String) {
-        final type = trainingType.toLowerCase();
-        if (type == 'gym') phases.add(OnboardingData.gymPhase);
-        if (type == 'calisthenics')
-          phases.add(OnboardingData.calisthenicsPhase);
-        if (type == 'yoga') phases.add(OnboardingData.yogaPhase);
-      }
-    }
-
-    // Phases 5, 6, and Final
-    phases.addAll(OnboardingData.finalPhases);
-    return phases;
-  }
+  List<OnboardingPhase> get activePhases =>
+      OnboardingData.activePhasesFor(_answers);
 
   OnboardingPhase get currentPhase => activePhases[_currentPhaseIndex];
   OnboardingQuestion get currentQuestion =>
       currentPhase.questions[_currentQuestionIndex];
+
+  bool get isOnAnalysis => currentQuestion.inputType == InputType.loading;
+
+  bool get isOnBlueprint =>
+      currentQuestion.inputType == InputType.summary && _analysis != null;
+
+  List<String> get analysisSteps => [
+    for (final option in currentQuestion.options ?? const <QuestionOption>[])
+      option.title,
+  ];
+
+  String get blueprintTitle {
+    final name = _answers['name'];
+    final firstName = name is String ? name.trim().split(' ').first : '';
+    return firstName.isEmpty ? 'Your Blueprint' : "$firstName's Blueprint";
+  }
 
   /// Progress across all active phases (0.0 to 1.0)
   double get globalProgress {
@@ -76,9 +77,22 @@ class OnboardingProvider extends ChangeNotifier {
     return _answers[questionId];
   }
 
+  Duration? sleepDurationFor(String questionId) {
+    if (questionId != 'sleep_schedule') return null;
+    final sleep = _answers['sleep_time'];
+    final wake = _answers['wake_time'];
+    if (sleep is! DateTime || wake is! DateTime) return null;
+    final sleepMinutes = sleep.hour * 60 + sleep.minute;
+    final wakeMinutes = wake.hour * 60 + wake.minute;
+    return Duration(
+      minutes: (wakeMinutes - sleepMinutes) % Duration.minutesPerDay,
+    );
+  }
+
   /// Save an answer and notify listeners so UI updates instantly
   void setAnswer(String questionId, dynamic answer) {
     _answers[questionId] = answer;
+    _analysis = null;
     notifyListeners();
   }
 
@@ -96,17 +110,45 @@ class OnboardingProvider extends ChangeNotifier {
     }
 
     _answers[questionId] = currentList;
+    _analysis = null;
     notifyListeners();
+  }
+
+  bool _stepForward() {
+    if (_currentQuestionIndex < currentPhase.questions.length - 1) {
+      _currentQuestionIndex++;
+      return true;
+    }
+    if (_currentPhaseIndex < activePhases.length - 1) {
+      _currentPhaseIndex++;
+      _currentQuestionIndex = 0;
+      return true;
+    }
+    return false;
+  }
+
+  bool _stepBack() {
+    if (_currentQuestionIndex > 0) {
+      _currentQuestionIndex--;
+      return true;
+    }
+    if (_currentPhaseIndex > 0) {
+      _currentPhaseIndex--;
+      _currentQuestionIndex = currentPhase.questions.length - 1;
+      return true;
+    }
+    return false;
   }
 
   /// Go back to the previous question or phase
   void previousQuestion(PageController pageController) {
-    if (_currentQuestionIndex > 0) {
-      _currentQuestionIndex--;
-      _animateToCurrentPage(pageController);
-    } else if (_currentPhaseIndex > 0) {
-      _currentPhaseIndex--;
-      _currentQuestionIndex = currentPhase.questions.length - 1;
+    if (isOnAnalysis) {
+      _analysisRun++;
+      isAnalyzing = false;
+      analysisError = null;
+    }
+    if (_stepBack()) {
+      if (isOnAnalysis) _stepBack();
       _animateToCurrentPage(pageController);
     }
     notifyListeners();
@@ -115,16 +157,10 @@ class OnboardingProvider extends ChangeNotifier {
   /// Proceed to the next question or phase. Returns true once the whole
   /// flow is complete and the answers have been submitted successfully.
   Future<bool> nextQuestion(PageController pageController) async {
-    if (_currentQuestionIndex < currentPhase.questions.length - 1) {
-      _currentQuestionIndex++;
+    if (_stepForward()) {
       _animateToCurrentPage(pageController);
       notifyListeners();
-      return false;
-    } else if (_currentPhaseIndex < activePhases.length - 1) {
-      _currentPhaseIndex++;
-      _currentQuestionIndex = 0;
-      _animateToCurrentPage(pageController);
-      notifyListeners();
+      if (isOnAnalysis) analyzeProfile(pageController);
       return false;
     }
 
@@ -142,6 +178,33 @@ class OnboardingProvider extends ChangeNotifier {
       isSubmitting = false;
       notifyListeners();
     }
+  }
+
+  Future<void> analyzeProfile(PageController pageController) async {
+    if (isAnalyzing) return;
+    final run = ++_analysisRun;
+    isAnalyzing = true;
+    analysisError = null;
+    notifyListeners();
+
+    final minimumDisplay = Future<void>.delayed(AppMotion.profileAnalysis);
+    try {
+      final analysis =
+          _analysis ??
+          await _onboardingService.analyzeOnboardingAnswers(Map.of(_answers));
+      await minimumDisplay;
+      if (run != _analysisRun) return;
+      _analysis = analysis;
+      if (isOnAnalysis && _stepForward()) {
+        _animateToCurrentPage(pageController);
+      }
+    } on OnboardingException catch (e) {
+      await minimumDisplay;
+      if (run != _analysisRun) return;
+      analysisError = e.message;
+    }
+    isAnalyzing = false;
+    notifyListeners();
   }
 
   /// Private helper to animate the page view smoothly
@@ -162,33 +225,41 @@ class OnboardingProvider extends ChangeNotifier {
     }
   }
 
-  /// Validates if the current question has an answer so the Continue button can be enabled
-  bool get canContinue {
-    if (currentQuestion.inputType == InputType.multiQuestion) {
-      if (currentQuestion.subQuestions == null ||
-          currentQuestion.subQuestions!.isEmpty)
+  bool get canContinue => isAnswered(currentQuestion);
+
+  bool isAnswered(OnboardingQuestion question) {
+    if (question.inputType == InputType.multiQuestion) {
+      if (question.subQuestions == null || question.subQuestions!.isEmpty) {
         return true;
-      for (final subQ in currentQuestion.subQuestions!) {
+      }
+      for (final subQ in question.subQuestions!) {
         final ans = _answers[subQ.id];
         if (ans == null) return false;
       }
       return true;
     }
 
-    final answer = _answers[currentQuestion.id];
-    switch (currentQuestion.inputType) {
+    final answer = _answers[question.id];
+    switch (question.inputType) {
       case InputType.text:
         return answer != null && answer.toString().trim().isNotEmpty;
       case InputType.multiSelect:
       case InputType.multiSelectPill:
-        return answer != null && (answer as List).isNotEmpty;
+        return answer is List && answer.isNotEmpty;
       case InputType.inlineSlider:
         return answer != null; // Will be initialized by renderer if null
       case InputType.loading:
+        return false;
       case InputType.summary:
-        return true; // Always allow continue for non-input screens
+        return _analysis != null;
       default:
         return answer != null; // Most others just need a non-null answer
     }
+  }
+
+  @override
+  void dispose() {
+    _analysisRun++;
+    super.dispose();
   }
 }

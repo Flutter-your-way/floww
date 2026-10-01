@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/widgets/habit_icon.dart';
@@ -53,13 +53,10 @@ class HabitsEmptyStateCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: AppSpacing.xl),
-          PillButton(
+          BrightActionButton(
             onPressed: onCreateHabit,
-            variant: PillButtonVariant.bright,
             icon: Icons.add_rounded,
-            iconColor: colors.onSurfaceBright,
             label: buttonLabel,
-            labelStyle: AppTypography.labelMediumSemiBold,
           ),
         ],
       ),

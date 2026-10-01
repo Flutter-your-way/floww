@@ -10,4 +10,16 @@ class NumberFormatter {
     }
     return buffer.toString();
   }
+
+  static String clock(int seconds) {
+    final minutes = seconds ~/ Duration.secondsPerMinute;
+    final remainder = seconds % Duration.secondsPerMinute;
+    return '${minutes.toString().padLeft(2, '0')}:'
+        '${remainder.toString().padLeft(2, '0')}';
+  }
+
+  static String trimmed(double value, {int digits = 1}) {
+    if (value == value.roundToDouble()) return value.round().toString();
+    return value.toStringAsFixed(digits);
+  }
 }

@@ -10,6 +10,7 @@ import {
   handleSearchFood,
 } from "./src/handlers/food.handler";
 import {
+  handleAnalyzeOnboarding,
   handleCompleteOnboarding,
   handleSubmitOnboarding,
 } from "./src/handlers/onboarding.handler";
@@ -17,9 +18,12 @@ import {
   handleCancelSubscription,
   handleSubscribe,
 } from "./src/handlers/premium.handler";
+import {handleFoodImage} from "./src/handlers/food.image.handler";
+import {handleDailyQuote} from "./src/handlers/quote.handler";
 import {handleWaveChat} from "./src/handlers/wave.handler";
 import {
   handleCompleteWorkout,
+  handleGenerateWorkoutPlan,
   handleUnlogWorkout,
 } from "./src/handlers/workout.handler";
 import {authenticate} from "./src/middlewares/auth.middleware";
@@ -39,16 +43,18 @@ export {
   onOnboardingDetailsWritten,
   onWeightLogWritten,
 } from "./src/triggers/profile.trigger";
+export {onHealthLogWritten} from "./src/triggers/health.trigger";
 export {expireSubscriptions} from "./src/scheduled/subscriptions.schedule";
 export {sendScheduledReminders} from "./src/scheduled/reminders.schedule";
 
-type HttpMethod = "post" | "delete";
+type HttpMethod = "get" | "post" | "delete";
 
 const ANY_PATH = /.*/;
 
 const createApp = (
   method: HttpMethod,
   handler: RequestHandler,
+  {requireAuth = true}: {requireAuth?: boolean} = {},
 ): Application => {
   const app = express();
 
@@ -61,7 +67,11 @@ const createApp = (
     },
   }));
 
-  app[method](ANY_PATH, authenticate, handler);
+  if (requireAuth) {
+    app[method](ANY_PATH, authenticate, handler);
+  } else {
+    app[method](ANY_PATH, handler);
+  }
 
   app.use(notFoundHandler);
   app.use(errorHandler);
@@ -99,6 +109,15 @@ export const describeFood = onRequest(
   createApp("post", handleDescribeFood),
 );
 
+export const foodImage = onRequest(
+  {
+    cors: true,
+    memory: "256MiB",
+    timeoutSeconds: 30,
+  },
+  createApp("post", handleFoodImage),
+);
+
 export const waveChat = onRequest(
   {
     cors: true,
@@ -134,9 +153,34 @@ export const unlogWorkout = onRequest(
   createApp("post", handleUnlogWorkout),
 );
 
+export const generateWorkoutPlan = onRequest(
+  {
+    cors: true,
+    secrets: [openAiApiKey],
+    memory: "512MiB",
+    timeoutSeconds: 120,
+  },
+  createApp("post", handleGenerateWorkoutPlan),
+);
+
 export const submitOnboarding = onRequest(
   lightOptions,
   createApp("post", handleSubmitOnboarding),
+);
+
+export const analyzeOnboarding = onRequest(
+  {
+    cors: true,
+    secrets: [openAiApiKey],
+    memory: "512MiB",
+    timeoutSeconds: 120,
+  },
+  createApp("post", handleAnalyzeOnboarding),
+);
+
+export const dailyQuote = onRequest(
+  lightOptions,
+  createApp("post", handleDailyQuote),
 );
 
 export const completeOnboarding = onRequest(
@@ -153,3 +197,4 @@ export const cancelPremium = onRequest(
   lightOptions,
   createApp("post", handleCancelSubscription),
 );
+

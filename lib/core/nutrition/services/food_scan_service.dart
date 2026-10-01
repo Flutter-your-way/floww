@@ -92,6 +92,13 @@ class FoodScanService {
     ];
   }
 
+  Future<String?> lookupFoodImage(String name) async {
+    final data = await _post(AppApi.foodImage, AppApi.searchResponseTimeout, {
+      'name': name.trim(),
+    });
+    return (data as Map<String, dynamic>)['url'] as String?;
+  }
+
   Future<FoodModel> describeFood(String text) async {
     final data = await _post(AppApi.foodDescribe, AppApi.aiResponseTimeout, {
       'text': text.trim(),

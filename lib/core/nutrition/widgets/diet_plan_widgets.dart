@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
+import 'package:floww/config/widgets/animations/app_collapsible_section.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
@@ -80,6 +81,16 @@ class DietPlanDayCard extends StatelessWidget {
     final captionStyle = context.textTheme.labelSmall?.copyWith(
       color: colors.textSecondary,
     );
+    final statusColor = day.isCompleted
+        ? colors.primary
+        : day.isMissed
+        ? colors.destructiveBorder
+        : null;
+    final statusBorder = day.isCompleted
+        ? colors.borderAccent
+        : day.isMissed
+        ? colors.destructiveOutline
+        : colors.borderSubtle;
     return PressScale(
       onTap: onTap,
       child: AppCard(
@@ -87,8 +98,9 @@ class DietPlanDayCard extends StatelessWidget {
             ? AppCardVariant.highlighted
             : AppCardVariant.plain,
         padding: const EdgeInsets.all(AppSpacing.lg),
-        transitionDuration: AppMotion.expand,
+        transitionDuration: AppMotion.expandSoft,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
@@ -99,18 +111,12 @@ class DietPlanDayCard extends StatelessWidget {
                   decoration: AppShapes.decoration(
                     color: colors.backgroundElevated,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                    side: BorderSide(
-                      color: day.isCompleted
-                          ? colors.borderAccent
-                          : colors.borderSubtle,
-                    ),
+                    side: BorderSide(color: statusBorder),
                   ),
                   child: Text(
                     '${day.dayNumber}',
                     style: context.textTheme.labelLarge?.copyWith(
-                      color: day.isCompleted
-                          ? colors.primary
-                          : colors.textPrimary,
+                      color: statusColor ?? colors.textPrimary,
                     ),
                   ),
                 ),
@@ -127,16 +133,16 @@ class DietPlanDayCard extends StatelessWidget {
                 Icon(
                   day.isCompleted
                       ? Icons.check_circle_outline_rounded
+                      : day.isMissed
+                      ? Icons.highlight_off_rounded
                       : Icons.radio_button_unchecked_rounded,
-                  color: day.isCompleted
-                      ? colors.primary
-                      : colors.textSecondary,
+                  color: statusColor ?? colors.textSecondary,
                   size: AppSizes.s20,
                 ),
                 SizedBox(width: AppSpacing.sm),
                 AnimatedRotation(
-                  turns: day.isExpanded ? 0.25 : 0,
-                  duration: AppMotion.expand,
+                  turns: day.isExpanded ? AppMotion.quarterTurn : 0,
+                  duration: AppMotion.expandSoft,
                   curve: AppMotion.expandCurve,
                   child: Icon(
                     Icons.chevron_right_rounded,
@@ -146,17 +152,10 @@ class DietPlanDayCard extends StatelessWidget {
                 ),
               ],
             ),
-            AnimatedCrossFade(
-              alignment: Alignment.topCenter,
-              firstChild: const SizedBox(width: double.infinity),
-              secondChild: _PlanDayDetails(day: day),
-              crossFadeState: day.isExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: AppMotion.expand,
-              sizeCurve: AppMotion.expandCurve,
-              firstCurve: AppMotion.collapseCurve,
-              secondCurve: AppMotion.expandCurve,
+            AppCollapsibleSection(
+              visible: day.isExpanded,
+              duration: AppMotion.expandSoft,
+              child: _PlanDayDetails(day: day),
             ),
           ],
         ),

@@ -4,9 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
-import 'package:floww/config/theme/card_style_controller.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
-import 'package:floww/config/widgets/cards/app_toggle_card.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
@@ -116,19 +114,6 @@ class ProfileView extends StatelessWidget {
                 title: viewModel.settingsTitle,
                 items: viewModel.settings,
                 onItemTap: _openSetting,
-              ),
-              SizedBox(height: AppSpacing.xl2),
-              AppToggleCard(
-                icon: Icons.blur_on_rounded,
-                title: viewModel.glassCardsTitle,
-                subtitle: viewModel.glassCardsSubtitle,
-                value: context.select<CardStyleController, bool>(
-                  (controller) => controller.isGlass,
-                ),
-                onChanged: (value) {
-                  HapticManager.light();
-                  context.read<CardStyleController>().setGlass(value);
-                },
               ),
               SizedBox(height: AppSpacing.xl2),
               ProfileLogOutButton(

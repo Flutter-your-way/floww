@@ -41,7 +41,14 @@ class RecoveryMetricRow extends StatelessWidget {
               ),
             ),
             SizedBox(width: AppSpacing.md),
-            Text('${metric.percent}%', style: context.textTheme.labelLarge),
+            Text(
+              metric.hasData ? '${metric.percent}%' : '–',
+              style: context.textTheme.labelLarge?.copyWith(
+                color: metric.hasData
+                    ? context.colors.textPrimary
+                    : context.colors.textSecondary,
+              ),
+            ),
           ],
         ),
         SizedBox(height: AppSpacing.md),

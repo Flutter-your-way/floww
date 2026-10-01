@@ -3,11 +3,13 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/placeholders/app_spinner.dart';
+import 'package:floww/core/nutrition/widgets/food_photo.dart';
 
 class CatalogFoodRow extends StatelessWidget {
   const CatalogFoodRow({
     super.key,
     required this.name,
+    required this.photoName,
     required this.macrosLabel,
     required this.caloriesLabel,
     required this.isAdded,
@@ -16,6 +18,7 @@ class CatalogFoodRow extends StatelessWidget {
   });
 
   final String name;
+  final String photoName;
   final String macrosLabel;
   final String caloriesLabel;
   final bool isAdded;
@@ -33,6 +36,8 @@ class CatalogFoodRow extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
         child: Row(
           children: [
+            FoodPhoto(name: photoName),
+            SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

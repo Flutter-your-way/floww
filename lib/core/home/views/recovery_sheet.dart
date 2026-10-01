@@ -28,7 +28,7 @@ class RecoverySheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metrics = detail.metrics;
+    final metrics = detail.displayMetrics;
 
     return AppFloatingSheet(
       child: AppSheetPanel(
@@ -48,22 +48,24 @@ class RecoverySheet extends StatelessWidget {
         titleContent: _RecoveryTitle(
           percent: detail.percent,
           levelLabel: detail.levelLabel,
+          hasData: detail.hasData,
         ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (metrics.isEmpty)
+            for (var i = 0; i < metrics.length; i++) ...[
+              if (i > 0) SizedBox(height: AppSpacing.xl),
+              RecoveryMetricRow(metric: metrics[i]),
+            ],
+            if (!detail.hasData) ...[
+              SizedBox(height: AppSpacing.xl),
               Text(
-                'Connect Apple Health or Health Connect to see your sleep, '
-                'HRV and energy.',
+                'Connect your wearable to see your sleep, HRV and energy.',
                 style: context.textTheme.bodyMedium?.copyWith(
                   color: context.colors.textSecondary,
                 ),
               ),
-            for (var i = 0; i < metrics.length; i++) ...[
-              if (i > 0) SizedBox(height: AppSpacing.xl),
-              RecoveryMetricRow(metric: metrics[i]),
             ],
           ],
         ),
@@ -73,10 +75,15 @@ class RecoverySheet extends StatelessWidget {
 }
 
 class _RecoveryTitle extends StatelessWidget {
-  const _RecoveryTitle({required this.percent, required this.levelLabel});
+  const _RecoveryTitle({
+    required this.percent,
+    required this.levelLabel,
+    required this.hasData,
+  });
 
   final int percent;
   final String levelLabel;
+  final bool hasData;
 
   @override
   Widget build(BuildContext context) {
@@ -91,16 +98,20 @@ class _RecoveryTitle extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('$percent', style: context.textTheme.headlineSmall),
-            Padding(
-              padding: EdgeInsets.only(bottom: AppSpacing.xxs),
-              child: Text(
-                '%',
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: colors.textSecondary,
+            Text(
+              hasData ? '$percent' : '–',
+              style: context.textTheme.headlineSmall,
+            ),
+            if (hasData)
+              Padding(
+                padding: EdgeInsets.only(bottom: AppSpacing.xxs),
+                child: Text(
+                  '%',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 ),
               ),
-            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Container(
@@ -110,9 +121,9 @@ class _RecoveryTitle extends StatelessWidget {
               ),
             ),
             AppStatValue(
-              value: levelLabel,
-              dotColor: colors.success,
-              valueColor: colors.success,
+              value: hasData ? levelLabel : 'No data',
+              dotColor: hasData ? colors.success : colors.textSecondary,
+              valueColor: hasData ? colors.success : colors.textSecondary,
             ),
           ],
         ),

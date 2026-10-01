@@ -10,6 +10,9 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
+import 'package:floww/core/premium/widgets/premium_gate.dart';
+import 'package:floww/core/premium/widgets/premium_locked_panel.dart';
 import 'package:floww/core/wave/models/wave_card_data.dart';
 import 'package:floww/core/wave/models/wave_quick_action.dart';
 import 'package:floww/core/wave/services/wave_chat_service.dart';
@@ -120,128 +123,160 @@ class WaveChatSheet extends StatelessWidget {
     final viewPadding = MediaQuery.viewPaddingOf(context);
     final viewInsets = MediaQuery.viewInsetsOf(context);
 
-    return ChangeNotifierProvider(
-      create: (_) => WaveChatViewModel(
-        WaveChatService(),
-        WaveContextService(),
-        WaveTranscriptService(),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(top: viewPadding.top + AppSizes.s64),
-        child: Material(
-          type: MaterialType.transparency,
-          child: Container(
-            clipBehavior: Clip.antiAlias,
-            decoration: AppShapes.decoration(
-              color: context.colors.backgroundPrimary,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppRadius.xl),
-              ),
-              side: BorderSide(
-                color: context.colors.borderSubtle,
-                width: AppSizes.s1,
-              ),
+    return Padding(
+      padding: EdgeInsets.only(top: viewPadding.top + AppSizes.s64),
+      child: Material(
+        type: MaterialType.transparency,
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: AppShapes.decoration(
+            color: context.colors.backgroundPrimary,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
             ),
-            child: Consumer<WaveChatViewModel>(
-              builder: (context, viewModel, child) {
-                return Column(
-                  children: [
-                    WaveChatHeader(
-                      title: WaveChatViewModel.title,
-                      status: viewModel.statusLabel,
-                      onClose: _close,
-                      onHistory: () => _openHistory(context, viewModel),
-                    ),
-                    const WaveCardDivider(),
-                    Expanded(
-                      child: ListView.separated(
-                        controller: viewModel.scrollController,
-                        reverse: true,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl,
-                          vertical: AppSpacing.xl,
+            side: BorderSide(
+              color: context.colors.borderSubtle,
+              width: AppSizes.s1,
+            ),
+          ),
+          child: PremiumGate(
+            capability: PremiumCapability.waveCoach,
+            locked: _WaveLockedContent(onClose: _close),
+            child: ChangeNotifierProvider(
+              create: (_) => WaveChatViewModel(
+                WaveChatService(),
+                WaveContextService(),
+                WaveTranscriptService(),
+              ),
+              child: Consumer<WaveChatViewModel>(
+                builder: (context, viewModel, child) {
+                  return Column(
+                    children: [
+                      WaveChatHeader(
+                        title: WaveChatViewModel.title,
+                        status: viewModel.statusLabel,
+                        onClose: _close,
+                        onHistory: () => _openHistory(context, viewModel),
+                      ),
+                      const WaveCardDivider(),
+                      Expanded(
+                        child: ListView.separated(
+                          controller: viewModel.scrollController,
+                          reverse: true,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                            vertical: AppSpacing.xl,
+                          ),
+                          itemCount:
+                              viewModel.messages.length +
+                              (viewModel.isBusy ? 1 : 0),
+                          separatorBuilder: (context, index) =>
+                              SizedBox(height: AppSpacing.xl),
+                          itemBuilder: (context, index) {
+                            if (viewModel.isBusy && index == 0) {
+                              return const WaveTypingIndicator();
+                            }
+                            final offset = viewModel.isBusy ? 1 : 0;
+                            final messages = viewModel.messages;
+                            final message =
+                                messages[messages.length -
+                                    1 -
+                                    (index - offset)];
+                            return WaveMessageItem(
+                              message: message,
+                              viewModel: viewModel,
+                              onPlanAction: (item) =>
+                                  _handlePlanAction(viewModel, item),
+                              onOpenNutrition: _openNutrition,
+                              onOpenWorkout: _openActiveWorkout,
+                            );
+                          },
                         ),
-                        itemCount:
-                            viewModel.messages.length +
-                            (viewModel.isBusy ? 1 : 0),
-                        separatorBuilder: (context, index) =>
-                            SizedBox(height: AppSpacing.xl),
-                        itemBuilder: (context, index) {
-                          if (viewModel.isBusy && index == 0) {
-                            return const WaveTypingIndicator();
-                          }
-                          final offset = viewModel.isBusy ? 1 : 0;
-                          final messages = viewModel.messages;
-                          final message =
-                              messages[messages.length - 1 - (index - offset)];
-                          return WaveMessageItem(
-                            message: message,
-                            viewModel: viewModel,
-                            onPlanAction: (item) =>
-                                _handlePlanAction(viewModel, item),
-                            onOpenNutrition: _openNutrition,
-                            onOpenWorkout: _openActiveWorkout,
-                          );
-                        },
                       ),
-                    ),
-                    AnimatedSize(
-                      duration: AppMotion.composerGrow,
-                      curve: AppMotion.composerGrowCurve,
-                      alignment: Alignment.bottomCenter,
-                      child: viewModel.showQuickActions
-                          ? Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(height: AppSpacing.md),
-                                WaveQuickActionBar(
-                                  actions: viewModel.quickActions,
-                                  onSelected: (action) {
-                                    HapticManager.light();
-                                    viewModel.sendQuickAction(action);
-                                  },
-                                ),
-                              ],
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                    SizedBox(height: AppSpacing.md),
-                    const WaveCardDivider(),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        left: AppSpacing.xl,
-                        right: AppSpacing.xl,
-                        top: AppSpacing.md,
-                        bottom: viewInsets.bottom + viewPadding.bottom,
+                      AnimatedSize(
+                        duration: AppMotion.composerGrow,
+                        curve: AppMotion.composerGrowCurve,
+                        alignment: Alignment.bottomCenter,
+                        child: viewModel.showQuickActions
+                            ? Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(height: AppSpacing.md),
+                                  WaveQuickActionBar(
+                                    actions: viewModel.quickActions,
+                                    onSelected: (action) {
+                                      HapticManager.light();
+                                      viewModel.sendQuickAction(action);
+                                    },
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
                       ),
-                      child: viewModel.isViewingToday
-                          ? WaveComposer(
-                              controller: viewModel.composer,
-                              hintText: WaveChatViewModel.composerHint,
-                              canSend: viewModel.canSend,
-                              onSubmit: () {
-                                HapticManager.light();
-                                viewModel.submitComposer();
-                              },
-                            )
-                          : PillButton(
-                              variant: PillButtonVariant.neutral,
-                              label: 'Back to Today',
-                              height: AppSizes.s48,
-                              labelColor: context.colors.primary,
-                              onPressed: () {
-                                HapticManager.light();
-                                viewModel.goToToday();
-                              },
-                            ),
-                    ),
-                  ],
-                );
-              },
+                      SizedBox(height: AppSpacing.md),
+                      const WaveCardDivider(),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: AppSpacing.xl,
+                          right: AppSpacing.xl,
+                          top: AppSpacing.md,
+                          bottom: viewInsets.bottom + viewPadding.bottom,
+                        ),
+                        child: viewModel.isViewingToday
+                            ? WaveComposer(
+                                controller: viewModel.composer,
+                                hintText: WaveChatViewModel.composerHint,
+                                canSend: viewModel.canSend,
+                                onSubmit: () {
+                                  HapticManager.light();
+                                  viewModel.submitComposer();
+                                },
+                              )
+                            : PillButton(
+                                variant: PillButtonVariant.neutral,
+                                label: 'Back to Today',
+                                height: AppSizes.s48,
+                                labelColor: context.colors.primary,
+                                onPressed: () {
+                                  HapticManager.light();
+                                  viewModel.goToToday();
+                                },
+                              ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _WaveLockedContent extends StatelessWidget {
+  const _WaveLockedContent({required this.onClose});
+
+  static const String status = 'Premium feature';
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        WaveChatHeader(
+          title: WaveChatViewModel.title,
+          status: status,
+          onClose: onClose,
+        ),
+        const WaveCardDivider(),
+        const Expanded(
+          child: PremiumLockedPanel(capability: PremiumCapability.waveCoach),
+        ),
+        SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
+      ],
     );
   }
 }

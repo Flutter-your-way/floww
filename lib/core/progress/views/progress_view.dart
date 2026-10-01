@@ -12,6 +12,9 @@ import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/core/achievements/views/streak_achievements_sheet.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
+import 'package:floww/core/premium/widgets/premium_gate.dart';
+import 'package:floww/core/premium/widgets/premium_locked_card.dart';
 import 'package:floww/core/progress/view_models/progress_view_model.dart';
 import 'package:floww/core/progress/views/log_weight_sheet.dart';
 import 'package:floww/core/progress/views/unlog_weight_sheet.dart';
@@ -121,41 +124,62 @@ class ProgressView extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: AppSpacing.lg),
-                WorkoutVolumeCard(
-                  title: viewModel.volumeTitle,
-                  rangeLabel: viewModel.weeklyRangeLabel,
-                  volume: viewModel.volume,
-                  summaryLabel: viewModel.volumeSummaryLabel,
-                  emptyTitle: viewModel.volumeEmptyTitle,
-                  emptyMessage: viewModel.volumeEmptyMessage,
-                  emptyButtonLabel: viewModel.logWorkoutLabel,
-                ),
-                SizedBox(height: AppSpacing.lg),
-                HabitConsistencyCard(
-                  title: viewModel.habitsTitle,
-                  items: viewModel.habits,
-                  strongestLabel: viewModel.strongestHabitLabel,
-                  weakestLabel: viewModel.weakestHabitLabel,
-                  strongestHabit: viewModel.strongestHabit,
-                  weakestHabit: viewModel.weakestHabit,
+                PremiumGate(
+                  capability: PremiumCapability.advancedAnalytics,
+                  placeholder: const SizedBox.shrink(),
+                  locked: const PremiumLockedCard(
+                    capability: PremiumCapability.advancedAnalytics,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      WorkoutVolumeCard(
+                        title: viewModel.volumeTitle,
+                        rangeLabel: viewModel.weeklyRangeLabel,
+                        volume: viewModel.volume,
+                        summaryLabel: viewModel.volumeSummaryLabel,
+                        emptyTitle: viewModel.volumeEmptyTitle,
+                        emptyMessage: viewModel.volumeEmptyMessage,
+                        emptyButtonLabel: viewModel.logWorkoutLabel,
+                      ),
+                      SizedBox(height: AppSpacing.lg),
+                      HabitConsistencyCard(
+                        title: viewModel.habitsTitle,
+                        items: viewModel.habits,
+                        strongestLabel: viewModel.strongestHabitLabel,
+                        weakestLabel: viewModel.weakestHabitLabel,
+                        strongestHabit: viewModel.strongestHabit,
+                        weakestHabit: viewModel.weakestHabit,
+                      ),
+                      if (viewModel.showRecords) ...[
+                        SizedBox(height: AppSpacing.lg),
+                        PersonalRecordsCard(
+                          title: viewModel.recordsTitle,
+                          records: viewModel.records,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
                 SizedBox(height: AppSpacing.lg),
                 if (insights != null) ...[
-                  WaveInsightsCard(
-                    title: viewModel.insightsTitle,
-                    rangeLabel: viewModel.monthlyRangeLabel,
-                    insights: insights,
-                    improvementLabel: viewModel.improvementLabel,
-                    weaknessLabel: viewModel.weaknessLabel,
+                  PremiumGate(
+                    capability: PremiumCapability.personalizedRecommendations,
+                    placeholder: const SizedBox.shrink(),
+                    locked: const PremiumLockedCard(
+                      capability: PremiumCapability.personalizedRecommendations,
+                    ),
+                    child: WaveInsightsCard(
+                      title: viewModel.insightsTitle,
+                      rangeLabel: viewModel.monthlyRangeLabel,
+                      insights: insights,
+                      improvementLabel: viewModel.improvementLabel,
+                      weaknessLabel: viewModel.weaknessLabel,
+                    ),
                   ),
                   SizedBox(height: AppSpacing.lg),
                 ],
-                if (viewModel.showRecords)
-                  PersonalRecordsCard(
-                    title: viewModel.recordsTitle,
-                    records: viewModel.records,
-                  )
-                else
+                if (!viewModel.showRecords)
                   TipCard(
                     title: viewModel.encouragementTitle,
                     message: viewModel.encouragementMessage,

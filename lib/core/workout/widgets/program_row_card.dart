@@ -7,14 +7,22 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
+import 'package:floww/core/workout/widgets/program_logo_tile.dart';
 import 'package:floww/core/workout/widgets/workout_chip.dart';
-import 'package:floww/core/workout/widgets/workout_icon_tile.dart';
 
 class ProgramRowCard extends StatelessWidget {
-  const ProgramRowCard({super.key, required this.program, this.onTap});
+  const ProgramRowCard({
+    super.key,
+    required this.program,
+    this.onTap,
+    this.isLocked = false,
+  });
+
+  static const String premiumLabel = 'Premium';
 
   final ProgramItem program;
   final VoidCallback? onTap;
+  final bool isLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +40,10 @@ class ProgramRowCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WorkoutIconTile(
-                icon: program.icon,
+              ProgramLogoTile(
+                imageUrl: program.logo,
                 isHighlighted: program.isActive,
+                isWave: program.isWave,
               ),
               SizedBox(width: AppSpacing.lg),
               Expanded(
@@ -61,6 +70,14 @@ class ProgramRowCard extends StatelessWidget {
                             tone: program.isActive
                                 ? WorkoutChipTone.filled
                                 : WorkoutChipTone.accent,
+                          ),
+                        ],
+                        if (isLocked) ...[
+                          SizedBox(width: AppSpacing.md),
+                          const WorkoutChip(
+                            label: premiumLabel,
+                            icon: Icons.lock_rounded,
+                            tone: WorkoutChipTone.accent,
                           ),
                         ],
                       ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
@@ -50,7 +51,7 @@ class PerformanceCard extends StatelessWidget {
           SizedBox(height: AppSpacing.xl),
           PillButton(
             variant: PillButtonVariant.bright,
-            height: AppSizes.s32,
+            height: BrightActionButton.height,
             onPressed: onViewDetails,
             child: const _ViewDetailsLabel(),
           ),

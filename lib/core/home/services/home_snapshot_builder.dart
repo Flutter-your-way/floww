@@ -1,4 +1,5 @@
 import 'package:floww/config/entities/daily_flow_entity.dart';
+import 'package:floww/config/entities/health_day_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
@@ -8,6 +9,7 @@ import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
+import 'package:floww/core/home/services/flow_score_handover.dart';
 import 'package:floww/core/home/services/home_service.dart';
 import 'package:floww/core/home/services/recovery_calculator.dart';
 import 'package:floww/core/nutrition/models/nutrition_day.dart';
@@ -15,8 +17,10 @@ import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/services/nutrition_goal_calculator.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
 import 'package:floww/core/progress/services/flow_score_calculator.dart';
+import 'package:floww/core/progress/services/flow_readiness_calculator.dart';
 import 'package:floww/core/recovery/models/muscle_recovery_status.dart';
 import 'package:floww/core/recovery/services/muscle_recovery_service.dart';
+import 'package:floww/core/workout/models/program_artwork.dart';
 
 class HomeSnapshotBuilder {
   HomeSnapshotBuilder({MuscleRecoveryService? muscleRecoveryService})
@@ -27,9 +31,10 @@ class HomeSnapshotBuilder {
   static const int targetSetsPerSession =
       FlowScoreCalculator.targetSetsPerSession;
 
-  static const int _workoutPoints = 40;
-  static const int _habitPoints = 35;
-  static const int _nutritionPoints = 25;
+  static const int _workoutPoints = FlowScoreCalculator.workoutPoints;
+  static const int _habitPoints = FlowScoreCalculator.habitPoints;
+  static const int _nutritionPoints = FlowScoreCalculator.nutritionPoints;
+  static const int _recoveryPoints = FlowScoreCalculator.recoveryPoints;
 
   static const int _secondsPerMinute = 60;
 
@@ -61,7 +66,10 @@ class HomeSnapshotBuilder {
   };
 
   static const FlowScoreCalculator _calculator = FlowScoreCalculator();
+  static const FlowReadinessCalculator _readinessCalculator =
+      FlowReadinessCalculator();
   static const RecoveryCalculator _recoveryCalculator = RecoveryCalculator();
+  static const FlowScoreHandover _handover = FlowScoreHandover();
   static const NutritionGoalCalculator _goalCalculator =
       NutritionGoalCalculator();
 
@@ -81,6 +89,10 @@ class HomeSnapshotBuilder {
       0,
       (total, session) => total + session.totalSets,
     );
+    final workoutPlannedSets = completedToday.fold<int>(
+      0,
+      (total, session) => total + session.plannedSets,
+    );
 
     final mealCount = records.nutrition.foods
         .where((log) => AppDateUtils.isSameDay(log.loggedAt, today))
@@ -94,7 +106,9 @@ class HomeSnapshotBuilder {
     final todayEntry = _calculator.scoreOf(
       FlowScoreInputs(
         date: today,
+        readinessScore: _readinessOf(records, today),
         workoutSets: workoutSets,
+        workoutPlannedSets: workoutPlannedSets,
         habitCompletion: habitCompletion,
         mealCount: mealCount,
         waterMl: waterMl,
@@ -119,6 +133,13 @@ class HomeSnapshotBuilder {
       todayEntry,
     ];
 
+    final displayScore = _handover.displayOf(
+      entry: todayEntry,
+      baseline: account.flowBaseline,
+      memberSince: account.memberSince,
+      today: today,
+    );
+
     return HomeSnapshot(
       userName: (account.name ?? '').trim(),
       streakCount: AchievementsService.currentStreakOf(
@@ -126,20 +147,25 @@ class HomeSnapshotBuilder {
         today,
       ),
       flowScorePercent: todayEntry.score,
+      displayFlowScorePercent: displayScore,
       flowScoreBreakdown: FlowScoreBreakdown(
         weeklyAveragePercent: _weeklyAverageOf(flowHistory, today),
         components: _componentsOf(
           entry: todayEntry,
           workoutSets: workoutSets,
+          workoutPlannedSets: workoutPlannedSets,
           habits: habits,
           mealCount: mealCount,
           waterMl: waterMl,
+          hasRecoveryData: _hasRecoveryInputs(records, today),
+          sleepTargetHours: account.sleepTargetHours,
         ),
       ),
       flowScoreBoosts: _boostsOf(todayEntry),
       recovery: recovery,
       flowMode: _flowModeOf(
-        score: todayEntry.score,
+        score: displayScore,
+        readiness: todayEntry.readinessScore,
         recovery: recovery,
         records: records,
         today: today,
@@ -178,6 +204,26 @@ class HomeSnapshotBuilder {
         habits: habits,
       ),
       todayFlowEntry: todayEntry,
+    );
+  }
+
+  bool _hasRecoveryInputs(HomeRecords records, DateTime today) =>
+      records.healthDays.any(
+        (day) =>
+            AppDateUtils.isSameDay(day.date, today) &&
+            (day.sleepMinutes > 0 || (day.hrvMs ?? 0) > 0),
+      );
+
+  int _readinessOf(HomeRecords records, DateTime today) {
+    HealthDayLog? log;
+    for (final day in records.healthDays) {
+      if (AppDateUtils.isSameDay(day.date, today)) log = day;
+    }
+    return _readinessCalculator.readinessOf(
+      baseline: records.account.flowBaseline,
+      sleepMinutes: log?.sleepMinutes ?? 0,
+      hrvMs: log?.hrvMs,
+      sleepTargetHours: records.account.sleepTargetHours,
     );
   }
 
@@ -226,21 +272,40 @@ class HomeSnapshotBuilder {
   List<FlowScoreComponent> _componentsOf({
     required DailyFlowEntry entry,
     required int workoutSets,
+    required int workoutPlannedSets,
     required List<Habit> habits,
     required int mealCount,
     required double waterMl,
+    required bool hasRecoveryData,
+    double? sleepTargetHours,
   }) {
+    final workoutTarget = FlowScoreCalculator.workoutTargetOf(
+      workoutPlannedSets,
+    );
     final habitsDone = habits.where((habit) => habit.isCompleted).length;
     final waterLiters = NutritionLabels.liters(waterMl);
+    final sleepHours = NumberFormatter.trimmed(
+      sleepTargetHours ?? FlowReadinessCalculator.defaultSleepTargetHours,
+    );
 
     return [
       _componentOf(
         emoji: '💪',
         title: 'Workout',
-        detail: '$workoutSets / $targetSetsPerSession sets logged',
+        detail: '$workoutSets / $workoutTarget sets logged',
         score: entry.workoutScore,
         maxPoints: _workoutPoints,
-        hint: "Complete today's workout",
+        hint: workoutSets == 0
+            ? "Complete today's workout"
+            : 'Log the remaining sets',
+      ),
+      _componentOf(
+        emoji: '🥗',
+        title: 'Nutrition',
+        detail: '$mealCount / $mealsPerDay meals · ${waterLiters}L water',
+        score: entry.nutritionScore,
+        maxPoints: _nutritionPoints,
+        hint: 'Log a meal and hit your water goal',
       ),
       _componentOf(
         emoji: '✅',
@@ -251,12 +316,14 @@ class HomeSnapshotBuilder {
         hint: "Complete today's habits",
       ),
       _componentOf(
-        emoji: '🥗',
-        title: 'Nutrition',
-        detail: '$mealCount / $mealsPerDay meals · ${waterLiters}L water',
-        score: entry.nutritionScore,
-        maxPoints: _nutritionPoints,
-        hint: 'Log a meal and hit your water goal',
+        emoji: '🌙',
+        title: 'Recovery Readiness',
+        detail: hasRecoveryData
+            ? 'Based on sleep & HRV'
+            : 'From your profile · connect a wearable',
+        score: entry.readinessScore,
+        maxPoints: _recoveryPoints,
+        hint: 'Log $sleepHours hrs of sleep tonight',
       ),
     ];
   }
@@ -269,7 +336,7 @@ class HomeSnapshotBuilder {
     required int maxPoints,
     required String hint,
   }) {
-    final points = (maxPoints * score / 100).round();
+    final points = FlowScoreCalculator.pointsOf(maxPoints, score);
     return FlowScoreComponent(
       emoji: emoji,
       title: title,
@@ -304,12 +371,16 @@ class HomeSnapshotBuilder {
 
   FlowModeDetail _flowModeOf({
     required int score,
+    required int readiness,
     required RecoveryDetail recovery,
     required HomeRecords records,
     required DateTime today,
   }) {
     final mode = AppThemeMode.fromFlowScore(score);
-    final reasons = <String>['Flow Score is $score%'];
+    final reasons = <String>[
+      'Flow Score is $score%',
+      if (readiness > 0) 'Recovery readiness is $readiness%',
+    ];
 
     if (recovery.hasData) {
       reasons.add('Recovery is ${recovery.levelLabel}');
@@ -368,6 +439,7 @@ class HomeSnapshotBuilder {
       durationLabel: '${plan.durationMinutes}m',
       intensityLabel: _intensityOf(plan.totalSets),
       reasons: reasons,
+      imageUrl: ProgramArtwork.ofPlan(plan),
     );
   }
 
@@ -399,6 +471,7 @@ class HomeSnapshotBuilder {
     return CompletedWorkout(
       sessionId: latest.id,
       title: latest.name,
+      imageUrl: ProgramArtwork.ofSession(latest),
       completedLabel: sessions.length == 1
           ? 'Completed at $completedTime'
           : '${sessions.length} sessions · last at $completedTime',

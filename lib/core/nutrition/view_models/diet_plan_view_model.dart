@@ -52,6 +52,9 @@ class DietPlanViewModel extends ChangeNotifier {
         dayNumber: day.dayNumber,
         caloriesLabel: '${NumberFormatter.grouped(day.calories)} kcal total',
         isCompleted: _progress!.completedDays.contains(day.dayNumber),
+        isMissed:
+            day.dayNumber < _progress!.currentDayNumber &&
+            !_progress!.completedDays.contains(day.dayNumber),
         isToday: day.dayNumber == _progress!.currentDayNumber,
         isExpanded: day.dayNumber == _expandedDay,
         proteinLabel: '${day.proteinG}g',

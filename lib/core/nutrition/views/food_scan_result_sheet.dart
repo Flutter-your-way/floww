@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +7,7 @@ import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/core/nutrition/models/food_model.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
+import 'package:floww/core/nutrition/providers/food_photo_provider.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/food_scan_result_view_model.dart';
 import 'package:floww/core/nutrition/widgets/food_meal_edit_panel.dart';
@@ -22,7 +24,9 @@ class FoodScanResultSheet extends StatelessWidget {
     required NutritionGoal goal,
     required DateTime date,
     MealType? meal,
+    Uint8List? photo,
   }) {
+    final photos = context.read<FoodPhotoProvider>();
     return showAppFloatingSheet<void>(
       context: context,
       builder: (_) => ChangeNotifierProvider(
@@ -32,6 +36,8 @@ class FoodScanResultSheet extends StatelessWidget {
           NutritionLogService(),
           date,
           meal: meal,
+          photo: photo,
+          photos: photos,
         ),
         child: const FoodScanResultSheet(),
       ),

@@ -8,7 +8,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
-import 'package:floww/config/widgets/animations/date_change_transition.dart';
+import 'package:floww/config/widgets/animations/app_pop_reveal.dart';
 import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_empty_state_card.dart';
@@ -131,6 +131,11 @@ class _HabitsViewState extends State<HabitsView> {
         builder: (context, viewModel, child) {
           final errorMessage = viewModel.errorMessage;
           final actionMessage = viewModel.actionMessage;
+          final revealTrigger = viewModel.selectedDate;
+          final showCurrentEmpty =
+              !viewModel.isFuture && viewModel.showEmptyState;
+          final showCurrentHabits =
+              !viewModel.isFuture && !viewModel.showEmptyState;
           _openPendingCreate(viewModel);
 
           return Stack(
@@ -175,117 +180,196 @@ class _HabitsViewState extends State<HabitsView> {
                             onRetry: viewModel.retry,
                           )
                         else
-                          DateChangeTransition(
-                            value: viewModel.selectedDate,
-                            direction: viewModel.dateDirection,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (actionMessage != null) ...[
-                                  AppErrorCard(message: actionMessage),
-                                  SizedBox(height: AppSpacing.lg),
-                                ],
-                                if (viewModel.isReadOnly) ...[
-                                  TipCard.note(title: viewModel.readOnlyLabel),
-                                  SizedBox(height: AppSpacing.lg),
-                                ],
-                                if (viewModel.isFuture) ...[
-                                  AppEmptyStateCard(
-                                    title: viewModel.futureTitle,
-                                    message: viewModel.futureMessage,
-                                    iconAsset: AppImages.tab_4,
-                                  ),
-                                  if (viewModel.showPlannedHabits) ...[
-                                    SizedBox(height: AppSpacing.lg),
-                                    TodayHabitsCard(
-                                      title: viewModel.habitsTitle,
-                                      items: viewModel.habits,
-                                      onOpen: (item) =>
-                                          NavigationService.instance.push(
-                                            AppRouter.habitDetails,
-                                            arguments: item.id,
-                                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              AppPopReveal(
+                                child: actionMessage != null
+                                    ? Padding(
+                                        padding: EdgeInsets.only(
+                                          bottom: AppSpacing.lg,
+                                        ),
+                                        child: AppErrorCard(
+                                          message: actionMessage,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              AppPopReveal(
+                                trigger: revealTrigger,
+                                child: viewModel.isReadOnly
+                                    ? Padding(
+                                        padding: EdgeInsets.only(
+                                          bottom: AppSpacing.lg,
+                                        ),
+                                        child: TipCard.note(
+                                          title: viewModel.readOnlyLabel,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              AppPopReveal(
+                                trigger: revealTrigger,
+                                child: viewModel.isFuture
+                                    ? AppEmptyStateCard(
+                                        title: viewModel.futureTitle,
+                                        message: viewModel.futureMessage,
+                                        iconAsset: AppImages.tab_4,
+                                      )
+                                    : null,
+                              ),
+                              AppPopReveal(
+                                trigger: revealTrigger,
+                                child:
+                                    viewModel.isFuture &&
+                                        viewModel.showPlannedHabits
+                                    ? Padding(
+                                        padding: EdgeInsets.only(
+                                          top: AppSpacing.lg,
+                                        ),
+                                        child: TodayHabitsCard(
+                                          title: viewModel.habitsTitle,
+                                          items: viewModel.habits,
+                                          onOpen: (item) =>
+                                              NavigationService.instance.push(
+                                                AppRouter.habitDetails,
+                                                arguments: item.id,
+                                              ),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              LuminosityLayer(
+                                enabled: viewModel.isReadOnly,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    AppPopReveal(
+                                      trigger: revealTrigger,
+                                      child: showCurrentEmpty
+                                          ? Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: AppSpacing.lg,
+                                              ),
+                                              child: HabitsEmptyStateCard(
+                                                title: viewModel.emptyTitle,
+                                                message: viewModel.emptyMessage,
+                                                buttonLabel: viewModel
+                                                    .createFirstHabitLabel,
+                                                onCreateHabit: () => _addHabit(
+                                                  context,
+                                                  viewModel,
+                                                ),
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    AppPopReveal(
+                                      trigger: revealTrigger,
+                                      child: showCurrentEmpty
+                                          ? Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: AppSpacing.lg,
+                                              ),
+                                              child: PopularHabitsCard(
+                                                items: viewModel.popularHabits,
+                                                onSelect: viewModel.canEdit
+                                                    ? (item) => viewModel
+                                                          .addSuggestedHabit(
+                                                            item.id,
+                                                          )
+                                                    : null,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    AppPopReveal(
+                                      trigger: revealTrigger,
+                                      child: showCurrentHabits
+                                          ? Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: AppSpacing.lg,
+                                              ),
+                                              child: HabitScoreCard(
+                                                scoreLabel:
+                                                    viewModel.scoreLabel,
+                                                scoreTotalLabel:
+                                                    viewModel.scoreTotalLabel,
+                                                headline: viewModel.headline,
+                                                message:
+                                                    viewModel.headlineMessage,
+                                                dailyScoreLabel:
+                                                    viewModel.dailyScoreLabel,
+                                                flowPointsLabel:
+                                                    viewModel.flowPointsLabel,
+                                                progress: viewModel.dailyScore,
+                                                stats: viewModel.stats,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    AppPopReveal(
+                                      trigger: revealTrigger,
+                                      child: showCurrentHabits
+                                          ? Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: AppSpacing.lg,
+                                              ),
+                                              child: TodayHabitsCard(
+                                                title: viewModel.habitsTitle,
+                                                items: viewModel.habits,
+                                                onToggle: viewModel.canEdit
+                                                    ? (item) => viewModel
+                                                          .toggleHabit(item.id)
+                                                    : null,
+                                                onOpen: (item) =>
+                                                    NavigationService.instance
+                                                        .push(
+                                                          AppRouter
+                                                              .habitDetails,
+                                                          arguments: item.id,
+                                                        ),
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    AppPopReveal(
+                                      trigger: revealTrigger,
+                                      child: showCurrentHabits
+                                          ? Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: AppSpacing.lg,
+                                              ),
+                                              child: WeeklyProgressCard(
+                                                days: viewModel.weekdays,
+                                                legend: viewModel.legend,
+                                                onTap: () => NavigationService
+                                                    .instance
+                                                    .push(
+                                                      AppRouter.habitCalendar,
+                                                      arguments: viewModel
+                                                          .selectedDate,
+                                                    ),
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    AppPopReveal(
+                                      trigger: revealTrigger,
+                                      child: viewModel.isFuture
+                                          ? null
+                                          : TipCard(
+                                              title: viewModel.noteTitle,
+                                              message: viewModel.noteMessage,
+                                              icon: Icons
+                                                  .local_fire_department_rounded,
+                                            ),
                                     ),
                                   ],
-                                ] else
-                                  LuminosityLayer(
-                                    enabled: viewModel.isReadOnly,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        if (viewModel.showEmptyState) ...[
-                                          HabitsEmptyStateCard(
-                                            title: viewModel.emptyTitle,
-                                            message: viewModel.emptyMessage,
-                                            buttonLabel:
-                                                viewModel.createFirstHabitLabel,
-                                            onCreateHabit: () =>
-                                                _addHabit(context, viewModel),
-                                          ),
-                                          SizedBox(height: AppSpacing.lg),
-                                          PopularHabitsCard(
-                                            items: viewModel.popularHabits,
-                                            onSelect: viewModel.canEdit
-                                                ? (item) => viewModel
-                                                      .addSuggestedHabit(
-                                                        item.id,
-                                                      )
-                                                : null,
-                                          ),
-                                          SizedBox(height: AppSpacing.lg),
-                                        ] else ...[
-                                          HabitScoreCard(
-                                            scoreLabel: viewModel.scoreLabel,
-                                            scoreTotalLabel:
-                                                viewModel.scoreTotalLabel,
-                                            headline: viewModel.headline,
-                                            message: viewModel.headlineMessage,
-                                            dailyScoreLabel:
-                                                viewModel.dailyScoreLabel,
-                                            flowPointsLabel:
-                                                viewModel.flowPointsLabel,
-                                            progress: viewModel.dailyScore,
-                                            stats: viewModel.stats,
-                                          ),
-                                          SizedBox(height: AppSpacing.lg),
-                                          TodayHabitsCard(
-                                            title: viewModel.habitsTitle,
-                                            items: viewModel.habits,
-                                            onToggle: viewModel.canEdit
-                                                ? (item) => viewModel
-                                                      .toggleHabit(item.id)
-                                                : null,
-                                            onOpen: (item) =>
-                                                NavigationService.instance.push(
-                                                  AppRouter.habitDetails,
-                                                  arguments: item.id,
-                                                ),
-                                          ),
-                                          SizedBox(height: AppSpacing.lg),
-                                          WeeklyProgressCard(
-                                            days: viewModel.weekdays,
-                                            legend: viewModel.legend,
-                                            onTap: () =>
-                                                NavigationService.instance.push(
-                                                  AppRouter.habitCalendar,
-                                                  arguments:
-                                                      viewModel.selectedDate,
-                                                ),
-                                          ),
-                                          SizedBox(height: AppSpacing.lg),
-                                        ],
-                                        TipCard(
-                                          title: viewModel.noteTitle,
-                                          message: viewModel.noteMessage,
-                                          icon: Icons
-                                              .local_fire_department_rounded,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
+                                ),
+                              ),
+                            ],
                           ),
                         SizedBox(
                           height: actionsBottom + AppSizes.s48 + AppSpacing.xl3,

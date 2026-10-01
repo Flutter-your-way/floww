@@ -5,6 +5,8 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/animations/app_collapsible_section.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/exercise_info.dart';
@@ -30,12 +32,11 @@ class ExerciseInfoSectionCard extends StatelessWidget {
           : AppCardVariant.subtle,
       radius: AppRadius.lg,
       padding: EdgeInsets.zero,
-      transitionDuration: AppMotion.expand,
+      transitionDuration: AppMotion.expandSoft,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
+          PressScale(
             onTap: onToggle,
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -61,25 +62,38 @@ class ExerciseInfoSectionCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: AppSpacing.md),
-                  Icon(
-                    isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
-                    size: AppSizes.s20,
-                    color: colors.textSecondary,
+                  AnimatedRotation(
+                    turns: isExpanded ? AppMotion.halfTurn : 0,
+                    duration: AppMotion.expandSoft,
+                    curve: AppMotion.expandCurve,
+                    child: Icon(
+                      Icons.arrow_downward,
+                      size: AppSizes.s20,
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          if (isExpanded) ...[
-            Container(height: AppSizes.s1, color: colors.borderSubtle),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSpacing.xl,
-                vertical: AppSpacing.xl,
-              ),
-              child: _SectionBody(section: section),
+          AppCollapsibleSection(
+            visible: isExpanded,
+            duration: AppMotion.expandSoft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(height: AppSizes.s1, color: colors.borderSubtle),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.xl,
+                  ),
+                  child: _SectionBody(section: section),
+                ),
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );

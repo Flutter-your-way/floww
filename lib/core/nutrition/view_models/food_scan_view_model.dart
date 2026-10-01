@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
-import 'package:floww/core/nutrition/models/food_model.dart';
+import 'package:floww/core/nutrition/models/scanned_food.dart';
 import 'package:floww/core/nutrition/services/food_camera_service.dart';
 import 'package:floww/core/nutrition/services/food_scan_service.dart';
 import 'package:floww/core/nutrition/services/photo_library_service.dart';
@@ -70,12 +70,12 @@ class FoodScanViewModel extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  Future<FoodModel?> captureAndScan() async {
+  Future<ScannedFood?> captureAndScan() async {
     if (!canCapture) return null;
     return _scanPhoto(_cameraService.capture, FoodScanStatus.capturing);
   }
 
-  Future<FoodModel?> pickPhotoAndScan() async {
+  Future<ScannedFood?> pickPhotoAndScan() async {
     if (!canPickPhoto) return null;
     final food = await _scanPhoto(
       _libraryService.pickPhoto,
@@ -90,7 +90,7 @@ class FoodScanViewModel extends ChangeNotifier with WidgetsBindingObserver {
     return food;
   }
 
-  Future<FoodModel?> _scanPhoto(
+  Future<ScannedFood?> _scanPhoto(
     Future<Uint8List?> Function() readPhoto,
     FoodScanStatus readingStatus, {
     bool showsPhoto = false,
@@ -112,10 +112,11 @@ class FoodScanViewModel extends ChangeNotifier with WidgetsBindingObserver {
       if (showsPhoto) _scannedPhoto = photo;
       _status = FoodScanStatus.scanning;
       notifyListeners();
-      return await _scanService.scanFood(
+      final food = await _scanService.scanFood(
         imageBytes: photo,
         mimeType: FoodCameraService.photoMimeType,
       );
+      return ScannedFood(food: food, photo: photo);
     } on FoodCameraException catch (e) {
       _errorMessage = e.message;
     } on FoodScanException catch (e) {

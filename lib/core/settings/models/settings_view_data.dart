@@ -4,11 +4,14 @@ import 'package:floww/config/entities/measurement_system.dart';
 
 export 'package:floww/config/entities/measurement_system.dart';
 
+enum ConnectedAppKind { appleHealth, healthConnect, cloud }
+
 class ConnectedAppItem {
   const ConnectedAppItem({
     required this.id,
     required this.name,
     required this.isConnected,
+    required this.kind,
     this.iconAsset,
     this.wordmark,
   });
@@ -16,13 +19,17 @@ class ConnectedAppItem {
   final String id;
   final String name;
   final bool isConnected;
+  final ConnectedAppKind kind;
   final String? iconAsset;
   final String? wordmark;
+
+  bool get isOnDevice => kind != ConnectedAppKind.cloud;
 
   ConnectedAppItem copyWith({bool? isConnected}) => ConnectedAppItem(
     id: id,
     name: name,
     isConnected: isConnected ?? this.isConnected,
+    kind: kind,
     iconAsset: iconAsset,
     wordmark: wordmark,
   );

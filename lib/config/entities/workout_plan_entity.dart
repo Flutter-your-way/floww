@@ -37,6 +37,8 @@ class LoggedSetEntry {
 
   double get effortReps => reps + (durationSeconds ?? 0) / secondsPerEffortRep;
 
+  int get workSeconds => durationSeconds ?? reps * secondsPerEffortRep;
+
   double? get estimatedOneRepMaxKg {
     final weight = weightKg;
     if (!isWorking || weight == null || weight <= 0 || reps <= 0) return null;
@@ -364,6 +366,7 @@ class WorkoutPlanEntity {
     this.sessionId,
     this.isAdapted = false,
     this.isDeload = false,
+    this.rescheduledTo,
   });
 
   factory WorkoutPlanEntity.fromJson(Map<String, dynamic> json) =>
@@ -381,7 +384,12 @@ class WorkoutPlanEntity {
         sessionId: json['sessionId'] as String?,
         isAdapted: json['isAdapted'] as bool? ?? false,
         isDeload: json['isDeload'] as bool? ?? false,
+        rescheduledTo: json['rescheduledTo'] is String
+            ? DateTime.tryParse(json['rescheduledTo'] as String)
+            : null,
       );
+
+  static const String rescheduledToField = 'rescheduledTo';
 
   final String id;
   final DateTime date;
@@ -396,6 +404,12 @@ class WorkoutPlanEntity {
   final String? sessionId;
   final bool isAdapted;
   final bool isDeload;
+  final DateTime? rescheduledTo;
+
+  bool isScheduledFor(DateTime day) {
+    final target = rescheduledTo;
+    return target != null && AppDateUtils.isSameDay(target, day);
+  }
 
   int get totalSets {
     var count = 0;
@@ -413,6 +427,8 @@ class WorkoutPlanEntity {
     String? insight,
     List<WorkoutEntryEntity>? exercises,
     bool? isAdapted,
+    DateTime? rescheduledTo,
+    bool clearRescheduled = false,
   }) => WorkoutPlanEntity(
     id: id,
     date: date ?? this.date,
@@ -427,6 +443,9 @@ class WorkoutPlanEntity {
     sessionId: sessionId,
     isAdapted: isAdapted ?? this.isAdapted,
     isDeload: isDeload,
+    rescheduledTo: clearRescheduled
+        ? null
+        : rescheduledTo ?? this.rescheduledTo,
   );
 
   Map<String, dynamic> toJson() => {
@@ -443,6 +462,8 @@ class WorkoutPlanEntity {
     if (sessionId != null) 'sessionId': sessionId,
     'isAdapted': isAdapted,
     'isDeload': isDeload,
+    if (rescheduledTo != null)
+      rescheduledToField: AppDateUtils.dateKey(rescheduledTo!),
   };
 
   static List<WorkoutEntryEntity> entriesOf(Object? value) {

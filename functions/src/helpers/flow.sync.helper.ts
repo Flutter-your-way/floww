@@ -11,6 +11,7 @@ import {
   readDayActivity,
   sameFlowValues,
 } from "./flow.score.helper";
+import {readDayReadiness} from "./flow.readiness.helper";
 import {syncAutoHabits} from "./habit.source.helper";
 import {refreshFlowStats} from "./stats.helper";
 import {UserClock, clockOf, loadActiveUser} from "./user.clock.helper";
@@ -27,10 +28,13 @@ export const recomputeDailyFlow = async (
     if (!user) return null;
 
     const clock = clockOf(user);
-    const activity = await readDayActivity(transaction, uid, day, clock);
+    const [activity, readiness] = await Promise.all([
+      readDayActivity(transaction, uid, day, clock),
+      readDayReadiness(transaction, uid, day),
+    ]);
     const ref = flowDoc(uid, day);
     const stored = await transaction.get(ref);
-    const entry = flowEntryOf(day, activity);
+    const entry = flowEntryOf(day, activity, readiness);
 
     const shouldWrite = stored.exists ?
       !sameFlowValues(stored.data(), entry) :

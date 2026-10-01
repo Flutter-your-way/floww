@@ -15,12 +15,14 @@ import 'package:floww/navigation/services/navigation_service.dart';
 class WeeklyReportView extends StatelessWidget {
   const WeeklyReportView({super.key});
 
+  static const String pageTitle = 'Weekly Nutrition Report';
+
   @override
   Widget build(BuildContext context) {
     return Consumer<WeeklyReportViewModel>(
       builder: (context, viewModel, child) {
         return InnerPageScaffold(
-          title: 'Weekly Nutrition Report',
+          title: pageTitle,
           onBack: () => NavigationService.instance.pop(),
           children: [
             Row(

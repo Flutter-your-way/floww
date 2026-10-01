@@ -15,6 +15,8 @@ class WorkoutShiftCard extends StatelessWidget {
     required this.actionLabel,
     required this.onAction,
     this.isLoading = false,
+    this.icon = Icons.event_repeat_rounded,
+    this.errorMessage,
   });
 
   final String title;
@@ -22,10 +24,13 @@ class WorkoutShiftCard extends StatelessWidget {
   final String actionLabel;
   final VoidCallback onAction;
   final bool isLoading;
+  final IconData icon;
+  final String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final errorMessage = this.errorMessage;
 
     return AppCard(
       padding: EdgeInsets.symmetric(
@@ -37,11 +42,7 @@ class WorkoutShiftCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.event_repeat_rounded,
-                size: AppSizes.s20,
-                color: colors.primary,
-              ),
+              Icon(icon, size: AppSizes.s20, color: colors.primary),
               SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
@@ -60,6 +61,15 @@ class WorkoutShiftCard extends StatelessWidget {
               color: colors.textSecondary,
             ),
           ),
+          if (errorMessage != null) ...[
+            SizedBox(height: AppSpacing.md),
+            Text(
+              errorMessage,
+              style: AppTypography.bodySmallRegularTight.copyWith(
+                color: colors.destructiveBorder,
+              ),
+            ),
+          ],
           SizedBox(height: AppSpacing.lg),
           PillButton(
             variant: PillButtonVariant.outline,

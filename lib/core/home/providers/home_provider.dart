@@ -11,6 +11,7 @@ import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
 import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
+import 'package:floww/core/home/services/daily_quote_service.dart';
 import 'package:floww/core/home/services/home_service.dart';
 import 'package:floww/core/home/services/home_snapshot_builder.dart';
 import 'package:floww/core/recovery/models/muscle_body_side.dart';
@@ -23,11 +24,14 @@ class HomeProvider extends ChangeNotifier {
     this._achievementsService,
     this._flowModeController, {
     MuscleMapService? muscleMapService,
-  }) : _muscleMapService = muscleMapService ?? MuscleMapService() {
+    DailyQuoteService? quoteService,
+  }) : _muscleMapService = muscleMapService ?? MuscleMapService(),
+       _quoteService = quoteService ?? DailyQuoteService() {
     _flowModeController.resetSession();
     _greeting = _greetingForHour(DateTime.now().hour);
     _watchToday();
     _loadMuscleMap();
+    _loadDailyQuote();
     _dayRollover = DayRolloverTimer(_onNewDay);
   }
 
@@ -42,6 +46,8 @@ class HomeProvider extends ChangeNotifier {
   final AchievementsService _achievementsService;
   final FlowModeController _flowModeController;
   final MuscleMapService _muscleMapService;
+  final DailyQuoteService _quoteService;
+  DailyQuote? _dailyQuote;
 
   late final DayRolloverTimer _dayRollover;
   StreamSubscription<HomeRecords>? _subscription;
@@ -55,6 +61,15 @@ class HomeProvider extends ChangeNotifier {
 
   String get greeting => _greeting;
 
+  DailyQuote? get dailyQuote => _dailyQuote;
+
+  Future<void> _loadDailyQuote() async {
+    final quote = await _quoteService.today();
+    if (_disposed || quote == null) return;
+    _dailyQuote = quote;
+    notifyListeners();
+  }
+
   bool get isReady => _isReady;
 
   String get userName => _snapshot.userName;
@@ -62,6 +77,10 @@ class HomeProvider extends ChangeNotifier {
   int get streakCount => _snapshot.streakCount;
 
   int get flowScorePercent => _snapshot.flowScorePercent;
+
+  int get displayFlowScorePercent => _snapshot.displayFlowScorePercent;
+
+  bool get hasActivityToday => _snapshot.todayFlowEntry?.hasActivity ?? false;
 
   String get recoveryLevel => _snapshot.recovery.levelLabel;
 
@@ -109,6 +128,7 @@ class HomeProvider extends ChangeNotifier {
   void _onNewDay() {
     _greeting = _greetingForHour(DateTime.now().hour);
     _watchToday();
+    _loadDailyQuote();
   }
 
   void _watchToday() {
@@ -127,7 +147,7 @@ class HomeProvider extends ChangeNotifier {
     _snapshot = _builder.build(records, date: _date);
     _isReady = true;
     notifyListeners();
-    _flowModeController.reportScore(_snapshot.flowScorePercent);
+    _flowModeController.reportScore(_snapshot.displayFlowScorePercent);
   }
 
   Future<void> toggleHabit(String id) async {

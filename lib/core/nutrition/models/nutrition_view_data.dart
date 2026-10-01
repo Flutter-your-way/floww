@@ -55,6 +55,24 @@ class MicronutrientTileItem {
   final bool isOverLimit;
 }
 
+class NutrientSourceItem {
+  const NutrientSourceItem({
+    required this.name,
+    required this.meal,
+    required this.detail,
+    required this.amountLabel,
+    required this.shareLabel,
+    required this.share,
+  });
+
+  final String name;
+  final MealType meal;
+  final String detail;
+  final String amountLabel;
+  final String shareLabel;
+  final double share;
+}
+
 class MealBreakdownItem {
   const MealBreakdownItem({
     required this.meal,
@@ -131,6 +149,7 @@ class FoodItemData {
     required this.proteinLabel,
     required this.carbsLabel,
     required this.fatLabel,
+    required this.microsLabel,
     required this.isScanned,
   });
 
@@ -141,6 +160,7 @@ class FoodItemData {
   final String proteinLabel;
   final String carbsLabel;
   final String fatLabel;
+  final String microsLabel;
   final bool isScanned;
 }
 
@@ -202,11 +222,13 @@ class DietPlanDayItem {
     required this.proteinLabel,
     required this.carbsLabel,
     required this.fatLabel,
+    this.isMissed = false,
   });
 
   final int dayNumber;
   final String caloriesLabel;
   final bool isCompleted;
+  final bool isMissed;
   final bool isToday;
   final bool isExpanded;
   final List<DietPlanMealItem> meals;

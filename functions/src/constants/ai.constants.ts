@@ -37,3 +37,18 @@ export const FOOD_DESCRIBE_PROMPT_VERSION = "food-describe-v1";
 export const FOOD_DESCRIBE_DAILY_LIMIT = {premium: 30, free: 5};
 export const MIN_FOOD_DESCRIPTION_LENGTH = 2;
 export const MAX_FOOD_DESCRIPTION_LENGTH = 300;
+
+export const ONBOARDING_ANALYSIS_MODEL = "gpt-5.4-mini";
+export const ONBOARDING_ANALYSIS_REASONING_EFFORT = "low";
+export const ONBOARDING_ANALYSIS_PROMPT_VERSION = "onboarding-analysis-v1";
+export const ONBOARDING_ANALYSIS_DAILY_LIMIT = {premium: 10, free: 10};
+export const ONBOARDING_ANALYSIS_INSIGHT_COUNT = 3;
+export const MAX_ONBOARDING_DETAILS_LENGTH = 12_000;
+
+export const WORKOUT_PLAN_MODEL = "gpt-5.4-mini";
+export const WORKOUT_PLAN_REASONING_EFFORT = "low";
+export const WORKOUT_PLAN_PROMPT_VERSION = "workout-plan-v1";
+export const WORKOUT_PLAN_DAILY_LIMIT = {premium: 5, free: 3};
+export const WORKOUT_PLAN_LENGTH_DAYS = 30;
+export const WORKOUT_PLAN_PROGRAM_ID = "wave-30-day-plan";
+export const WORKOUT_PLAN_NAME = "Your Workout Plan";

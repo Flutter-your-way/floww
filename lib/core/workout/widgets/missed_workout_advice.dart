@@ -5,11 +5,35 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
+import 'package:floww/core/premium/widgets/premium_gate.dart';
+import 'package:floww/core/premium/widgets/premium_locked_row.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/widgets/workout_tone_color.dart';
 
 class MissedWorkoutAdvice extends StatelessWidget {
   const MissedWorkoutAdvice({super.key, required this.missed});
+
+  static const String lockedLabel = "WAVE's advice for this missed session";
+
+  final MissedWorkoutItem missed;
+
+  @override
+  Widget build(BuildContext context) {
+    return PremiumGate(
+      capability: PremiumCapability.adaptiveEngine,
+      placeholder: const SizedBox.shrink(),
+      locked: const PremiumLockedRow(
+        capability: PremiumCapability.adaptiveEngine,
+        label: lockedLabel,
+      ),
+      child: _MissedWorkoutAdviceContent(missed: missed),
+    );
+  }
+}
+
+class _MissedWorkoutAdviceContent extends StatelessWidget {
+  const _MissedWorkoutAdviceContent({required this.missed});
 
   final MissedWorkoutItem missed;
 

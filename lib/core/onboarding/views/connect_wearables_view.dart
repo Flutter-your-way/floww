@@ -35,7 +35,9 @@ class _ConnectWearablesViewState extends State<ConnectWearablesView> {
     try {
       await _onboardingService.markWearablesStepDone(connected);
       if (!mounted) return;
-      NavigationService.instance.pushAndRemoveUntil(AppRouter.home);
+      NavigationService.instance.pushAndRemoveUntil(
+        AppRouter.notificationPermission,
+      );
     } on OnboardingException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
@@ -64,12 +66,21 @@ class _ConnectWearablesViewState extends State<ConnectWearablesView> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+                SizedBox(height: AppSpacing.lg),
+                Text(
+                  health.syncSubtitle,
+                  textAlign: TextAlign.center,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
+                ),
                 Expanded(
                   child: Center(
                     child: HealthIntegrationWidget(
                       isConnected: health.isConnected,
                       isConnecting: health.isConnecting,
                       statusLabel: health.statusLabel,
+                      usesAppleHealth: health.usesAppleHealth,
                       onConnect: context.read<HealthProvider>().connect,
                     ),
                   ),

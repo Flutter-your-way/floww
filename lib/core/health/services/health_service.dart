@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
 
+import 'package:floww/config/constants/app_integrations.dart';
+
 import '../models/health_snapshot.dart';
 
 class HealthServiceException implements Exception {
@@ -20,6 +22,16 @@ class HealthService {
   final Health _health;
 
   bool _configured = false;
+
+  static bool get usesAppleHealth => Platform.isIOS;
+
+  static String get sourceId => Platform.isIOS
+      ? AppIntegrations.appleHealth
+      : AppIntegrations.healthConnect;
+
+  static String get sourceName => Platform.isIOS
+      ? AppIntegrations.appleHealthName
+      : AppIntegrations.healthConnectName;
 
   static HealthDataType get hrvType => Platform.isIOS
       ? HealthDataType.HEART_RATE_VARIABILITY_SDNN
@@ -61,6 +73,26 @@ class HealthService {
     }
   }
 
+  Future<bool> needsHealthConnectInstall() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final status = await _health.getHealthConnectSdkStatus();
+      return status ==
+          HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired;
+    } catch (e, stackTrace) {
+      debugPrint('needsHealthConnectInstall failed: $e\n$stackTrace');
+      return false;
+    }
+  }
+
+  Future<void> installHealthConnect() async {
+    try {
+      await _health.installHealthConnect();
+    } catch (e, stackTrace) {
+      debugPrint('installHealthConnect failed: $e\n$stackTrace');
+    }
+  }
+
   Future<bool> hasPermissions() async {
     await configure();
     try {
@@ -85,7 +117,7 @@ class HealthService {
     } catch (e, stackTrace) {
       debugPrint('requestPermissions failed: $e\n$stackTrace');
       throw HealthServiceException(
-        'Could not open Apple Health. Please try again.',
+        'Could not open $sourceName. Please try again.',
       );
     }
   }
@@ -163,7 +195,7 @@ class HealthService {
       );
     } catch (e, stackTrace) {
       debugPrint('fetchTodaySnapshot failed: $e\n$stackTrace');
-      throw HealthServiceException('Could not read your Apple Health data.');
+      throw HealthServiceException('Could not read your $sourceName data.');
     }
   }
 

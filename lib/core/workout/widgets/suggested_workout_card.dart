@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
@@ -34,7 +34,7 @@ class SuggestedWorkoutCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const WorkoutIconTile(),
+              WorkoutIconTile(imageUrl: suggestion.imageUrl),
               SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
@@ -59,11 +59,9 @@ class SuggestedWorkoutCard extends StatelessWidget {
           SizedBox(height: AppSpacing.lg),
           _SuggestionReasons(reasons: suggestion.reasons),
           SizedBox(height: AppSpacing.lg),
-          CustomButton(
-            text: 'START WORKOUT',
-            icon: Icons.play_arrow,
-            backgroundColor: context.colors.textPrimary,
-            foregroundColor: context.colors.backgroundPrimary,
+          BrightActionButton(
+            label: 'START WORKOUT',
+            icon: Icons.play_arrow_rounded,
             onPressed: onStartWorkout,
           ),
         ],

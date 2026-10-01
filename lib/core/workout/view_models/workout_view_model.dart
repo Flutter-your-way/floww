@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:floww/config/constants/app_images.dart';
 
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
@@ -9,16 +10,21 @@ import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/dates/date_change_direction.dart';
 import 'package:floww/config/utils/dates/day_rollover_timer.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
+import 'package:floww/core/workout/models/active_workout_args.dart';
+import 'package:floww/core/workout/models/program_artwork.dart';
 import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/models/program_start_config.dart';
+import 'package:floww/core/workout/models/todays_workout_args.dart';
 import 'package:floww/core/workout/models/workout_history.dart';
 import 'package:floww/core/workout/models/workout_shift_offer.dart';
 import 'package:floww/core/workout/models/workout_tab.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
+import 'package:floww/core/workout/services/workout_catalog_data.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
 import 'package:floww/core/workout/services/workout_history_analyzer.dart';
 import 'package:floww/core/workout/services/workout_metrics.dart';
+import 'package:floww/core/workout/services/workout_plan_generator_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
@@ -34,6 +40,7 @@ class WorkoutViewModel extends ChangeNotifier {
     this._planService,
     this._programService,
     this._catalogService,
+    this._generatorService,
   ) : _selectedDate = AppDateUtils.dateOnly(DateTime.now()),
       _shiftService = WorkoutShiftService(_planService) {
     _dayRollover = DayRolloverTimer(_onNewDay);
@@ -45,12 +52,12 @@ class WorkoutViewModel extends ChangeNotifier {
   static const int _heartRateAxisSteps = 4;
   static const int _secondsPerMinute = 60;
   static const String _loadFailure = 'Could not load your workouts.';
-  static const Duration _clockTick = Duration(seconds: 1);
   static const int _historyMinWeeks = 8;
   static const int _historyMaxDays = 182;
   static const int _percent = 100;
   static const double _strongAdherence = 0.8;
   static const int _strongAdherenceMinPlanned = 3;
+  static const int _agendaMinEntries = 2;
   static const String _allFilter = 'all';
   static const String _mineFilter = 'mine';
 
@@ -58,24 +65,31 @@ class WorkoutViewModel extends ChangeNotifier {
   final WorkoutPlanService _planService;
   final WorkoutProgramService _programService;
   final WorkoutCatalogService _catalogService;
+  final WorkoutPlanGeneratorService _generatorService;
   final WorkoutShiftService _shiftService;
 
   StreamSubscription<List<WorkoutSessionEntity>>? _sessionSubscription;
   StreamSubscription<WorkoutStateEntity>? _stateSubscription;
   StreamSubscription<List<WorkoutProgramEntity>>? _programSubscription;
   StreamSubscription<WorkoutPlanEntity?>? _planSubscription;
+  StreamSubscription<List<WorkoutPlanEntity>>? _catchUpSubscription;
 
   DateTime _selectedDate;
   DateChangeDirection _dateDirection = DateChangeDirection.forward;
   WorkoutTab _selectedTab = WorkoutTab.overview;
   bool _tabReverse = false;
   late final DayRolloverTimer _dayRollover;
-  Timer? _clock;
 
   List<WorkoutSessionEntity> _sessions = const [];
   List<WorkoutProgramEntity> _programs = const [];
   WorkoutStateEntity _state = WorkoutStateEntity.empty;
   WorkoutPlanEntity? _plan;
+  List<WorkoutPlanEntity> _catchUps = const [];
+  String? _focusedSessionId;
+  bool _isBuildingPlan = false;
+  bool _isRenamingPlan = false;
+  bool _autoBuildTried = false;
+  String? _planBuildError;
   WorkoutShiftOffer? _shiftOffer;
   bool _isShifting = false;
   int _shiftRequest = 0;
@@ -127,7 +141,9 @@ class WorkoutViewModel extends ChangeNotifier {
         : WorkoutDayStatus.past;
   }
 
-  bool get showDateSelector => _selectedTab == WorkoutTab.overview;
+  bool get isOverviewTab => _selectedTab == WorkoutTab.overview;
+
+  bool get showDateSelector => isOverviewTab;
 
   String get titlePrefix => !showDateSelector
       ? 'Your'
@@ -154,7 +170,6 @@ class WorkoutViewModel extends ChangeNotifier {
       _sessions = sessions;
       _isLoading = false;
       _errorMessage = null;
-      _syncClock();
       notifyListeners();
       unawaited(_refreshShiftOffer());
       final loadedFrom = _historyFrom;
@@ -166,6 +181,10 @@ class WorkoutViewModel extends ChangeNotifier {
     _stateSubscription = _programService.watchState().listen((state) {
       _state = state;
       notifyListeners();
+      if (!_autoBuildTried && !state.hasGeneratedPlan) {
+        _autoBuildTried = true;
+        unawaited(buildPlan(showResult: false));
+      }
       unawaited(_ensurePlan());
       unawaited(_refreshShiftOffer());
       _reloadHistoryIfVisible();
@@ -174,6 +193,7 @@ class WorkoutViewModel extends ChangeNotifier {
     _programSubscription = _catalogService.watchPrograms().listen((programs) {
       _programs = programs;
       notifyListeners();
+      unawaited(_renameGeneratedPlan());
     }, onError: _onError);
 
     _watchPlan();
@@ -185,6 +205,13 @@ class WorkoutViewModel extends ChangeNotifier {
       _plan = plan;
       notifyListeners();
       unawaited(_refreshShiftOffer());
+    }, onError: _onError);
+    _catchUpSubscription?.cancel();
+    _catchUpSubscription = _planService.watchCatchUps(_selectedDate).listen((
+      plans,
+    ) {
+      _catchUps = plans;
+      notifyListeners();
     }, onError: _onError);
   }
 
@@ -212,6 +239,7 @@ class WorkoutViewModel extends ChangeNotifier {
     await _stateSubscription?.cancel();
     await _programSubscription?.cancel();
     await _planSubscription?.cancel();
+    await _catchUpSubscription?.cancel();
     await _start();
     _reloadHistoryIfVisible();
   }
@@ -259,9 +287,90 @@ class WorkoutViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<WorkoutSessionEntity> get _daySessions => [
+    for (final session in _sessions)
+      if (AppDateUtils.isSameDay(session.date, _selectedDate)) session,
+  ];
+
   WorkoutSessionEntity? get _selectedSession {
-    for (final session in _sessions) {
-      if (AppDateUtils.isSameDay(session.date, _selectedDate)) return session;
+    final sessions = _daySessions;
+    if (sessions.isEmpty) return null;
+    for (final session in sessions) {
+      if (session.id == _focusedSessionId) return session;
+    }
+    for (final session in sessions) {
+      if (session.isInProgress) return session;
+    }
+    return sessions.first;
+  }
+
+  WorkoutSessionEntity? _sessionFor(DateTime planDate) {
+    WorkoutSessionEntity? completed;
+    for (final session in _daySessions) {
+      if (!AppDateUtils.isSameDay(session.scheduledDate, planDate)) continue;
+      if (session.isInProgress) return session;
+      if (session.isCompleted) completed ??= session;
+    }
+    return completed;
+  }
+
+  WorkoutPlanEntity? _planFor(DateTime planDate) {
+    if (AppDateUtils.isSameDay(planDate, _selectedDate)) return _plan;
+    for (final plan in _catchUps) {
+      if (AppDateUtils.isSameDay(plan.date, planDate)) return plan;
+    }
+    return null;
+  }
+
+  List<_DayWorkout> get _dayWorkouts {
+    final workouts = <_DayWorkout>[];
+    final matched = <String>{};
+    final plan = _plan;
+    if (plan != null) {
+      final session = _sessionFor(_selectedDate);
+      if (session != null) matched.add(session.id);
+      workouts.add(
+        _DayWorkout(planDate: _selectedDate, plan: plan, session: session),
+      );
+    }
+    final activeId = _state.activeProgram?.id;
+    for (final catchUp in _catchUps) {
+      final session = _sessionFor(catchUp.date);
+      if (session == null && catchUp.programId != activeId) continue;
+      if (session != null) matched.add(session.id);
+      workouts.add(
+        _DayWorkout(
+          planDate: catchUp.date,
+          plan: catchUp,
+          session: session,
+          isCatchUp: true,
+        ),
+      );
+    }
+    for (final session in _daySessions.reversed) {
+      if (matched.contains(session.id)) continue;
+      if (!session.isCompleted && !session.isInProgress) continue;
+      workouts.add(
+        _DayWorkout(
+          planDate: session.scheduledDate,
+          session: session,
+          isCatchUp: session.isCatchUp,
+        ),
+      );
+    }
+    return workouts;
+  }
+
+  _DayWorkout? get _nextPending {
+    for (final workout in _dayWorkouts) {
+      if (workout.session == null && workout.plan != null) return workout;
+    }
+    return null;
+  }
+
+  _DayWorkout? _workoutById(String id) {
+    for (final workout in _dayWorkouts) {
+      if (workout.id == id) return workout;
     }
     return null;
   }
@@ -270,32 +379,43 @@ class WorkoutViewModel extends ChangeNotifier {
 
   WorkoutPrimaryAction? get primaryAction {
     if (dayStatus == WorkoutDayStatus.past) return null;
-    final session = _selectedSession;
-    if (session == null) return WorkoutPrimaryAction.start;
-    if (session.isInProgress && dayStatus == WorkoutDayStatus.today) {
-      return WorkoutPrimaryAction.resume;
-    }
-    return null;
+    if (_activeSession != null) return WorkoutPrimaryAction.resume;
+    if (_nextPending != null) return WorkoutPrimaryAction.start;
+    return _daySessions.isEmpty ? WorkoutPrimaryAction.start : null;
   }
 
-  String get primaryActionLabel => 'Start Workout';
+  String get primaryActionLabel =>
+      _nextPending?.isCatchUp ?? false ? 'Start Catch-up' : 'Start Workout';
+
+  TodaysWorkoutArgs get startArgs {
+    final next = _nextPending;
+    return TodaysWorkoutArgs(
+      date: _selectedDate,
+      catchUpFrom: next != null && next.isCatchUp ? next.planDate : null,
+    );
+  }
 
   WorkoutSessionEntity? get _activeSession {
-    final session = _selectedSession;
-    if (session == null ||
-        !session.isInProgress ||
-        dayStatus != WorkoutDayStatus.today) {
-      return null;
+    if (dayStatus != WorkoutDayStatus.today) return null;
+    for (final session in _daySessions) {
+      if (session.isInProgress) return session;
     }
-    return session;
+    return null;
   }
 
   bool get isTimerPaused => _activeSession?.isTimerPaused ?? false;
 
   String get activeStatusLabel => isTimerPaused ? 'Paused' : 'In Progress';
 
-  String get activeTimerLabel =>
-      _clockLabel(_activeSession?.elapsedSecondsAt(DateTime.now()) ?? 0);
+  String get activeProgressLabel {
+    final session = _activeSession;
+    if (session == null) return '';
+    var logged = 0;
+    for (final exercise in session.exercises) {
+      logged += exercise.workingSetCount;
+    }
+    return '$logged/${session.plannedSets} sets';
+  }
 
   Future<void> toggleTimer() async {
     final session = _activeSession;
@@ -308,7 +428,6 @@ class WorkoutViewModel extends ChangeNotifier {
       for (final entry in _sessions)
         if (entry.id == updated.id) updated else entry,
     ];
-    _syncClock();
     notifyListeners();
     try {
       await _sessionService.saveTimer(updated);
@@ -317,27 +436,296 @@ class WorkoutViewModel extends ChangeNotifier {
     }
   }
 
-  void _syncClock() {
-    final shouldTick = _activeSession?.isTimerRunning ?? false;
-    if (!shouldTick) {
-      _clock?.cancel();
-      _clock = null;
+  bool get hasPlan => _plan != null;
+
+  ActiveWorkoutArgs get activeWorkoutArgs {
+    final session = _activeSession;
+    final plan = session == null ? _plan : _planFor(session.scheduledDate);
+    return ActiveWorkoutArgs(
+      date: _selectedDate,
+      plan: plan,
+      history: plan == null ? null : _sessions,
+      session: session,
+    );
+  }
+
+  List<String?> get planImageUrls => [
+    for (final plan in [?_plan, ..._catchUps])
+      for (final exercise in plan.exercises)
+        exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
+  ];
+
+  WorkoutAgendaItem? get agenda {
+    if (!isOverviewTab) return null;
+    final workouts = _dayWorkouts;
+    if (workouts.length < _agendaMinEntries) return null;
+    final focusedId = _selectedSession?.id;
+    final hasActive = _activeSession != null;
+    var done = 0;
+    for (final workout in workouts) {
+      if (workout.session?.isCompleted ?? false) done++;
+    }
+    final active = _state.activeProgram;
+    return WorkoutAgendaItem(
+      title: '$titlePrefix Plan',
+      progressLabel: '$done of ${workouts.length} done',
+      planLabel: active == null
+          ? null
+          : _programProgressLabel(active, _selectedDate),
+      planProgress: active == null
+          ? null
+          : _programProgressOf(active, _selectedDate),
+      entries: [
+        for (final workout in workouts)
+          _agendaEntryOf(workout, focusedId: focusedId, hasActive: hasActive),
+      ],
+    );
+  }
+
+  WorkoutAgendaEntryItem _agendaEntryOf(
+    _DayWorkout workout, {
+    required String? focusedId,
+    required bool hasActive,
+  }) {
+    final session = workout.session;
+    final plan = workout.plan;
+    final isToday = dayStatus == WorkoutDayStatus.today;
+    final status = session == null
+        ? WorkoutAgendaStatus.pending
+        : session.isCompleted
+        ? WorkoutAgendaStatus.completed
+        : WorkoutAgendaStatus.inProgress;
+    final isFocused = session != null && session.id == focusedId;
+    final action = switch (status) {
+      WorkoutAgendaStatus.pending =>
+        isToday && !hasActive ? WorkoutAgendaAction.start : null,
+      WorkoutAgendaStatus.inProgress =>
+        isToday
+            ? WorkoutAgendaAction.resume
+            : isFocused
+            ? null
+            : WorkoutAgendaAction.focus,
+      WorkoutAgendaStatus.completed =>
+        isFocused ? null : WorkoutAgendaAction.focus,
+    };
+    return WorkoutAgendaEntryItem(
+      id: workout.id,
+      name: session?.name ?? plan?.name ?? '',
+      tagLabel: workout.isCatchUp
+          ? 'Catch-up · ${AppDateUtils.shortWeekday(workout.planDate)} '
+                '${workout.planDate.day}'
+          : plan == null
+          ? 'Logged'
+          : 'Scheduled',
+      metaLabel: _agendaMetaOf(workout),
+      status: status,
+      statusLabel: switch (status) {
+        WorkoutAgendaStatus.pending =>
+          isToday
+              ? hasActive
+                    ? 'Up next'
+                    : 'Ready'
+              : dayStatus == WorkoutDayStatus.future
+              ? 'Planned'
+              : 'Missed',
+        WorkoutAgendaStatus.inProgress =>
+          isToday ? activeStatusLabel : 'Unfinished',
+        WorkoutAgendaStatus.completed => 'Completed',
+      },
+      action: action,
+      actionLabel: switch (action) {
+        WorkoutAgendaAction.start => 'Start',
+        WorkoutAgendaAction.resume => 'Resume',
+        WorkoutAgendaAction.focus => 'View',
+        null => null,
+      },
+      isCatchUp: workout.isCatchUp,
+      isFocused: isFocused,
+      canRemove: workout.isCatchUp && session == null && isToday,
+      imageUrl: plan == null
+          ? ProgramArtwork.ofSession(session!)
+          : ProgramArtwork.ofPlan(plan),
+    );
+  }
+
+  String _agendaMetaOf(_DayWorkout workout) {
+    final session = workout.session;
+    final plan = workout.plan;
+    if (session != null && session.isCompleted) {
+      return '${_durationLabel(session.trackedSeconds)} min · '
+          '${session.exerciseCount} exercises · '
+          '${NumberFormatter.grouped(session.caloriesKcal)} kcal';
+    }
+    if (session != null) {
+      var logged = 0;
+      for (final exercise in session.exercises) {
+        logged += exercise.workingSetCount;
+      }
+      return '$logged/${session.plannedSets} sets logged';
+    }
+    if (plan == null) return '';
+    return '${plan.durationMinutes} min · ${plan.exercises.length} exercises '
+        '· ${plan.totalSets} sets';
+  }
+
+  TodaysWorkoutArgs? startArgsFor(String id) {
+    final workout = _workoutById(id);
+    if (workout == null || workout.plan == null) return null;
+    return TodaysWorkoutArgs(
+      date: _selectedDate,
+      catchUpFrom: workout.isCatchUp ? workout.planDate : null,
+    );
+  }
+
+  ActiveWorkoutArgs? resumeArgsFor(String id) {
+    final workout = _workoutById(id);
+    final session = workout?.session;
+    if (workout == null || session == null || !session.isInProgress) {
+      return null;
+    }
+    final plan = workout.plan;
+    return ActiveWorkoutArgs(
+      date: _selectedDate,
+      plan: plan,
+      history: plan == null ? null : _sessions,
+      session: session,
+    );
+  }
+
+  void focusEntry(String id) {
+    final session = _workoutById(id)?.session;
+    if (session == null || session.id == _focusedSessionId) return;
+    _focusedSessionId = session.id;
+    notifyListeners();
+  }
+
+  Future<void> removeCatchUp(String id) async {
+    final workout = _workoutById(id);
+    final plan = workout?.plan;
+    if (workout == null ||
+        plan == null ||
+        !workout.isCatchUp ||
+        workout.session != null) {
       return;
     }
-    _clock ??= Timer.periodic(_clockTick, (_) => notifyListeners());
+    try {
+      await _planService.unscheduleCatchUp(plan);
+    } on WorkoutException catch (error) {
+      _onError(error);
+    }
   }
 
-  String _clockLabel(int seconds) {
-    final hours = seconds ~/ (_secondsPerMinute * _secondsPerMinute);
-    final minutes = (seconds ~/ _secondsPerMinute) % _secondsPerMinute;
-    final remainder = seconds % _secondsPerMinute;
-    final clock =
-        '${minutes.toString().padLeft(2, '0')}:'
-        '${remainder.toString().padLeft(2, '0')}';
-    return hours > 0 ? '$hours:$clock' : clock;
+  String _programProgressLabel(ActiveProgramEntry active, DateTime date) =>
+      active.hasFixedLength
+      ? '${active.name} · day ${active.dayNumberAt(date)} of '
+            '${active.totalDays}'
+      : '${active.name} · week ${active.weekAt(date)} of '
+            '${active.totalWeeks}';
+
+  double? _programProgressOf(ActiveProgramEntry active, DateTime date) {
+    if (active.hasFixedLength) {
+      return active.dayNumberAt(date) / active.totalDays;
+    }
+    if (active.totalWeeks <= 0) return null;
+    return active.weekAt(date) / active.totalWeeks;
   }
 
-  bool get hasPlan => _plan != null;
+  Future<void> _renameGeneratedPlan() async {
+    if (_isRenamingPlan || _isBuildingPlan) return;
+    WorkoutProgramEntity? stale;
+    for (final program in _programs) {
+      if (program.needsGeneratedName) stale = program;
+    }
+    if (stale == null) return;
+    _isRenamingPlan = true;
+    try {
+      final renamed = stale.copyWith(name: WorkoutProgramEntity.generatedName);
+      await _catalogService.saveProgram(renamed);
+      final active = (await _programService.loadState()).activeProgram;
+      if (active != null && active.id == renamed.id) {
+        await _planService.scheduleProgram(
+          renamed,
+          active.withProgram(renamed),
+          from: _today,
+          saveActive: true,
+        );
+      }
+    } on WorkoutException catch (_) {
+      return;
+    } finally {
+      _isRenamingPlan = false;
+    }
+  }
+
+  bool get isBuildingPlan => _isBuildingPlan;
+
+  WorkoutPlanBuilderItem? get planBuilder {
+    if (_isLoading) return null;
+    final active = _state.activeProgram;
+    final generatedId = _state.generatedProgramId;
+    final isGeneratedActive = active != null && active.id == generatedId;
+    final isVisible = switch (_selectedTab) {
+      WorkoutTab.overview =>
+        _isBuildingPlan ||
+            (active == null && dayStatus != WorkoutDayStatus.past),
+      WorkoutTab.programs => true,
+      _ => false,
+    };
+    if (!isVisible) return null;
+    if (_isBuildingPlan) {
+      return const WorkoutPlanBuilderItem(
+        title: 'WAVE is building your 30-day plan',
+        message:
+            'Reading your onboarding answers and picking exercises from your '
+            'library. This takes a few seconds.',
+        actionLabel: 'Building…',
+      );
+    }
+    return WorkoutPlanBuilderItem(
+      title: isGeneratedActive
+          ? 'Your WAVE 30-day plan'
+          : 'Get your personal 30-day plan',
+      message: isGeneratedActive
+          ? 'Changed your schedule, equipment or goal? Rebuild the plan from '
+                'your latest onboarding answers. Logged workouts stay in your '
+                'history.'
+          : active != null
+          ? 'WAVE builds a standard 30-day program from your onboarding '
+                'answers. It replaces ${active.name} and reschedules your '
+                'upcoming sessions.'
+          : 'WAVE builds a standard 30-day program from your onboarding '
+                'answers: your training days, session length, equipment and '
+                'goal.',
+      actionLabel: generatedId == null ? 'Build my plan' : 'Rebuild my plan',
+      errorMessage: _planBuildError,
+    );
+  }
+
+  Future<void> buildPlan({bool showResult = true}) async {
+    if (_isBuildingPlan) return;
+    _isBuildingPlan = true;
+    _planBuildError = null;
+    notifyListeners();
+    try {
+      final program = await _generatorService.generate();
+      final active = _programService.activeEntryFor(program, startDate: _today);
+      await _planService.scheduleProgram(
+        program,
+        active,
+        from: _today,
+        saveActive: true,
+      );
+      _isBuildingPlan = false;
+      if (showResult) {
+        _setDate(_today);
+        selectTab(WorkoutTab.overview);
+      }
+    } on WorkoutException catch (error) {
+      _planBuildError = showResult ? error.message : null;
+    }
+    _isBuildingPlan = false;
+    notifyListeners();
+  }
 
   Future<void> _refreshShiftOffer() async {
     final request = ++_shiftRequest;
@@ -392,6 +780,7 @@ class WorkoutViewModel extends ChangeNotifier {
             )
           : const WorkoutEmptyState(
               icon: Icons.directions_run,
+              iconAsset: AppImages.runIcon,
               title: 'No workout logged yet',
               message:
                   'Start your first session to unlock training stats, muscle '
@@ -432,6 +821,8 @@ class WorkoutViewModel extends ChangeNotifier {
       !_isLoading &&
       !isHistoryLoading &&
       _errorMessage == null &&
+      agenda == null &&
+      (planBuilder == null || !isOverviewTab) &&
       !showOverview &&
       !showHistory &&
       !showPrograms &&
@@ -563,17 +954,21 @@ class WorkoutViewModel extends ChangeNotifier {
 
   WorkoutHistoryItem _historyItemOf(WorkoutSessionEntity session) {
     final isToday = AppDateUtils.isSameDay(session.date, _today);
+    final dateLabel = isToday
+        ? 'Today · ${AppDateUtils.time(session.startedAt)}'
+        : _historyDayLabel(session.date);
     return WorkoutHistoryItem(
       id: session.id,
       name: session.name,
-      dateLabel: isToday
-          ? 'Today · ${AppDateUtils.time(session.startedAt)}'
-          : _historyDayLabel(session.date),
+      dateLabel: session.isCatchUp
+          ? '$dateLabel · Catch-up for '
+                '${AppDateUtils.shortWeekday(session.scheduledDate)}'
+          : dateLabel,
       effectLabel: session.trainingEffect.toStringAsFixed(1),
       metrics: [
         WorkoutMetricItem(
           icon: Icons.schedule,
-          label: _durationLabel(session.elapsedSecondsAt(DateTime.now())),
+          label: _durationLabel(session.trackedSeconds),
         ),
         WorkoutMetricItem(
           icon: Icons.local_fire_department,
@@ -637,9 +1032,7 @@ class WorkoutViewModel extends ChangeNotifier {
           ),
       ],
       goal: plan.goal.isNotEmpty ? plan.goal : plan.focus,
-      actionLabel: insight.recovery == MissedRecovery.catchUp
-          ? 'Do it today'
-          : null,
+      actionLabel: insight.canSchedule ? 'Do it today' : null,
     );
   }
 
@@ -652,12 +1045,20 @@ class WorkoutViewModel extends ChangeNotifier {
     final keyExercise = insight.keyExercise;
     final coveredOn = insight.coveredOn;
     switch (insight.recovery) {
+      case MissedRecovery.scheduled:
+        return (
+          title: 'Scheduled for today',
+          message:
+              '${plan.name} is on today\'s plan alongside your scheduled '
+              'session. Do both and nothing gets lost.',
+          tone: WorkoutStatTone.accent,
+        );
       case MissedRecovery.catchUp:
         return (
           title: 'Catch up today',
           message:
-              'Shift your program back one day so ${plan.name} happens today '
-              'and nothing gets lost.',
+              'Add ${plan.name} to today alongside your scheduled session. '
+              'Your program stays on track and nothing gets lost.',
           tone: WorkoutStatTone.accent,
         );
       case MissedRecovery.covered:
@@ -675,8 +1076,10 @@ class WorkoutViewModel extends ChangeNotifier {
             : '$musclesLabel ${muscles.length == 1 ? 'hasn\'t' : 'haven\'t'} '
                   'been trained since';
         final addition = keyExercise == null
-            ? 'Add a few extra sets to your next session'
-            : 'Add 2–3 sets of $keyExercise to your next session';
+            ? 'Do it today alongside your plan, or add a few extra sets to '
+                  'your next session'
+            : 'Do it today alongside your plan, or add 2–3 sets of '
+                  '$keyExercise to your next session';
         return (
           title: 'Make it up this week',
           message: '$focus. $addition to keep progressing.',
@@ -807,8 +1210,7 @@ class WorkoutViewModel extends ChangeNotifier {
   }
 
   Future<void> catchUp(MissedWorkoutItem item) async {
-    final active = _state.activeProgram;
-    if (active == null || _isShifting) return;
+    if (_isShifting) return;
     WorkoutPlanEntity? missed;
     for (final plan in _historyPlans) {
       if (AppDateUtils.isSameDay(plan.date, item.date)) missed = plan;
@@ -816,20 +1218,23 @@ class WorkoutViewModel extends ChangeNotifier {
     if (missed == null) return;
     _isShifting = true;
     notifyListeners();
-    var shifted = false;
+    var scheduled = false;
     try {
-      await _shiftService.apply(
-        WorkoutShiftOffer(kind: WorkoutShiftKind.catchUp, plan: missed),
-        active,
-      );
-      _shiftOffer = null;
-      shifted = true;
+      await _planService.scheduleCatchUp(missed, _today);
+      _historyPlans = [
+        for (final plan in _historyPlans)
+          if (identical(plan, missed))
+            plan.copyWith(rescheduledTo: _today)
+          else
+            plan,
+      ];
+      scheduled = true;
     } on WorkoutException catch (error) {
       _onError(error);
     }
     _isShifting = false;
     notifyListeners();
-    if (!shifted) return;
+    if (!scheduled) return;
     _setDate(_today);
     selectTab(WorkoutTab.overview);
     unawaited(_refreshShiftOffer());
@@ -838,6 +1243,7 @@ class WorkoutViewModel extends ChangeNotifier {
   bool get showSuggestion =>
       _selectedTab == WorkoutTab.overview &&
       overview == null &&
+      agenda == null &&
       suggestion != null;
 
   bool get showPrograms =>
@@ -868,11 +1274,12 @@ class WorkoutViewModel extends ChangeNotifier {
           ? 'Paused'
           : 'In Progress',
       isCompleted: session.isCompleted,
+      imageUrl: ProgramArtwork.ofSession(session),
       stats: [
         WorkoutStatItem(
           icon: Icons.schedule,
           title: 'DURATION',
-          value: _durationLabel(session.elapsedSecondsAt(DateTime.now())),
+          value: _durationLabel(session.trackedSeconds),
           unit: 'min',
         ),
         WorkoutStatItem(
@@ -1085,31 +1492,62 @@ class WorkoutViewModel extends ChangeNotifier {
     return '$reference\'s session — historical data (read-only)';
   }
 
-  String get suggestionTitle => dayStatus == WorkoutDayStatus.today
+  String get suggestionTitle => _nextPending?.isCatchUp ?? false
+      ? 'Catch-up For Today'
+      : dayStatus == WorkoutDayStatus.today
       ? 'Scheduled For Today'
       : 'Scheduled For ${AppDateUtils.weekdayName(_selectedDate)}';
 
   WorkoutSuggestionItem? get suggestion {
-    final plan = _plan;
-    if (plan == null || dayStatus == WorkoutDayStatus.past) return null;
+    if (dayStatus == WorkoutDayStatus.past) return null;
+    final next = _nextPending;
+    final plan = next?.plan;
+    if (next == null || plan == null) return null;
     final active = _state.activeProgram;
     return WorkoutSuggestionItem(
       title: plan.name,
       durationLabel: '${plan.durationMinutes}m',
       intensityLabel: plan.focus,
       reasons: [
-        if (active != null)
-          '${active.name} · week ${active.weekAt(plan.date)} of '
-              '${active.totalWeeks}',
+        if (next.isCatchUp)
+          'Missed on ${AppDateUtils.weekdayName(plan.date)}, '
+              '${AppDateUtils.dayMonth(plan.date)}',
+        if (active != null) _programProgressLabel(active, plan.date),
         '${plan.exercises.length} exercises · ${plan.totalSets} sets',
         if (plan.goal.isNotEmpty) plan.goal,
       ],
+      imageUrl: _suggestionImageOf(plan),
     );
+  }
+
+  String? _suggestionImageOf(WorkoutPlanEntity plan) {
+    final image = ProgramArtwork.ofPlan(plan);
+    if (image != null) return image;
+    final active = _state.activeProgram;
+    final program = active == null ? null : _programById(active.id);
+    return program == null ? null : ProgramArtwork.of(program);
   }
 
   ActiveProgramItem? get activeProgram {
     final program = _state.activeProgram;
-    if (program == null || program.totalWeeks == 0) return null;
+    if (program == null) return null;
+    if (program.hasFixedLength) {
+      final day = program.dayNumberAt(_today);
+      final progress = day / program.totalDays;
+      return ActiveProgramItem(
+        name: program.name,
+        scheduleLabel:
+            'Day $day of ${program.totalDays} · '
+            '${program.daysPerWeek} days/week',
+        statusLabel: 'ACTIVE',
+        levelLabel:
+            '${program.level} · ${program.totalDays - day} days remaining',
+        progressLabel: '${(progress * 100).round()}% complete',
+        progress: progress,
+        isWave: program.id == _state.generatedProgramId,
+      );
+    }
+    if (program.totalWeeks == 0) return null;
     final week = program.weekAt(_today);
     final remaining = program.totalWeeks - week + 1;
     final progress = week / program.totalWeeks;
@@ -1212,6 +1650,7 @@ class WorkoutViewModel extends ChangeNotifier {
       name: program.name,
       dayWeekdays: [for (final day in program.days) day.weekday],
       weeks: program.weeks,
+      lengthDays: program.lengthDays,
     );
   }
 
@@ -1238,9 +1677,11 @@ class WorkoutViewModel extends ChangeNotifier {
       id: program.id,
       name: program.name,
       description: program.description,
-      icon: program.goal.icon,
+      logo: ProgramArtwork.of(program),
       isActive: isActive,
       isCustom: program.isCustom,
+      isPremium: program.goal.isPremium && !program.isCustom,
+      isWave: program.isGenerated,
       schedule: [
         for (final index in order)
           ProgramScheduleItem(
@@ -1258,8 +1699,10 @@ class WorkoutViewModel extends ChangeNotifier {
         WorkoutStatItem(
           icon: Icons.schedule,
           title: 'Duration',
-          value: '${program.weeks}',
-          unit: 'weeks',
+          value: program.hasFixedLength
+              ? '${program.lengthDays}'
+              : '${program.weeks}',
+          unit: program.hasFixedLength ? 'days' : 'weeks',
         ),
         WorkoutStatItem(
           icon: Icons.track_changes,
@@ -1292,6 +1735,10 @@ class WorkoutViewModel extends ChangeNotifier {
             a.id == activeId ? 1 : 0,
           );
           if (activeOrder != 0) return activeOrder;
+          final generatedOrder = (b.isGenerated ? 1 : 0).compareTo(
+            a.isGenerated ? 1 : 0,
+          );
+          if (generatedOrder != 0) return generatedOrder;
           final customOrder = (b.isCustom ? 1 : 0).compareTo(
             a.isCustom ? 1 : 0,
           );
@@ -1305,10 +1752,11 @@ class WorkoutViewModel extends ChangeNotifier {
           id: program.id,
           name: program.name,
           description: program.description,
-          icon: program.goal.icon,
-          metaLabel:
-              '${program.level} · ${program.weeks} '
-              '${program.weeks == 1 ? 'week' : 'weeks'}',
+          logo: ProgramArtwork.of(program),
+          metaLabel: program.hasFixedLength
+              ? '${program.level} · ${program.lengthDays} days'
+              : '${program.level} · ${program.weeks} '
+                    '${program.weeks == 1 ? 'week' : 'weeks'}',
           scheduleLabel:
               '${program.sessionsPerWeek}x / week · '
               '~${program.averageMinutes} min',
@@ -1323,10 +1771,14 @@ class WorkoutViewModel extends ChangeNotifier {
           ],
           badgeLabel: program.id == activeId
               ? 'Active'
+              : program.isGenerated
+              ? 'WAVE'
               : program.isCustom
               ? 'Custom'
               : null,
           isActive: program.id == activeId,
+          isPremium: program.goal.isPremium && !program.isCustom,
+          isWave: program.isGenerated,
         ),
     ];
   }
@@ -1432,8 +1884,9 @@ class WorkoutViewModel extends ChangeNotifier {
         : DateChangeDirection.backward;
     _selectedDate = date;
     _plan = null;
+    _catchUps = const [];
+    _focusedSessionId = null;
     _shiftOffer = null;
-    _syncClock();
     notifyListeners();
     _watchPlan();
     unawaited(_ensurePlan());
@@ -1448,11 +1901,28 @@ class WorkoutViewModel extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _dayRollover.cancel();
-    _clock?.cancel();
     _sessionSubscription?.cancel();
     _stateSubscription?.cancel();
     _programSubscription?.cancel();
     _planSubscription?.cancel();
+    _catchUpSubscription?.cancel();
     super.dispose();
   }
+}
+
+class _DayWorkout {
+  const _DayWorkout({
+    required this.planDate,
+    this.plan,
+    this.session,
+    this.isCatchUp = false,
+  });
+
+  final DateTime planDate;
+  final WorkoutPlanEntity? plan;
+  final WorkoutSessionEntity? session;
+  final bool isCatchUp;
+
+  String get id =>
+      plan != null ? AppDateUtils.dateKey(planDate) : session?.id ?? '';
 }

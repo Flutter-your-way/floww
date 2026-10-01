@@ -3,7 +3,7 @@ import 'package:floww/config/entities/workout_session_entity.dart';
 
 enum WorkoutDayOutcome { completed, partial, missed, rest, pending }
 
-enum MissedRecovery { catchUp, covered, prioritize, letGo }
+enum MissedRecovery { scheduled, catchUp, covered, prioritize, letGo }
 
 class MissedWorkoutInsight {
   const MissedWorkoutInsight({
@@ -11,9 +11,11 @@ class MissedWorkoutInsight {
     required this.muscles,
     this.coveredOn,
     this.keyExercise,
+    this.canSchedule = false,
   });
 
   final MissedRecovery recovery;
+  final bool canSchedule;
   final List<String> muscles;
   final DateTime? coveredOn;
   final String? keyExercise;

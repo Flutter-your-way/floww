@@ -5,6 +5,7 @@ import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:floww/core/workout/models/program_phase.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
@@ -21,16 +22,58 @@ class WorkoutPlanService extends WorkoutFirestore {
   static const String _restField = 'isRest';
   static const String _idField = 'id';
   static const String _movedToField = 'movedTo';
+  static const String _sessionField = 'sessionId';
   static const int _minAdaptedSets = 1;
   static const int _maxInsightReasons = 3;
   static const int _maxAlternatives = 8;
   static const double _sameGroupBonus = 0.5;
+  static const double _savedBonus = 0.25;
   static const double _defaultWeightStepKg = 2.5;
 
   final WorkoutCatalogService _catalogService;
 
   CollectionReference<Map<String, dynamic>> _plans(String uid) =>
       collectionOf(uid, AppCollection.workoutPlans);
+
+  Stream<List<WorkoutPlanEntity>> watchCatchUps(DateTime date) {
+    final uid = userId;
+    if (uid == null) return Stream.value(const []);
+    return _plans(uid)
+        .where(
+          WorkoutPlanEntity.rescheduledToField,
+          isEqualTo: AppDateUtils.dateKey(date),
+        )
+        .snapshots()
+        .map(
+          (snapshot) => [
+            for (final doc in snapshot.docs)
+              if (_storedPlanOf(doc.data()) case final plan?)
+                if (!AppDateUtils.isSameDay(plan.date, date)) plan,
+          ]..sort((a, b) => a.date.compareTo(b.date)),
+        );
+  }
+
+  Future<void> scheduleCatchUp(WorkoutPlanEntity missed, DateTime day) async {
+    final uid = requireUserId;
+    await guard(
+      'scheduleCatchUp',
+      _saveFailure,
+      () => _plans(uid).doc(AppDateUtils.dateKey(missed.date)).set({
+        WorkoutPlanEntity.rescheduledToField: AppDateUtils.dateKey(day),
+      }, SetOptions(merge: true)),
+    );
+  }
+
+  Future<void> unscheduleCatchUp(WorkoutPlanEntity missed) async {
+    final uid = requireUserId;
+    await guard(
+      'unscheduleCatchUp',
+      _saveFailure,
+      () => _plans(uid).doc(AppDateUtils.dateKey(missed.date)).set({
+        WorkoutPlanEntity.rescheduledToField: FieldValue.delete(),
+      }, SetOptions(merge: true)),
+    );
+  }
 
   Stream<WorkoutPlanEntity?> watchPlan(DateTime date) {
     final uid = userId;
@@ -135,11 +178,14 @@ class WorkoutPlanService extends WorkoutFirestore {
 
   Future<void> savePlan(WorkoutPlanEntity plan) async {
     final uid = requireUserId;
-    await guard(
-      'savePlan',
-      _saveFailure,
-      () => _plans(uid).doc(AppDateUtils.dateKey(plan.date)).set(plan.toJson()),
-    );
+    await guard('savePlan', _saveFailure, () {
+      final batch = firestore.batch();
+      batch.set(_plans(uid).doc(AppDateUtils.dateKey(plan.date)), plan.toJson());
+      _catalogService.unlockInto(batch, uid, [
+        for (final entry in plan.exercises) entry.exerciseId,
+      ]);
+      return batch.commit();
+    });
   }
 
   Future<void> linkSession(DateTime date, String sessionId) async {
@@ -148,7 +194,7 @@ class WorkoutPlanService extends WorkoutFirestore {
       'linkSession',
       _saveFailure,
       () => _plans(uid).doc(AppDateUtils.dateKey(date)).set({
-        'sessionId': sessionId,
+        _sessionField: sessionId,
       }, SetOptions(merge: true)),
     );
   }
@@ -159,7 +205,7 @@ class WorkoutPlanService extends WorkoutFirestore {
       'unlinkSession',
       _saveFailure,
       () => _plans(uid).doc(AppDateUtils.dateKey(date)).set({
-        'sessionId': FieldValue.delete(),
+        _sessionField: FieldValue.delete(),
       }, SetOptions(merge: true)),
     );
   }
@@ -209,7 +255,10 @@ class WorkoutPlanService extends WorkoutFirestore {
     ActiveProgramEntry activeProgram,
     DateTime start,
   ) async {
-    final end = AppDateUtils.addDays(start, _scheduleAheadDays);
+    final aheadDays = activeProgram.totalDays > _scheduleAheadDays
+        ? activeProgram.totalDays
+        : _scheduleAheadDays;
+    final end = AppDateUtils.addDays(start, aheadDays);
     final catalog = await _catalogMap();
     final existing = await _plans(uid)
         .orderBy(FieldPath.documentId)
@@ -218,9 +267,9 @@ class WorkoutPlanService extends WorkoutFirestore {
         .get();
     final started = {
       for (final doc in existing.docs)
-        if (doc.data()['sessionId'] != null) doc.id,
+        if (doc.data()[_sessionField] != null) doc.id,
     };
-    for (var offset = 0; offset < _scheduleAheadDays; offset++) {
+    for (var offset = 0; offset < aheadDays; offset++) {
       final date = AppDateUtils.addDays(start, offset);
       final key = AppDateUtils.dateKey(date);
       if (started.contains(key)) continue;
@@ -237,6 +286,10 @@ class WorkoutPlanService extends WorkoutFirestore {
         batch.set(document, plan.toJson());
       }
     }
+    _catalogService.unlockInto(batch, uid, [
+      for (final id in program.exerciseIds)
+        if (catalog[id]?.isAvailable == false) id,
+    ]);
   }
 
   void _setActive(WriteBatch batch, String uid, ActiveProgramEntry? active) =>
@@ -252,7 +305,7 @@ class WorkoutPlanService extends WorkoutFirestore {
       ]).get();
       final batch = firestore.batch();
       for (final doc in upcoming.docs) {
-        if (doc.data()['sessionId'] == null) batch.delete(doc.reference);
+        if (doc.data()[_sessionField] == null) batch.delete(doc.reference);
       }
       if (stopProgram) _setActive(batch, uid, null);
       await batch.commit();
@@ -262,7 +315,6 @@ class WorkoutPlanService extends WorkoutFirestore {
   Future<void> shiftToToday({
     required DateTime today,
     required ActiveProgramEntry shifted,
-    WorkoutPlanEntity? missed,
   }) async {
     final uid = requireUserId;
     final tomorrow = AppDateUtils.addDays(today, 1);
@@ -274,21 +326,10 @@ class WorkoutPlanService extends WorkoutFirestore {
         await _scheduleInto(batch, uid, program, shifted, tomorrow);
       }
       _setActive(batch, uid, shifted);
-      final todayDoc = _plans(uid).doc(AppDateUtils.dateKey(today));
-      if (missed == null) {
-        batch.set(todayDoc, {..._restOf(today), _movedToField: tomorrowKey});
-      } else {
-        batch.set(
-          todayDoc,
-          missed
-              .copyWith(date: AppDateUtils.dateOnly(today), isAdapted: false)
-              .toJson(),
-        );
-        batch.set(
-          _plans(uid).doc(AppDateUtils.dateKey(missed.date)),
-          _restOf(missed.date),
-        );
-      }
+      batch.set(_plans(uid).doc(AppDateUtils.dateKey(today)), {
+        ..._restOf(today),
+        _movedToField: tomorrowKey,
+      });
       await batch.commit();
     });
   }
@@ -355,9 +396,10 @@ class WorkoutPlanService extends WorkoutFirestore {
     required ActiveProgramEntry? activeProgram,
     required List<WorkoutSessionEntity> history,
     required Future<WorkoutReadiness> Function() readiness,
+    bool adaptive = true,
   }) async {
     final plan = await ensurePlanFor(date, activeProgram: activeProgram);
-    if (plan == null) return null;
+    if (plan == null || !adaptive) return plan;
     final isToday = AppDateUtils.isSameDay(date, DateTime.now());
     if (!isToday ||
         plan.isAdapted ||
@@ -447,6 +489,7 @@ class WorkoutPlanService extends WorkoutFirestore {
       if (current != null && exercise.group == current.group) {
         score += _sameGroupBonus;
       }
+      if (score > 0 && exercise.isAdded) score += _savedBonus;
       if (score > 0) scored.add((exercise, score));
     }
     scored.sort((a, b) => b.$2.compareTo(a.$2));
@@ -495,30 +538,43 @@ class WorkoutPlanService extends WorkoutFirestore {
     if (day == null) return null;
 
     final week = activeProgram.weekAt(date);
-    final isDeload = program.isDeloadWeek(week);
+    final phase = activeProgram.hasFixedLength
+        ? ProgramPhase.of(week, activeProgram.totalWeeks)
+        : null;
+    final isDeload = phase?.isDeload ?? program.isDeloadWeek(week);
     final entries = <WorkoutEntryEntity>[];
+    var mainIndex = 0;
     for (var index = 0; index < day.exercises.length; index++) {
       final planned = day.exercises[index];
       final exercise = catalog[planned.exerciseId];
       if (exercise == null) continue;
+      final isMain = planned.section == WorkoutSectionKind.main;
+      final baseSets = planned.sets ?? exercise.defaultSets;
+      final setBoost =
+          phase != null && isMain && mainIndex < ProgramPhase.peakLifts
+          ? phase.setDelta
+          : 0;
+      if (isMain) mainIndex++;
       entries.add(
         WorkoutEntryEntity.fromCatalog(
           exercise,
           id: '${planned.exerciseId}-$index',
           section: planned.section,
           sets: isDeload
-              ? WorkoutProgression.deloadSetsOf(
-                  planned.sets ?? exercise.defaultSets,
-                )
-              : planned.sets,
+              ? WorkoutProgression.deloadSetsOf(baseSets)
+              : baseSets + setBoost,
           reps: planned.reps,
           restSeconds: planned.restSeconds,
-          repsInReserve: planned.repsInReserve,
+          repsInReserve: phase != null && isMain
+              ? (planned.repsInReserve ?? exercise.defaultRepsInReserve) +
+                    phase.reserveDelta
+              : planned.repsInReserve,
           weightKg: planned.weightKg,
         ),
       );
     }
     if (entries.isEmpty) return null;
+    final dayNumber = activeProgram.dayNumberAt(date);
 
     return WorkoutPlanEntity(
       id: '${program.id}-${AppDateUtils.dateKey(date)}',
@@ -526,17 +582,28 @@ class WorkoutPlanService extends WorkoutFirestore {
       name: day.name,
       focus: day.focus,
       goal: day.goal,
-      insight: _insightOf(
-        program: program,
-        day: day,
-        week: week,
-        isDeload: isDeload,
-      ),
+      insight: phase != null
+          ? phase.insightOf(
+              programName: program.name,
+              dayName: day.name,
+              focus: day.focus,
+              day: dayNumber,
+              totalDays: activeProgram.totalDays,
+            )
+          : _insightOf(
+              program: program,
+              day: day,
+              week: week,
+              isDeload: isDeload,
+            ),
       durationMinutes: day.durationMinutes,
       exercises: entries,
       programId: program.id,
-      programLabel:
-          '${program.name} Program · Week $week${isDeload ? ' · Deload' : ''}',
+      programLabel: phase != null
+          ? '${program.name} · Day $dayNumber of ${activeProgram.totalDays} '
+                '· ${phase.label}'
+          : '${program.name} Program · Week $week'
+                '${isDeload ? ' · Deload' : ''}',
       isDeload: isDeload,
     );
   }

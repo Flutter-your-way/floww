@@ -7,11 +7,13 @@ class WorkoutEmptyState {
     required this.icon,
     required this.title,
     required this.message,
+    this.iconAsset,
   });
 
   final IconData icon;
   final String title;
   final String message;
+  final String? iconAsset;
 }
 
 class WorkoutSuggestionItem {
@@ -20,12 +22,78 @@ class WorkoutSuggestionItem {
     required this.durationLabel,
     required this.intensityLabel,
     required this.reasons,
+    this.imageUrl,
   });
 
   final String title;
   final String durationLabel;
   final String intensityLabel;
   final List<String> reasons;
+  final String? imageUrl;
+}
+
+enum WorkoutAgendaStatus { pending, inProgress, completed }
+
+enum WorkoutAgendaAction { start, resume, focus }
+
+class WorkoutAgendaEntryItem {
+  const WorkoutAgendaEntryItem({
+    required this.id,
+    required this.name,
+    required this.tagLabel,
+    required this.metaLabel,
+    required this.status,
+    required this.statusLabel,
+    this.action,
+    this.actionLabel,
+    this.isCatchUp = false,
+    this.isFocused = false,
+    this.canRemove = false,
+    this.imageUrl,
+  });
+
+  final String id;
+  final String name;
+  final String tagLabel;
+  final String metaLabel;
+  final WorkoutAgendaStatus status;
+  final String statusLabel;
+  final WorkoutAgendaAction? action;
+  final String? actionLabel;
+  final bool isCatchUp;
+  final bool isFocused;
+  final bool canRemove;
+  final String? imageUrl;
+}
+
+class WorkoutAgendaItem {
+  const WorkoutAgendaItem({
+    required this.title,
+    required this.progressLabel,
+    required this.entries,
+    this.planLabel,
+    this.planProgress,
+  });
+
+  final String title;
+  final String progressLabel;
+  final List<WorkoutAgendaEntryItem> entries;
+  final String? planLabel;
+  final double? planProgress;
+}
+
+class WorkoutPlanBuilderItem {
+  const WorkoutPlanBuilderItem({
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    this.errorMessage,
+  });
+
+  final String title;
+  final String message;
+  final String actionLabel;
+  final String? errorMessage;
 }
 
 enum WorkoutStatTone { neutral, accent, alert, ember, warning }
@@ -52,6 +120,7 @@ class WorkoutSummaryItem {
     required this.statusLabel,
     required this.isCompleted,
     required this.stats,
+    this.imageUrl,
   });
 
   final String name;
@@ -60,6 +129,7 @@ class WorkoutSummaryItem {
   final String statusLabel;
   final bool isCompleted;
   final List<WorkoutStatItem> stats;
+  final String? imageUrl;
 }
 
 class TrainingEffectItem {
@@ -397,6 +467,7 @@ class ActiveProgramItem {
     required this.levelLabel,
     required this.progressLabel,
     required this.progress,
+    this.isWave = false,
   });
 
   final String name;
@@ -405,6 +476,7 @@ class ActiveProgramItem {
   final String levelLabel;
   final String progressLabel;
   final double progress;
+  final bool isWave;
 }
 
 class ProgramScheduleItem {
@@ -424,23 +496,27 @@ class ProgramDetailItem {
     required this.id,
     required this.name,
     required this.description,
-    required this.icon,
+    required this.logo,
     required this.stats,
     required this.schedule,
     required this.warning,
     required this.isActive,
     required this.isCustom,
+    this.isPremium = false,
+    this.isWave = false,
   });
 
   final String id;
   final String name;
   final String description;
-  final IconData icon;
+  final String logo;
   final List<WorkoutStatItem> stats;
   final List<ProgramScheduleItem> schedule;
   final String? warning;
   final bool isActive;
   final bool isCustom;
+  final bool isPremium;
+  final bool isWave;
 }
 
 class ProgramWeekdayItem {
@@ -455,23 +531,27 @@ class ProgramItem {
     required this.id,
     required this.name,
     required this.description,
-    required this.icon,
+    required this.logo,
     required this.metaLabel,
     required this.scheduleLabel,
     required this.weekdays,
     required this.badgeLabel,
     required this.isActive,
+    this.isPremium = false,
+    this.isWave = false,
   });
 
   final String id;
   final String name;
   final String description;
-  final IconData icon;
+  final String logo;
   final String metaLabel;
   final String scheduleLabel;
   final List<ProgramWeekdayItem> weekdays;
   final String? badgeLabel;
   final bool isActive;
+  final bool isPremium;
+  final bool isWave;
 }
 
 class ProgramFilterItem<T> {

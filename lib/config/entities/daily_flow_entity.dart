@@ -7,10 +7,12 @@ class DailyFlowEntry {
     required this.workoutScore,
     required this.habitScore,
     required this.nutritionScore,
+    this.readinessScore = 0,
   });
 
   const DailyFlowEntry.empty(this.date)
     : score = 0,
+      readinessScore = 0,
       workoutScore = 0,
       habitScore = 0,
       nutritionScore = 0;
@@ -21,6 +23,7 @@ class DailyFlowEntry {
     workoutScore: (json['workoutScore'] as num? ?? 0).toInt(),
     habitScore: (json['habitScore'] as num? ?? 0).toInt(),
     nutritionScore: (json['nutritionScore'] as num? ?? 0).toInt(),
+    readinessScore: (json['readinessScore'] as num? ?? 0).toInt(),
   );
 
   final DateTime date;
@@ -28,14 +31,17 @@ class DailyFlowEntry {
   final int workoutScore;
   final int habitScore;
   final int nutritionScore;
+  final int readinessScore;
 
-  bool get hasActivity => score > 0;
+  bool get hasActivity =>
+      workoutScore > 0 || habitScore > 0 || nutritionScore > 0;
 
   bool sameValuesAs(DailyFlowEntry other) =>
       score == other.score &&
       workoutScore == other.workoutScore &&
       habitScore == other.habitScore &&
-      nutritionScore == other.nutritionScore;
+      nutritionScore == other.nutritionScore &&
+      readinessScore == other.readinessScore;
 
   Map<String, dynamic> toJson() => {
     'date': AppDateUtils.dateKey(date),
@@ -43,6 +49,7 @@ class DailyFlowEntry {
     'workoutScore': workoutScore,
     'habitScore': habitScore,
     'nutritionScore': nutritionScore,
+    'readinessScore': readinessScore,
     'updatedAt': AppDateUtils.isoKey(DateTime.now()),
   };
 }

@@ -1,3 +1,4 @@
+import 'package:floww/config/widgets/animations/app_card_pop.dart';
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_opacity.dart';
@@ -9,6 +10,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
+import 'package:floww/core/workout/widgets/wave_logo_tile.dart';
 import 'package:floww/core/workout/widgets/workout_chip.dart';
 
 class ActiveProgramCard extends StatelessWidget {
@@ -48,20 +50,23 @@ class ActiveProgramCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: AppSizes.s48,
-                    height: AppSizes.s48,
-                    alignment: Alignment.center,
-                    decoration: AppShapes.decoration(
-                      color: colors.bgTinted,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                  if (program.isWave)
+                    const WaveLogoTile()
+                  else
+                    Container(
+                      width: AppSizes.s48,
+                      height: AppSizes.s48,
+                      alignment: Alignment.center,
+                      decoration: AppShapes.decoration(
+                        color: colors.bgTinted,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: Icon(
+                        Icons.fitness_center,
+                        size: AppSizes.s24,
+                        color: colors.primaryAlt,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.fitness_center,
-                      size: AppSizes.s24,
-                      color: colors.primaryAlt,
-                    ),
-                  ),
                   SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Column(
@@ -129,7 +134,9 @@ class ActiveProgramCard extends StatelessWidget {
       ],
     );
 
-    if (onTap == null) return card;
-    return PressScale(onTap: onTap, child: card);
+    if (onTap == null) return AppCardPop(child: card);
+    return AppCardPop(
+      child: PressScale(onTap: onTap, child: card),
+    );
   }
 }

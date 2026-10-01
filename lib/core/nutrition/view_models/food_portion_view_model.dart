@@ -37,6 +37,12 @@ class FoodPortionViewModel extends ChangeNotifier {
 
   String get fatLabel => NutritionLabels.preciseGrams(food.fatG * _factor);
 
+  String get microsLabel => NutritionLabels.microLine(
+    food.fiberG * _factor,
+    food.sugarG * _factor,
+    food.sodiumMg * _factor,
+  );
+
   String get primaryLabel => isEditing ? 'Update' : 'Add to ${meal.label}';
 
   FoodPortionResult? get result => portion.isValid

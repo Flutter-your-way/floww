@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:floww/config/constants/app_sizes.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
-import 'package:floww/config/theme/app_typography.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
+import 'package:floww/core/nutrition/widgets/food_photo.dart';
 import 'package:floww/core/nutrition/widgets/swipe_to_delete.dart';
 
 class FoodItemsCard extends StatelessWidget {
@@ -17,6 +16,7 @@ class FoodItemsCard extends StatelessWidget {
     required this.emptyMessage,
     this.onDelete,
     this.onAdd,
+    this.onEditPhoto,
   });
 
   final List<FoodItemData> items;
@@ -24,6 +24,7 @@ class FoodItemsCard extends StatelessWidget {
   final String emptyMessage;
   final ValueChanged<String>? onDelete;
   final VoidCallback? onAdd;
+  final ValueChanged<String>? onEditPhoto;
 
   @override
   Widget build(BuildContext context) {
@@ -63,18 +64,14 @@ class FoodItemsCard extends StatelessWidget {
             SwipeToDelete(
               id: items[i].id,
               onDelete: onDelete,
-              child: _FoodItemRow(item: items[i]),
+              child: _FoodItemRow(item: items[i], onEditPhoto: onEditPhoto),
             ),
           ],
           if (onAdd != null) ...[
             SizedBox(height: AppSpacing.lg),
-            PillButton(
-              variant: PillButtonVariant.bright,
-              height: AppSizes.s36,
+            BrightActionButton(
               label: 'ADD FOOD ITEM',
-              icon: Icons.add_circle,
-              iconColor: context.colors.onSurfaceBright,
-              labelStyle: AppTypography.labelSmallSemiBold,
+              icon: Icons.add_rounded,
               onPressed: onAdd,
             ),
           ],
@@ -85,32 +82,23 @@ class FoodItemsCard extends StatelessWidget {
 }
 
 class _FoodItemRow extends StatelessWidget {
-  const _FoodItemRow({required this.item});
+  const _FoodItemRow({required this.item, this.onEditPhoto});
 
   final FoodItemData item;
+  final ValueChanged<String>? onEditPhoto;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final onEditPhoto = this.onEditPhoto;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(
         children: [
-          Container(
-            width: AppSizes.s40,
-            height: AppSizes.s40,
-            decoration: BoxDecoration(
-              color: colors.backgroundElevated,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              item.isScanned
-                  ? Icons.photo_camera_outlined
-                  : Icons.restaurant_rounded,
-              color: colors.textSecondary,
-              size: AppSizes.s20,
-            ),
+          FoodPhoto(
+            name: item.name,
+            onTap: onEditPhoto == null ? null : () => onEditPhoto(item.name),
           ),
           SizedBox(width: AppSpacing.md),
           Expanded(
@@ -129,6 +117,14 @@ class _FoodItemRow extends StatelessWidget {
                   item.servingLabel,
                   style: context.textTheme.labelSmall?.copyWith(
                     color: colors.textSecondary,
+                  ),
+                ),
+                Text(
+                  item.microsLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

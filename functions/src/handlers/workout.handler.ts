@@ -1,20 +1,45 @@
 import {Request, Response} from "express";
+import {logger} from "firebase-functions";
 import {DocumentData, FieldValue, Transaction} from "firebase-admin/firestore";
 import {ApiError, sendData} from "../common/api.error";
 import {numberOf, recordOf} from "../common/utils";
+import {WORKOUT_PLAN_DAILY_LIMIT} from "../constants/ai.constants";
 import {
   USER_COLLECTIONS,
+  WORKOUT_STATE_DOC,
   firestore,
   onboardingDetailsCollection,
   userCollection,
 } from "../constants/collections";
+import {GeneratedProgram, PlannedDay} from "../models/workout.plan.model";
+import {
+  recordAiTokens,
+  releaseAiQuota,
+  reserveAiQuota,
+} from "../helpers/usage.helper";
+import {
+  aiProgramOf,
+  draftOf,
+  generateAiPlan,
+  hasUsableDraft,
+  standardProgramOf,
+} from "../helpers/workout.plan.helper";
+import {
+  CatalogExercise,
+  PlanProfile,
+  allowedExercisesOf,
+  catalogExerciseOf,
+  planProfileOf,
+} from "../helpers/workout.plan.profile.helper";
 import {
   COMPLETED_STATUS,
   DayActivity,
   flowDocOf,
   flowEntryOf,
   readDayActivity,
+  sessionPlannedSetsOf,
 } from "../helpers/flow.score.helper";
+import {readDayReadiness} from "../helpers/flow.readiness.helper";
 import {flowDoc} from "../helpers/flow.sync.helper";
 import {UserClock, clockOf, loadActiveUser} from "../helpers/user.clock.helper";
 import {
@@ -24,11 +49,13 @@ import {
   entriesOf,
   muscleActivationOf,
   personalRecordsOf,
+  plannedSetsOf,
   totalsOf,
   trainingEffectOf,
 } from "../helpers/workout.metrics.helper";
 import {
   completeWorkoutValidator,
+  generateWorkoutPlanValidator,
   unlogWorkoutValidator,
 } from "../validators/workout.validator";
 
@@ -39,6 +66,9 @@ const sessionsOf = (uid: string) =>
 
 const planDoc = (uid: string, day: string) =>
   userCollection(uid, USER_COLLECTIONS.workoutPlans).doc(day);
+
+const planDayOf = (session: DocumentData): string =>
+  typeof session.planDate === "string" ? session.planDate : session.date;
 
 const requireUser = async (
   uid: string,
@@ -91,6 +121,10 @@ const withoutSession = (
       0,
       activity.workoutSets - numberOf(session.totalSets),
     ),
+    workoutPlannedSets: Math.max(
+      0,
+      activity.workoutPlannedSets - sessionPlannedSetsOf(session),
+    ),
     sessionIds: activity.sessionIds.filter((id) => id !== sessionId),
   };
 };
@@ -104,17 +138,20 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
     const session = await requireSession(uid, body.sessionId, transaction);
     const day: string = session.date;
 
-    const [history, bodyWeightKg, activity, plan] = await Promise.all([
-      transaction.get(
-        sessionsOf(uid).orderBy("startedAt", "desc").limit(HISTORY_LIMIT),
-      ),
-      bodyWeightOf(uid, transaction),
-      readDayActivity(transaction, uid, day, clock),
-      transaction.get(planDoc(uid, day)),
-    ]);
+    const [history, bodyWeightKg, activity, plan, readiness] =
+      await Promise.all([
+        transaction.get(
+          sessionsOf(uid).orderBy("startedAt", "desc").limit(HISTORY_LIMIT),
+        ),
+        bodyWeightOf(uid, transaction),
+        readDayActivity(transaction, uid, day, clock),
+        transaction.get(planDoc(uid, planDayOf(session))),
+        readDayReadiness(transaction, uid, day),
+      ]);
 
     const entries = entriesOf(body.exercises);
     const totals = totalsOf(entries);
+    const plannedSets = plannedSetsOf(entries);
     const previous = history.docs
       .filter((doc) =>
         doc.id !== body.sessionId && doc.get("status") === COMPLETED_STATUS)
@@ -122,11 +159,12 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
     const effect = trainingEffectOf(totals, body.durationSeconds);
 
     const before = withoutSession(activity, body.sessionId, session);
-    const beforeEntry = flowEntryOf(day, before);
+    const beforeEntry = flowEntryOf(day, before, readiness);
     const afterEntry = flowEntryOf(day, {
       ...before,
       workoutSets: before.workoutSets + totals.totalSets,
-    });
+      workoutPlannedSets: before.workoutPlannedSets + plannedSets,
+    }, readiness);
 
     const heartRate = body.heartRate;
     const payload: DocumentData = {
@@ -140,6 +178,7 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
       exercises: body.exercises,
       volumeKg: totals.volumeKg,
       totalSets: totals.totalSets,
+      plannedSets,
       totalReps: totals.totalReps,
       exerciseCount: totals.exerciseCount,
       caloriesKcal: caloriesOf(totals, body.durationSeconds, bodyWeightKg),
@@ -180,15 +219,17 @@ export const handleUnlogWorkout = async (req: Request, res: Response) => {
     const session = await requireSession(uid, body.sessionId, transaction);
     const day: string = session.date;
 
-    const [activity, plan, stored] = await Promise.all([
+    const [activity, plan, stored, readiness] = await Promise.all([
       readDayActivity(transaction, uid, day, clock),
-      transaction.get(planDoc(uid, day)),
+      transaction.get(planDoc(uid, planDayOf(session))),
       transaction.get(flowDoc(uid, day)),
+      readDayReadiness(transaction, uid, day),
     ]);
 
     const entry = flowEntryOf(
       day,
       withoutSession(activity, body.sessionId, session),
+      readiness,
     );
 
     transaction.delete(sessionsOf(uid).doc(body.sessionId));
@@ -201,4 +242,88 @@ export const handleUnlogWorkout = async (req: Request, res: Response) => {
   });
 
   sendData(res, {unlogged: true});
+};
+
+const workoutStateDoc = (uid: string) =>
+  userCollection(uid, USER_COLLECTIONS.workoutState).doc(WORKOUT_STATE_DOC);
+
+const loadCatalog = async (uid: string): Promise<CatalogExercise[]> => {
+  const snapshot = await userCollection(uid, USER_COLLECTIONS.workoutExercises)
+    .get();
+  return snapshot.docs
+    .map((doc) => catalogExerciseOf(doc.data()))
+    .filter((exercise): exercise is CatalogExercise => exercise !== null);
+};
+
+const aiProgramFor = async (
+  uid: string,
+  profile: PlanProfile,
+  allowed: CatalogExercise[],
+  draft: PlannedDay[],
+): Promise<GeneratedProgram | null> => {
+  try {
+    await reserveAiQuota(uid, "workoutPlan", WORKOUT_PLAN_DAILY_LIMIT);
+  } catch (error) {
+    logger.warn("handleGenerateWorkoutPlan: quota unavailable", {error});
+    return null;
+  }
+  try {
+    const result = await generateAiPlan(profile, allowed, draft);
+    await recordAiTokens(uid, "workoutPlan", result.usage).catch(
+      (usageError) => logger.error(
+        "handleGenerateWorkoutPlan: token usage write failed", {usageError}));
+    return aiProgramOf(profile, draft, result.output, allowed);
+  } catch (error) {
+    logger.error("handleGenerateWorkoutPlan: AI plan failed", {error});
+    await releaseAiQuota(uid, "workoutPlan").catch((releaseError) =>
+      logger.error("handleGenerateWorkoutPlan: quota release failed",
+        {releaseError}));
+    return null;
+  }
+};
+
+export const handleGenerateWorkoutPlan = async (
+  req: Request,
+  res: Response,
+) => {
+  const {useAi = true} = generateWorkoutPlanValidator.parse(req.body ?? {});
+  const uid = req.user.uid;
+
+  const [user, details, catalog] = await Promise.all([
+    loadActiveUser(uid),
+    onboardingDetailsCollection.doc(uid).get(),
+    loadCatalog(uid),
+  ]);
+  if (!user) throw new ApiError("UNAUTHORIZED", "Please sign in again.");
+  const answers = details.data();
+  if (!answers) {
+    throw new ApiError("INVALID_REQUEST", "Finish onboarding first.");
+  }
+
+  const profile = planProfileOf(answers);
+  const allowed = allowedExercisesOf(catalog, profile, answers);
+  const draft = draftOf(profile, allowed);
+  if (!hasUsableDraft(draft)) {
+    throw new ApiError(
+      "INVALID_REQUEST",
+      "Your exercise library is still syncing. Try again in a moment.",
+    );
+  }
+
+  const program = (useAi ?
+    await aiProgramFor(uid, profile, allowed, draft) :
+    null) ?? standardProgramOf(profile, draft);
+
+  const batch = firestore.batch();
+  batch.set(
+    userCollection(uid, USER_COLLECTIONS.workoutPrograms).doc(program.id),
+    program,
+  );
+  batch.set(workoutStateDoc(uid), {
+    generatedProgramId: program.id,
+    planGeneratedAt: program.generatedAt,
+  }, {merge: true});
+  await batch.commit();
+
+  sendData(res, {program});
 };

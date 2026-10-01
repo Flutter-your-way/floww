@@ -10,7 +10,7 @@ import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
-import 'package:floww/core/workout/widgets/workout_icon_tile.dart';
+import 'package:floww/core/workout/widgets/program_logo_tile.dart';
 import 'package:floww/core/workout/widgets/workout_stat_tile.dart';
 
 class ProgramDetailSheet extends StatelessWidget {
@@ -21,11 +21,16 @@ class ProgramDetailSheet extends StatelessWidget {
     this.onCustomize,
     this.onDelete,
     this.onStop,
+    this.isLocked = false,
   });
+
+  static const String startLabel = 'Start program';
+  static const String unlockLabel = 'Unlock with Premium';
 
   static Future<void> show({
     required BuildContext context,
     required ProgramDetailItem detail,
+    bool isLocked = false,
     VoidCallback? onStart,
     VoidCallback? onCustomize,
     VoidCallback? onDelete,
@@ -39,6 +44,7 @@ class ProgramDetailSheet extends StatelessWidget {
         onCustomize: onCustomize,
         onDelete: onDelete,
         onStop: onStop,
+        isLocked: isLocked,
       ),
     );
   }
@@ -48,6 +54,7 @@ class ProgramDetailSheet extends StatelessWidget {
   final VoidCallback? onCustomize;
   final VoidCallback? onDelete;
   final VoidCallback? onStop;
+  final bool isLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +68,11 @@ class ProgramDetailSheet extends StatelessWidget {
         title: detail.name,
         subtitle: detail.description,
         titleStyle: context.textTheme.headlineSmall,
-        leading: WorkoutIconTile(icon: detail.icon, isHighlighted: true),
+        leading: ProgramLogoTile(
+          imageUrl: detail.logo,
+          isHighlighted: true,
+          isWave: detail.isWave,
+        ),
         closeButtonSize: AppSizes.s36,
         closeIconSize: AppSizes.s20,
         onClose: () => Navigator.of(context).maybePop(),
@@ -89,8 +100,8 @@ class ProgramDetailSheet extends StatelessWidget {
           children: [
             if (!detail.isActive)
               PillButton(
-                label: 'Start program',
-                icon: Icons.play_arrow_rounded,
+                label: isLocked ? unlockLabel : startLabel,
+                icon: isLocked ? Icons.lock_rounded : Icons.play_arrow_rounded,
                 onPressed: onStart,
               ),
             if (!detail.isActive) SizedBox(height: AppSpacing.md),

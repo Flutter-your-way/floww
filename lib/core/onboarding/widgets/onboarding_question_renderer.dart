@@ -16,7 +16,7 @@ import '../models/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
 import 'custom_progress_widget.dart';
 import 'custom_date_time_selector.dart';
-import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
+import 'sleep_duration_summary.dart';
 
 class OnboardingQuestionRenderer extends StatefulWidget {
   final OnboardingQuestion question;
@@ -60,8 +60,13 @@ class _OnboardingQuestionRendererState
     }
   }
 
+  bool get _isFullScreenStep =>
+      widget.question.inputType == InputType.loading ||
+      widget.question.inputType == InputType.summary;
+
   @override
   Widget build(BuildContext context) {
+    if (_isFullScreenStep) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -134,40 +139,45 @@ class _OnboardingQuestionRendererState
 
     switch (q.inputType) {
       case InputType.multiQuestion:
+        final sleepDuration = provider.sleepDurationFor(q.id);
         return Column(
-          children: (q.subQuestions ?? []).map((subQ) {
-            final bool showTitle =
-                subQ.title.isNotEmpty &&
-                subQ.title != q.title &&
-                subQ.inputType != InputType.timePicker &&
-                subQ.inputType != InputType.datePicker &&
-                subQ.inputType != InputType.inlineSlider;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (showTitle) ...[
-                    const SizedBox(height: 32),
-                    Center(
-                      child: Text(
-                        subQ.title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          fontFamily: 'PlusJakartaSans',
+          children: [
+            ...(q.subQuestions ?? []).map((subQ) {
+              final bool showTitle =
+                  subQ.title.isNotEmpty &&
+                  subQ.title != q.title &&
+                  subQ.inputType != InputType.timePicker &&
+                  subQ.inputType != InputType.datePicker &&
+                  subQ.inputType != InputType.inlineSlider;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (showTitle) ...[
+                      const SizedBox(height: 32),
+                      Center(
+                        child: Text(
+                          subQ.title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            fontFamily: 'PlusJakartaSans',
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ],
+                    _buildInputWidget(context, subQ),
                   ],
-                  _buildInputWidget(context, subQ),
-                ],
-              ),
-            );
-          }).toList(),
+                ),
+              );
+            }),
+            if (sleepDuration != null)
+              SleepDurationSummary(duration: sleepDuration),
+          ],
         );
 
       case InputType.text:
@@ -424,20 +434,8 @@ class _OnboardingQuestionRendererState
         );
 
       case InputType.loading:
-        return const AppSectionLoader();
-
       case InputType.summary:
-        return Center(
-          child: Text(
-            "Blueprint Complete!\nTap Continue to finish.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              color: context.colors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        );
+        return const SizedBox.shrink();
     }
   }
 

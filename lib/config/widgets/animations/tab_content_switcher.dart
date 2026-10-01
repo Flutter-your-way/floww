@@ -21,14 +21,12 @@ class TabContentSwitcher extends StatelessWidget {
     return Stack(
       alignment: Alignment.topCenter,
       children: [
-        for (final entry in entries.sublist(0, entries.length - 1))
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(child: entry),
+        for (var i = 0; i < entries.length; i++)
+          _TabEntry(
+            key: entries[i].key,
+            isActive: i == entries.length - 1,
+            child: entries[i],
           ),
-        entries.last,
       ],
     );
   }
@@ -52,6 +50,24 @@ class TabContentSwitcher extends StatelessWidget {
             ),
         child: child,
       ),
+    );
+  }
+}
+
+class _TabEntry extends StatelessWidget {
+  const _TabEntry({super.key, required this.isActive, required this.child});
+
+  final bool isActive;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final double? edge = isActive ? null : 0;
+    return Positioned(
+      top: edge,
+      left: edge,
+      right: edge,
+      child: IgnorePointer(ignoring: !isActive, child: child),
     );
   }
 }

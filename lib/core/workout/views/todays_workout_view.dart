@@ -5,9 +5,13 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
+import 'package:floww/config/widgets/images/image_precacher.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
+import 'package:floww/core/premium/widgets/premium_gate.dart';
+import 'package:floww/core/premium/widgets/premium_locked_card.dart';
 import 'package:floww/core/workout/view_models/todays_workout_view_model.dart';
 import 'package:floww/core/workout/widgets/todays_workout_exercises_card.dart';
 import 'package:floww/core/workout/widgets/todays_workout_summary_card.dart';
@@ -33,7 +37,7 @@ class TodaysWorkoutView extends StatelessWidget {
     HapticManager.medium();
     NavigationService.instance.push(
       AppRouter.activeWorkout,
-      arguments: viewModel.date,
+      arguments: viewModel.activeWorkoutArgs,
     );
   }
 
@@ -44,55 +48,66 @@ class TodaysWorkoutView extends StatelessWidget {
         final workout = viewModel.workout;
         final errorMessage = viewModel.errorMessage;
 
-        return InnerPageScaffold(
-          title: viewModel.title,
-          onBack: () => NavigationService.instance.pop(),
-          footer: workout == null
-              ? null
-              : PillButton(
-                  variant: viewModel.isCompleted
-                      ? PillButtonVariant.outline
-                      : PillButtonVariant.primary,
-                  label: viewModel.startLabel,
-                  onPressed: () => _onAction(viewModel),
-                ),
-          children: [
-            if (viewModel.isLoading)
-              const AppSectionLoader()
-            else if (errorMessage != null)
-              AppErrorCard(message: errorMessage, onRetry: viewModel.load)
-            else ...[
-              if (viewModel.canShift) ...[
-                WorkoutShiftCard(
-                  title: viewModel.shiftTitle,
-                  message: viewModel.shiftMessage,
-                  actionLabel: viewModel.shiftLabel,
-                  isLoading: viewModel.isShifting,
-                  onAction: () {
-                    HapticManager.medium();
-                    viewModel.shiftSchedule();
-                  },
-                ),
-                SizedBox(height: AppSpacing.lg),
-              ],
-              if (workout == null)
-                WorkoutEmptyStateCard(
-                  icon: viewModel.emptyIcon,
-                  title: viewModel.emptyTitle,
-                  message: viewModel.emptyMessage,
-                )
+        return ImagePrecacher(
+          urls: viewModel.imageUrls,
+          child: InnerPageScaffold(
+            title: viewModel.title,
+            onBack: () => NavigationService.instance.pop(),
+            footer: workout == null
+                ? null
+                : PillButton(
+                    variant: viewModel.isCompleted
+                        ? PillButtonVariant.neutral
+                        : PillButtonVariant.primary,
+                    label: viewModel.startLabel,
+                    onPressed: () => _onAction(viewModel),
+                  ),
+            children: [
+              if (viewModel.isLoading)
+                const AppSectionLoader()
+              else if (errorMessage != null)
+                AppErrorCard(message: errorMessage, onRetry: viewModel.load)
               else ...[
-                TodaysWorkoutSummaryCard(workout: workout),
-                SizedBox(height: AppSpacing.lg),
-                TodaysWorkoutExercisesCard(
-                  exercises: workout.exercises,
-                  countLabel: workout.exerciseCountLabel,
-                ),
-                SizedBox(height: AppSpacing.lg),
-                TipCard.note(title: workout.insight),
+                if (viewModel.canShift) ...[
+                  PremiumGate(
+                    capability: PremiumCapability.adaptiveEngine,
+                    placeholder: const SizedBox.shrink(),
+                    locked: PremiumLockedCard(
+                      capability: PremiumCapability.adaptiveEngine,
+                      title: viewModel.shiftTitle,
+                    ),
+                    child: WorkoutShiftCard(
+                      title: viewModel.shiftTitle,
+                      message: viewModel.shiftMessage,
+                      actionLabel: viewModel.shiftLabel,
+                      isLoading: viewModel.isShifting,
+                      onAction: () {
+                        HapticManager.medium();
+                        viewModel.shiftSchedule();
+                      },
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.lg),
+                ],
+                if (workout == null)
+                  WorkoutEmptyStateCard(
+                    icon: viewModel.emptyIcon,
+                    title: viewModel.emptyTitle,
+                    message: viewModel.emptyMessage,
+                  )
+                else ...[
+                  TodaysWorkoutSummaryCard(workout: workout),
+                  SizedBox(height: AppSpacing.lg),
+                  TodaysWorkoutExercisesCard(
+                    exercises: workout.exercises,
+                    countLabel: workout.exerciseCountLabel,
+                  ),
+                  SizedBox(height: AppSpacing.lg),
+                  TipCard.note(title: workout.insight),
+                ],
               ],
             ],
-          ],
+          ),
         );
       },
     );

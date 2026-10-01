@@ -11,14 +11,14 @@ class ActiveWorkoutFab extends StatelessWidget {
   const ActiveWorkoutFab({
     super.key,
     required this.statusLabel,
-    required this.timerLabel,
+    required this.progressLabel,
     required this.isPaused,
     required this.onOpen,
     required this.onTogglePause,
   });
 
   final String statusLabel;
-  final String timerLabel;
+  final String progressLabel;
   final bool isPaused;
   final VoidCallback onOpen;
   final VoidCallback onTogglePause;
@@ -53,7 +53,7 @@ class ActiveWorkoutFab extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    timerLabel,
+                    progressLabel,
                     style: AppTypography.bodyLargeBold.copyWith(
                       color: colors.primaryAlt,
                       fontFeatures: const [FontFeature.tabularFigures()],

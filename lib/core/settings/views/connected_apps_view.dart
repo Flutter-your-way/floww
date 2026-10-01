@@ -62,6 +62,7 @@ class ConnectedAppsView extends StatelessWidget {
               connectLabel: viewModel.connectLabel,
               connectedLabel: viewModel.connectedLabel,
               isPending: viewModel.isPending,
+              isEnabled: viewModel.isEnabled,
               onToggle: (app) => _toggle(context, viewModel, app),
             ),
           ],

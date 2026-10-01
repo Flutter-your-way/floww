@@ -3,6 +3,7 @@ import 'package:floww/config/entities/habit_day_log_entity.dart';
 import 'package:floww/config/entities/workout_session_log_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/progress/models/progress_view_data.dart';
+import 'package:floww/core/progress/services/flow_readiness_calculator.dart';
 import 'package:floww/core/progress/services/flow_score_calculator.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
 
@@ -63,6 +64,7 @@ class ProgressSnapshotBuilder {
   ProgressSnapshotResult build(ProgressRecords records, {DateTime? now}) {
     final today = AppDateUtils.dateOnly(now ?? DateTime.now());
     final setsByDay = _setsByDay(records.sessions);
+    final plannedByDay = _plannedSetsByDay(records.sessions);
     final habitByDay = {
       for (final day in records.habitDays) AppDateUtils.dateKey(day.date): day,
     };
@@ -84,13 +86,18 @@ class ProgressSnapshotBuilder {
         AppDateUtils.dateKey(entry.date): entry,
     };
     final computedFlow = <String, DailyFlowEntry>{};
+    final todayReadiness = const FlowReadinessCalculator().readinessOf(
+      baseline: records.goals.flowBaseline,
+    );
     for (var offset = ProgressService.habitHistoryDays; offset >= 0; offset--) {
       final date = AppDateUtils.addDays(today, -offset);
       final key = AppDateUtils.dateKey(date);
       computedFlow[key] = _calculator.scoreOf(
         FlowScoreInputs(
           date: date,
+          readinessScore: offset == 0 ? todayReadiness : 0,
           workoutSets: setsByDay[key] ?? 0,
+          workoutPlannedSets: plannedByDay[key] ?? 0,
           habitCompletion: habitByDay[key]?.completion ?? 0,
           mealCount: mealsByDay[key] ?? 0,
           waterMl: waterByDay[key] ?? 0,
@@ -102,7 +109,7 @@ class ProgressSnapshotBuilder {
     final weekStart = AppDateUtils.startOfWeek(today);
     computedFlow.forEach((key, entry) {
       if (storedFlow.containsKey(key)) return;
-      if (!entry.hasActivity) return;
+      if (!entry.hasActivity && key != AppDateUtils.dateKey(today)) return;
       flow[key] = entry;
     });
 
@@ -161,6 +168,16 @@ class ProgressSnapshotBuilder {
       if (!session.isCompleted) continue;
       final key = AppDateUtils.dateKey(session.date);
       sets[key] = (sets[key] ?? 0) + session.totalSets;
+    }
+    return sets;
+  }
+
+  Map<String, int> _plannedSetsByDay(List<WorkoutSessionLog> sessions) {
+    final sets = <String, int>{};
+    for (final session in sessions) {
+      if (!session.isCompleted) continue;
+      final key = AppDateUtils.dateKey(session.date);
+      sets[key] = (sets[key] ?? 0) + session.plannedSets;
     }
     return sets;
   }

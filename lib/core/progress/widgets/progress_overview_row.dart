@@ -1,3 +1,4 @@
+import 'package:floww/config/widgets/animations/app_card_pop.dart';
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_opacity.dart';
@@ -39,62 +40,64 @@ class ProgressOverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Container(
-      height: _height,
-      clipBehavior: Clip.antiAlias,
-      decoration: AppShapes.decoration(
-        gradient: context.gradients.darkGlow.withOpacity(
-          AppOpacity.frostedCard,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          DecoratedBox(
-            decoration: AppShapes.decoration(
-              gradient: context.gradients.cardSheen.withOpacity(
-                AppOpacity.frostedCard,
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-            ),
+    return AppCardPop(
+      child: Container(
+        height: _height,
+        clipBehavior: Clip.antiAlias,
+        decoration: AppShapes.decoration(
+          gradient: context.gradients.darkGlow.withOpacity(
+            AppOpacity.frostedCard,
           ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      stat.icon,
-                      size: _iconSize,
-                      color: stat.tone.resolve(context),
-                    ),
-                    SizedBox(width: AppSpacing.xs),
-                    Expanded(
-                      child: Text(
-                        stat.label,
-                        style: AppTypography.captionSemiBoldMicro.copyWith(
-                          color: colors.textSubtle,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            DecoratedBox(
+              decoration: AppShapes.decoration(
+                gradient: context.gradients.cardSheen.withOpacity(
+                  AppOpacity.frostedCard,
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        stat.icon,
+                        size: _iconSize,
+                        color: stat.tone.resolve(context),
+                      ),
+                      SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          stat.label,
+                          style: AppTypography.captionSemiBoldMicro.copyWith(
+                            color: colors.textSubtle,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.xs),
-                Text(
-                  stat.value,
-                  style: AppTypography.bodyXLargeBold.copyWith(
-                    color: colors.textPrimary,
+                    ],
                   ),
-                ),
-              ],
+                  SizedBox(height: AppSpacing.xs),
+                  Text(
+                    stat.value,
+                    style: AppTypography.bodyXLargeBold.copyWith(
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

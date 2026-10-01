@@ -7,12 +7,15 @@ import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
+import 'package:floww/core/workout/services/workout_catalog_data.dart';
+import 'package:floww/core/workout/models/active_workout_args.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/workout_shift_offer.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/workout/services/workout_readiness_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/services/workout_shift_service.dart';
@@ -25,9 +28,14 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     this._programService,
     this._sessionService,
     this._readinessService,
-    DateTime date,
-  ) : _date = AppDateUtils.dateOnly(date),
-      _shiftService = WorkoutShiftService(_planService);
+    this._access,
+    DateTime date, {
+    DateTime? catchUpFrom,
+  }) : _date = AppDateUtils.dateOnly(date),
+       _catchUpFrom = catchUpFrom == null
+           ? null
+           : AppDateUtils.dateOnly(catchUpFrom),
+       _shiftService = WorkoutShiftService(_planService);
 
   static const int _secondsPerMinute = 60;
   static const String _loadFailure = 'Could not load your planned workout.';
@@ -59,12 +67,15 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   final WorkoutProgramService _programService;
   final WorkoutSessionService _sessionService;
   final WorkoutReadinessService _readinessService;
+  final PremiumAccessProvider _access;
   final WorkoutShiftService _shiftService;
   final DateTime _date;
+  final DateTime? _catchUpFrom;
 
   WorkoutPlanEntity? _plan;
   WorkoutShiftOffer? _shiftOffer;
   WorkoutSessionEntity? _session;
+  List<WorkoutSessionEntity> _history = const [];
   StreamSubscription<List<WorkoutSessionEntity>>? _sessionSubscription;
   bool _isShifting = false;
   WorkoutPlanEntity? _nextPlan;
@@ -75,17 +86,23 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
 
   DateTime get date => _date;
 
+  bool get isCatchUp => _catchUpFrom != null;
+
+  DateTime get _planDate => _catchUpFrom ?? _date;
+
   bool get isLoading => _isLoading;
 
   String? get errorMessage => _errorMessage;
 
   bool get hasWorkout => _plan != null;
 
-  String get title => AppDateUtils.isSameDay(_date, DateTime.now())
+  String get title => isCatchUp
+      ? 'Catch-up Workout'
+      : AppDateUtils.isSameDay(_date, DateTime.now())
       ? "Today's Workout"
       : "${AppDateUtils.weekdayName(_date)}'s Workout";
 
-  bool get _isRestDay => _plan == null && _activeProgram != null;
+  bool get _isRestDay => _plan == null && _activeProgram != null && !isCatchUp;
 
   IconData get emptyIcon =>
       _isRestDay ? Icons.self_improvement : Icons.calendar_today;
@@ -125,6 +142,21 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
 
   bool get isCompleted => _session?.isCompleted ?? false;
 
+  ActiveWorkoutArgs get activeWorkoutArgs {
+    final session = _session;
+    return ActiveWorkoutArgs(
+      date: _date,
+      plan: _plan,
+      history: _history,
+      session: session != null && session.isInProgress ? session : null,
+    );
+  }
+
+  List<String?> get imageUrls => [
+    for (final exercise in _plan?.exercises ?? const <WorkoutEntryEntity>[])
+      exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
+  ];
+
   void _watchSessions() {
     _sessionSubscription?.cancel();
     _sessionSubscription = _sessionService.watchSessionsFor(_date).listen((
@@ -138,6 +170,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   WorkoutSessionEntity? _primarySessionOf(List<WorkoutSessionEntity> sessions) {
     WorkoutSessionEntity? inProgress;
     for (final session in sessions) {
+      if (!AppDateUtils.isSameDay(session.scheduledDate, _planDate)) continue;
       if (session.isCompleted) return session;
       if (session.isInProgress) inProgress ??= session;
     }
@@ -152,25 +185,30 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
       final state = await _programService.loadState();
       _activeProgram = state.activeProgram;
       final history = await _sessionService.loadRecentSessions();
-      _plan = await _planService.preparePlanFor(
-        _date,
-        activeProgram: state.activeProgram,
-        history: history,
-        readiness: () => _readinessService.assess(history),
-      );
+      _history = history;
+      final catchUpFrom = _catchUpFrom;
+      _plan = catchUpFrom != null
+          ? await _planService.loadPlan(catchUpFrom)
+          : await _planService.preparePlanFor(
+              _date,
+              activeProgram: state.activeProgram,
+              history: history,
+              readiness: () => _readinessService.assess(history),
+              adaptive: _access.canUse(PremiumCapability.adaptiveEngine),
+            );
       _session = _primarySessionOf([
         for (final session in history)
           if (AppDateUtils.isSameDay(session.date, _date)) session,
       ]);
-      _shiftOffer = await _shiftService.offerFor(
-        date: _date,
-        activeProgram: state.activeProgram,
-        sessions: history,
-        todayPlan: _plan,
-      );
-      _nextPlan = _plan == null && _activeProgram != null
-          ? await _planService.nextPlanAfter(_date)
-          : null;
+      _shiftOffer = catchUpFrom != null
+          ? null
+          : await _shiftService.offerFor(
+              date: _date,
+              activeProgram: state.activeProgram,
+              sessions: history,
+              todayPlan: _plan,
+            );
+      _nextPlan = _isRestDay ? await _planService.nextPlanAfter(_date) : null;
       _errorMessage = null;
       _watchSessions();
     } on WorkoutException catch (error) {
@@ -238,7 +276,10 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
       },
       name: plan.name,
       icon: _workoutIcon,
-      programLabel: plan.programLabel,
+      programLabel: isCatchUp
+          ? 'Missed ${AppDateUtils.weekdayName(plan.date)}, '
+                '${AppDateUtils.dayMonth(plan.date)} · Catch-up'
+          : plan.programLabel,
       stats: [
         WorkoutStatItem(
           icon: Icons.schedule,
@@ -259,7 +300,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
           unit: 'total',
         ),
       ],
-      goalTitle: "Today's Goal",
+      goalTitle: isCatchUp ? 'Catch-up Goal' : "Today's Goal",
       goal: plan.goal,
       insight: plan.insight,
       exerciseCountLabel: '${plan.exercises.length} exercises',
@@ -272,7 +313,8 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     return WorkoutExerciseItem(
       id: exercise.id,
       name: exercise.name,
-      imageUrl: exercise.imageUrl,
+      imageUrl:
+          exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
       setsLabel: '${exercise.targetSets} sets x ${exercise.targetReps} $unit',
       weightLabel: exercise.isBodyweight
           ? 'BW'

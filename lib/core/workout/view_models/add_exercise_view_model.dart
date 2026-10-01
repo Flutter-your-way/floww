@@ -10,12 +10,11 @@ import 'package:floww/core/workout/services/workout_firestore.dart';
 
 class AddExerciseViewModel extends ChangeNotifier {
   AddExerciseViewModel({
-    required WorkoutCatalogService service,
+    required this._service,
     required List<AddExerciseSectionOption> sections,
     String? initialSectionId,
     this.submitLabel = 'Add to Workout',
-  }) : _service = service,
-       _sections = sections {
+  }) : _sections = sections {
     _sectionId =
         initialSectionId ?? (sections.isEmpty ? '' : sections.first.id);
   }
@@ -100,8 +99,14 @@ class AddExerciseViewModel extends ChangeNotifier {
 
   List<AddExercisePickerItem> get results {
     final query = _query.trim().toLowerCase();
-    return [
+    final ordered = [
       for (final exercise in _catalog)
+        if (exercise.isAdded) exercise,
+      for (final exercise in _catalog)
+        if (!exercise.isAdded && exercise.isAvailable) exercise,
+    ];
+    return [
+      for (final exercise in ordered)
         if (query.isEmpty || exercise.name.toLowerCase().contains(query))
           AddExercisePickerItem(
             id: exercise.id,
@@ -110,6 +115,7 @@ class AddExerciseViewModel extends ChangeNotifier {
                 '${exercise.group.label} · ${exercise.equipment.label}',
             isCustom: exercise.isCustom,
             isSelected: exercise.id == _exerciseId,
+            isSaved: exercise.isAdded,
           ),
     ];
   }

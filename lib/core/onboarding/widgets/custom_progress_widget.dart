@@ -115,6 +115,7 @@ class CustomPillSlider extends StatefulWidget {
   final ValueChanged<double> onChanged;
 
   const CustomPillSlider({
+    super.key,
     required this.value,
     required this.min,
     required this.max,

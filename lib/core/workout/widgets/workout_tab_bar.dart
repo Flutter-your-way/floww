@@ -20,18 +20,20 @@ class WorkoutTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: context.sizes.screenHorizontalPadding,
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           for (final tab in tabs)
-            _WorkoutTab(
-              label: tab.label,
-              isSelected: tab == selected,
-              onTap: () => onSelected(tab),
+            Flexible(
+              child: _WorkoutTab(
+                label: tab.label,
+                isSelected: tab == selected,
+                onTap: () => onSelected(tab),
+              ),
             ),
         ],
       ),
@@ -63,19 +65,22 @@ class _WorkoutTab extends StatelessWidget {
         duration: _duration,
         height: AppSizes.s40,
         alignment: Alignment.center,
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl2),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: AppShapes.decoration(
           color: isSelected
               ? colors.backgroundPrimary
               : colors.backgroundPrimary.withValues(alpha: 0),
           borderRadius: BorderRadius.circular(AppRadius.full),
         ),
-        child: Text(
-          label,
-          maxLines: 1,
-          style: context.textTheme.titleMedium?.copyWith(
-            color: isSelected ? colors.primary : colors.textPrimary,
-            fontWeight: FontWeight.w600,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: context.textTheme.titleMedium?.copyWith(
+              color: isSelected ? colors.primary : colors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),

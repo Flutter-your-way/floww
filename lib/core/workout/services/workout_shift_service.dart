@@ -21,9 +21,9 @@ class WorkoutShiftService {
     if (activeProgram == null || !AppDateUtils.isSameDay(date, today)) {
       return null;
     }
-    if (_hasSessionOn(sessions, today)) return null;
+    final hasTodaySession = _hasSessionFor(sessions, today);
 
-    if (todayPlan == null) {
+    if (todayPlan == null && !hasTodaySession) {
       final postponed = await _planService.postponedPlanOf(today);
       if (postponed != null) {
         return WorkoutShiftOffer(
@@ -34,16 +34,20 @@ class WorkoutShiftService {
     }
 
     final yesterday = AppDateUtils.addDays(today, -1);
-    if (!_hasSessionOn(sessions, yesterday)) {
+    if (!_hasSessionFor(sessions, yesterday)) {
       final missed = await _planService.loadPlan(yesterday);
       if (missed != null &&
           missed.sessionId == null &&
+          !missed.isScheduledFor(today) &&
           missed.programId == activeProgram.id) {
         return WorkoutShiftOffer(kind: WorkoutShiftKind.catchUp, plan: missed);
       }
     }
 
-    if (includePostpone && todayPlan != null && todayPlan.sessionId == null) {
+    if (includePostpone &&
+        !hasTodaySession &&
+        todayPlan != null &&
+        todayPlan.sessionId == null) {
       return WorkoutShiftOffer(
         kind: WorkoutShiftKind.postpone,
         plan: todayPlan,
@@ -57,25 +61,29 @@ class WorkoutShiftService {
     ActiveProgramEntry activeProgram,
   ) async {
     final today = AppDateUtils.dateOnly(DateTime.now());
-    if (offer.kind == WorkoutShiftKind.restore) {
-      await _planService.restoreToToday(
-        today: today,
-        restored: activeProgram.shiftedBy(-1),
-        postponed: offer.plan,
-      );
-      return;
+    switch (offer.kind) {
+      case WorkoutShiftKind.restore:
+        await _planService.restoreToToday(
+          today: today,
+          restored: activeProgram.shiftedBy(-1),
+          postponed: offer.plan,
+        );
+      case WorkoutShiftKind.catchUp:
+        await _planService.scheduleCatchUp(offer.plan, today);
+      case WorkoutShiftKind.postpone:
+        await _planService.shiftToToday(
+          today: today,
+          shifted: activeProgram.shiftedBy(1),
+        );
     }
-    await _planService.shiftToToday(
-      today: today,
-      shifted: activeProgram.shiftedBy(1),
-      missed: offer.kind == WorkoutShiftKind.catchUp ? offer.plan : null,
-    );
   }
 
-  bool _hasSessionOn(List<WorkoutSessionEntity> sessions, DateTime date) =>
-      sessions.any(
-        (session) =>
-            AppDateUtils.isSameDay(session.date, date) &&
-            (session.isCompleted || session.isInProgress),
-      );
+  static bool _hasSessionFor(
+    List<WorkoutSessionEntity> sessions,
+    DateTime date,
+  ) => sessions.any(
+    (session) =>
+        AppDateUtils.isSameDay(session.scheduledDate, date) &&
+        (session.isCompleted || session.isInProgress),
+  );
 }

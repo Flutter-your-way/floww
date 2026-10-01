@@ -6,11 +6,13 @@ import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/entities/health_day_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/health/models/health_snapshot.dart';
+import 'package:floww/core/health/services/health_service.dart';
 
 class HealthLogService {
   HealthLogService();
 
   static const String _dateField = 'date';
+  static const String _sourcesField = 'sources';
 
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
@@ -56,8 +58,22 @@ class HealthLogService {
       hrvMs: snapshot.hrvMs,
     );
 
+    final json = log.toJson();
+    final source = HealthService.sourceId;
+
     try {
-      await _logs(uid).doc(AppDateUtils.dateKey(day)).set(log.toJson());
+      await _logs(uid).doc(AppDateUtils.dateKey(day)).set(
+        {
+          ...json,
+          _sourcesField: {source: json},
+        },
+        SetOptions(
+          mergeFields: [
+            ...json.keys,
+            FieldPath([_sourcesField, source]),
+          ],
+        ),
+      );
     } catch (e, stackTrace) {
       debugPrint('saveSnapshot failed: $e\n$stackTrace');
     }

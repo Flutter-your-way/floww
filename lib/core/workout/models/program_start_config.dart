@@ -4,12 +4,16 @@ class ProgramStartSetup {
     required this.name,
     required this.dayWeekdays,
     required this.weeks,
+    this.lengthDays = 0,
   });
 
   final String programId;
   final String name;
   final List<int> dayWeekdays;
   final int weeks;
+  final int lengthDays;
+
+  bool get hasFixedLength => lengthDays > 0;
 
   int get sessionsPerWeek => dayWeekdays.length;
 }

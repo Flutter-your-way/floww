@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 
 class RemoteImage extends StatelessWidget {
@@ -16,7 +18,37 @@ class RemoteImage extends StatelessWidget {
   final double fallbackIconSize;
   final BoxFit fit;
 
-  static const double _decodeHeadroom = 2;
+  static const double _thumbnailExtent = AppSizes.s96;
+  static const double _thumbnailHeadroom = 2;
+
+  static ImageProvider providerOf(
+    BuildContext context,
+    String url, {
+    bool isThumbnail = false,
+  }) {
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final extent = isThumbnail
+        ? _thumbnailExtent * _thumbnailHeadroom
+        : MediaQuery.sizeOf(context).width;
+    return ResizeImage(
+      CachedNetworkImageProvider(url),
+      width: (extent * devicePixelRatio).round(),
+      policy: ResizeImagePolicy.fit,
+    );
+  }
+
+  static Future<void> precache(
+    BuildContext context,
+    Iterable<String> urls, {
+    bool isThumbnail = false,
+  }) => Future.wait([
+    for (final url in urls.toSet())
+      precacheImage(
+        providerOf(context, url, isThumbnail: isThumbnail),
+        context,
+        onError: (error, stackTrace) {},
+      ),
+  ]);
 
   @override
   Widget build(BuildContext context) {
@@ -26,36 +58,21 @@ class RemoteImage extends StatelessWidget {
       return _Fallback(icon: fallbackIcon, size: fallbackIconSize);
     }
 
-    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-
     return LayoutBuilder(
       builder: (context, constraints) => Image(
-        image: _providerFor(url, constraints.biggest, devicePixelRatio),
+        image: providerOf(
+          context,
+          url,
+          isThumbnail: constraints.biggest.longestSide <= _thumbnailExtent,
+        ),
         fit: fit,
+        gaplessPlayback: true,
         loadingBuilder: (context, child, progress) => progress == null
             ? child
             : _Fallback(icon: fallbackIcon, size: fallbackIconSize),
         errorBuilder: (context, error, stackTrace) =>
             _Fallback(icon: fallbackIcon, size: fallbackIconSize),
       ),
-    );
-  }
-
-  static ImageProvider _providerFor(
-    String url,
-    Size size,
-    double devicePixelRatio,
-  ) {
-    final network = NetworkImage(url);
-    if (!size.isFinite || size.isEmpty) return network;
-
-    final extent = (size.longestSide * devicePixelRatio * _decodeHeadroom)
-        .round();
-    return ResizeImage(
-      network,
-      width: extent,
-      height: extent,
-      policy: ResizeImagePolicy.fit,
     );
   }
 }

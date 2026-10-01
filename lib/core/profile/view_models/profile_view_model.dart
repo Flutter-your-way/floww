@@ -185,16 +185,18 @@ class ProfileViewModel extends ChangeNotifier {
       route: AppRouter.units,
     ),
     const ProfileSettingItem(
+      icon: Icons.quiz_outlined,
+      title: 'Onboarding Answers',
+      subtitle: 'Review & edit your questionnaire',
+      route: AppRouter.onboardingAnswers,
+    ),
+    const ProfileSettingItem(
       icon: Icons.shield_outlined,
       title: 'Privacy & Data',
       subtitle: 'Export data · Delete account',
       route: AppRouter.privacyData,
     ),
   ];
-
-  String get glassCardsTitle => 'Glass Cards';
-
-  String get glassCardsSubtitle => 'Frosted, see-through card surfaces';
 
   String get premiumBadgeLabel => 'PREMIUM';
 

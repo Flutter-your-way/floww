@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/card_style_controller.dart';
+import 'package:floww/config/widgets/animations/app_card_pop.dart';
 import 'package:floww/config/widgets/effects/inner_glow.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_shapes.dart';
@@ -44,10 +43,6 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isGlass = context.select<CardStyleController, bool>(
-      (controller) => controller.isGlass,
-    );
-
     Color? backgroundColor;
     Gradient? gradient;
     Color variantBorderColor;
@@ -78,16 +73,14 @@ class AppCard extends StatelessWidget {
         variantBorderColor = Colors.transparent;
     }
 
-    if (isGlass) {
-      if (backgroundColor != null && backgroundColor.a == 1) {
-        backgroundColor = backgroundColor.withValues(
-          alpha: AppOpacity.frostedCard,
-        );
-      }
-      gradient = gradient?.withOpacity(AppOpacity.frostedCard);
-      if (variantBorderColor == Colors.transparent) {
-        variantBorderColor = context.colors.borderSubtle;
-      }
+    if (backgroundColor != null && backgroundColor.a == 1) {
+      backgroundColor = backgroundColor.withValues(
+        alpha: AppOpacity.frostedCard,
+      );
+    }
+    gradient = gradient?.withOpacity(AppOpacity.frostedCard);
+    if (variantBorderColor == Colors.transparent) {
+      variantBorderColor = context.colors.borderSubtle;
     }
 
     final card = AnimatedContainer(
@@ -119,6 +112,6 @@ class AppCard extends StatelessWidget {
           )
         : card;
 
-    return RepaintBoundary(child: surface);
+    return AppCardPop(child: RepaintBoundary(child: surface));
   }
 }

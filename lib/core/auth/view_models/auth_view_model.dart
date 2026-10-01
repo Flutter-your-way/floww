@@ -17,7 +17,23 @@ class AuthViewModel extends ChangeNotifier {
   StreamSubscription<String?>? _avatarSubscription;
   bool _disposed = false;
 
-  bool get isBusy => isGoogleLoading || isAppleLoading;
+  bool isSigningOut = false;
+
+  bool get isBusy => isGoogleLoading || isAppleLoading || isSigningOut;
+
+  String get logOutTitle => 'Log out?';
+
+  String get logOutMessage =>
+      'Your onboarding progress will not be saved. You will need to sign in again to continue.';
+
+  String get logOutLabel => 'Log Out';
+
+  String get cancelLabel => 'Cancel';
+
+  String get createAccountTitle => 'Create your account';
+
+  String get createAccountSubtitle =>
+      'Sign in to save your plan and sync your progress across devices.';
 
   String? get avatarUrl => currentUser?.avatarUrl;
 
@@ -55,8 +71,9 @@ class AuthViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  Future<void> requestNotificationPermission() =>
-      _authService.requestNotificationPermission();
+  Future<bool> hasSeenIntro() => _authService.hasSeenIntro();
+
+  Future<void> markIntroSeen() => _authService.markIntroSeen();
 
   Future<UserModel?> restoreSession() async {
     try {
@@ -88,6 +105,27 @@ class AuthViewModel extends ChangeNotifier {
     } finally {
       isGoogleLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<bool> signOut() async {
+    if (isSigningOut) return false;
+    errorMessage = null;
+    isSigningOut = true;
+    notifyListeners();
+
+    try {
+      await _authService.signOut();
+      await _avatarSubscription?.cancel();
+      _avatarSubscription = null;
+      currentUser = null;
+      return true;
+    } on AuthException catch (e) {
+      errorMessage = e.message;
+      return false;
+    } finally {
+      isSigningOut = false;
+      if (!_disposed) notifyListeners();
     }
   }
 

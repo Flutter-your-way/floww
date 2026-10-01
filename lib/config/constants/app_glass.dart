@@ -18,6 +18,7 @@ class AppGlass {
   static const double brightness = 1.06;
 
   static const double fillOpacity = 0.1;
+  static const double buttonFillOpacity = 0.25;
   static const double rimWidth = 1.2;
   static const double innerGlowOpacity = 0.22;
   static const double shadowOpacity = 0.45;
@@ -47,12 +48,6 @@ class AppGlass {
   static const double indicatorPopRise = AppSizes.s6;
   static const double indicatorPopSquash = 0.18;
   static const Duration indicatorPopSettle = Duration(milliseconds: 190);
-
-  static const Duration indicatorBurst = Duration(milliseconds: 620);
-  static const Curve indicatorBurstCurve = Curves.easeOutQuart;
-  static const double indicatorBurstScale = 0.62;
-  static const double indicatorBurstOpacity = 0.35;
-  static const double indicatorBurstWidth = AppSizes.s2;
 
   static const double iconLiftSelected = AppSizes.s2;
   static const double iconPopScale = 1.08;

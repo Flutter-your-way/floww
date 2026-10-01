@@ -26,13 +26,15 @@ class WorkoutHistoryAnalyzer {
       for (final plan in plans) AppDateUtils.dateKey(plan.date): plan,
     };
     final sessionsByDay = <String, List<WorkoutSessionEntity>>{};
+    final sessionsByPlan = <String, List<WorkoutSessionEntity>>{};
     for (final session in sessions) {
       sessionsByDay
           .putIfAbsent(AppDateUtils.dateKey(session.date), () => [])
           .add(session);
+      sessionsByPlan
+          .putIfAbsent(AppDateUtils.dateKey(session.scheduledDate), () => [])
+          .add(session);
     }
-    final todaySessions =
-        sessionsByDay[AppDateUtils.dateKey(today)] ?? const [];
 
     final end = AppDateUtils.endOfWeek(today);
     final days = <WorkoutHistoryDay>[];
@@ -44,7 +46,12 @@ class WorkoutHistoryAnalyzer {
       final key = AppDateUtils.dateKey(date);
       final plan = plansByDay[key];
       final daySessions = sessionsByDay[key] ?? const [];
-      final outcome = _outcomeOf(date, today, plan, daySessions);
+      final outcome = _outcomeOf(
+        date,
+        today,
+        plan,
+        sessionsByPlan[key] ?? const [],
+      );
       days.add(
         WorkoutHistoryDay(
           date: date,
@@ -57,7 +64,6 @@ class WorkoutHistoryAnalyzer {
                   date: date,
                   today: today,
                   sessions: sessions,
-                  todaySessions: todaySessions,
                   activeProgram: activeProgram,
                 )
               : null,
@@ -103,7 +109,6 @@ class WorkoutHistoryAnalyzer {
     required DateTime date,
     required DateTime today,
     required List<WorkoutSessionEntity> sessions,
-    required List<WorkoutSessionEntity> todaySessions,
     required ActiveProgramEntry? activeProgram,
   }) {
     final muscles = musclesOf(plan);
@@ -111,13 +116,16 @@ class WorkoutHistoryAnalyzer {
     final age = AppDateUtils.daysBetween(date, today);
     final coveredOn = _coveredOn(muscles, date, sessions);
 
-    final canCatchUp =
-        age == catchUpWindowDays &&
-        todaySessions.isEmpty &&
+    final isScheduled = plan.isScheduledFor(today);
+    final canSchedule =
+        !isScheduled &&
+        age <= prioritizeWindowDays &&
         activeProgram != null &&
         plan.programId == activeProgram.id;
 
-    final recovery = canCatchUp
+    final recovery = isScheduled
+        ? MissedRecovery.scheduled
+        : canSchedule && age == catchUpWindowDays
         ? MissedRecovery.catchUp
         : coveredOn != null
         ? MissedRecovery.covered
@@ -130,6 +138,7 @@ class WorkoutHistoryAnalyzer {
       muscles: muscles,
       coveredOn: coveredOn,
       keyExercise: keyExercise,
+      canSchedule: canSchedule,
     );
   }
 

@@ -14,12 +14,14 @@ import 'package:floww/navigation/services/navigation_service.dart';
 class DietPlanView extends StatelessWidget {
   const DietPlanView({super.key});
 
+  static const String pageTitle = '30-Day WAVE Diet Plan';
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DietPlanViewModel>(
       builder: (context, viewModel, child) {
         return InnerPageScaffold(
-          title: '30-Day WAVE Diet Plan',
+          title: pageTitle,
           onBack: () => NavigationService.instance.pop(),
           children: [
             if (viewModel.isLoading)

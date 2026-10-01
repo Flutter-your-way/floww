@@ -171,6 +171,14 @@ class AppTypography {
     letterSpacing: 0,
   );
 
+  static const TextStyle bodyLargeRegular = TextStyle(
+    fontFamily: _fontBody,
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    height: 24 / 16,
+    letterSpacing: 0,
+  );
+
   static const TextStyle bodyMediumBold = TextStyle(
     fontFamily: _fontBody,
     fontSize: 14,

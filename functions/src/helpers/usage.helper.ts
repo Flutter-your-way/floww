@@ -12,7 +12,10 @@ export type AiFeature =
   | "foodScan"
   | "foodDescribe"
   | "foodSearch"
-  | "waveChat";
+  | "foodImage"
+  | "waveChat"
+  | "onboardingAnalysis"
+  | "workoutPlan";
 
 export interface AiDailyLimits {
   premium: number;

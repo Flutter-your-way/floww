@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
+import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
-import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
+import 'package:floww/config/widgets/animations/app_collapsible_section.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
@@ -65,13 +68,9 @@ class WorkoutExercisesCard extends StatelessWidget {
                 horizontal: AppSpacing.xl,
                 vertical: AppSpacing.xl,
               ),
-              child: PillButton(
-                variant: PillButtonVariant.bright,
-                height: AppSizes.s48,
+              child: BrightActionButton(
                 label: 'ADD EXERCISE',
-                icon: Icons.add_circle,
-                iconColor: context.colors.onSurfaceBright,
-                labelStyle: AppTypography.labelSmallSemiBold,
+                icon: Icons.add_rounded,
                 onPressed: onAddExercise,
               ),
             ),
@@ -102,9 +101,8 @@ class _ExerciseSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GestureDetector(
+        PressScale(
           onTap: onToggle,
-          behavior: HitTestBehavior.opaque,
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: AppSpacing.xl,
@@ -138,29 +136,41 @@ class _ExerciseSection extends StatelessWidget {
                 SizedBox(width: AppSpacing.lg),
                 _SectionStatusDot(status: section.status),
                 SizedBox(width: AppSpacing.lg),
-                Icon(
-                  section.isExpanded
-                      ? Icons.keyboard_arrow_down
-                      : Icons.chevron_right,
-                  size: AppSizes.s24,
-                  color: context.colors.textSecondary,
+                AnimatedRotation(
+                  turns: section.isExpanded ? AppMotion.quarterTurn : 0,
+                  duration: AppMotion.expandSoft,
+                  curve: AppMotion.expandCurve,
+                  child: Icon(
+                    Icons.chevron_right,
+                    size: AppSizes.s24,
+                    color: context.colors.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
         ),
-        if (section.isExpanded)
-          for (var i = 0; i < section.exercises.length; i++) ...[
-            if (i > 0)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                child: const _CardDivider(),
-              ),
-            WorkoutExerciseRow(
-              exercise: section.exercises[i],
-              imageUrl: section.exercises[i].imageUrl,
-            ),
-          ],
+        AppCollapsibleSection(
+          visible: section.isExpanded,
+          duration: AppMotion.expandSoft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < section.exercises.length; i++) ...[
+                if (i > 0)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                    child: const _CardDivider(),
+                  ),
+                WorkoutExerciseRow(
+                  exercise: section.exercises[i],
+                  imageUrl: section.exercises[i].imageUrl,
+                ),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }

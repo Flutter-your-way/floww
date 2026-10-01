@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
+import 'package:floww/core/nutrition/views/food_photo_sheet.dart';
 import 'package:floww/core/nutrition/view_models/meal_details_view_model.dart';
 import 'package:floww/core/nutrition/views/log_food_sheet.dart';
 import 'package:floww/core/nutrition/widgets/food_items_card.dart';
@@ -37,6 +38,7 @@ class MealDetailsView extends StatelessWidget {
               countLabel: viewModel.itemCountLabel,
               emptyMessage: 'No foods logged for this meal yet.',
               onDelete: viewModel.canEdit ? viewModel.deleteItem : null,
+              onEditPhoto: (name) => FoodPhotoSheet.show(context, name),
               onAdd: viewModel.canEdit
                   ? () => LogFoodSheet.show(
                       context,

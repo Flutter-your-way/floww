@@ -14,10 +14,15 @@ import {
   habitsForDay,
 } from "./habit.day.helper";
 import {UserClock} from "./user.clock.helper";
+import {
+  entriesOf as workoutEntriesOf,
+  plannedSetsOf,
+} from "./workout.metrics.helper";
 
-const WORKOUT_WEIGHT = 0.4;
-const HABIT_WEIGHT = 0.35;
-const NUTRITION_WEIGHT = 0.25;
+const WORKOUT_POINTS = 35;
+const NUTRITION_POINTS = 25;
+const HABIT_POINTS = 20;
+const RECOVERY_POINTS = 20;
 const TARGET_SETS = 20;
 const TARGET_MEALS = 3;
 const TARGET_WATER_ML = 2500;
@@ -32,10 +37,12 @@ export interface FlowEntry {
   workoutScore: number;
   habitScore: number;
   nutritionScore: number;
+  readinessScore: number;
 }
 
 export interface DayActivity {
   workoutSets: number;
+  workoutPlannedSets: number;
   habitCompletion: number;
   mealCount: number;
   waterMl: number;
@@ -50,32 +57,49 @@ export const emptyFlowEntry = (date: string): FlowEntry => ({
   workoutScore: 0,
   habitScore: 0,
   nutritionScore: 0,
+  readinessScore: 0,
 });
 
-export const flowEntryOf = (date: string, activity: DayActivity): FlowEntry => {
-  const isEmpty = activity.workoutSets === 0 &&
-    activity.habitCompletion === 0 &&
-    activity.mealCount === 0 &&
-    activity.waterMl === 0;
-  if (isEmpty) return emptyFlowEntry(date);
+const pointsOf = (maxPoints: number, percentValue: number): number =>
+  Math.round(maxPoints * clamp(percentValue, 0, 100) / 100);
 
-  const workout = percent(activity.workoutSets / TARGET_SETS);
-  const habit = percent(activity.habitCompletion);
-  const nutrition = percent(
+export const workoutTargetOf = (plannedSets: number): number =>
+  plannedSets > 0 ? plannedSets : TARGET_SETS;
+
+export const sessionPlannedSetsOf = (session: DocumentData): number => {
+  const stored = numberOf(session.plannedSets);
+  if (stored > 0) return stored;
+  return plannedSetsOf(workoutEntriesOf(session.exercises));
+};
+
+export const flowEntryOf = (
+  date: string,
+  activity: DayActivity,
+  readiness = 0,
+): FlowEntry => {
+  const workout = Math.round(percent(
+    activity.workoutSets / workoutTargetOf(activity.workoutPlannedSets),
+  ));
+  const habit = Math.round(percent(activity.habitCompletion));
+  const nutrition = Math.round(percent(
     clamp(activity.mealCount / TARGET_MEALS, 0, 1) * MEAL_SHARE +
       clamp(activity.waterMl / TARGET_WATER_ML, 0, 1) * WATER_SHARE,
-  );
+  ));
 
   return {
     date,
-    score: Math.round(
-      workout * WORKOUT_WEIGHT +
-        habit * HABIT_WEIGHT +
-        nutrition * NUTRITION_WEIGHT,
+    score: clamp(
+      pointsOf(WORKOUT_POINTS, workout) +
+        pointsOf(NUTRITION_POINTS, nutrition) +
+        pointsOf(HABIT_POINTS, habit) +
+        pointsOf(RECOVERY_POINTS, readiness),
+      0,
+      100,
     ),
-    workoutScore: Math.round(workout),
-    habitScore: Math.round(habit),
-    nutritionScore: Math.round(nutrition),
+    readinessScore: readiness,
+    workoutScore: workout,
+    habitScore: habit,
+    nutritionScore: nutrition,
   };
 };
 
@@ -87,7 +111,8 @@ export const sameFlowValues = (
   numberOf(stored.score) === entry.score &&
   numberOf(stored.workoutScore) === entry.workoutScore &&
   numberOf(stored.habitScore) === entry.habitScore &&
-  numberOf(stored.nutritionScore) === entry.nutritionScore;
+  numberOf(stored.nutritionScore) === entry.nutritionScore &&
+  numberOf(stored.readinessScore) === entry.readinessScore;
 
 export const flowDocOf = (entry: FlowEntry): DocumentData => ({
   ...entry,
@@ -160,6 +185,10 @@ export const readDayActivity = async (
   return {
     workoutSets: completed.reduce(
       (total, doc) => total + numberOf(doc.get("totalSets")),
+      0,
+    ),
+    workoutPlannedSets: completed.reduce(
+      (total, doc) => total + sessionPlannedSetsOf(doc.data()),
       0,
     ),
     habitCompletion: completionOf(

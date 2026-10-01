@@ -2,6 +2,7 @@ import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/images/image_precacher.dart';
 import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/core/flow_mode/widgets/flow_mode_ambient_layer.dart';
@@ -13,6 +14,7 @@ import 'package:floww/core/home/services/home_snapshot_builder.dart';
 import 'package:floww/core/profile/services/profile_service.dart';
 import 'package:floww/core/wave/views/wave_chat_sheet.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
+import 'package:floww/core/workout/services/workout_plan_generator_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
@@ -110,18 +112,21 @@ class _MainTabViewState extends State<MainTabView> {
 
   static Widget _workoutTab() {
     final catalogService = WorkoutCatalogService();
+    final sessionService = WorkoutSessionService();
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (context) => WorkoutViewModel(
-            WorkoutSessionService(),
+            sessionService,
             WorkoutPlanService(catalogService),
             WorkoutProgramService(),
             catalogService,
+            WorkoutPlanGeneratorService(),
           ),
         ),
         ChangeNotifierProvider(
-          create: (context) => ExerciseLibraryViewModel(catalogService),
+          create: (context) =>
+              ExerciseLibraryViewModel(catalogService, sessionService),
         ),
       ],
       child: WorkoutView(),
@@ -159,11 +164,15 @@ class _MainTabViewState extends State<MainTabView> {
           dispose: (context, HabitSourceSync sync) => sync.dispose(),
         ),
       ],
-      child: ChangeNotifierProvider.value(
-        value: _controller,
-        child: Consumer<MainTabController>(
-          builder: (context, controller, child) =>
-              _buildScaffold(context, controller),
+      child: ImagePrecacher(
+        urls: AppImages.remotePhotos,
+        thumbnailsOnly: true,
+        child: ChangeNotifierProvider.value(
+          value: _controller,
+          child: Consumer<MainTabController>(
+            builder: (context, controller, child) =>
+                _buildScaffold(context, controller),
+          ),
         ),
       ),
     );

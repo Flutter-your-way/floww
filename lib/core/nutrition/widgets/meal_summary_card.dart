@@ -6,7 +6,7 @@ import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
-import 'package:floww/core/nutrition/widgets/meal_type_badge.dart';
+import 'package:floww/core/nutrition/widgets/meal_time_icon.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
 
 class MealSummaryCard extends StatelessWidget {
@@ -36,7 +36,7 @@ class MealSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              MealTypeBadge(meal: meal, size: AppSizes.s48),
+              MealTimeIcon(meal: meal, size: AppSizes.s48),
               SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
@@ -128,10 +128,14 @@ class _MacroColumn extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(
-              share.amountLabel,
-              style: context.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: Text(
+                share.amountLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             SizedBox(width: AppSpacing.xs),

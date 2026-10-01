@@ -4,6 +4,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/animations/app_pop_reveal.dart';
 import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
@@ -24,6 +25,7 @@ class ProgramListSection extends StatelessWidget {
     required this.onSelectLevel,
     this.onOpen,
     this.onCreate,
+    this.isPremiumUnlocked = true,
   });
 
   final List<ProgramItem> programs;
@@ -35,6 +37,7 @@ class ProgramListSection extends StatelessWidget {
   final ValueChanged<ProgramLevel?> onSelectLevel;
   final ValueChanged<ProgramItem>? onOpen;
   final VoidCallback? onCreate;
+  final bool isPremiumUnlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +46,10 @@ class ProgramListSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CreateProgramCard(onTap: onCreate),
+        AppPopReveal(
+          appearOnMount: true,
+          child: CreateProgramCard(onTap: onCreate),
+        ),
         SizedBox(height: AppSpacing.xl3),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -104,9 +110,17 @@ class ProgramListSection extends StatelessWidget {
           ),
         for (var i = 0; i < programs.length; i++) ...[
           if (i > 0) SizedBox(height: AppSpacing.lg),
-          ProgramRowCard(
-            program: programs[i],
-            onTap: onOpen == null ? null : () => onOpen(programs[i]),
+          AppPopReveal(
+            key: ValueKey(programs[i].id),
+            appearOnMount: true,
+            child: ProgramRowCard(
+              program: programs[i],
+              isLocked:
+                  programs[i].isPremium &&
+                  !programs[i].isActive &&
+                  !isPremiumUnlocked,
+              onTap: onOpen == null ? null : () => onOpen(programs[i]),
+            ),
           ),
         ],
       ],

@@ -42,11 +42,36 @@ class WorkoutCatalogService extends WorkoutFirestore {
       for (final program in WorkoutCatalogData.programs) {
         batch.set(_programs(uid).doc(program.id), program.toJson());
       }
+      unlockInto(batch, uid, await _programExerciseIds(uid, stored));
       batch.set(stateDoc(uid), {
         'catalogVersion': WorkoutCatalogData.version,
       }, SetOptions(merge: true));
       await batch.commit();
     });
+  }
+
+  void unlockInto(WriteBatch batch, String uid, Iterable<String> exerciseIds) {
+    for (final id in exerciseIds.toSet()) {
+      if (!WorkoutCatalogData.isPool(id)) continue;
+      batch.set(_exercises(uid).doc(id), {
+        'isUnlocked': true,
+      }, SetOptions(merge: true));
+    }
+  }
+
+  Future<Set<String>> _programExerciseIds(
+    String uid,
+    WorkoutStateEntity state,
+  ) async {
+    final programIds = {?state.activeProgram?.id, ?state.generatedProgramId};
+    final ids = <String>{};
+    for (final programId in programIds) {
+      final document = await _programs(uid).doc(programId).get();
+      final data = document.data();
+      if (data == null) continue;
+      ids.addAll(WorkoutProgramEntity.fromJson(data).exerciseIds);
+    }
+    return ids;
   }
 
   Stream<List<ExerciseCatalogEntry>> watchExercises() {

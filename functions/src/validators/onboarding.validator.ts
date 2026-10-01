@@ -7,3 +7,5 @@ export const submitOnboardingValidator = z.object({
 export const completeOnboardingValidator = z.object({
   wearablesConnected: z.boolean(),
 });
+
+export const analyzeOnboardingValidator = submitOnboardingValidator;

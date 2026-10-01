@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/animations/app_pop_reveal.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
@@ -33,7 +34,10 @@ class WorkoutHistorySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (consistency != null) ...[
-          WorkoutConsistencyCard(consistency: consistency),
+          AppPopReveal(
+            appearOnMount: true,
+            child: WorkoutConsistencyCard(consistency: consistency),
+          ),
           SizedBox(height: AppSpacing.xl3),
         ],
         for (var i = 0; i < history.weeks.length; i++) ...[
@@ -73,32 +77,38 @@ class _HistoryWeek extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: SectionLabel(
-                label: week.title,
-                color: context.colors.textPrimary,
-              ),
-            ),
-            if (summaryLabel != null)
-              Text(
-                summaryLabel,
-                style: AppTypography.labelSmallMedium.copyWith(
-                  color: context.colors.textSecondary,
+        AppPopReveal(
+          appearOnMount: true,
+          child: Row(
+            children: [
+              Expanded(
+                child: SectionLabel(
+                  label: week.title,
+                  color: context.colors.textPrimary,
                 ),
               ),
-          ],
+              if (summaryLabel != null)
+                Text(
+                  summaryLabel,
+                  style: AppTypography.labelSmallMedium.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
         ),
         SizedBox(height: AppSpacing.lg),
         for (var i = 0; i < week.entries.length; i++) ...[
           if (i > 0) SizedBox(height: AppSpacing.lg),
-          _HistoryEntry(
-            entry: week.entries[i],
-            onOpen: onOpen,
-            onOpenMissed: onOpenMissed,
-            onCatchUp: onCatchUp,
-            isCatchingUp: isCatchingUp,
+          AppPopReveal(
+            appearOnMount: true,
+            child: _HistoryEntry(
+              entry: week.entries[i],
+              onOpen: onOpen,
+              onOpenMissed: onOpenMissed,
+              onCatchUp: onCatchUp,
+              isCatchingUp: isCatchingUp,
+            ),
           ),
         ],
       ],

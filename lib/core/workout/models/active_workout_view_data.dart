@@ -7,6 +7,38 @@ import 'package:floww/core/workout/models/workout_view_data.dart';
 
 enum ActiveSetStatus { completed, current, pending }
 
+class WorkoutFinishStat {
+  const WorkoutFinishStat({
+    required this.label,
+    required this.value,
+    this.unit,
+    this.isClock = false,
+  });
+
+  final String label;
+  final int value;
+  final String? unit;
+  final bool isClock;
+}
+
+class WorkoutFinishSummary {
+  const WorkoutFinishSummary({
+    required this.statusLabel,
+    required this.title,
+    required this.stats,
+    required this.flowLabel,
+    this.flowValue,
+    this.flowDelta,
+  });
+
+  final String statusLabel;
+  final String title;
+  final List<WorkoutFinishStat> stats;
+  final String flowLabel;
+  final String? flowValue;
+  final String? flowDelta;
+}
+
 class TodayWorkoutItem {
   const TodayWorkoutItem({
     required this.name,
@@ -183,7 +215,6 @@ class EditSetItem {
 
 class ActiveWorkoutItem {
   const ActiveWorkoutItem({
-    required this.timerLabel,
     required this.progress,
     required this.exerciseLabel,
     required this.setLabel,
@@ -196,7 +227,6 @@ class ActiveWorkoutItem {
     this.nextUpLabel,
   });
 
-  final String timerLabel;
   final double progress;
   final String exerciseLabel;
   final String setLabel;

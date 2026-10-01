@@ -224,6 +224,7 @@ class ProfileService {
     final healthDiet = _section(onboarding, 'healthDiet');
     final trainingSetup = _section(onboarding, 'trainingSetup');
     final targets = _section(onboarding, 'targetsPermissions');
+    final blueprint = _section(onboarding, 'blueprint');
     final trainingType = _string(trainingSetup, 'trainingType');
 
     return ProfileAccount(
@@ -247,6 +248,7 @@ class ProfileService {
       stepsTarget: _number(targets, 'stepsTarget'),
       sleepTargetHours: _number(targets, 'sleepTargetHours'),
       waterTargetLiters: _number(targets, 'waterTargetLiters'),
+      flowBaseline: _number(blueprint, 'flowScore')?.round(),
       memberSince: _dateTime(user, 'createdAt'),
       subscription: _subscriptionOf(user),
     );

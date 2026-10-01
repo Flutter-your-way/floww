@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_collection.dart';
+import 'package:floww/config/constants/app_integrations.dart';
 import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/core/settings/models/settings_view_data.dart';
 
@@ -15,39 +16,45 @@ class SettingsService {
 
   static const _defaultConnectedApps = [
     ConnectedAppItem(
-      id: 'apple_health',
-      name: 'Apple Health',
-      isConnected: true,
+      id: AppIntegrations.appleHealth,
+      name: AppIntegrations.appleHealthName,
+      isConnected: false,
+      kind: ConnectedAppKind.appleHealth,
       iconAsset: AppImages.appleHealthIcon,
     ),
     ConnectedAppItem(
-      id: 'garmin',
+      id: AppIntegrations.garmin,
       name: 'Garmin®',
       isConnected: false,
+      kind: ConnectedAppKind.cloud,
       wordmark: 'GARMIN',
     ),
     ConnectedAppItem(
-      id: 'whoop',
+      id: AppIntegrations.whoop,
       name: 'WHOOP',
       isConnected: false,
+      kind: ConnectedAppKind.cloud,
       iconAsset: AppImages.whoopIcon,
     ),
     ConnectedAppItem(
-      id: 'oura',
+      id: AppIntegrations.oura,
       name: 'Oura',
       isConnected: false,
+      kind: ConnectedAppKind.cloud,
       iconAsset: AppImages.ouraIcon,
     ),
     ConnectedAppItem(
-      id: 'fitbit',
+      id: AppIntegrations.fitbit,
       name: 'Fitbit',
       isConnected: false,
+      kind: ConnectedAppKind.cloud,
       iconAsset: AppImages.fitbitIcon,
     ),
     ConnectedAppItem(
-      id: 'health_connect',
-      name: 'Health Connect',
+      id: AppIntegrations.healthConnect,
+      name: AppIntegrations.healthConnectName,
       isConnected: false,
+      kind: ConnectedAppKind.healthConnect,
       iconAsset: AppImages.healthConnectIcon,
     ),
   ];

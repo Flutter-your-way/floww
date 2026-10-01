@@ -16,13 +16,17 @@ import 'package:floww/navigation/services/navigation_service.dart';
 class FoodScanView extends StatelessWidget {
   const FoodScanView({super.key});
 
+  static const String pageTitle = 'AI Food Scan';
+
   Future<void> _capture(
     BuildContext context,
     FoodScanViewModel viewModel,
   ) async {
     HapticManager.medium();
-    final food = await viewModel.captureAndScan();
-    if (food != null && context.mounted) NavigationService.instance.pop(food);
+    final scanned = await viewModel.captureAndScan();
+    if (scanned != null && context.mounted) {
+      NavigationService.instance.pop(scanned);
+    }
   }
 
   Future<void> _pickPhoto(
@@ -30,8 +34,10 @@ class FoodScanView extends StatelessWidget {
     FoodScanViewModel viewModel,
   ) async {
     HapticManager.light();
-    final food = await viewModel.pickPhotoAndScan();
-    if (food != null && context.mounted) NavigationService.instance.pop(food);
+    final scanned = await viewModel.pickPhotoAndScan();
+    if (scanned != null && context.mounted) {
+      NavigationService.instance.pop(scanned);
+    }
   }
 
   @override
@@ -70,7 +76,7 @@ class FoodScanView extends StatelessWidget {
                   left: horizontalPadding,
                   right: horizontalPadding,
                   child: CustomHeader(
-                    title: 'AI Food Scan',
+                    title: pageTitle,
                     onBackPressed: () => NavigationService.instance.pop(),
                   ),
                 ),

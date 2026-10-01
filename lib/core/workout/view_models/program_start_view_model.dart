@@ -67,15 +67,24 @@ class ProgramStartViewModel extends ChangeNotifier {
     return true;
   }
 
-  AddExerciseTargetItem get weeksTarget => AddExerciseTargetItem(
-    label: 'Length',
-    value: '$_weeks',
-    unit: _weeks == 1 ? 'week' : 'weeks',
-    canDecrease: _weeks > _minWeeks,
-    canIncrease: _weeks < _maxWeeks,
-  );
+  AddExerciseTargetItem get weeksTarget => _setup.hasFixedLength
+      ? AddExerciseTargetItem(
+          label: 'Length',
+          value: '${_setup.lengthDays}',
+          unit: 'days',
+          canDecrease: false,
+          canIncrease: false,
+        )
+      : AddExerciseTargetItem(
+          label: 'Length',
+          value: '$_weeks',
+          unit: _weeks == 1 ? 'week' : 'weeks',
+          canDecrease: _weeks > _minWeeks,
+          canIncrease: _weeks < _maxWeeks,
+        );
 
   void adjustWeeks(int delta) {
+    if (_setup.hasFixedLength) return;
     final next = (_weeks + delta).clamp(_minWeeks, _maxWeeks);
     if (next == _weeks) return;
     _weeks = next;
@@ -120,10 +129,12 @@ class ProgramStartViewModel extends ChangeNotifier {
           ),
         ),
     ];
-    final end = AppDateUtils.addDays(
-      AppDateUtils.startOfWeek(startDate),
-      _weeks * DateTime.daysPerWeek - 1,
-    );
+    final end = _setup.hasFixedLength
+        ? AppDateUtils.addDays(startDate, _setup.lengthDays - 1)
+        : AppDateUtils.addDays(
+            AppDateUtils.startOfWeek(startDate),
+            _weeks * DateTime.daysPerWeek - 1,
+          );
     return '${days.join(', ')} · starts '
         '${AppDateUtils.dayMonth(startDate)} · ends '
         '${AppDateUtils.dayMonth(end, withYear: end.year != _today.year)}';

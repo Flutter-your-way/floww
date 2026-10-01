@@ -7,10 +7,10 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/animations/app_pop_reveal.dart';
-import 'package:floww/config/widgets/animations/date_change_transition.dart';
 import 'package:floww/config/widgets/animations/tab_content_switcher.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
+import 'package:floww/config/widgets/images/image_precacher.dart';
 import 'package:floww/config/widgets/effects/luminosity_layer.dart';
 import 'package:floww/config/widgets/headers/screen_date_header.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
@@ -18,6 +18,9 @@ import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/sheets/app_confirm_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_date_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
+import 'package:floww/core/premium/widgets/premium_gate.dart';
+import 'package:floww/core/premium/widgets/premium_locked_card.dart';
 import 'package:floww/core/workout/models/program_start_config.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/view_models/workout_view_model.dart';
@@ -27,6 +30,7 @@ import 'package:floww/core/workout/views/program_detail_sheet.dart';
 import 'package:floww/core/workout/views/program_start_sheet.dart';
 import 'package:floww/core/workout/widgets/active_program_card.dart';
 import 'package:floww/core/workout/widgets/active_workout_fab.dart';
+import 'package:floww/core/workout/widgets/workout_agenda_card.dart';
 import 'package:floww/core/workout/widgets/workout_empty_state_card.dart';
 import 'package:floww/core/workout/widgets/workout_tab_bar.dart';
 import 'package:floww/core/workout/widgets/exercise_library_section.dart';
@@ -58,15 +62,57 @@ class WorkoutView extends StatelessWidget {
     HapticManager.light();
     NavigationService.instance.push(
       AppRouter.todaysWorkout,
-      arguments: viewModel.selectedDate,
+      arguments: viewModel.startArgs,
     );
+  }
+
+  void _onAgendaAction(
+    WorkoutViewModel viewModel,
+    WorkoutAgendaEntryItem entry,
+  ) {
+    switch (entry.action) {
+      case WorkoutAgendaAction.start:
+        final args = viewModel.startArgsFor(entry.id);
+        if (args == null) return;
+        HapticManager.light();
+        NavigationService.instance.push(
+          AppRouter.todaysWorkout,
+          arguments: args,
+        );
+      case WorkoutAgendaAction.resume:
+        final args = viewModel.resumeArgsFor(entry.id);
+        if (args == null) return;
+        HapticManager.medium();
+        NavigationService.instance.push(
+          AppRouter.activeWorkout,
+          arguments: args,
+        );
+      case WorkoutAgendaAction.focus:
+        HapticManager.selection();
+        viewModel.focusEntry(entry.id);
+      case null:
+        return;
+    }
+  }
+
+  void _removeCatchUp(
+    WorkoutViewModel viewModel,
+    WorkoutAgendaEntryItem entry,
+  ) {
+    HapticManager.light();
+    viewModel.removeCatchUp(entry.id);
+  }
+
+  void _buildPlan(WorkoutViewModel viewModel) {
+    HapticManager.medium();
+    viewModel.buildPlan();
   }
 
   void _resumeWorkout(WorkoutViewModel viewModel) {
     HapticManager.medium();
     NavigationService.instance.push(
       AppRouter.activeWorkout,
-      arguments: viewModel.selectedDate,
+      arguments: viewModel.activeWorkoutArgs,
     );
   }
 
@@ -129,16 +175,30 @@ class WorkoutView extends StatelessWidget {
   ) {
     final detail = viewModel.programDetailFor(id);
     if (detail == null) return;
+    final access = context.read<PremiumAccessProvider>();
+    final isLocked =
+        detail.isPremium &&
+        !detail.isActive &&
+        !access.canUse(PremiumCapability.multiModeWorkouts);
     HapticManager.light();
     ProgramDetailSheet.show(
       context: context,
       detail: detail,
+      isLocked: isLocked,
       onStart: () {
         Navigator.of(context).maybePop();
+        if (isLocked) {
+          access.openUpgrade();
+          return;
+        }
         _setUpProgram(context, viewModel, id);
       },
       onCustomize: () {
         Navigator.of(context).maybePop();
+        if (isLocked) {
+          access.openUpgrade();
+          return;
+        }
         _openEditor(
           viewModel,
           ProgramEditorArgs(programId: id, editExisting: detail.isCustom),
@@ -237,50 +297,53 @@ class WorkoutView extends StatelessWidget {
           final activeProgramId = viewModel.activeProgramId;
           final overviewWorkoutId = viewModel.overviewWorkoutId;
           final shiftOffer = viewModel.shiftOffer;
+          final agenda = viewModel.agenda;
+          final planBuilder = viewModel.planBuilder;
           final history = viewModel.showHistory ? viewModel.history : null;
+          final revealTrigger = viewModel.selectedDate;
 
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              AppBackground(
-                mode: AppBackgroundMode.active(context),
-                safeAreaTop: false,
-                scrollable: true,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                    ),
-                    Padding(
-                      padding: horizontalPadding,
-                      child: ScreenDateHeader(
-                        titlePrefix: viewModel.titlePrefix,
-                        title: 'Workouts',
-                        dateLabel: viewModel.dateLabel,
-                        direction: viewModel.dateDirection,
-                        onPreviousDay: viewModel.canGoPrevious
-                            ? viewModel.previousDay
-                            : null,
-                        onNextDay: viewModel.canGoNext
-                            ? viewModel.nextDay
-                            : null,
-                        onPickDate: () => _pickDate(context, viewModel),
-                        showDateSelector: viewModel.showDateSelector,
+          return ImagePrecacher(
+            urls: viewModel.planImageUrls,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                AppBackground(
+                  mode: AppBackgroundMode.active(context),
+                  safeAreaTop: false,
+                  scrollable: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height:
+                            MediaQuery.paddingOf(context).top + AppSpacing.lg,
                       ),
-                    ),
-                    SizedBox(height: AppSpacing.xl3),
-                    WorkoutTabBar(
-                      tabs: viewModel.tabs,
-                      selected: viewModel.selectedTab,
-                      onSelected: viewModel.selectTab,
-                    ),
-                    SizedBox(height: AppSpacing.lg),
-                    Padding(
-                      padding: horizontalPadding,
-                      child: DateChangeTransition(
-                        value: viewModel.selectedDate,
-                        direction: viewModel.dateDirection,
+                      Padding(
+                        padding: horizontalPadding,
+                        child: ScreenDateHeader(
+                          titlePrefix: viewModel.titlePrefix,
+                          title: 'Workouts',
+                          dateLabel: viewModel.dateLabel,
+                          direction: viewModel.dateDirection,
+                          onPreviousDay: viewModel.canGoPrevious
+                              ? viewModel.previousDay
+                              : null,
+                          onNextDay: viewModel.canGoNext
+                              ? viewModel.nextDay
+                              : null,
+                          onPickDate: () => _pickDate(context, viewModel),
+                          showDateSelector: viewModel.showDateSelector,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.xl3),
+                      WorkoutTabBar(
+                        tabs: viewModel.tabs,
+                        selected: viewModel.selectedTab,
+                        onSelected: viewModel.selectTab,
+                      ),
+                      SizedBox(height: AppSpacing.lg),
+                      Padding(
+                        padding: horizontalPadding,
                         child: TabContentSwitcher(
                           reverse: viewModel.tabReverse,
                           child: Column(
@@ -296,41 +359,108 @@ class WorkoutView extends StatelessWidget {
                                   onRetry: viewModel.retry,
                                 ),
                               AppPopReveal(
-                                child: shiftOffer == null
+                                trigger: revealTrigger,
+                                appearOnMount: true,
+                                child: planBuilder == null
                                     ? null
                                     : Padding(
                                         padding: EdgeInsets.only(
                                           bottom: AppSpacing.lg,
                                         ),
                                         child: WorkoutShiftCard(
-                                          title: shiftOffer.title,
-                                          message: shiftOffer.message,
-                                          actionLabel: shiftOffer.actionLabel,
-                                          isLoading: viewModel.isShifting,
-                                          onAction: () {
-                                            HapticManager.medium();
-                                            viewModel.applyShift();
-                                          },
+                                          icon: Icons.auto_awesome_rounded,
+                                          title: planBuilder.title,
+                                          message: planBuilder.message,
+                                          actionLabel: planBuilder.actionLabel,
+                                          errorMessage:
+                                              planBuilder.errorMessage,
+                                          isLoading: viewModel.isBuildingPlan,
+                                          onAction: () => _buildPlan(viewModel),
                                         ),
                                       ),
                               ),
-                              if (viewModel.showOverview && overview != null)
+                              AppPopReveal(
+                                trigger: revealTrigger,
+                                appearOnMount: true,
+                                child: shiftOffer == null
+                                    ? null
+                                    : Padding(
+                                        padding: EdgeInsets.only(
+                                          bottom: AppSpacing.lg,
+                                        ),
+                                        child: PremiumGate(
+                                          capability:
+                                              PremiumCapability.adaptiveEngine,
+                                          placeholder: const SizedBox.shrink(),
+                                          locked: PremiumLockedCard(
+                                            capability: PremiumCapability
+                                                .adaptiveEngine,
+                                            title: shiftOffer.title,
+                                          ),
+                                          child: WorkoutShiftCard(
+                                            title: shiftOffer.title,
+                                            message: shiftOffer.message,
+                                            actionLabel: shiftOffer.actionLabel,
+                                            isLoading: viewModel.isShifting,
+                                            onAction: () {
+                                              HapticManager.medium();
+                                              viewModel.applyShift();
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                              if (viewModel.isOverviewTab)
                                 LuminosityLayer(
                                   enabled: viewModel.isReadOnly,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
                                     children: [
-                                      if (viewModel.showReadOnlyBanner) ...[
-                                        TipCard(
-                                          title: viewModel.readOnlyLabel,
-                                          icon: Icons
-                                              .local_fire_department_rounded,
-                                        ),
-                                        SizedBox(height: AppSpacing.lg),
-                                      ],
+                                      AppPopReveal(
+                                        trigger: revealTrigger,
+                                        appearOnMount: true,
+                                        child: agenda == null
+                                            ? null
+                                            : Padding(
+                                                padding: EdgeInsets.only(
+                                                  bottom: AppSpacing.lg,
+                                                ),
+                                                child: WorkoutAgendaCard(
+                                                  agenda: agenda,
+                                                  onAction: (entry) =>
+                                                      _onAgendaAction(
+                                                        viewModel,
+                                                        entry,
+                                                      ),
+                                                  onRemove: (entry) =>
+                                                      _removeCatchUp(
+                                                        viewModel,
+                                                        entry,
+                                                      ),
+                                                ),
+                                              ),
+                                      ),
+                                      AppPopReveal(
+                                        trigger: revealTrigger,
+                                        appearOnMount: true,
+                                        child: viewModel.showReadOnlyBanner
+                                            ? Padding(
+                                                padding: EdgeInsets.only(
+                                                  bottom: AppSpacing.lg,
+                                                ),
+                                                child: TipCard(
+                                                  title:
+                                                      viewModel.readOnlyLabel,
+                                                  icon: Icons
+                                                      .local_fire_department_rounded,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
                                       WorkoutOverviewSection(
                                         overview: overview,
+                                        revealTrigger: revealTrigger,
                                         showSummary: !viewModel.isReadOnly,
                                         onViewAnatomy: () =>
                                             _openAnatomy(context, viewModel),
@@ -365,13 +495,22 @@ class WorkoutView extends StatelessWidget {
                                   onCatchUp: (missed) =>
                                       _catchUp(viewModel, missed),
                                 ),
-                              if (viewModel.showEmptyState)
-                                WorkoutEmptyStateCard(
-                                  icon: viewModel.emptyState.icon,
-                                  title: viewModel.emptyState.title,
-                                  message: viewModel.emptyState.message,
-                                ),
                               AppPopReveal(
+                                trigger: revealTrigger,
+                                appearOnMount: true,
+                                child: viewModel.showEmptyState
+                                    ? WorkoutEmptyStateCard(
+                                        icon: viewModel.emptyState.icon,
+                                        iconAsset:
+                                            viewModel.emptyState.iconAsset,
+                                        title: viewModel.emptyState.title,
+                                        message: viewModel.emptyState.message,
+                                      )
+                                    : null,
+                              ),
+                              AppPopReveal(
+                                trigger: revealTrigger,
+                                appearOnMount: true,
                                 child:
                                     viewModel.showSuggestion &&
                                         suggestion != null
@@ -393,12 +532,15 @@ class WorkoutView extends StatelessWidget {
                               if (viewModel.showPrograms) ...[
                                 if (activeProgram != null &&
                                     activeProgramId != null) ...[
-                                  ActiveProgramCard(
-                                    program: activeProgram,
-                                    onTap: () => _openProgram(
-                                      context,
-                                      viewModel,
-                                      activeProgramId,
+                                  AppPopReveal(
+                                    appearOnMount: true,
+                                    child: ActiveProgramCard(
+                                      program: activeProgram,
+                                      onTap: () => _openProgram(
+                                        context,
+                                        viewModel,
+                                        activeProgramId,
+                                      ),
                                     ),
                                   ),
                                   SizedBox(height: AppSpacing.xl3),
@@ -420,43 +562,48 @@ class WorkoutView extends StatelessWidget {
                                     viewModel,
                                     const ProgramEditorArgs(),
                                   ),
+                                  isPremiumUnlocked: context
+                                      .watch<PremiumAccessProvider>()
+                                      .canUse(
+                                        PremiumCapability.multiModeWorkouts,
+                                      ),
                                 ),
                               ],
                             ],
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      height: actionsBottom + AppSizes.s48 + AppSpacing.xl3,
-                    ),
-                  ],
-                ),
-              ),
-              if (viewModel.primaryAction == WorkoutPrimaryAction.start)
-                Positioned(
-                  right: context.sizes.screenHorizontalPadding,
-                  bottom: actionsBottom,
-                  child: PillButton(
-                    label: viewModel.primaryActionLabel,
-                    icon: Icons.play_arrow_rounded,
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
-                    onPressed: () => _startWorkout(viewModel),
+                      SizedBox(
+                        height: actionsBottom + AppSizes.s48 + AppSpacing.xl3,
+                      ),
+                    ],
                   ),
                 ),
-              if (viewModel.primaryAction == WorkoutPrimaryAction.resume)
-                Positioned(
-                  right: context.sizes.screenHorizontalPadding,
-                  bottom: actionsBottom,
-                  child: ActiveWorkoutFab(
-                    statusLabel: viewModel.activeStatusLabel,
-                    timerLabel: viewModel.activeTimerLabel,
-                    isPaused: viewModel.isTimerPaused,
-                    onOpen: () => _resumeWorkout(viewModel),
-                    onTogglePause: () => _toggleTimer(viewModel),
+                if (viewModel.primaryAction == WorkoutPrimaryAction.start)
+                  Positioned(
+                    right: context.sizes.screenHorizontalPadding,
+                    bottom: actionsBottom,
+                    child: PillButton(
+                      label: viewModel.primaryActionLabel,
+                      icon: Icons.play_arrow_rounded,
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
+                      onPressed: () => _startWorkout(viewModel),
+                    ),
                   ),
-                ),
-            ],
+                if (viewModel.primaryAction == WorkoutPrimaryAction.resume)
+                  Positioned(
+                    right: context.sizes.screenHorizontalPadding,
+                    bottom: actionsBottom,
+                    child: ActiveWorkoutFab(
+                      statusLabel: viewModel.activeStatusLabel,
+                      progressLabel: viewModel.activeProgressLabel,
+                      isPaused: viewModel.isTimerPaused,
+                      onOpen: () => _resumeWorkout(viewModel),
+                      onTogglePause: () => _toggleTimer(viewModel),
+                    ),
+                  ),
+              ],
+            ),
           );
         },
       ),

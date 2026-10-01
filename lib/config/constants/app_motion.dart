@@ -7,15 +7,39 @@ class AppMotion {
 
   static const Duration press = Duration(milliseconds: 120);
   static const Duration expand = Duration(milliseconds: 280);
+  static const Duration expandSoft = Duration(milliseconds: 460);
   static const Duration fast = Duration(milliseconds: 480);
   static const Duration medium = Duration(milliseconds: 720);
   static const Duration modeShift = Duration(milliseconds: 900);
   static const Duration notice = Duration(milliseconds: 4000);
+  static const Duration profileAnalysis = Duration(milliseconds: 5600);
+  static const Duration analysisScreen = Duration(milliseconds: 640);
+  static const Duration analysisStep = Duration(milliseconds: 420);
+  static const Curve analysisCurve = Curves.easeOutCubic;
+  static const Interval analysisTitleIn = Interval(
+    0.08,
+    0.2,
+    curve: Curves.easeOutCubic,
+  );
+  static const double analysisStepsStart = 0.16;
+  static const double analysisStepsEnd = 0.9;
+  static const double analysisStepRevealSpan = 0.1;
+  static const double analysisStepRevealStagger = 0.03;
+  static const double analysisRise = AppSizes.s12;
+  static const double analysisExitScale = 1.04;
+
+  static const Duration permissionPromptDelay = Duration(milliseconds: 900);
+
+  static const Duration blueprintScore = Duration(milliseconds: 1600);
+  static const Duration blueprintScoreDelay = Duration(milliseconds: 420);
+  static const Curve blueprintScoreCurve = Curves.easeOutCubic;
 
   static const Curve enter = Curves.easeOutQuart;
   static const Curve expandCurve = Curves.easeOutCubic;
   static const Curve collapseCurve = Curves.easeInCubic;
   static const double pressScale = 0.98;
+  static const double halfTurn = 0.5;
+  static const double quarterTurn = 0.25;
   static const Curve pop = Curves.easeOutBack;
   static const Curve fadeIn = Interval(0, 0.6, curve: Curves.easeOut);
 
@@ -88,8 +112,20 @@ class AppMotion {
   );
   static const double popRevealScale = 0.9;
 
+  static const Duration staggerReveal = Duration(milliseconds: 1400);
+  static const double staggerRevealStep = 0.09;
+  static const double staggerRevealSpan = 0.4;
+
   static const Duration tabReveal = Duration(milliseconds: 260);
   static const Curve tabRevealCurve = Curves.easeOutCubic;
+
+  static const Duration workoutFinishMin = Duration(milliseconds: 1800);
+  static const Duration workoutFinishHold = Duration(milliseconds: 1100);
+  static const Duration workoutFinishPulse = Duration(milliseconds: 900);
+  static const double workoutFinishRowStep = 0.14;
+  static const double workoutFinishRowSpan = 0.42;
+  static const double workoutFinishLoadingFill = 0.86;
+  static const double workoutFinishRowRise = 0.4;
 
   static const Duration spinnerReveal = Duration(milliseconds: 220);
   static const Duration spinnerRevealDelay = Duration(milliseconds: 120);
@@ -104,7 +140,8 @@ class AppMotion {
   static const Duration modeSettleDebounce = Duration(milliseconds: 250);
   static const Duration modeSettleRetry = Duration(milliseconds: 200);
   static const Duration modeTransitionCooldown = Duration.zero;
-  static const Duration modeTransitionWatchdog = Duration(seconds: 6);
+  static const Duration modeTransitionWatchdog = Duration(seconds: 12);
+  static const Duration modeHold = Duration(seconds: 5);
 
   static const Curve modeImmerse = Curves.easeOutCubic;
   static const Curve modeRelease = Curves.easeInOutCubic;
@@ -120,6 +157,8 @@ class AppMotion {
   static const Interval modeVisual = Interval(0.06, 0.74, curve: Curves.linear);
   static const Interval modeTitleIn = Interval(0.34, 0.6, curve: modeImmerse);
   static const Interval modeMessageIn = Interval(0.44, 0.7, curve: modeImmerse);
+  static const Interval modeActionIn = Interval(0.56, 0.72, curve: modeImmerse);
+  static const double modeHoldPoint = 0.72;
   static const double modeThemeSwitchPoint = 0.62;
   static const double modeVeilOpacity = 0.96;
   static const double modeVeilBlurSigma = AppSizes.s18;

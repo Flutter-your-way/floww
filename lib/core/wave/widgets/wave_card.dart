@@ -1,3 +1,4 @@
+import 'package:floww/config/widgets/animations/app_card_pop.dart';
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
@@ -24,37 +25,39 @@ class WaveCard extends StatelessWidget {
     final header = this.header;
     final radius = BorderRadius.circular(AppRadius.lg);
 
-    return Container(
-      decoration: AppShapes.decoration(
-        color: context.colors.backgroundSecondary,
-        borderRadius: radius,
-        side: BorderSide(
-          color: borderColor ?? context.colors.borderSubtle,
-          width: AppSizes.s1,
+    return AppCardPop(
+      child: Container(
+        decoration: AppShapes.decoration(
+          color: context.colors.backgroundSecondary,
+          borderRadius: radius,
+          side: BorderSide(
+            color: borderColor ?? context.colors.borderSubtle,
+            width: AppSizes.s1,
+          ),
         ),
-      ),
-      child: ClipRSuperellipse(
-        borderRadius: radius,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (header != null)
-              ColoredBox(
-                color: headerColor ?? context.colors.tint,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.lg,
+        child: ClipRSuperellipse(
+          borderRadius: radius,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (header != null)
+                ColoredBox(
+                  color: headerColor ?? context.colors.tint,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.lg,
+                    ),
+                    child: header,
                   ),
-                  child: header,
                 ),
-              ),
-            for (var index = 0; index < sections.length; index++) ...[
-              if (index > 0 || header != null) const WaveCardDivider(),
-              sections[index],
+              for (var index = 0; index < sections.length; index++) ...[
+                if (index > 0 || header != null) const WaveCardDivider(),
+                sections[index],
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

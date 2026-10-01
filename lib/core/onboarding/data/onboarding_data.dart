@@ -2,6 +2,22 @@ import 'package:flutter/material.dart';
 import '../models/onboarding_models.dart';
 
 class OnboardingData {
+  static List<OnboardingPhase> activePhasesFor(Map<String, dynamic> answers) {
+    final trainingType = answers['training_type'];
+    final type = switch (trainingType) {
+      List(isNotEmpty: true) => trainingType.first.toString().toLowerCase(),
+      String() => trainingType.toLowerCase(),
+      _ => null,
+    };
+    return [
+      ...corePhases,
+      if (type == 'gym') gymPhase,
+      if (type == 'calisthenics') calisthenicsPhase,
+      if (type == 'yoga') yogaPhase,
+      ...finalPhases,
+    ];
+  }
+
   static const List<OnboardingPhase> corePhases = [
     // Phase 1
     OnboardingPhase(
@@ -1048,9 +1064,15 @@ class OnboardingData {
       questions: [
         OnboardingQuestion(
           id: 'loading_screen',
-          title: 'Analyzing your profile...',
+          title: 'WAVE is analyzing…',
           subtitle: 'WAVE is calculating your optimal starting point.',
           inputType: InputType.loading,
+          options: [
+            QuestionOption(title: 'Analyzing recovery profile'),
+            QuestionOption(title: 'Learning energy patterns'),
+            QuestionOption(title: 'Building nutrition model'),
+            QuestionOption(title: 'Designing workout system'),
+          ],
         ),
         OnboardingQuestion(
           id: 'summary_screen',

@@ -9,6 +9,8 @@ import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/core/flow_mode/views/flow_mode_transition_host.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/health/services/health_service.dart';
+import 'package:floww/core/nutrition/providers/food_photo_provider.dart';
+import 'package:floww/core/nutrition/services/food_image_service.dart';
 import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/services/premium_service.dart';
 import 'package:floww/firebase_options.dart';
@@ -17,7 +19,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config/theme/app_theme.dart';
-import 'config/theme/card_style_controller.dart';
 import 'config/theme/theme_controller.dart';
 import 'navigation/app_router.dart';
 import 'navigation/services/navigation_service.dart';
@@ -33,28 +34,19 @@ Future<void> main() async {
     (e) => e.name == (prefs.getString('app_theme_mode') ?? 'flow'),
     orElse: () => AppThemeMode.flow,
   );
-  final isGlass = CardStyleController.load(prefs);
-  runApp(MainApp(initialMode: saved, initialGlass: isGlass));
+  runApp(MainApp(initialMode: saved));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({
-    super.key,
-    required this.initialMode,
-    this.initialGlass = CardStyleController.defaultIsGlass,
-  });
+  const MainApp({super.key, required this.initialMode});
 
   final AppThemeMode initialMode;
-  final bool initialGlass;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeModeController(initialMode)),
-        ChangeNotifierProvider(
-          create: (_) => CardStyleController(initialGlass),
-        ),
         ChangeNotifierProxyProvider<ThemeModeController, FlowModeController>(
           create: (context) =>
               FlowModeController(context.read<ThemeModeController>()),
@@ -66,6 +58,9 @@ class MainApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => PremiumAccessProvider(PremiumService())..start(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FoodPhotoProvider(FoodImageService())..start(),
         ),
       ],
       child: Consumer<ThemeModeController>(

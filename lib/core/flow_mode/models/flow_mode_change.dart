@@ -41,6 +41,8 @@ class FlowModeCopy {
     AppThemeMode.flow: "You're in the zone.",
   };
 
+  static const String acknowledge = 'Okay';
+
   static String titleOf(AppThemeMode mode) => titles[mode]!;
 
   static String messageOf(AppThemeMode mode) => messages[mode]!;

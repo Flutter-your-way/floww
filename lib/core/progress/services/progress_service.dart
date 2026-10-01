@@ -22,21 +22,28 @@ class ProgressException implements Exception {
 }
 
 class ProgressGoals {
-  const ProgressGoals({this.startWeightKg, this.targetWeightKg});
+  const ProgressGoals({
+    this.startWeightKg,
+    this.targetWeightKg,
+    this.flowBaseline,
+  });
 
   static const empty = ProgressGoals();
 
   factory ProgressGoals.fromJson(Map<String, dynamic> json) {
     final profile = json['profile'] as Map<String, dynamic>?;
     final goals = json['goalsActivity'] as Map<String, dynamic>?;
+    final blueprint = json['blueprint'] as Map<String, dynamic>?;
     return ProgressGoals(
       startWeightKg: (profile?['weightKg'] as num?)?.toDouble(),
       targetWeightKg: (goals?['targetWeightKg'] as num?)?.toDouble(),
+      flowBaseline: (blueprint?['flowScore'] as num?)?.round(),
     );
   }
 
   final double? startWeightKg;
   final double? targetWeightKg;
+  final int? flowBaseline;
 }
 
 class ProgressRecords {

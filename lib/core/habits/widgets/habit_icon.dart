@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import 'package:floww/config/constants/app_images.dart';
 
 import 'package:floww/core/habits/models/habit.dart';
 
@@ -33,7 +36,20 @@ class HabitIcon extends StatelessWidget {
     HabitIconKind.target => Icons.track_changes_rounded,
   };
 
+  static String? assetOf(HabitIconKind kind) => switch (kind) {
+    HabitIconKind.clipboard => AppImages.clipboardIcon,
+    _ => null,
+  };
+
   @override
-  Widget build(BuildContext context) =>
-      Icon(iconOf(kind), size: size, color: color);
+  Widget build(BuildContext context) {
+    final asset = assetOf(kind);
+    if (asset == null) return Icon(iconOf(kind), size: size, color: color);
+    return SvgPicture.asset(
+      asset,
+      width: size,
+      height: size,
+      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+    );
+  }
 }

@@ -5,9 +5,9 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
-import 'package:floww/config/widgets/animations/date_change_transition.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
-import 'package:floww/core/nutrition/models/food_model.dart';
+import 'package:floww/config/widgets/animations/app_pop_reveal.dart';
+import 'package:floww/core/nutrition/models/scanned_food.dart';
 import 'package:floww/core/nutrition/models/meal_details_args.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
@@ -15,6 +15,7 @@ import 'package:floww/core/nutrition/view_models/nutrition_view_model.dart';
 import 'package:floww/core/nutrition/views/food_scan_result_sheet.dart';
 import 'package:floww/core/nutrition/views/log_food_sheet.dart';
 import 'package:floww/core/nutrition/views/macronutrients_sheet.dart';
+import 'package:floww/core/nutrition/views/micronutrient_sources_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_date_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
 import 'package:floww/core/nutrition/views/water_intake_sheet.dart';
@@ -57,11 +58,12 @@ class NutritionView extends StatelessWidget {
     BuildContext context,
     NutritionViewModel viewModel,
   ) async {
-    final food = await NavigationService.instance.push(AppRouter.foodScan);
-    if (food is! FoodModel || !context.mounted) return;
+    final scanned = await NavigationService.instance.push(AppRouter.foodScan);
+    if (scanned is! ScannedFood || !context.mounted) return;
     await FoodScanResultSheet.show(
       context,
-      food: food,
+      food: scanned.food,
+      photo: scanned.photo,
       goal: viewModel.goal,
       date: viewModel.selectedDate,
     );
@@ -111,6 +113,8 @@ class NutritionView extends StatelessWidget {
       backgroundColor: Colors.transparent,
       body: Consumer<NutritionViewModel>(
         builder: (context, viewModel, child) {
+          final revealTrigger = viewModel.selectedDate;
+
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -143,149 +147,278 @@ class NutritionView extends StatelessWidget {
                         onPickDate: () => _pickDate(context, viewModel),
                       ),
                       SizedBox(height: AppSpacing.xl4),
-                      DateChangeTransition(
-                        value: viewModel.selectedDate,
-                        direction: viewModel.dateDirection,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (viewModel.showFlowImpact) ...[
-                              FlowImpactCard(
-                                totalPointsLabel:
-                                    viewModel.flowPointsTotalLabel,
-                                maxLabel: viewModel.flowImpactMaxLabel,
-                                rows: viewModel.flowPointRows,
-                              ),
-                              SizedBox(height: AppSpacing.xl),
-                            ],
-                            LuminosityLayer(
-                              enabled: viewModel.showFlowImpact,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  if (viewModel.showFlowImpact) ...[
-                                    TipCard(
-                                      title: viewModel.readOnlyLabel,
-                                      icon: Icons.local_fire_department_rounded,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppPopReveal(
+                            trigger: revealTrigger,
+                            child: viewModel.showFlowImpact
+                                ? Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: AppSpacing.xl,
                                     ),
-                                    SizedBox(height: AppSpacing.lg),
-                                  ],
-                                  if (viewModel.showEmptyState) ...[
-                                    AppEmptyStateCard(
-                                      title: viewModel.emptyTitle,
-                                      message: viewModel.emptyMessage,
+                                    child: FlowImpactCard(
+                                      totalPointsLabel:
+                                          viewModel.flowPointsTotalLabel,
+                                      maxLabel: viewModel.flowImpactMaxLabel,
+                                      rows: viewModel.flowPointRows,
                                     ),
-                                    SizedBox(height: AppSpacing.lg),
-                                    if (viewModel.canLog) ...[
-                                      DailyGoalCard(
-                                        calories: viewModel.calorieGoalLabel,
-                                        protein: viewModel.proteinGoalLabel,
-                                        carbs: viewModel.carbsGoalLabel,
-                                        fats: viewModel.fatsGoalLabel,
-                                      ),
-                                      SizedBox(height: AppSpacing.lg),
-                                    ],
-                                    TipCard(
-                                      title: viewModel.tipTitle,
-                                      message: viewModel.tipMessage,
-                                    ),
-                                    SizedBox(height: AppSpacing.lg),
-                                  ],
-                                  if (viewModel.showDetails) ...[
-                                    if (viewModel.showStartTracking) ...[
-                                      const StartTrackingCard(),
-                                      SizedBox(height: AppSpacing.lg),
-                                    ],
-                                    if (viewModel.showDietPlan) ...[
-                                      DietPlanCard(
-                                        nextLabel: viewModel.dietPlanNextLabel,
-                                        daysLabel: viewModel.dietPlanDaysLabel,
-                                        percentLabel:
-                                            viewModel.dietPlanPercentLabel,
-                                        progress: viewModel.dietPlanProgress,
-                                        onTap: () => _openDietPlan(viewModel),
-                                      ),
-                                      SizedBox(height: AppSpacing.lg),
-                                    ],
-                                    if (viewModel.showRecentFoods) ...[
-                                      RecentFoodLogsSection(
-                                        items: viewModel.recentFoods,
-                                        onTap: (item) => _openRecentFood(
-                                          context,
-                                          viewModel,
-                                          item,
-                                        ),
-                                        onViewAll: () =>
-                                            _logFood(context, viewModel),
-                                      ),
-                                      SizedBox(height: AppSpacing.lg),
-                                    ],
-                                    CalorieSummaryCard(
-                                      goalValue: viewModel.calorieGoalLabel,
-                                      remainingValue:
-                                          viewModel.caloriesRemainingLabel,
-                                      consumedValue:
-                                          viewModel.caloriesConsumedLabel,
-                                      shareLabel: viewModel.calorieShareLabel,
-                                      progress: viewModel.calorieProgress,
-                                    ),
-                                    SizedBox(height: AppSpacing.lg),
-                                    MacronutrientsCard(
-                                      items: viewModel.macros,
-                                      onLearnMore: () =>
-                                          MacronutrientsSheet.show(
-                                            context,
-                                            day: viewModel.day,
+                                  )
+                                : null,
+                          ),
+                          LuminosityLayer(
+                            enabled: viewModel.showFlowImpact,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showFlowImpact
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
                                           ),
-                                    ),
-                                    SizedBox(height: AppSpacing.lg),
-                                    MicronutrientTiles(
-                                      items: viewModel.micronutrients,
-                                      onOpenWater: () => WaterIntakeSheet.show(
-                                        context,
-                                        date: viewModel.selectedDate,
-                                        goal: viewModel.goal,
-                                      ),
-                                      onAddWater: viewModel.canLog
-                                          ? () => WaterIntakeSheet.show(
-                                              context,
-                                              date: viewModel.selectedDate,
-                                              goal: viewModel.goal,
-                                            )
-                                          : null,
-                                    ),
-                                    SizedBox(height: AppSpacing.lg),
-                                    MealBreakdownCard(
-                                      items: viewModel.meals,
-                                      onOpenMeal: (meal) =>
-                                          _openMeal(viewModel, meal),
-                                      onAddToMeal: viewModel.canLog
-                                          ? (meal) => _logFood(
+                                          child: TipCard(
+                                            title: viewModel.readOnlyLabel,
+                                            icon: Icons
+                                                .local_fire_department_rounded,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showEmptyState
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: AppEmptyStateCard(
+                                            title: viewModel.emptyTitle,
+                                            message: viewModel.emptyMessage,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child:
+                                      viewModel.showEmptyState &&
+                                          viewModel.canLog
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: DailyGoalCard(
+                                            calories:
+                                                viewModel.calorieGoalLabel,
+                                            protein: viewModel.proteinGoalLabel,
+                                            carbs: viewModel.carbsGoalLabel,
+                                            fats: viewModel.fatsGoalLabel,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showEmptyState
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: TipCard(
+                                            title: viewModel.tipTitle,
+                                            message: viewModel.tipMessage,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child:
+                                      viewModel.showDetails &&
+                                          viewModel.showStartTracking
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: const StartTrackingCard(),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child:
+                                      viewModel.showDetails &&
+                                          viewModel.showDietPlan
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: DietPlanCard(
+                                            nextLabel:
+                                                viewModel.dietPlanNextLabel,
+                                            daysLabel:
+                                                viewModel.dietPlanDaysLabel,
+                                            percentLabel:
+                                                viewModel.dietPlanPercentLabel,
+                                            progress:
+                                                viewModel.dietPlanProgress,
+                                            onTap: () =>
+                                                _openDietPlan(viewModel),
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child:
+                                      viewModel.showDetails &&
+                                          viewModel.showRecentFoods
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: RecentFoodLogsSection(
+                                            items: viewModel.recentFoods,
+                                            onTap: (item) => _openRecentFood(
                                               context,
                                               viewModel,
-                                              meal,
-                                            )
-                                          : null,
-                                      onAddMeal: viewModel.canLog
-                                          ? () => _logFood(context, viewModel)
-                                          : null,
-                                    ),
-                                    SizedBox(height: AppSpacing.lg),
-                                    FlowPointsCard(
-                                      points: viewModel.flowPoints,
-                                      maxPoints: viewModel.flowPointsMax,
-                                      headline: viewModel.flowPointsHeadline,
-                                      message: viewModel.flowPointsMessage,
-                                      onInfo: () => AppInfoSheet.show(
-                                        context,
-                                        title: 'Nutrition',
-                                        message:
-                                            viewModel.flowPointsInfoMessage,
-                                      ),
-                                    ),
-                                    SizedBox(height: AppSpacing.lg),
-                                  ],
-                                  WeeklyReportCard(
+                                              item,
+                                            ),
+                                            onViewAll: () =>
+                                                _logFood(context, viewModel),
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showDetails
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: CalorieSummaryCard(
+                                            goalValue:
+                                                viewModel.calorieGoalLabel,
+                                            remainingValue: viewModel
+                                                .caloriesRemainingLabel,
+                                            consumedValue:
+                                                viewModel.caloriesConsumedLabel,
+                                            shareLabel:
+                                                viewModel.calorieShareLabel,
+                                            progress: viewModel.calorieProgress,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showDetails
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: MacronutrientsCard(
+                                            items: viewModel.macros,
+                                            onLearnMore: () =>
+                                                MacronutrientsSheet.show(
+                                                  context,
+                                                  day: viewModel.day,
+                                                ),
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showDetails
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: MicronutrientTiles(
+                                            items: viewModel.micronutrients,
+                                            onOpenWater: () =>
+                                                WaterIntakeSheet.show(
+                                                  context,
+                                                  date: viewModel.selectedDate,
+                                                  goal: viewModel.goal,
+                                                ),
+                                            onAddWater: viewModel.canLog
+                                                ? () => WaterIntakeSheet.show(
+                                                    context,
+                                                    date:
+                                                        viewModel.selectedDate,
+                                                    goal: viewModel.goal,
+                                                  )
+                                                : null,
+                                            onOpenNutrient: (kind) =>
+                                                MicronutrientSourcesSheet.show(
+                                                  context,
+                                                  day: viewModel.day,
+                                                  kind: kind,
+                                                ),
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showDetails
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: MealBreakdownCard(
+                                            items: viewModel.meals,
+                                            onOpenMeal: (meal) =>
+                                                _openMeal(viewModel, meal),
+                                            onAddToMeal: viewModel.canLog
+                                                ? (meal) => _logFood(
+                                                    context,
+                                                    viewModel,
+                                                    meal,
+                                                  )
+                                                : null,
+                                            onAddMeal: viewModel.canLog
+                                                ? () => _logFood(
+                                                    context,
+                                                    viewModel,
+                                                  )
+                                                : null,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showDetails
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: FlowPointsCard(
+                                            points: viewModel.flowPoints,
+                                            maxPoints: viewModel.flowPointsMax,
+                                            headline:
+                                                viewModel.flowPointsHeadline,
+                                            message:
+                                                viewModel.flowPointsMessage,
+                                            onInfo: () => AppInfoSheet.show(
+                                              context,
+                                              title: 'Nutrition',
+                                              message: viewModel
+                                                  .flowPointsInfoMessage,
+                                            ),
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: WeeklyReportCard(
                                     rangeLabel: viewModel.weekRangeLabel,
                                     onTap: () =>
                                         NavigationService.instance.push(
@@ -293,11 +426,11 @@ class NutritionView extends StatelessWidget {
                                           arguments: viewModel.selectedDate,
                                         ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                       SizedBox(
                         height: actionsBottom + AppSizes.s48 + AppSpacing.xl3,

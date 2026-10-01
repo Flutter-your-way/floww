@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/workout/models/workout_completion.dart';
@@ -81,10 +83,10 @@ class WorkoutSessionEntity {
     this.notes = '',
     this.recoveryMood,
     this.isTimerPaused = false,
-    this.timerResumedAt,
     this.restEndsAt,
     this.restRemainingSeconds = 0,
     this.currentEntryId,
+    this.planDate,
   });
 
   factory WorkoutSessionEntity.fromJson(Map<String, dynamic> json) =>
@@ -120,11 +122,13 @@ class WorkoutSessionEntity {
         notes: json['notes'] as String? ?? '',
         recoveryMood: _moodOf(json['recoveryMood'] as String?),
         isTimerPaused: json['isTimerPaused'] as bool? ?? false,
-        timerResumedAt: _dateOf(json['timerResumedAt']),
         restEndsAt: _dateOf(json['restEndsAt']),
         restRemainingSeconds: (json['restRemainingSeconds'] as num? ?? 0)
             .toInt(),
         currentEntryId: json['currentEntryId'] as String?,
+        planDate: json['planDate'] is String
+            ? DateTime.tryParse(json['planDate'] as String)
+            : null,
       );
 
   final String id;
@@ -158,10 +162,15 @@ class WorkoutSessionEntity {
   final String notes;
   final RecoveryMood? recoveryMood;
   final bool isTimerPaused;
-  final DateTime? timerResumedAt;
   final DateTime? restEndsAt;
   final int restRemainingSeconds;
   final String? currentEntryId;
+  final DateTime? planDate;
+
+  DateTime get scheduledDate => planDate ?? date;
+
+  bool get isCatchUp =>
+      planDate != null && !AppDateUtils.isSameDay(planDate!, date);
 
   bool get isCompleted => status == WorkoutSessionStatus.completed;
 
@@ -169,14 +178,25 @@ class WorkoutSessionEntity {
 
   bool get hasHeartRate => averageHeartRate != null;
 
-  bool get isTimerRunning => isInProgress && !isTimerPaused;
+  static const int _maxSetGapSeconds = 900;
 
-  int elapsedSecondsAt(DateTime now) {
-    final resumedAt = timerResumedAt;
-    if (!isTimerRunning || resumedAt == null) return durationSeconds;
-    final running = now.difference(resumedAt).inSeconds;
-    return durationSeconds + (running < 0 ? 0 : running);
+  int get activeSeconds {
+    final sets = [for (final exercise in exercises) ...exercise.sets]
+      ..sort((a, b) => a.loggedAt.compareTo(b.loggedAt));
+    if (sets.isEmpty) return 0;
+    var seconds = sets.first.workSeconds;
+    for (var i = 1; i < sets.length; i++) {
+      final work = sets[i].workSeconds;
+      final gap = sets[i].loggedAt.difference(sets[i - 1].loggedAt).inSeconds;
+      seconds += math.min(
+        math.max(gap, work),
+        math.max(work, _maxSetGapSeconds),
+      );
+    }
+    return seconds;
   }
+
+  int get trackedSeconds => isInProgress ? activeSeconds : durationSeconds;
 
   WorkoutSessionEntity withPlannedSetsLogged(DateTime now) => copyWith(
     exercises: [
@@ -201,9 +221,8 @@ class WorkoutSessionEntity {
           restRemainingSeconds: 0,
         );
 
-  WorkoutSessionEntity pausedAt(DateTime now) => isTimerRunning
+  WorkoutSessionEntity pausedAt(DateTime now) => isInProgress && !isTimerPaused
       ? copyWith(
-          durationSeconds: elapsedSecondsAt(now),
           isTimerPaused: true,
           restRemainingSeconds: restSecondsAt(now),
           clearRestEnd: true,
@@ -212,11 +231,7 @@ class WorkoutSessionEntity {
 
   WorkoutSessionEntity resumedAt(DateTime now) {
     final rest = restSecondsAt(now);
-    final resumed = copyWith(
-      isTimerPaused: false,
-      timerResumedAt: now,
-      clearRest: true,
-    );
+    final resumed = copyWith(isTimerPaused: false, clearRest: true);
     return rest <= 0 ? resumed : resumed.restingFor(rest, now);
   }
 
@@ -236,7 +251,6 @@ class WorkoutSessionEntity {
     String? notes,
     RecoveryMood? recoveryMood,
     bool? isTimerPaused,
-    DateTime? timerResumedAt,
     DateTime? restEndsAt,
     int? restRemainingSeconds,
     String? currentEntryId,
@@ -275,7 +289,6 @@ class WorkoutSessionEntity {
     notes: notes ?? this.notes,
     recoveryMood: recoveryMood ?? this.recoveryMood,
     isTimerPaused: isTimerPaused ?? this.isTimerPaused,
-    timerResumedAt: timerResumedAt ?? this.timerResumedAt,
     restEndsAt: clearRest || clearRestEnd
         ? null
         : restEndsAt ?? this.restEndsAt,
@@ -285,6 +298,7 @@ class WorkoutSessionEntity {
     currentEntryId: clearCurrentEntry
         ? null
         : currentEntryId ?? this.currentEntryId,
+    planDate: planDate,
   );
 
   Map<String, dynamic> toJson() => {
@@ -319,14 +333,13 @@ class WorkoutSessionEntity {
     'personalRecords': [for (final record in personalRecords) record.toJson()],
     'notes': notes,
     if (recoveryMood != null) 'recoveryMood': recoveryMood!.name,
+    'durationSeconds': durationSeconds,
+    if (planDate != null) 'planDate': AppDateUtils.dateKey(planDate!),
     ...timerJson,
   };
 
   Map<String, dynamic> get timerJson => {
-    'durationSeconds': durationSeconds,
     'isTimerPaused': isTimerPaused,
-    if (timerResumedAt != null)
-      'timerResumedAt': AppDateUtils.isoKey(timerResumedAt!),
     ...restJson,
   };
 

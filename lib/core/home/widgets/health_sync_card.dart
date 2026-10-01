@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 
-class AppleHealthSyncCard extends StatelessWidget {
-  const AppleHealthSyncCard({
+class HealthSyncCard extends StatelessWidget {
+  const HealthSyncCard({
     super.key,
+    required this.sourceName,
+    required this.iconAsset,
     required this.connected,
     this.syncDetail,
     this.onConnect,
     this.onDisconnect,
   });
 
+  final String sourceName;
+  final String iconAsset;
   final bool connected;
   final String? syncDetail;
   final VoidCallback? onConnect;
@@ -30,7 +33,7 @@ class AppleHealthSyncCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             child: SvgPicture.asset(
-              AppImages.appleHealth,
+              iconAsset,
               height: AppSizes.s40,
               width: AppSizes.s40,
             ),
@@ -40,7 +43,12 @@ class AppleHealthSyncCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Apple Health Sync', style: context.textTheme.titleLarge),
+                Text(
+                  '$sourceName Sync',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleLarge,
+                ),
                 SizedBox(height: AppSpacing.xs),
                 Text(
                   connected

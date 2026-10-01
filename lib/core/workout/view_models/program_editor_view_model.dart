@@ -417,6 +417,8 @@ class ProgramEditorViewModel extends ChangeNotifier {
       goal: _goal,
       isCustom: true,
       basedOn: _args.editExisting ? source?.basedOn : source?.id,
+      lengthDays: _args.editExisting ? source?.lengthDays ?? 0 : 0,
+      isGenerated: _args.editExisting && (source?.isGenerated ?? false),
       days: [
         for (final day in _days)
           day.copyWith(name: day.name.trim(), durationMinutes: _minutesOf(day)),

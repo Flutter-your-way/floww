@@ -13,14 +13,18 @@ import 'package:floww/core/achievements/views/streak_achievements_sheet.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
 import 'package:floww/core/flow_mode/widgets/flow_mode_debug_trigger.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
+import 'package:floww/core/premium/widgets/premium_gate.dart';
+import 'package:floww/core/premium/widgets/premium_locked_card.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
 import 'package:floww/core/home/views/flow_mode_sheet.dart';
 import 'package:floww/core/home/views/flow_score_breakdown_sheet.dart';
 import 'package:floww/core/home/views/recovery_sheet.dart';
-import 'package:floww/core/home/widgets/apple_health_sync_card.dart';
+import 'package:floww/core/home/widgets/health_sync_card.dart';
 import 'package:floww/core/home/widgets/flow_score_boost_card.dart';
 import 'package:floww/core/home/widgets/flow_score_card.dart';
+import 'package:floww/core/home/widgets/daily_quote_card.dart';
 import 'package:floww/core/home/widgets/home_header.dart';
 import 'package:floww/core/home/widgets/muscle_recovery_card.dart';
 import 'package:floww/core/home/widgets/nutrition_summary_card.dart';
@@ -165,7 +169,7 @@ class HomeView extends StatelessWidget {
                   SizedBox(height: AppSpacing.xl2),
                   FlowModeDebugTrigger(
                     child: FlowScoreCard(
-                      percent: home.flowScorePercent,
+                      percent: home.displayFlowScorePercent,
                       recoveryLevel: home.recoveryLevel,
                       hasRecoveryData: home.hasRecoveryData,
                       todayMode: activeMode,
@@ -176,7 +180,15 @@ class HomeView extends StatelessWidget {
                     ),
                   ),
                   AppCollapsibleSection(
-                    visible: home.flowScorePercent == 0,
+                    visible: home.dailyQuote != null,
+                    gap: AppSpacing.lg,
+                    animateIn: true,
+                    child: home.dailyQuote == null
+                        ? const SizedBox.shrink()
+                        : DailyQuoteCard(quote: home.dailyQuote!),
+                  ),
+                  AppCollapsibleSection(
+                    visible: !home.hasActivityToday,
                     gap: AppSpacing.xl2,
                     child: FlowScoreBoostCard(
                       boosts: home.flowScoreBoosts,
@@ -204,7 +216,9 @@ class HomeView extends StatelessWidget {
                     onTap: _openNutrition,
                   ),
                   SizedBox(height: AppSpacing.xl2),
-                  AppleHealthSyncCard(
+                  HealthSyncCard(
+                    sourceName: health.sourceName,
+                    iconAsset: health.sourceIcon,
                     connected: health.isConnected,
                     syncDetail: health.statusLabel,
                     onConnect: health.connect,
@@ -223,7 +237,15 @@ class HomeView extends StatelessWidget {
                   ),
                   if (home.waveInsight != null) ...[
                     SizedBox(height: AppSpacing.xl2),
-                    WaveInsightBanner(message: home.waveInsight!),
+                    PremiumGate(
+                      capability: PremiumCapability.personalizedRecommendations,
+                      placeholder: const SizedBox.shrink(),
+                      locked: const PremiumLockedCard(
+                        capability:
+                            PremiumCapability.personalizedRecommendations,
+                      ),
+                      child: WaveInsightBanner(message: home.waveInsight!),
+                    ),
                   ],
                   SizedBox(
                     height:

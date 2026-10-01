@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
@@ -13,11 +16,13 @@ class MicronutrientTiles extends StatelessWidget {
     required this.items,
     this.onOpenWater,
     this.onAddWater,
+    this.onOpenNutrient,
   });
 
   final List<MicronutrientTileItem> items;
   final VoidCallback? onOpenWater;
   final VoidCallback? onAddWater;
+  final ValueChanged<MicronutrientKind>? onOpenNutrient;
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +51,14 @@ class MicronutrientTiles extends StatelessWidget {
 
   Widget _tile(MicronutrientTileItem item) {
     final isWater = item.kind == MicronutrientKind.water;
+    final onOpenNutrient = this.onOpenNutrient;
     return _MicronutrientTile(
       item: item,
-      onTap: isWater ? onOpenWater : null,
+      onTap: isWater
+          ? onOpenWater
+          : onOpenNutrient == null
+          ? null
+          : () => onOpenNutrient(item.kind),
       onAdd: isWater ? onAddWater : null,
     );
   }
@@ -66,10 +76,10 @@ class _MicronutrientTile extends StatelessWidget {
     final colors = context.colors;
     final onAdd = this.onAdd;
     final barColor = item.isOverLimit ? colors.destructiveBorder : null;
+    final isLimit = item.kind.isLimit;
 
-    return GestureDetector(
+    return PressScale(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -80,67 +90,87 @@ class _MicronutrientTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     item.label,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: colors.textSecondary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodyMediumRegular.copyWith(
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
-                Icon(
-                  item.kind.icon,
-                  color: colors.textSecondary,
-                  size: AppSizes.s16,
+                SvgPicture.asset(
+                  item.kind.iconAsset,
+                  width: AppSizes.s20,
+                  height: AppSizes.s20,
                 ),
               ],
             ),
-            SizedBox(height: AppSpacing.md),
+            SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 Expanded(
                   child: AppProgressBar(
                     progress: item.progress,
                     color: barColor,
+                    height: AppSizes.s8,
                   ),
                 ),
                 SizedBox(width: AppSpacing.md),
                 Text(
                   item.percentLabel,
-                  style: context.textTheme.bodySmall?.copyWith(
+                  style: AppTypography.bodySmallRegularTight.copyWith(
                     color: barColor ?? colors.textSecondary,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: AppSpacing.md),
+            SizedBox(height: AppSpacing.lg),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  item.valueLabel,
-                  style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
                 Expanded(
-                  child: Text(
-                    item.goalLabel,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: colors.textSecondary,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text.rich(
+                      TextSpan(
+                        text: item.valueLabel,
+                        style: AppTypography.bodyLargeBold.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: item.goalLabel,
+                            style: AppTypography.bodyLargeMedium.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      maxLines: 1,
                     ),
                   ),
                 ),
-                if (onAdd != null)
+                if (onAdd != null) ...[
+                  SizedBox(width: AppSpacing.md),
                   GestureDetector(
                     onTap: onAdd,
                     behavior: HitTestBehavior.opaque,
                     child: Text(
                       '+ Intake',
-                      style: context.textTheme.labelMedium?.copyWith(
+                      style: AppTypography.bodyMediumMedium.copyWith(
                         color: colors.primary,
+                        decoration: TextDecoration.underline,
+                        decorationColor: colors.primary,
                       ),
                     ),
                   ),
+                ],
+                SizedBox(width: AppSpacing.md),
+                Icon(
+                  isLimit ? Icons.arrow_downward : Icons.arrow_upward,
+                  size: AppSizes.s18,
+                  color: isLimit ? colors.accentOrange : colors.primary,
+                ),
               ],
             ),
           ],

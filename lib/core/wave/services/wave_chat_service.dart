@@ -230,14 +230,15 @@ class WaveChatService {
     final exercises = await _catalogService.loadExercises();
     final planned = plan.exercises.map((entry) => entry.exerciseId).toSet();
     final coarseGroup = _coarseGroupOf(area);
-    final alternative = exercises
-        .where(
-          (exercise) =>
-              exercise.group == coarseGroup &&
-              !planned.contains(exercise.id) &&
-              _lowLoadEquipment.contains(exercise.equipment),
-        )
-        .firstOrNull;
+    final candidates = exercises.where(
+      (exercise) =>
+          exercise.group == coarseGroup &&
+          !planned.contains(exercise.id) &&
+          _lowLoadEquipment.contains(exercise.equipment),
+    );
+    final alternative =
+        candidates.where((exercise) => exercise.isAdded).firstOrNull ??
+        candidates.firstOrNull;
     if (alternative == null) return null;
 
     return WaveInjurySwap(
@@ -459,11 +460,9 @@ class WaveChatService {
     final session = await _sessionService.loadInProgressSession(today);
     if (session == null) return null;
 
-    final now = DateTime.now();
+    final logged = session.withPlannedSetsLogged(DateTime.now());
     await _sessionService.completeSession(
-      session
-          .withPlannedSetsLogged(now)
-          .copyWith(durationSeconds: session.elapsedSecondsAt(now)),
+      logged.copyWith(durationSeconds: logged.activeSeconds),
     );
     return session.name;
   }
@@ -474,7 +473,7 @@ class WaveChatService {
     if (session == null) return null;
 
     await _sessionService.cancelSession(session.id);
-    await _planService.unlinkSession(session.date);
+    await _planService.unlinkSession(session.scheduledDate);
     return session.name;
   }
 

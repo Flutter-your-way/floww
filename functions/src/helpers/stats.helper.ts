@@ -73,11 +73,15 @@ export const refreshFlowStats = async (
   ]);
 
   const scores = new Map<string, number>();
+  let todayScore = 0;
   for (const doc of history.docs) {
     const date = doc.get("date");
-    if (typeof date === "string" && date <= clock.today) {
-      scores.set(date, numberOf(doc.get("score")));
-    }
+    if (typeof date !== "string" || date > clock.today) continue;
+    if (date === clock.today) todayScore = numberOf(doc.get("score"));
+    const hasActivity = numberOf(doc.get("workoutScore")) > 0 ||
+      numberOf(doc.get("habitScore")) > 0 ||
+      numberOf(doc.get("nutritionScore")) > 0;
+    if (hasActivity) scores.set(date, numberOf(doc.get("score")));
   }
 
   const weekFrom = addDaysToKey(clock.today, -(WEEK_DAYS - 1));
@@ -107,7 +111,7 @@ export const refreshFlowStats = async (
     weeklyAverage: weekDays === 0 ? 0 : Math.round(weekTotal / weekDays),
     monthActiveDays,
     completedDays,
-    todayScore: scores.get(clock.today) ?? 0,
+    todayScore,
     lastActiveDay,
     today: clock.today,
     updatedAt: new Date().toISOString(),

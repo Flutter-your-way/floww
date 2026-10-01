@@ -19,6 +19,7 @@ class AddExercisePickerItem {
     required this.detailLabel,
     required this.isCustom,
     required this.isSelected,
+    this.isSaved = false,
   });
 
   final String id;
@@ -26,6 +27,7 @@ class AddExercisePickerItem {
   final String detailLabel;
   final bool isCustom;
   final bool isSelected;
+  final bool isSaved;
 }
 
 class AddExerciseTargetItem {

@@ -7,10 +7,14 @@ class AppPopReveal extends StatefulWidget {
     super.key,
     required this.child,
     this.duration = AppMotion.popReveal,
+    this.trigger,
+    this.appearOnMount = false,
   });
 
   final Widget? child;
   final Duration duration;
+  final Object? trigger;
+  final bool appearOnMount;
 
   @override
   State<AppPopReveal> createState() => _AppPopRevealState();
@@ -21,7 +25,7 @@ class _AppPopRevealState extends State<AppPopReveal>
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: widget.duration,
-    value: widget.child == null ? 0 : 1,
+    value: widget.child == null || widget.appearOnMount ? 0 : 1,
   );
 
   late final Animation<double> _size = CurvedAnimation(
@@ -44,11 +48,21 @@ class _AppPopRevealState extends State<AppPopReveal>
   late Widget? _child = widget.child;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.appearOnMount && widget.child != null) _controller.forward();
+  }
+
+  @override
   void didUpdateWidget(AppPopReveal oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.child != null) {
       _child = widget.child;
-      if (oldWidget.child == null) _controller.forward();
+      if (oldWidget.child == null) {
+        _controller.forward();
+      } else if (widget.trigger != oldWidget.trigger) {
+        _controller.forward(from: 0);
+      }
     } else if (oldWidget.child != null) {
       _controller.reverse();
     }
@@ -83,7 +97,17 @@ class _AppPopRevealState extends State<AppPopReveal>
           ),
         );
       },
-      child: _child,
+      child: _child == null ? null : AppPopRevealScope(child: _child!),
     );
   }
+}
+
+class AppPopRevealScope extends InheritedWidget {
+  const AppPopRevealScope({super.key, required super.child});
+
+  static bool isActive(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<AppPopRevealScope>() != null;
+
+  @override
+  bool updateShouldNotify(AppPopRevealScope oldWidget) => false;
 }

@@ -6,7 +6,7 @@ import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
+import 'package:floww/core/nutrition/widgets/meal_time_icon.dart';
 
 class MealTimelineCard extends StatelessWidget {
   const MealTimelineCard({
@@ -42,12 +42,11 @@ class MealTimelineCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              entry.meal.icon,
-                              color: entry.meal.colorOf(context),
-                              size: AppSizes.s12,
+                            MealTimeIcon(
+                              meal: entry.meal,
+                              size: AppSizes.s20,
                             ),
-                            SizedBox(width: AppSpacing.xxs),
+                            SizedBox(width: AppSpacing.xs),
                             Flexible(
                               child: Text(
                                 entry.meal.label,

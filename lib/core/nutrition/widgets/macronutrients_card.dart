@@ -6,6 +6,7 @@ import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
+import 'package:floww/core/nutrition/widgets/macro_emoji.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
 
 class MacronutrientsCard extends StatelessWidget {
@@ -67,7 +68,7 @@ class _MacroColumn extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(item.macro.icon, color: color, size: AppSizes.s12),
+            MacroEmoji(macro: item.macro, size: AppSizes.s12),
             SizedBox(width: AppSpacing.xs),
             Text(item.macro.label, style: captionStyle),
           ],

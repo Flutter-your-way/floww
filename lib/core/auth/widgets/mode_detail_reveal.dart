@@ -74,6 +74,7 @@ class _ModeDetailRevealState extends State<ModeDetailReveal> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        const SizedBox(height: AppSizes.s32),
         _pop(
           visible: _iconVisible,
           child: SvgPicture.asset(
@@ -83,7 +84,7 @@ class _ModeDetailRevealState extends State<ModeDetailReveal> {
             colorFilter: ColorFilter.mode(widget.color, BlendMode.srcIn),
           ),
         ),
-        const SizedBox(height: AppSizes.s48),
+        const SizedBox(height: AppSizes.s32),
         _pop(
           visible: _titleVisible,
           child: TypewriterText(
@@ -113,7 +114,6 @@ class _ModeDetailRevealState extends State<ModeDetailReveal> {
             style: context.textTheme.titleMedium?.copyWith(
               fontSize: 19,
               fontFamily: 'PlusJakartaSans',
-              fontStyle: FontStyle.italic,
               color: Colors.white70,
               letterSpacing: -0.1,
               height: 1.4,
