@@ -30,7 +30,9 @@ class PrivacyDataViewModel extends ChangeNotifier {
 
   String get deleteTitle => 'Delete Account';
 
-  String get deleteSubtitle => 'Permanently delete all your data';
+  String get deleteSubtitle => _isDeleting
+      ? 'Deleting your account…'
+      : 'Permanently delete all your data';
 
   String get deletePromptTitle => 'Delete Account?';
 

@@ -19,6 +19,7 @@ class FlowModeController extends ChangeNotifier {
   int? _score;
   bool _hasBaseline = false;
   bool _isAppActive = true;
+  bool _isSuspended = false;
   bool _disposed = false;
 
   AppThemeMode get mode => _themeController.mode;
@@ -30,7 +31,7 @@ class FlowModeController extends ChangeNotifier {
   bool get isTransitioning => _activeTransition != null;
 
   void reportScore(int score) {
-    if (_disposed) return;
+    if (_disposed || _isSuspended) return;
     _score = score;
 
     final resolved = AppThemeMode.fromFlowScore(score);
@@ -50,8 +51,22 @@ class FlowModeController extends ChangeNotifier {
     _scheduleSettle(AppMotion.modeSettleDebounce);
   }
 
+  void endSession() {
+    if (_disposed) return;
+    _isSuspended = true;
+    _settleTimer?.cancel();
+    _watchdogTimer?.cancel();
+    _score = null;
+    _hasBaseline = false;
+    _lastTransitionAt = null;
+    if (_activeTransition == null) return;
+    _activeTransition = null;
+    notifyListeners();
+  }
+
   void resetSession() {
     if (_disposed) return;
+    _isSuspended = false;
     _settleTimer?.cancel();
     _watchdogTimer?.cancel();
     _score = null;

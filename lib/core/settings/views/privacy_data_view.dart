@@ -5,6 +5,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
+import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/core/settings/view_models/privacy_data_view_model.dart';
 import 'package:floww/core/settings/views/delete_account_sheet.dart';
 import 'package:floww/core/settings/widgets/danger_zone_card.dart';
@@ -27,12 +28,16 @@ class PrivacyDataView extends StatelessWidget {
       message: viewModel.deletePromptMessage,
       confirmLabel: viewModel.deleteConfirmLabel,
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !context.mounted) return;
 
+    final flowModeController = context.read<FlowModeController>();
+    flowModeController.endSession();
     if (await viewModel.deleteAccount()) {
       await NavigationService.instance.pushAndRemoveUntil(
         AppRouter.accountSetup,
       );
+    } else {
+      flowModeController.resetSession();
     }
   }
 
@@ -60,6 +65,7 @@ class PrivacyDataView extends StatelessWidget {
               title: viewModel.dangerZoneTitle,
               actionTitle: viewModel.deleteTitle,
               actionSubtitle: viewModel.deleteSubtitle,
+              isLoading: viewModel.isDeleting,
               onDelete: viewModel.isDeleting
                   ? null
                   : () => _confirmDelete(context, viewModel),

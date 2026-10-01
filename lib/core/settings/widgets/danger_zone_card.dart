@@ -9,6 +9,7 @@ import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/cards/app_icon_tile.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class DangerZoneCard extends StatelessWidget {
   const DangerZoneCard({
@@ -17,12 +18,14 @@ class DangerZoneCard extends StatelessWidget {
     required this.actionTitle,
     required this.actionSubtitle,
     this.onDelete,
+    this.isLoading = false,
   });
 
   final String title;
   final String actionTitle;
   final String actionSubtitle;
   final VoidCallback? onDelete;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -82,11 +85,17 @@ class DangerZoneCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: AppSpacing.md),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: AppSizes.s20,
-                    color: colors.destructiveBorder,
-                  ),
+                  if (isLoading)
+                    AppSpinner(
+                      size: AppSizes.s20,
+                      color: colors.destructiveBorder,
+                    )
+                  else
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: AppSizes.s20,
+                      color: colors.destructiveBorder,
+                    ),
                 ],
               ),
             ),
