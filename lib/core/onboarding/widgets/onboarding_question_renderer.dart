@@ -16,6 +16,7 @@ import '../models/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
 import 'custom_progress_widget.dart';
 import 'custom_date_time_selector.dart';
+import 'goal_pace_sheet.dart';
 import 'sleep_duration_summary.dart';
 
 class OnboardingQuestionRenderer extends StatefulWidget {
@@ -212,7 +213,15 @@ class _OnboardingQuestionRendererState
                 iconData: option.icon,
                 isSelected: isSelected,
                 onTap: () {
-                  provider.setAnswer(q.id, option.title);
+                  provider.toggleAnswer(q.id, option.title);
+                  if (isSelected || !provider.hasGoalPace(q.id, option.title)) {
+                    return;
+                  }
+                  GoalPaceSheet.show(
+                    context,
+                    questionId: q.id,
+                    option: option.title,
+                  );
                 },
               ),
             );

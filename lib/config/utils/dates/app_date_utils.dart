@@ -108,6 +108,8 @@ class AppDateUtils {
 
   static String weekdayName(DateTime date) => _weekdays[date.weekday - 1];
 
+  static String monthName(DateTime date) => _months[date.month - 1];
+
   static String monthYear(DateTime date) =>
       '${_months[date.month - 1]} ${date.year}';
 

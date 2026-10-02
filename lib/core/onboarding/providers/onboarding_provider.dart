@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import '../data/onboarding_data.dart';
+import '../models/goal_pace.dart';
 import '../models/onboarding_analysis.dart';
 import '../models/onboarding_models.dart';
 import '../services/onboarding_service.dart';
@@ -89,11 +90,65 @@ class OnboardingProvider extends ChangeNotifier {
     );
   }
 
+  static const String primaryGoalId = 'primary_goal';
+  static const String goalPaceId = 'goal_pace';
+  static const String goalPaceUnitId = 'goal_pace_unit';
+
+  bool hasGoalPace(String questionId, String option) =>
+      questionId == primaryGoalId && GoalPaceConfig.byGoal.containsKey(option);
+
+  GoalPaceProjection? goalPaceProjectionFor(String questionId, String option) {
+    if (questionId != primaryGoalId) return null;
+    final config = GoalPaceConfig.byGoal[option];
+    if (config == null) return null;
+    final pace = _answers[goalPaceId];
+    final weight = _answers['weight'];
+    return GoalPaceProjection.from(
+      config: config,
+      pace: pace is double && _answers[primaryGoalId] == option
+          ? config.snap(pace)
+          : config.initial,
+      weight: weight is double ? weight : GoalPaceConfig.fallbackWeight,
+      today: DateTime.now(),
+    );
+  }
+
+  void setGoalPace(GoalPaceConfig config, double pace) {
+    final snapped = config.snap(pace);
+    if (_answers[goalPaceId] == snapped) return;
+    setAnswer(goalPaceId, snapped);
+  }
+
   /// Save an answer and notify listeners so UI updates instantly
   void setAnswer(String questionId, dynamic answer) {
+    if (questionId == primaryGoalId && _answers[questionId] != answer) {
+      _resetGoalPace(GoalPaceConfig.byGoal[answer]);
+    }
     _answers[questionId] = answer;
     _analysis = null;
     notifyListeners();
+  }
+
+  void toggleAnswer(String questionId, String option) {
+    if (_answers[questionId] != option) {
+      setAnswer(questionId, option);
+      return;
+    }
+    _answers.remove(questionId);
+    if (questionId == primaryGoalId) _resetGoalPace(null);
+    _analysis = null;
+    notifyListeners();
+  }
+
+  void _resetGoalPace(GoalPaceConfig? config) {
+    if (config == null) {
+      _answers
+        ..remove(goalPaceId)
+        ..remove(goalPaceUnitId);
+      return;
+    }
+    _answers[goalPaceId] = config.initial;
+    _answers[goalPaceUnitId] = config.unit;
   }
 
   /// Helper for Multi-Select toggling

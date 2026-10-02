@@ -296,7 +296,7 @@ class _FlowScoreCard extends StatelessWidget {
                 const Expanded(
                   child: _TileHeader(
                     icon: Icons.bolt_rounded,
-                    title: 'Readiness',
+                    title: 'Flow Score',
                   ),
                 ),
                 Text(

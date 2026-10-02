@@ -13,11 +13,13 @@ class FlowModeController extends ChangeNotifier {
 
   Timer? _settleTimer;
   Timer? _watchdogTimer;
+  Timer? _hydrationTimer;
   FlowModeChange? _activeTransition;
   DateTime? _lastTransitionAt;
   int _transitionCount = 0;
   int? _score;
   bool _hasBaseline = false;
+  bool _isHydrating = false;
   bool _isAppActive = true;
   bool _isSuspended = false;
   bool _disposed = false;
@@ -36,10 +38,11 @@ class FlowModeController extends ChangeNotifier {
 
     final resolved = AppThemeMode.fromFlowScore(score);
 
-    if (!_hasBaseline) {
+    if (!_hasBaseline || _isHydrating) {
       _hasBaseline = true;
       _settleTimer?.cancel();
       _applyMode(resolved);
+      _holdBaseline();
       return;
     }
 
@@ -56,6 +59,7 @@ class FlowModeController extends ChangeNotifier {
     _isSuspended = true;
     _settleTimer?.cancel();
     _watchdogTimer?.cancel();
+    _releaseBaseline();
     _score = null;
     _hasBaseline = false;
     _lastTransitionAt = null;
@@ -69,6 +73,7 @@ class FlowModeController extends ChangeNotifier {
     _isSuspended = false;
     _settleTimer?.cancel();
     _watchdogTimer?.cancel();
+    _releaseBaseline();
     _score = null;
     _hasBaseline = false;
     _lastTransitionAt = null;
@@ -109,6 +114,20 @@ class FlowModeController extends ChangeNotifier {
     if (_disposed || target == mode || isTransitioning) return;
     _settleTimer?.cancel();
     _begin(target);
+  }
+
+  void _holdBaseline() {
+    _isHydrating = true;
+    _hydrationTimer?.cancel();
+    _hydrationTimer = Timer(
+      AppMotion.modeBaselineQuiet,
+      () => _isHydrating = false,
+    );
+  }
+
+  void _releaseBaseline() {
+    _hydrationTimer?.cancel();
+    _isHydrating = false;
   }
 
   void _scheduleSettle(Duration delay) {
@@ -180,6 +199,7 @@ class FlowModeController extends ChangeNotifier {
     _disposed = true;
     _settleTimer?.cancel();
     _watchdogTimer?.cancel();
+    _hydrationTimer?.cancel();
     super.dispose();
   }
 }

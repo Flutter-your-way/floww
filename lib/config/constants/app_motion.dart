@@ -127,6 +127,16 @@ class AppMotion {
   static const double workoutFinishLoadingFill = 0.86;
   static const double workoutFinishRowRise = 0.4;
 
+  static const Duration goalChartReveal = Duration(milliseconds: 1100);
+  static const Duration goalChartMorph = Duration(milliseconds: 420);
+  static const Duration goalDotPulse = Duration(milliseconds: 1600);
+  static const Curve goalChartCurve = Curves.easeOutCubic;
+  static const Interval goalChartBubbleIn = Interval(
+    0.7,
+    1,
+    curve: Curves.easeOut,
+  );
+
   static const Duration spinnerReveal = Duration(milliseconds: 220);
   static const Duration spinnerRevealDelay = Duration(milliseconds: 120);
   static const Curve spinnerRevealCurve = Curves.easeOut;
@@ -139,6 +149,7 @@ class AppMotion {
   static const Duration modeTransitionReduced = Duration(milliseconds: 900);
   static const Duration modeSettleDebounce = Duration(milliseconds: 250);
   static const Duration modeSettleRetry = Duration(milliseconds: 200);
+  static const Duration modeBaselineQuiet = Duration(milliseconds: 2500);
   static const Duration modeTransitionCooldown = Duration.zero;
   static const Duration modeTransitionWatchdog = Duration(seconds: 12);
   static const Duration modeHold = Duration(seconds: 5);

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/theme/app_shapes.dart';
+import 'floww_time_picker.dart';
 
 class CustomDateTimeSelector extends StatelessWidget {
   final String title;
@@ -142,7 +143,23 @@ class CustomDateTimeSelector extends StatelessWidget {
     );
   }
 
+  Future<void> _showTimePicker(BuildContext context) async {
+    final base = currentValue ?? DateTime.now();
+    final picked = await FlowwTimePicker.show(
+      context,
+      initialTime: TimeOfDay.fromDateTime(base),
+    );
+    if (picked == null) return;
+    onChanged(
+      DateTime(base.year, base.month, base.day, picked.hour, picked.minute),
+    );
+  }
+
   void _showPicker(BuildContext context) {
+    if (!isDate && !isYearOnly) {
+      _showTimePicker(context);
+      return;
+    }
     showModalBottomSheet(
       context: context,
       backgroundColor: context.colors.backgroundSurface,

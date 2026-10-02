@@ -52,6 +52,8 @@ class OnboardingGoalsActivityDetails {
     required this.activityLevel,
     required this.sleepTime,
     required this.wakeTime,
+    this.goalPace,
+    this.goalPaceUnit,
   });
 
   final String primaryGoal;
@@ -60,6 +62,8 @@ class OnboardingGoalsActivityDetails {
   final String activityLevel;
   final String sleepTime;
   final String wakeTime;
+  final double? goalPace;
+  final String? goalPaceUnit;
 
   factory OnboardingGoalsActivityDetails.fromJson(Map<String, dynamic> json) =>
       OnboardingGoalsActivityDetails(
@@ -69,6 +73,8 @@ class OnboardingGoalsActivityDetails {
         activityLevel: json['activityLevel'] as String,
         sleepTime: json['sleepTime'] as String,
         wakeTime: json['wakeTime'] as String,
+        goalPace: (json['goalPace'] as num?)?.toDouble(),
+        goalPaceUnit: json['goalPaceUnit'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -78,6 +84,8 @@ class OnboardingGoalsActivityDetails {
     'activityLevel': activityLevel,
     'sleepTime': sleepTime,
     'wakeTime': wakeTime,
+    'goalPace': ?goalPace,
+    'goalPaceUnit': ?goalPaceUnit,
   };
 }
 
@@ -432,6 +440,8 @@ class OnboardingDetailsEntity {
         activityLevel: answers['activity_level'] as String,
         sleepTime: _hhmm(answers['sleep_time'] as DateTime),
         wakeTime: _hhmm(answers['wake_time'] as DateTime),
+        goalPace: (answers['goal_pace'] as num?)?.toDouble(),
+        goalPaceUnit: answers['goal_pace_unit'] as String?,
       );
     }
 

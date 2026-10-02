@@ -86,6 +86,8 @@ class OnboardingAnswersService {
     put('activity_level', goals?['activityLevel']);
     put('sleep_time', _time(goals?['sleepTime']));
     put('wake_time', _time(goals?['wakeTime']));
+    put('goal_pace', _number(goals?['goalPace']));
+    put('goal_pace_unit', goals?['goalPaceUnit']);
 
     final diet = _section(details, 'healthDiet');
     put('health_conditions', _list(diet?['healthConditions']));
