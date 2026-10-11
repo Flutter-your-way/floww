@@ -1,3 +1,4 @@
+import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/nutrition/models/food_catalog.dart';
 import 'package:floww/core/wave/models/wave_context.dart';
@@ -10,7 +11,10 @@ class WaveTodayPayload {
   static const int maxLabelLength = 60;
   static const int maxTitleLength = 80;
 
-  factory WaveTodayPayload.fromContext(WaveContext context) {
+  factory WaveTodayPayload.fromContext(
+    WaveContext context, {
+    List<WorkoutPlanEntity> schedule = const [],
+  }) {
     final snapshot = context.snapshot;
     final nutrition = context.nutrition;
     final workout = context.workout;
@@ -21,6 +25,7 @@ class WaveTodayPayload {
     return WaveTodayPayload({
       'flowScore': context.flowScore,
       'mode': _label(snapshot.flowMode.mode.name),
+      'modeOverride': context.flowModeOverride != null,
       'streakDays': snapshot.streakCount,
       'workoutTitle': _label(workout?.title ?? '', max: maxTitleLength),
       'workoutDetail': _label(
@@ -76,12 +81,38 @@ class WaveTodayPayload {
       'musclesRecovering': muscles.inRecoveryCount,
       'musclesFatigued': muscles.fatiguedMusclesCount,
       'localTime': _label(AppDateUtils.time(DateTime.now(), padHour: true)),
+      'localDate': _label(
+        '${AppDateUtils.weekdayName(DateTime.now())} '
+        '${AppDateUtils.dateKey(DateTime.now())}',
+      ),
+      'schedule': _list(
+        schedule.map(
+          (plan) =>
+              '${AppDateUtils.weekdayName(plan.date)} '
+              '${AppDateUtils.dateKey(plan.date)}: ${plan.name}',
+        ),
+        length: maxTitleLength,
+      ),
+      'activeExercises': _list(
+        context.activeSession?.exercises.map(_exerciseProgressOf) ?? const [],
+        max: maxLongList,
+        length: maxTitleLength,
+      ),
+      'stepsTarget': (context.account.stepsTarget ?? 0).round(),
+      'sleepTargetHours': context.account.sleepTargetHours ?? 0,
     });
   }
 
   final Map<String, dynamic> _values;
 
   Map<String, dynamic> toJson() => _values;
+
+  static String _exerciseProgressOf(WorkoutEntryEntity entry) {
+    final weight = entry.targetWeightKg;
+    final load = weight == null ? 'bodyweight' : '${weight}kg';
+    return '${entry.name}: ${entry.workingSetCount}/${entry.targetSets} sets '
+        '· ${entry.targetReps} reps @ $load';
+  }
 
   static String _workoutStatusOf(WaveContext context) {
     if (context.hasActiveWorkout) return 'in progress';

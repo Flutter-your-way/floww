@@ -41,6 +41,10 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Floww uses your microphone so you can talk to WAVE instead of typing.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Floww turns what you say into text so WAVE can answer your voice messages.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Floww uses your camera to scan your meals so WAVE can estimate their calories and nutrition, and to take your profile photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

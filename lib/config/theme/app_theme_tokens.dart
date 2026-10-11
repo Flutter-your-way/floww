@@ -62,6 +62,7 @@ class _AppPalette {
   static const amberBorder = Color(0x3DF59E0B);
   static const amberSurface = Color(0x10F59E0B);
   static const accentViolet = Color(0xFF8B5CF6);
+  static const hydrationAccent = Color(0xFF38BDF8);
 }
 
 class _MacroGradients {
@@ -161,6 +162,13 @@ class _OverlayGradients {
     end: Alignment.bottomCenter,
   );
 
+  static const waveShimmer = LinearGradient(
+    colors: [_AppPalette.textDim, _AppPalette.textPrimary, _AppPalette.textDim],
+    stops: [0.3, 0.5, 0.7],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
   static const actionScrim = LinearGradient(
     colors: [
       Color(0x000A0A0A),
@@ -168,6 +176,23 @@ class _OverlayGradients {
       _AppPalette.backgroundPrimary,
     ],
     stops: [0.0, 0.55, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const topFade = LinearGradient(
+    colors: [_AppPalette.backgroundPrimary, Color(0x000A0A0A)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const bottomFade = LinearGradient(
+    colors: [
+      Color(0x000A0A0A),
+      _AppPalette.backgroundPrimary,
+      _AppPalette.backgroundPrimary,
+    ],
+    stops: [0.0, 0.45, 1.0],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
@@ -230,6 +255,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     this.amberBorder = _AppPalette.amberBorder,
     this.amberSurface = _AppPalette.amberSurface,
     this.accentViolet = _AppPalette.accentViolet,
+    this.hydrationAccent = _AppPalette.hydrationAccent,
   });
 
   final Color primary;
@@ -281,6 +307,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color amberBorder;
   final Color amberSurface;
   final Color accentViolet;
+  final Color hydrationAccent;
 
   static const flow = AppColorTokens(
     primary: Color(0xFFC3FF3D),
@@ -380,6 +407,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? amberBorder,
     Color? amberSurface,
     Color? accentViolet,
+    Color? hydrationAccent,
   }) {
     return AppColorTokens(
       primary: primary ?? this.primary,
@@ -430,6 +458,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       amberBorder: amberBorder ?? this.amberBorder,
       amberSurface: amberSurface ?? this.amberSurface,
       accentViolet: accentViolet ?? this.accentViolet,
+      hydrationAccent: hydrationAccent ?? this.hydrationAccent,
     );
   }
 
@@ -525,6 +554,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       amberBorder: Color.lerp(amberBorder, other.amberBorder, t)!,
       amberSurface: Color.lerp(amberSurface, other.amberSurface, t)!,
       accentViolet: Color.lerp(accentViolet, other.accentViolet, t)!,
+      hydrationAccent: Color.lerp(hydrationAccent, other.hydrationAccent, t)!,
     );
   }
 }
@@ -555,10 +585,13 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     this.cameraScrim = _OverlayGradients.cameraScrim,
     this.cardSheen = _OverlayGradients.cardSheen,
     this.actionScrim = _OverlayGradients.actionScrim,
+    this.topFade = _OverlayGradients.topFade,
+    this.bottomFade = _OverlayGradients.bottomFade,
     this.footerScrim = _OverlayGradients.footerScrim,
     this.glassFill = _OverlayGradients.glassFill,
     this.glassRim = _OverlayGradients.glassRim,
     this.glassIndicator = _OverlayGradients.glassIndicator,
+    this.waveShimmer = _OverlayGradients.waveShimmer,
   });
 
   final Gradient primaryButton;
@@ -584,10 +617,13 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient cameraScrim;
   final Gradient cardSheen;
   final Gradient actionScrim;
+  final Gradient topFade;
+  final Gradient bottomFade;
   final Gradient footerScrim;
   final Gradient glassFill;
   final Gradient glassRim;
   final Gradient glassIndicator;
+  final Gradient waveShimmer;
 
   static const defaultBackground = LinearGradient(
     colors: [Color(0xFF14110B), _AppPalette.backgroundPrimary],
@@ -623,11 +659,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   );
 
   static const flowScoreFill = LinearGradient(
-    colors: [
-      Color(0xFF84CC16),
-      Color(0xFFC3FF3D),
-      Color(0xFFF4FCE3),
-    ],
+    colors: [Color(0xFF84CC16), Color(0xFFC3FF3D), Color(0xFFF4FCE3)],
     stops: [0.0, 0.5, 1.0],
   );
 
@@ -857,10 +889,13 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? cameraScrim,
     Gradient? cardSheen,
     Gradient? actionScrim,
+    Gradient? topFade,
+    Gradient? bottomFade,
     Gradient? footerScrim,
     Gradient? glassFill,
     Gradient? glassRim,
     Gradient? glassIndicator,
+    Gradient? waveShimmer,
   }) {
     return AppGradientTokens(
       primaryButton: primaryButton ?? this.primaryButton,
@@ -886,10 +921,13 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       cameraScrim: cameraScrim ?? this.cameraScrim,
       cardSheen: cardSheen ?? this.cardSheen,
       actionScrim: actionScrim ?? this.actionScrim,
+      topFade: topFade ?? this.topFade,
+      bottomFade: bottomFade ?? this.bottomFade,
       footerScrim: footerScrim ?? this.footerScrim,
       glassFill: glassFill ?? this.glassFill,
       glassRim: glassRim ?? this.glassRim,
       glassIndicator: glassIndicator ?? this.glassIndicator,
+      waveShimmer: waveShimmer ?? this.waveShimmer,
     );
   }
 
@@ -924,10 +962,13 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       cameraScrim: Gradient.lerp(cameraScrim, other.cameraScrim, t)!,
       cardSheen: Gradient.lerp(cardSheen, other.cardSheen, t)!,
       actionScrim: Gradient.lerp(actionScrim, other.actionScrim, t)!,
+      topFade: Gradient.lerp(topFade, other.topFade, t)!,
+      bottomFade: Gradient.lerp(bottomFade, other.bottomFade, t)!,
       footerScrim: Gradient.lerp(footerScrim, other.footerScrim, t)!,
       glassFill: Gradient.lerp(glassFill, other.glassFill, t)!,
       glassRim: Gradient.lerp(glassRim, other.glassRim, t)!,
       glassIndicator: Gradient.lerp(glassIndicator, other.glassIndicator, t)!,
+      waveShimmer: Gradient.lerp(waveShimmer, other.waveShimmer, t)!,
     );
   }
 }

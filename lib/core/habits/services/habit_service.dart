@@ -146,6 +146,14 @@ class HabitService {
     }),
   );
 
+  Future<void> restoreHabit(HabitDefinition definition) => _guard(
+    'restoreHabit',
+    'Could not restore this habit. Please try again.',
+    () => _habits(
+      _requireUserId,
+    ).doc(definition.id).set(definition.toJson()),
+  );
+
   Future<void> deleteHabit(String id) => _guard(
     'deleteHabit',
     'Could not remove this habit. Please try again.',

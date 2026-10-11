@@ -33,7 +33,7 @@ class PremiumService {
     PremiumFeature(
       icon: Icons.waves_rounded,
       title: 'WAVE AI Coaching',
-      description: 'Chat, daily briefs, logging and motivation',
+      description: 'Memory, weekly reviews, plan edits, 60 messages a day',
       tone: PremiumFeatureTone.primary,
     ),
     PremiumFeature(

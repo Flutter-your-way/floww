@@ -39,6 +39,9 @@ class HomeSnapshotBuilder {
   static const int _secondsPerMinute = 60;
 
   static const int _highIntensitySets = 20;
+  static const String _autoStatus = 'Active today · Set by WAVE AI';
+  static const String _overrideStatus = 'Active today · Set by you with WAVE';
+  static const String _overrideReason = 'You asked WAVE for this mode today';
   static const int _moderateIntensitySets = 12;
 
   static const int _highRecoveryFloor = 75;
@@ -376,8 +379,10 @@ class HomeSnapshotBuilder {
     required HomeRecords records,
     required DateTime today,
   }) {
-    final mode = AppThemeMode.fromFlowScore(score);
+    final override = records.flowModeOverride;
+    final mode = override ?? AppThemeMode.fromFlowScore(score);
     final reasons = <String>[
+      if (override != null) _overrideReason,
       'Flow Score is $score%',
       if (readiness > 0) 'Recovery readiness is $readiness%',
     ];
@@ -401,7 +406,7 @@ class HomeSnapshotBuilder {
 
     return FlowModeDetail(
       mode: mode,
-      statusLabel: 'Active today · Set by WAVE AI',
+      statusLabel: override != null ? _overrideStatus : _autoStatus,
       reasons: reasons,
       tips: _modeTips[mode] ?? const [],
     );

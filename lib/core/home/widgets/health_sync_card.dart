@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -64,79 +65,93 @@ class HealthSyncCard extends StatelessWidget {
             ),
           ),
           SizedBox(width: AppSpacing.lg),
-          if (connected)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: AppSizes.s6,
-                      height: AppSizes.s6,
-                      decoration: BoxDecoration(
-                        color: context.colors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'Connected',
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: context.colors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.sm),
-                _SyncActionButton(
-                  text: 'Disconnect',
-                  color: context.colors.destructiveBorder,
-                  onPressed: onDisconnect,
-                ),
-              ],
-            )
-          else
-            _SyncActionButton(
-              text: 'Connect',
-              color: context.colors.primary,
-              onPressed: onConnect,
-            ),
+          _SyncStatusPill(
+            connected: connected,
+            onTap: connected ? onDisconnect : onConnect,
+          ),
         ],
       ),
     );
   }
 }
 
-class _SyncActionButton extends StatelessWidget {
-  const _SyncActionButton({
-    required this.text,
-    required this.color,
-    this.onPressed,
-  });
+class _SyncStatusPill extends StatelessWidget {
+  const _SyncStatusPill({required this.connected, this.onTap});
 
-  final String text;
-  final Color color;
-  final VoidCallback? onPressed;
+  final bool connected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final color = connected ? context.colors.success : context.colors.primary;
     return GestureDetector(
-      onTap: onPressed,
-      child: Container(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: AppMotion.tabSwitch,
+        curve: AppMotion.tabSwitchSizeCurve,
         height: AppSizes.s32,
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: AppShapes.decoration(
           borderRadius: BorderRadius.circular(AppRadius.full),
           side: BorderSide(color: color, width: 1),
         ),
-        child: Center(
-          child: Text(
-            text,
-            style: context.textTheme.bodySmall?.copyWith(color: color),
+        child: AnimatedSize(
+          duration: AppMotion.tabSwitch,
+          curve: AppMotion.tabSwitchSizeCurve,
+          child: AnimatedSwitcher(
+            duration: AppMotion.tabSwitch,
+            switchInCurve: AppMotion.tabSwitchCurve,
+            switchOutCurve: AppMotion.tabSwitchExitCurve,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(
+                  begin: AppMotion.tabSwitchScale,
+                  end: 1,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            child: _SyncStatusLabel(
+              key: ValueKey(connected),
+              connected: connected,
+              color: color,
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SyncStatusLabel extends StatelessWidget {
+  const _SyncStatusLabel({
+    super.key,
+    required this.connected,
+    required this.color,
+  });
+
+  final bool connected;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (connected) ...[
+          Container(
+            width: AppSizes.s6,
+            height: AppSizes.s6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          SizedBox(width: AppSpacing.sm),
+        ],
+        Text(
+          connected ? 'Connected' : 'Connect',
+          style: context.textTheme.bodySmall?.copyWith(color: color),
+        ),
+      ],
     );
   }
 }

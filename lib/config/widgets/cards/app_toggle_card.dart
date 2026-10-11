@@ -47,8 +47,7 @@ class AppToggleCard extends StatelessWidget {
                 SizedBox(height: AppSpacing.xxs),
                 Text(
                   subtitle,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodyMediumMedium.copyWith(
+                  style: AppTypography.bodySmallMedium.copyWith(
                     color: colors.textSubtle,
                   ),
                 ),

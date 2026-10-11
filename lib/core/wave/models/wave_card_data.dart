@@ -29,7 +29,9 @@ class WaveDailyBrief {
 
 enum WavePlanAction { startWorkout, resumeWorkout, logMeal, logWater }
 
-enum WaveConfirmationAction { openWorkout }
+enum WaveConfirmationAction { openWorkout, openMemory, undo, navigate, upgrade }
+
+enum WaveConfirmationTone { success, water, memory, warning, premium }
 
 class WavePlanItem {
   const WavePlanItem({

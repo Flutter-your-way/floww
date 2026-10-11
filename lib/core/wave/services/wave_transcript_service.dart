@@ -16,6 +16,9 @@ class WaveTranscriptService {
   static const int backfillLimit = 1000;
   static const int previewLimit = 90;
 
+  static final Map<String, List<WaveTranscriptEntry>> _dayCache = {};
+  static final Map<String, List<WaveChatDay>> _daysCache = {};
+
   bool _didBackfill = false;
 
   String? get userId {
@@ -45,6 +48,22 @@ class WaveTranscriptService {
     return _messages(uid).doc().id;
   }
 
+  String? _dayKey(DateTime day) {
+    final uid = userId;
+    if (uid == null) return null;
+    return '$uid/${AppDateUtils.dateKey(AppDateUtils.dateOnly(day))}';
+  }
+
+  List<WaveTranscriptEntry>? cachedDay(DateTime day) {
+    final key = _dayKey(day);
+    return key == null ? null : _dayCache[key];
+  }
+
+  List<WaveChatDay>? get cachedDays {
+    final uid = userId;
+    return uid == null ? null : _daysCache[uid];
+  }
+
   Stream<List<WaveTranscriptEntry>> watchDay(DateTime day) {
     final uid = userId;
     if (uid == null) return Stream.value(const []);
@@ -60,7 +79,12 @@ class WaveTranscriptService {
         )
         .orderBy(_createdAtField)
         .snapshots()
-        .map(_entriesOf);
+        .map((snapshot) {
+          final entries = _entriesOf(snapshot);
+          final key = _dayKey(day);
+          if (key != null) _dayCache[key] = List.unmodifiable(entries);
+          return entries;
+        });
   }
 
   Stream<List<WaveChatDay>> watchDays() {
@@ -71,7 +95,11 @@ class WaveTranscriptService {
         .orderBy(_dayField, descending: true)
         .limit(dayLimit)
         .snapshots()
-        .map(_daysOf);
+        .map((snapshot) {
+          final days = _daysOf(snapshot);
+          _daysCache[uid] = List.unmodifiable(days);
+          return days;
+        });
   }
 
   Future<void> save(WaveTranscriptEntry entry) async {

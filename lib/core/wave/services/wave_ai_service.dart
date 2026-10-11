@@ -7,7 +7,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:floww/config/constants/app_api.dart';
+import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/core/wave/models/wave_context.dart';
+import 'package:floww/core/wave/models/wave_quota.dart';
 import 'package:floww/core/wave/models/wave_reply.dart';
 import 'package:floww/core/wave/models/wave_today_payload.dart';
 import 'package:floww/core/wave/models/wave_transcript_entry.dart';
@@ -70,6 +72,35 @@ class WaveAiService {
     required String message,
     required WaveContext context,
     required List<WaveTranscriptEntry> history,
+    List<WorkoutPlanEntity> schedule = const [],
+  }) async {
+    final data = await _call(
+      AppApi.waveChat,
+      body: {
+        'message': _clamp(message, maxMessageLength),
+        'history': historyOf(history),
+        if (context.isReady)
+          'today': WaveTodayPayload.fromContext(
+            context,
+            schedule: schedule,
+          ).toJson(),
+      },
+    );
+    return WaveReply.fromJson(data);
+  }
+
+  Future<WaveQuota?> quota() async {
+    try {
+      return WaveQuota.fromJson(await _call(AppApi.waveQuota));
+    } on WaveChatException catch (e) {
+      debugPrint('waveQuota failed: ${e.code}');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> _call(
+    String path, {
+    Map<String, dynamic>? body,
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -82,29 +113,25 @@ class WaveAiService {
     final client = HttpClient()..connectionTimeout = AppApi.connectTimeout;
     try {
       final token = await user.getIdToken();
-      final payload = utf8.encode(
-        jsonEncode({
-          'message': _clamp(message, maxMessageLength),
-          'history': historyOf(history),
-          if (context.isReady)
-            'today': WaveTodayPayload.fromContext(context).toJson(),
-        }),
-      );
-
-      final request = await client.postUrl(AppApi.uri(AppApi.waveChat));
-      request.headers.contentType = ContentType.json;
+      final request = body == null
+          ? await client.getUrl(AppApi.uri(path))
+          : await client.postUrl(AppApi.uri(path));
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
-      request.contentLength = payload.length;
-      request.add(payload);
+      if (body != null) {
+        final payload = utf8.encode(jsonEncode(body));
+        request.headers.contentType = ContentType.json;
+        request.contentLength = payload.length;
+        request.add(payload);
+      }
 
       final response = await request.close().timeout(AppApi.aiResponseTimeout);
-      final body = await response.transform(utf8.decoder).join();
-      final json = _decodeBody(body);
+      final text = await response.transform(utf8.decoder).join();
+      final json = _decodeBody(text);
 
       if (json == null) {
         debugPrint(
-          'waveChat non-json response: ${response.statusCode} '
-          '${body.substring(0, min(body.length, _logBodyLimit))}',
+          '$path non-json response: ${response.statusCode} '
+          '${text.substring(0, min(text.length, _logBodyLimit))}',
         );
         throw WaveChatException(
           WaveChatErrorCode.serverUnavailable,
@@ -113,7 +140,7 @@ class WaveAiService {
       }
 
       if (response.statusCode == HttpStatus.ok) {
-        return WaveReply.fromJson(json['data'] as Map<String, dynamic>);
+        return json['data'] as Map<String, dynamic>;
       }
 
       final error = json['error'];
@@ -137,7 +164,7 @@ class WaveAiService {
         'No connection. Check your internet and ask me again.',
       );
     } catch (e, stackTrace) {
-      debugPrint('waveChat failed: $e\n$stackTrace');
+      debugPrint('$path failed: $e\n$stackTrace');
       throw WaveChatException(
         WaveChatErrorCode.unknown,
         WaveChatException._fallbackMessage,

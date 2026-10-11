@@ -6,6 +6,7 @@ import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/health_day_entity.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
+import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/streams/combine_latest.dart';
 import 'package:floww/core/habits/models/habit.dart';
@@ -15,6 +16,7 @@ import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/profile/models/profile_account.dart';
 import 'package:floww/core/profile/services/profile_service.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
+import 'package:floww/core/settings/services/settings_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 
@@ -27,6 +29,7 @@ class HomeRecords {
     required this.sessions,
     required this.healthDays,
     required this.flowHistory,
+    this.flowModeOverride,
   });
 
   static const empty = HomeRecords(
@@ -46,6 +49,7 @@ class HomeRecords {
   final List<WorkoutSessionEntity> sessions;
   final List<HealthDayLog> healthDays;
   final List<DailyFlowEntry> flowHistory;
+  final AppThemeMode? flowModeOverride;
 }
 
 class HomeService {
@@ -56,8 +60,9 @@ class HomeService {
     this._planService,
     this._sessionService,
     this._healthLogService,
-    this._progressService,
-  );
+    this._progressService, {
+    SettingsService? settingsService,
+  }) : _settingsService = settingsService ?? SettingsService();
 
   static const int healthHistoryDays = 30;
   static const int flowHistoryDays = 90;
@@ -69,6 +74,7 @@ class HomeService {
   final WorkoutSessionService _sessionService;
   final HealthLogService _healthLogService;
   final ProgressService _progressService;
+  final SettingsService _settingsService;
 
   Stream<HomeRecords> watchRecords(DateTime date) {
     final day = AppDateUtils.dateOnly(date);
@@ -105,6 +111,11 @@ class HomeService {
         const [],
         'daily flow',
       ),
+      _guarded<AppThemeMode?>(
+        _settingsService.watchFlowModeOverride(day),
+        null,
+        'flow mode override',
+      ),
     ]).map(
       (values) => HomeRecords(
         account: values[0]! as ProfileAccount,
@@ -114,6 +125,7 @@ class HomeService {
         sessions: values[4]! as List<WorkoutSessionEntity>,
         healthDays: values[5]! as List<HealthDayLog>,
         flowHistory: values[6]! as List<DailyFlowEntry>,
+        flowModeOverride: values[7] as AppThemeMode?,
       ),
     );
   }

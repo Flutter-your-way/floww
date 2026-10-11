@@ -98,12 +98,12 @@ class PremiumAccessProvider extends ChangeNotifier {
 }
 
 enum PremiumCapability {
-  waveCoach(
+  waveMemory(
     requiresPremium: true,
-    lockTitle: 'WAVE is a Premium coach',
+    lockTitle: 'WAVE Memory is Premium',
     lockMessage:
-        'Chat with WAVE, get your daily brief, log meals by message and '
-        'get plans that adapt to you.',
+        'WAVE remembers your injuries, schedule and preferences across chats, '
+        'reviews your week and edits your plan for you.',
   ),
   aiFoodScan(
     requiresPremium: true,

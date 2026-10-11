@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/constants/app_integrations.dart';
 import 'package:floww/config/constants/app_images.dart';
+import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/settings/models/settings_view_data.dart';
 
 class SettingsService {
@@ -12,7 +14,12 @@ class SettingsService {
 
   static const String notificationsField = 'notifications';
   static const String connectedAppsField = 'connectedApps';
+  static const String waveField = 'wave';
+  static const String waveMemoryFlag = 'memory';
   static const String dietPlanStartedAtField = 'dietPlanStartedAt';
+  static const String flowModeOverrideField = 'flowModeOverride';
+  static const String _overrideDateField = 'date';
+  static const String _overrideModeField = 'mode';
 
   static const _defaultConnectedApps = [
     ConnectedAppItem(
@@ -198,6 +205,80 @@ class SettingsService {
 
   Future<bool> setNotificationEnabled(String id, bool isEnabled) =>
       _setFlag(notificationsField, id, isEnabled);
+
+  Stream<bool> watchWaveMemoryEnabled() => _watchField(
+    waveField,
+  ).map((flags) => flags[waveMemoryFlag] != false);
+
+  Future<bool> setWaveMemoryEnabled(bool isEnabled) =>
+      _setFlag(waveField, waveMemoryFlag, isEnabled);
+
+  Future<bool> notificationEnabled(String id) async {
+    final settings = await watchNotifications().first;
+    if (settings.master.id == id) return settings.master.isEnabled;
+    for (final section in settings.sections) {
+      for (final item in section.items) {
+        if (item.id == id) return item.isEnabled;
+      }
+    }
+    return false;
+  }
+
+  bool isNotificationId(String id) =>
+      _defaultNotifications.master.id == id ||
+      _defaultNotifications.sections.any(
+        (section) => section.items.any((item) => item.id == id),
+      );
+
+  String notificationTitleOf(String id) {
+    if (_defaultNotifications.master.id == id) {
+      return _defaultNotifications.master.title;
+    }
+    for (final section in _defaultNotifications.sections) {
+      for (final item in section.items) {
+        if (item.id == id) return item.title;
+      }
+    }
+    return id;
+  }
+
+  Stream<AppThemeMode?> watchFlowModeOverride(DateTime date) {
+    final document = _preferences();
+    if (document == null) return Stream.value(null);
+    return document
+        .snapshots()
+        .map((snapshot) => _overrideOf(snapshot.data(), date))
+        .handleError(
+          (Object error) => debugPrint('flow mode override failed: $error'),
+        );
+  }
+
+  Future<AppThemeMode?> loadFlowModeOverride(DateTime date) async {
+    final document = _preferences();
+    if (document == null) return null;
+    final snapshot = await document.get();
+    return _overrideOf(snapshot.data(), date);
+  }
+
+  Future<void> setFlowModeOverride(DateTime date, AppThemeMode? mode) async {
+    final document = _preferences();
+    if (document == null) throw StateError('Please sign in again.');
+    await document.set({
+      flowModeOverrideField: mode == null
+          ? FieldValue.delete()
+          : {
+              _overrideDateField: AppDateUtils.dateKey(date),
+              _overrideModeField: mode.name,
+            },
+    }, SetOptions(merge: true));
+  }
+
+  static AppThemeMode? _overrideOf(Map<String, dynamic>? data, DateTime date) {
+    final value = data?[flowModeOverrideField];
+    if (value is! Map) return null;
+    if (value[_overrideDateField] != AppDateUtils.dateKey(date)) return null;
+    return AppThemeMode.values.asNameMap()[value[_overrideModeField]];
+  }
 
   Future<DateTime?> dietPlanStartedAt() async {
     final document = _preferences();

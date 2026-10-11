@@ -11,14 +11,14 @@ class EditDailyTargetsViewModel extends ChangeNotifier {
     load();
   }
 
-  static const double _defaultSteps = 10000;
-  static const double _defaultSleep = 8;
-  static const double _defaultWater = 3;
-
   final ProfileService _service;
 
-  List<DailyTargetSpec> _specs = _specsFor(ProfileAccount.empty);
-  List<DailyTargetSpec> _savedSpecs = _specsFor(ProfileAccount.empty);
+  List<DailyTargetSpec> _specs = ProfileService.dailyTargetSpecsOf(
+    ProfileAccount.empty,
+  );
+  List<DailyTargetSpec> _savedSpecs = ProfileService.dailyTargetSpecsOf(
+    ProfileAccount.empty,
+  );
   bool _isLoading = true;
   bool _isSaving = false;
   bool _disposed = false;
@@ -67,7 +67,7 @@ class EditDailyTargetsViewModel extends ChangeNotifier {
     _notify();
 
     try {
-      _specs = _specsFor(await _service.loadAccount());
+      _specs = ProfileService.dailyTargetSpecsOf(await _service.loadAccount());
       _savedSpecs = _specs;
     } on ProfileException catch (e) {
       _errorMessage = e.message;
@@ -109,51 +109,6 @@ class EditDailyTargetsViewModel extends ChangeNotifier {
   }
 
   DailyTargetsDraft buildDraft() => DailyTargetsDraft(specs: _specs);
-
-  static List<DailyTargetSpec> _specsFor(ProfileAccount account) => [
-    DailyTargetSpec(
-      target: DailyTarget.steps,
-      title: 'Daily Steps',
-      unit: 'steps',
-      value: _clamp(
-        account.stepsTarget ?? _defaultSteps,
-        ProfileService.stepsMin,
-        ProfileService.stepsMax,
-      ),
-      min: ProfileService.stepsMin,
-      max: ProfileService.stepsMax,
-      step: ProfileService.stepsStep,
-    ),
-    DailyTargetSpec(
-      target: DailyTarget.sleep,
-      title: 'Sleep Goal',
-      unit: 'hrs/night',
-      value: _clamp(
-        account.sleepTargetHours ?? _defaultSleep,
-        ProfileService.sleepMin,
-        ProfileService.sleepMax,
-      ),
-      min: ProfileService.sleepMin,
-      max: ProfileService.sleepMax,
-      step: ProfileService.sleepStep,
-    ),
-    DailyTargetSpec(
-      target: DailyTarget.water,
-      title: 'Water Intake',
-      unit: 'liters',
-      value: _clamp(
-        account.waterTargetLiters ?? _defaultWater,
-        ProfileService.waterMin,
-        ProfileService.waterMax,
-      ),
-      min: ProfileService.waterMin,
-      max: ProfileService.waterMax,
-      step: ProfileService.waterStep,
-    ),
-  ];
-
-  static double _clamp(double value, double min, double max) =>
-      value < min ? min : (value > max ? max : value);
 
   void _notify() {
     if (_disposed) return;

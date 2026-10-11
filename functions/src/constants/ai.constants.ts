@@ -14,11 +14,16 @@ export const FOOD_SCAN_MIME_TYPES = [
 export const MAX_IMAGE_BASE64_LENGTH = 8 * 1024 * 1024;
 export const MAX_FOOD_NOTE_LENGTH = 300;
 
-export const WAVE_CHAT_MODEL = "gpt-5.4-mini";
-export const WAVE_CHAT_REASONING_EFFORT = "low";
-export const WAVE_CHAT_PROMPT_VERSION = "wave-chat-v2";
+export const WAVE_CHAT_PROMPT_VERSION = "wave-chat-v7";
+export const WAVE_CHAT_PROMPT_VERSION_PATTERN = /^wave-chat-v\d+$/;
 export const WAVE_CHAT_DAILY_LIMIT = {premium: 60, free: 15};
-export const WAVE_CHAT_MAX_OUTPUT_TOKENS = 900;
+export const WAVE_CHAT_ROUTES = {
+  light: {model: "gpt-5.4-mini", reasoning: "low", maxOutputTokens: 1600},
+  deep: {model: "gpt-5.4", reasoning: "medium", maxOutputTokens: 2400},
+} as const;
+export const WAVE_EVAL_PASS_RATE = 0.9;
+export const WAVE_RECENT_FOOD_DAYS = 7;
+export const MAX_WAVE_CUSTOM_FOODS = 100;
 
 export const MAX_WAVE_MESSAGE_LENGTH = 1000;
 export const MAX_WAVE_HISTORY_TURNS = 8;
@@ -26,7 +31,29 @@ export const MAX_WAVE_HISTORY_LENGTH = 360;
 export const MAX_WAVE_REPLY_LENGTH = 900;
 export const MAX_WAVE_LIST_ITEMS = 8;
 export const MAX_WAVE_TARGET_LENGTH = 60;
+export const MAX_WAVE_ACTIONS = 5;
 export const MAX_WAVE_LONG_LIST = 30;
+export const WAVE_HISTORY_DAYS = 14;
+export const WAVE_WEIGHT_HISTORY_DAYS = 30;
+export const MAX_WAVE_HISTORY_LIFTS = 12;
+export const MAX_WAVE_HISTORY_EVENTS = 5;
+
+export const MAX_WAVE_MEMORIES = 40;
+export const MAX_WAVE_PROMPT_MEMORIES = 20;
+export const MAX_WAVE_MEMORY_LENGTH = 140;
+export const MAX_WAVE_MEMORY_WRITES = 2;
+export const MAX_WAVE_MEMORY_FORGETS = 5;
+
+export const WAVE_SUMMARY_MODEL = "gpt-5.4-mini";
+export const WAVE_SUMMARY_REASONING_EFFORT = "low";
+export const WAVE_SUMMARY_PROMPT_VERSION = "wave-summary-v2";
+export const WAVE_SUMMARY_MAX_OUTPUT_TOKENS = 600;
+export const MAX_WAVE_SUMMARY_ITEMS = 6;
+export const MAX_WAVE_SUMMARY_ITEM_LENGTH = 140;
+export const WAVE_SUMMARY_BATCH = 8;
+export const WAVE_SUMMARY_SCAN_LIMIT = 120;
+export const WAVE_SUMMARY_LOCK_MS = 90_000;
+export const MAX_WAVE_SUMMARY_TURN_LENGTH = 400;
 
 export const WAVE_PROFILE_CACHE_TTL_MS = 10 * 60 * 1000;
 export const WAVE_PROFILE_CACHE_LIMIT = 500;

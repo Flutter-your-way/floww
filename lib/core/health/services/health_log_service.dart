@@ -13,6 +13,9 @@ class HealthLogService {
 
   static const String _dateField = 'date';
   static const String _sourcesField = 'sources';
+  static const String _sleepField = 'sleepMinutes';
+  static const String _syncedAtField = 'syncedAt';
+  static const String manualSourceId = 'manual';
 
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
@@ -79,6 +82,39 @@ class HealthLogService {
     }
   }
 
+  Future<HealthSleepRecord> loadSleep(DateTime date) async {
+    final uid = userId;
+    if (uid == null) return const HealthSleepRecord(minutes: 0);
+    final document = await _logs(uid).doc(AppDateUtils.dateKey(date)).get();
+    final data = document.data() ?? const <String, dynamic>{};
+    final sources = data[_sourcesField];
+    final manual = sources is Map ? sources[manualSourceId] : null;
+    return HealthSleepRecord(
+      minutes: (data[_sleepField] as num? ?? 0).toInt(),
+      manualMinutes: manual is Map
+          ? (manual[_sleepField] as num?)?.toInt()
+          : null,
+    );
+  }
+
+  Future<void> saveSleep(DateTime date, HealthSleepRecord record) async {
+    final uid = userId;
+    if (uid == null) throw StateError('Please sign in again.');
+    final day = AppDateUtils.dateOnly(date);
+    final syncedAt = AppDateUtils.isoKey(DateTime.now());
+    final manualMinutes = record.manualMinutes;
+    await _logs(uid).doc(AppDateUtils.dateKey(day)).set({
+      _dateField: AppDateUtils.dateKey(day),
+      _sleepField: record.minutes,
+      _syncedAtField: syncedAt,
+      _sourcesField: {
+        manualSourceId: manualMinutes == null
+            ? FieldValue.delete()
+            : {_sleepField: manualMinutes, _syncedAtField: syncedAt},
+      },
+    }, SetOptions(merge: true));
+  }
+
   List<HealthDayLog> _parseAll(Iterable<Map<String, dynamic>> documents) {
     final logs = <HealthDayLog>[];
     for (final json in documents) {
@@ -90,4 +126,11 @@ class HealthLogService {
     }
     return logs;
   }
+}
+
+class HealthSleepRecord {
+  const HealthSleepRecord({required this.minutes, this.manualMinutes});
+
+  final int minutes;
+  final int? manualMinutes;
 }

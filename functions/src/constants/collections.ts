@@ -24,12 +24,17 @@ export const USER_COLLECTIONS = {
   stats: "stats",
   targets: "targets",
   integrations: "integrations",
+  waveMessages: "wave_messages",
+  waveMemories: "wave_memories",
+  waveState: "wave_state",
+  customFoods: "custom_foods",
 } as const;
 
 export const STATS_DOC = "summary";
 export const TARGETS_DOC = "current";
 export const ONBOARDING_BLUEPRINT_DOC = "onboarding_blueprint";
 export const SETTINGS_DOC = "preferences";
+export const WAVE_SUMMARY_DOC = "summary";
 export const WORKOUT_STATE_DOC = "state";
 
 export const usersCollection = firestore.collection("users");
@@ -40,6 +45,9 @@ export const wearableLinksCollection = firestore.collection("wearable_links");
 export const onboardingDetailsCollection =
   firestore.collection("onboarding_details");
 export const dailyQuotesCollection = firestore.collection("daily_quotes");
+export const waveRatingsCollection = firestore.collection("wave_ratings");
+export const wavePromptStatsCollection =
+  firestore.collection("wave_prompt_stats");
 
 export const userCollection = (
   uid: string,

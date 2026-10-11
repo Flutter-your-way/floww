@@ -4,16 +4,26 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
-import 'package:floww/core/habits/models/habit_draft.dart';
+import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/core/nutrition/models/diet_plan.dart';
 import 'package:floww/core/recovery/models/muscle_group.dart';
+import 'package:floww/core/wave/models/wave_action.dart';
+import 'package:floww/core/wave/models/wave_action_outcome.dart';
 import 'package:floww/core/wave/models/wave_card_data.dart';
 import 'package:floww/core/wave/models/wave_chat_day.dart';
 import 'package:floww/core/wave/models/wave_context.dart';
 import 'package:floww/core/wave/models/wave_message.dart';
+import 'package:floww/core/wave/models/wave_premium_feature.dart';
+import 'package:floww/core/wave/models/wave_quota.dart';
+import 'package:floww/core/wave/models/wave_rating.dart';
+import 'package:floww/core/wave/models/wave_rejected_action.dart';
 import 'package:floww/core/wave/models/wave_quick_action.dart';
 import 'package:floww/core/wave/models/wave_reply.dart';
+import 'package:floww/core/wave/models/wave_reveal.dart';
+import 'package:floww/core/wave/models/wave_thinking.dart';
 import 'package:floww/core/wave/models/wave_transcript_entry.dart';
+import 'package:floww/core/wave/models/wave_undo.dart';
+import 'package:floww/core/wave/services/wave_action_service.dart';
 import 'package:floww/core/wave/services/wave_ai_service.dart';
 import 'package:floww/core/wave/services/wave_chat_service.dart';
 import 'package:floww/core/wave/services/wave_context_service.dart';
@@ -25,14 +35,22 @@ class WaveChatViewModel extends ChangeNotifier {
     this._contextService,
     this._transcriptService, {
     WaveAiService? aiService,
+    WaveActionService? actionService,
+    this.onNavigate,
+    this.onUpgrade,
   }) : _aiService = aiService ?? WaveAiService(),
+       _actionService = actionService ?? WaveActionService(_service),
        _welcomeTimestamp = DateTime.now(),
-       _selectedDay = AppDateUtils.dateOnly(DateTime.now()) {
+       _selectedDay = _lastDay ?? AppDateUtils.dateOnly(DateTime.now()) {
     composer.addListener(_onComposerChanged);
+    _context = _contextService.cached ?? WaveContext.empty;
+    _days.addAll(_transcriptService.cachedDays ?? const []);
+    _seedDay();
     _watchContext();
     _watchTranscript();
     _watchDays();
     _transcriptService.backfillDays();
+    _loadQuota();
   }
 
   static const String title = 'WAVE';
@@ -45,14 +63,24 @@ class WaveChatViewModel extends ChangeNotifier {
   final WaveContextService _contextService;
   final WaveTranscriptService _transcriptService;
   final WaveAiService _aiService;
+  final WaveActionService _actionService;
+  final ValueChanged<WaveDestination>? onNavigate;
+  final Future<void> Function()? onUpgrade;
 
   final TextEditingController composer = TextEditingController();
-  final ScrollController scrollController = ScrollController();
+  static DateTime? _lastDay;
+  static double _lastOffset = 0;
+
+  final ScrollController scrollController = ScrollController(
+    initialScrollOffset: _lastOffset,
+  );
   final DateTime _welcomeTimestamp;
 
   final List<WaveTranscriptEntry> _entries = [];
   final Map<String, WaveMealSlot> _mealSlots = {};
   final Map<String, Set<String>> _selectedFoods = {};
+  final Set<String> _entering = {};
+  final Map<String, Completer<void>> _reveals = {};
 
   final List<WaveChatDay> _days = [];
 
@@ -61,9 +89,12 @@ class WaveChatViewModel extends ChangeNotifier {
   StreamSubscription<List<WaveChatDay>>? _daysSubscription;
   WaveContext _context = WaveContext.empty;
   DateTime _selectedDay;
+  String? _thinkingQuestion;
   bool _canSend = false;
+  bool _isLoaded = false;
   bool _isBusy = false;
   bool _disposed = false;
+  WaveQuota? _quota;
 
   WaveContext get context => _context;
 
@@ -71,11 +102,56 @@ class WaveChatViewModel extends ChangeNotifier {
 
   bool get isBusy => _isBusy;
 
+  bool get isLoaded => _isLoaded;
+
   List<WaveQuickAction> get quickActions => WaveQuickAction.values;
 
-  bool get canSend => _canSend && !_isBusy && isViewingToday;
+  bool get canSend =>
+      _canSend &&
+      !_isBusy &&
+      _reveals.isEmpty &&
+      isViewingToday &&
+      !isOutOfMessages;
 
-  bool get showQuickActions => !_canSend && isViewingToday;
+  bool get canUseVoice =>
+      !_isBusy && _reveals.isEmpty && isViewingToday && !isOutOfMessages;
+
+  bool get showQuota => isViewingToday && _quota != null && !_quota!.isPremium;
+
+  bool get isOutOfMessages =>
+      _quota != null && !_quota!.isPremium && _quota!.isExhausted;
+
+  bool get isQuotaLow => showQuota && _quota!.isLow;
+
+  int get quotaRemaining => _quota?.remaining ?? 0;
+
+  int get quotaLimit => _quota?.limit ?? 0;
+
+  String get quotaMessage => isOutOfMessages
+      ? 'You have used all ${_quota?.limit ?? 0} WAVE messages for today.'
+      : 'Only ${_quota?.remaining ?? 0} WAVE messages left today.';
+
+  static const String quotaUpsell =
+      'Premium gets 60 a day, memory, plan edits and weekly reviews.';
+  static const String upgradeLabel = 'Go Premium';
+
+  List<String> get thinkingSteps => WaveThinking.stepsFor(_thinkingQuestion);
+
+  bool shouldEnter(String messageId) => _entering.contains(messageId);
+
+  void markEntered(String messageId) => _entering.remove(messageId);
+
+  bool isRevealing(String messageId) => _reveals.containsKey(messageId);
+
+  void completeReveal(String messageId) {
+    final reveal = _reveals.remove(messageId);
+    if (reveal == null) return;
+    if (!reveal.isCompleted) reveal.complete();
+    notifyListeners();
+  }
+
+  bool get showQuickActions =>
+      !_canSend && isViewingToday && (_quota?.isPremium ?? false);
 
   List<WaveChatDay> get days => List.unmodifiable(_days);
 
@@ -87,19 +163,50 @@ class WaveChatViewModel extends ChangeNotifier {
   String get dayLabel => AppDateUtils.relativeDay(_selectedDay);
 
   static const String openWorkoutLabel = 'Open Workout';
+  static const String manageMemoryLabel = 'Manage';
+  static const String memoryUpdatedTitle = 'Memory Updated';
+  static const String undoLabel = 'Undo';
+  static const String openLabel = 'Open';
+  static const String confirmLabel = 'Confirm';
+  static const String cancelLabel = 'Cancel';
+  static const String actionFailedMessage =
+      'I could not save that change. Please try again.';
+  static const String undoFailedMessage =
+      'I could not undo that change. Please try again.';
 
   String? confirmationActionLabel(WaveConfirmationMessage message) =>
       switch (message.action) {
         WaveConfirmationAction.openWorkout =>
           isViewingToday && _context.hasActiveWorkout ? openWorkoutLabel : null,
+        WaveConfirmationAction.openMemory => manageMemoryLabel,
+        WaveConfirmationAction.undo =>
+          isViewingToday && !isResolved(message.id) ? undoLabel : null,
+        WaveConfirmationAction.navigate => isViewingToday ? openLabel : null,
+        WaveConfirmationAction.upgrade => upgradeLabel,
         null => null,
       };
+
+  static const String premiumTitle = 'Part of Premium';
+  static const String notFoundTitle = 'Not Found';
+  static const String notAvailableTitle = 'Not Available Now';
+
+  bool canRate(String messageId) => _entryOf(messageId)?.isRateable ?? false;
+
+  WaveRating? ratingFor(String messageId) => _entryOf(messageId)?.rating;
+
+  Future<void> rate(String messageId, WaveRating rating) async {
+    final entry = _entryOf(messageId);
+    if (entry == null || !entry.isRateable || entry.rating == rating) return;
+    await _update(entry.copyWith(rating: rating));
+  }
 
   String get statusLabel => isViewingToday
       ? (isReady ? connectedStatus : connectingStatus)
       : dayLabel;
 
-  List<WaveMessage> get messages => [
+  List<WaveMessage>? _messages;
+
+  List<WaveMessage> get messages => _messages ??= List.unmodifiable([
     if (isViewingToday)
       WaveDailyBriefMessage(
         id: welcomeId,
@@ -107,7 +214,7 @@ class WaveChatViewModel extends ChangeNotifier {
         brief: _service.briefOf(_context),
       ),
     for (final entry in _entries) ?_messageOf(entry),
-  ];
+  ]);
 
   String timeLabel(WaveMessage message) =>
       AppDateUtils.time(message.timestamp, padHour: true);
@@ -159,38 +266,30 @@ class WaveChatViewModel extends ChangeNotifier {
   Future<void> submitComposer() async {
     final text = composer.text.trim();
     if (text.isEmpty) return;
+    final quotaBefore = _quota;
+    _quota = _quota?.consumed;
     composer.clear();
     final history = List<WaveTranscriptEntry>.of(_entries);
     await _append(_entry(WaveMessageKind.user, text: text));
-    await _respondToText(text, history);
+    await _respondToText(text, history, quotaBefore);
+  }
+
+  Future<void> submitVoice(String text) async {
+    if (!canUseVoice || text.trim().isEmpty) return;
+    composer.text = text.trim();
+    await submitComposer();
   }
 
   Future<void> startDay() => _respondTo(WaveQuickAction.todayPlan);
 
   Future<void> logWater() async {
     if (_isBusy) return;
-    _setBusy(true);
-    try {
-      await _service.logWater(WaveChatService.waterQuickAmountMl);
-      await _append(
-        _entry(
-          WaveMessageKind.confirmation,
-          title: 'Water Logged',
-          detail:
-              '${WaveChatService.waterQuickAmountMl.round()}ml added to today',
-        ),
-      );
-    } catch (e) {
-      debugPrint('wave log water failed: $e');
-      await _append(
-        _entry(
-          WaveMessageKind.reply,
-          text: 'I could not log that water. Please try again.',
-        ),
-      );
-    } finally {
-      _setBusy(false);
-    }
+    await _perform(
+      const WaveAction(
+        kind: WaveActionKind.logWater,
+        value: WaveChatService.waterQuickAmountMl,
+      ),
+    );
   }
 
   Future<void> selectFeeling(String messageId, WaveFeeling feeling) async {
@@ -222,17 +321,14 @@ class WaveChatViewModel extends ChangeNotifier {
 
     _setBusy(true);
     try {
-      final count = await _service.logFoods(foods, mealSlotFor(message.id));
+      final outcome = await _actionService.logMeal(
+        foods,
+        mealSlotFor(message.id),
+      );
       _selectedFoods.remove(message.id);
       final entry = _entryOf(message.id);
       if (entry != null) await _update(entry.copyWith(isResolved: true));
-      await _append(
-        _entry(
-          WaveMessageKind.confirmation,
-          title: 'Meal Logged',
-          detail: '$count added to your nutrition for today',
-        ),
-      );
+      await _confirmOutcome(outcome);
     } catch (e) {
       debugPrint('wave log meal failed: $e');
       await _append(
@@ -283,9 +379,9 @@ class WaveChatViewModel extends ChangeNotifier {
   void selectDay(WaveChatDay day) {
     if (AppDateUtils.isSameDay(day.date, _selectedDay)) return;
     _selectedDay = day.date;
-    _entries.clear();
     _selectedFoods.clear();
     _mealSlots.clear();
+    _seedDay();
     notifyListeners();
     _watchTranscript();
   }
@@ -294,9 +390,9 @@ class WaveChatViewModel extends ChangeNotifier {
     final today = AppDateUtils.dateOnly(DateTime.now());
     if (AppDateUtils.isSameDay(today, _selectedDay)) return;
     _selectedDay = today;
-    _entries.clear();
     _selectedFoods.clear();
     _mealSlots.clear();
+    _seedDay();
     notifyListeners();
     _watchTranscript();
   }
@@ -319,21 +415,36 @@ class WaveChatViewModel extends ChangeNotifier {
   Future<void> _respondToText(
     String text,
     List<WaveTranscriptEntry> history,
+    WaveQuota? quotaBefore,
   ) async {
     WaveReply? reply;
     var failure = _fallbackReply;
 
+    _thinkingQuestion = text;
     _setBusy(true);
     try {
       reply = await _aiService.ask(
         message: text,
         context: _context,
         history: history,
+        schedule: await _contextService.upcomingSchedule().catchError((
+          Object error,
+        ) {
+          debugPrint('wave schedule failed: $error');
+          return const <WorkoutPlanEntity>[];
+        }),
       );
     } on WaveChatException catch (e) {
       debugPrint('wave ai failed: ${e.code}');
       failure = e.message;
+      if (e.code == WaveChatErrorCode.quotaExceeded) {
+        _quota = quotaBefore?.exhausted;
+        if (isOutOfMessages) failure = '$quotaMessage $quotaUpsell';
+      } else {
+        _quota = quotaBefore;
+      }
     } finally {
+      _thinkingQuestion = null;
       _setBusy(false);
     }
 
@@ -342,239 +453,219 @@ class WaveChatViewModel extends ChangeNotifier {
       return;
     }
 
-    await _append(_entry(WaveMessageKind.reply, text: reply.text));
-    await _runAction(reply);
+    _quota = reply.quota ?? _quota;
+    await _append(
+      _entry(
+        WaveMessageKind.reply,
+        text: reply.text,
+        promptVersion: reply.promptVersion,
+        aiModel: reply.aiModel,
+        route: reply.route,
+      ),
+    );
+    await _confirmMemory(reply);
+    final destination = await _runActions(reply);
+    await _reportRejected(reply.rejected);
+    await _offerPremium(reply.locked);
     await _respondWithCard(reply);
+    if (destination != null) _navigate(destination);
   }
 
-  Future<void> _runAction(WaveReply reply) async {
-    if (reply.action == WaveActionKind.none) return;
+  Future<void> upgrade() async {
+    await onUpgrade?.call();
+    if (_disposed) return;
+    await _loadQuota();
+  }
 
+  Future<void> _loadQuota() async {
+    final quota = await _aiService.quota();
+    if (quota == null) return;
+    _quota = quota;
+    notifyListeners();
+  }
+
+  Future<void> _reportRejected(List<WaveRejectedAction> rejected) async {
+    for (final item in rejected) {
+      final target = item.target.isEmpty ? 'That' : item.target;
+      switch (item.reason) {
+        case WaveRejectReason.premium:
+          continue;
+        case WaveRejectReason.notFound:
+          await _confirm(
+            notFoundTitle,
+            '$target is not in your ${_placeOf(item.kind)}',
+            tone: WaveConfirmationTone.warning,
+          );
+        case WaveRejectReason.notAvailable:
+          await _confirm(
+            notAvailableTitle,
+            _unavailableDetailOf(item.kind),
+            tone: WaveConfirmationTone.warning,
+          );
+      }
+    }
+  }
+
+  static String _placeOf(WaveActionKind kind) => switch (kind) {
+    WaveActionKind.logFood => 'foods yet',
+    WaveActionKind.unlogFood => 'food log today',
+    WaveActionKind.logSet => 'current session',
+    WaveActionKind.swapExercise => 'plan today',
+    _ => 'habits',
+  };
+
+  static String _unavailableDetailOf(WaveActionKind kind) => switch (kind) {
+    WaveActionKind.completeAllHabits => 'Every habit is already done today',
+    WaveActionKind.startWorkout => 'There is no session to start today',
+    WaveActionKind.logSet ||
+    WaveActionKind.completeWorkout ||
+    WaveActionKind.cancelWorkout => 'No workout is in progress',
+    _ => 'Today\'s session is already started, done or not planned',
+  };
+
+  Future<void> _offerPremium(List<WavePremiumFeature> locked) async {
+    if (locked.isEmpty) return;
+    await _confirm(
+      premiumTitle,
+      locked.map((feature) => feature.label).join(' · '),
+      action: WaveConfirmationAction.upgrade,
+      tone: WaveConfirmationTone.premium,
+    );
+  }
+
+  Future<void> _confirmMemory(WaveReply reply) async {
+    final details = [
+      if (reply.memorySaved.isNotEmpty)
+        'Remembered: ${reply.memorySaved.join(' · ')}',
+      if (reply.memoryForgotten.isNotEmpty)
+        'Forgot: ${reply.memoryForgotten.join(' · ')}',
+    ];
+    if (details.isEmpty) return;
+    await _confirm(
+      memoryUpdatedTitle,
+      details.join('\n'),
+      action: WaveConfirmationAction.openMemory,
+      tone: WaveConfirmationTone.memory,
+    );
+  }
+
+  Future<WaveDestination?> _runActions(WaveReply reply) async {
+    WaveDestination? destination;
+    for (final action in reply.actions) {
+      if (action.needsConfirmation) {
+        await _askToConfirm(action);
+        continue;
+      }
+      final outcome = await _perform(action);
+      destination = outcome?.destination ?? destination;
+    }
+    return destination;
+  }
+
+  Future<void> _askToConfirm(WaveAction action) {
+    final prompt = _actionService.promptFor(action);
+    return _append(
+      _entry(
+        WaveMessageKind.actionPrompt,
+        title: prompt.title,
+        detail: prompt.detail,
+        pendingAction: action,
+      ),
+    );
+  }
+
+  Future<WaveActionOutcome?> _perform(WaveAction action) async {
     _setBusy(true);
     try {
-      switch (reply.action) {
-        case WaveActionKind.none:
-          return;
-        case WaveActionKind.completeAllHabits:
-          await _confirmHabits(await _service.completeHabits());
-        case WaveActionKind.completeHabit:
-          await _confirmHabits(
-            await _service.completeHabits(title: reply.actionTarget),
-            title: reply.actionTarget,
-          );
-        case WaveActionKind.uncompleteHabit:
-          await _confirmUnticked(reply.actionTarget);
-        case WaveActionKind.addHabit:
-          await _confirmAddHabit(reply);
-        case WaveActionKind.editHabit:
-          await _confirmEditHabit(reply);
-        case WaveActionKind.deleteHabit:
-          await _confirmDeleteHabit(reply.actionTarget);
-        case WaveActionKind.logWater:
-          await _confirmWater(reply.actionAmountMl);
-        case WaveActionKind.unlogWater:
-          await _confirmUnlogWater(reply.actionAmountMl);
-        case WaveActionKind.logFood:
-          await _confirmLogFood(reply);
-        case WaveActionKind.unlogFood:
-          await _confirmUnlogFood(reply.actionTarget);
-        case WaveActionKind.createFood:
-          await _confirmCreateFood(reply);
-        case WaveActionKind.startWorkout:
-          await _confirmStartWorkout();
-        case WaveActionKind.completeWorkout:
-          await _confirmCompleteWorkout();
-        case WaveActionKind.cancelWorkout:
-          await _confirmCancelWorkout();
-      }
+      final outcome = await _actionService.run(action, _context);
+      if (outcome != null) await _confirmOutcome(outcome);
+      return outcome;
     } catch (e) {
-      debugPrint('wave action failed: $e');
-      await _append(
-        _entry(
-          WaveMessageKind.reply,
-          text: 'I could not save that change. Please try again.',
-        ),
-      );
+      debugPrint('wave action ${action.kind.name} failed: $e');
+      await _append(_entry(WaveMessageKind.reply, text: actionFailedMessage));
+      return null;
     } finally {
       _setBusy(false);
     }
   }
 
-  Future<void> _confirmHabits(int count, {String? title}) async {
-    if (count == 0) {
-      await _append(
-        _entry(
-          WaveMessageKind.confirmation,
-          title: 'Nothing To Tick',
-          detail: title == null || title.isEmpty
-              ? 'Today\'s habits were already complete'
-              : '$title was already complete',
-        ),
-      );
-      return;
-    }
-
-    await _append(
-      _entry(
-        WaveMessageKind.confirmation,
-        title: 'Habits Updated',
-        detail: count == 1
-            ? '1 habit marked complete for today'
-            : '$count habits marked complete for today',
-      ),
-    );
+  Future<void> confirmPending(String messageId) async {
+    final entry = _entryOf(messageId);
+    final action = entry?.pendingAction;
+    if (entry == null || action == null || entry.isResolved || _isBusy) return;
+    await _update(entry.copyWith(isResolved: true));
+    final outcome = await _perform(action);
+    final destination = outcome?.destination;
+    if (destination != null) _navigate(destination);
   }
 
-  Future<void> _confirmUnticked(String title) async {
-    final count = await _service.uncompleteHabits(title: title);
-    await _confirm(
-      count > 0 ? 'Habit Unticked' : 'Nothing To Untick',
-      count > 0 ? '$title is back to not done' : 'I could not find $title',
-    );
+  Future<void> dismissPending(String messageId) async {
+    final entry = _entryOf(messageId);
+    final action = entry?.pendingAction;
+    if (entry == null || action == null || entry.isResolved) return;
+    await _update(entry.copyWith(isResolved: true));
+    await _confirmOutcome(_actionService.dismissed(action));
   }
 
-  Future<void> _confirmAddHabit(WaveReply reply) async {
-    final draft = reply.habitDraft;
-    if (draft == null) return;
-    await _service.addHabit(draft);
-    await _confirm(
-      'Habit Added',
-      '${draft.title} · ${_targetLabel(draft)} per day',
-    );
-  }
+  Future<void> undo(String messageId) async {
+    final entry = _entryOf(messageId);
+    final undo = entry?.undo;
+    if (entry == null || undo == null || entry.isResolved || _isBusy) return;
+    if (!isViewingToday) return;
 
-  Future<void> _confirmEditHabit(WaveReply reply) async {
-    final draft = reply.habitDraft;
-    if (draft == null) return;
-    final updated = await _service.editHabit(reply.actionTarget, draft);
-    await _confirm(
-      updated ? 'Habit Updated' : 'Habit Not Found',
-      updated
-          ? '${draft.title} · ${_targetLabel(draft)} per day'
-          : 'I could not find ${reply.actionTarget}',
-    );
-  }
-
-  Future<void> _confirmDeleteHabit(String title) async {
-    final deleted = await _service.deleteHabit(title);
-    await _confirm(
-      deleted ? 'Habit Deleted' : 'Habit Not Found',
-      deleted ? '$title removed' : 'I could not find $title',
-    );
-  }
-
-  Future<void> _confirmUnlogWater(double amountMl) async {
-    final removed = await _service.unlogWater(_context, amountMl);
-    await _confirm(
-      removed > 0 ? 'Water Removed' : 'Nothing To Remove',
-      removed > 0
-          ? '${removed.round()}ml taken off today'
-          : 'No water logged today',
-    );
-  }
-
-  Future<void> _confirmLogFood(WaveReply reply) async {
-    final food = await _service.findFood(_context, reply.actionTarget);
-    if (food == null) {
+    _setBusy(true);
+    try {
+      final outcome = await _actionService.undo(undo);
+      await _update(entry.copyWith(isResolved: true));
       await _confirm(
-        'Food Not Found',
-        '${reply.actionTarget} is not in your foods yet',
+        outcome.title,
+        '${entry.title ?? ''} · ${outcome.detail}',
+        tone: entry.tone,
       );
-      return;
+    } catch (e) {
+      debugPrint('wave undo ${undo.kind.name} failed: $e');
+      await _append(_entry(WaveMessageKind.reply, text: undoFailedMessage));
+    } finally {
+      _setBusy(false);
     }
-
-    final slot = reply.meal == null
-        ? _service.currentMealSlot()
-        : WaveChatService.slotOf(reply.meal!);
-    final servings = reply.servings < 1 ? 1 : reply.servings;
-    final logged = await _service.logFood(food, slot, servings: servings);
-
-    await _confirm(
-      'Food Logged',
-      '$logged × ${food.name} added to ${slot.label.toLowerCase()}',
-    );
   }
 
-  Future<void> _confirmUnlogFood(String name) async {
-    final removed = await _service.unlogFood(_context, name);
-    await _confirm(
-      removed != null ? 'Food Removed' : 'Nothing To Remove',
-      removed != null
-          ? '$removed taken off today'
-          : 'I could not find $name in today\'s log',
-    );
+  void openDestination(String messageId) {
+    final destination = _entryOf(messageId)?.destination;
+    if (destination != null) _navigate(destination);
   }
 
-  Future<void> _confirmCreateFood(WaveReply reply) async {
-    final draft = reply.foodDraft;
-    if (draft == null) return;
-    final food = await _service.createFood(draft);
-    await _confirm(
-      'Food Created',
-      '${food.name} · ${food.calories.round()} kcal per '
-          '${food.serving.isEmpty ? "serving" : food.serving}',
-    );
+  void _navigate(WaveDestination destination) {
+    if (!isViewingToday) return;
+    onNavigate?.call(destination);
   }
 
-  Future<void> _confirmStartWorkout() async {
-    final title = await _service.startWorkout(_context);
-    await _confirm(
-      title != null ? 'Workout Started' : 'No Session Planned',
-      title ?? 'There is nothing scheduled for today',
-      action: title != null ? WaveConfirmationAction.openWorkout : null,
-    );
-  }
-
-  Future<void> _confirmCompleteWorkout() async {
-    final title = await _service.completeWorkout();
-    await _confirm(
-      title != null ? 'Workout Completed' : 'Nothing In Progress',
-      title ?? 'Start a session first, then I can finish it',
-    );
-  }
-
-  Future<void> _confirmCancelWorkout() async {
-    final title = await _service.cancelWorkout();
-    await _confirm(
-      title != null ? 'Workout Cancelled' : 'Nothing In Progress',
-      title != null
-          ? '$title discarded · start it again anytime today'
-          : 'There is no started workout to cancel',
-    );
-  }
+  Future<void> _confirmOutcome(WaveActionOutcome outcome) => _append(
+    _entry(
+      WaveMessageKind.confirmation,
+      title: outcome.title,
+      detail: outcome.detail,
+      action: outcome.action,
+      tone: outcome.tone,
+      undo: outcome.undo,
+      destination: outcome.destination,
+    ),
+  );
 
   Future<void> _confirm(
     String title,
     String detail, {
     WaveConfirmationAction? action,
+    WaveConfirmationTone? tone,
   }) => _append(
     _entry(
       WaveMessageKind.confirmation,
       title: title,
       detail: detail,
       action: action,
+      tone: tone,
     ),
   );
-
-  static String _targetLabel(HabitDraft draft) {
-    final target = draft.target;
-    final value = target == target.roundToDouble()
-        ? target.round().toString()
-        : target.toStringAsFixed(1);
-    return '$value ${draft.metric.name}';
-  }
-
-  Future<void> _confirmWater(double amountMl) async {
-    if (amountMl <= 0) return;
-    await _service.logWater(amountMl);
-    await _append(
-      _entry(
-        WaveMessageKind.confirmation,
-        title: 'Water Logged',
-        detail: '${amountMl.round()}ml added to today',
-      ),
-    );
-  }
 
   Future<void> _respondWithCard(WaveReply reply) async {
     switch (reply.card) {
@@ -583,6 +674,7 @@ class WaveChatViewModel extends ChangeNotifier {
       case WaveCardKind.plan:
         await _append(_entry(WaveMessageKind.plan));
       case WaveCardKind.mealLog:
+        if (reply.actions.any((action) => action.kind.logsFood)) return;
         await _append(_entry(WaveMessageKind.mealLog));
       case WaveCardKind.scoreReport:
         await _append(_entry(WaveMessageKind.scoreReport));
@@ -689,6 +781,13 @@ class WaveChatViewModel extends ChangeNotifier {
     String? detail,
     WaveInjurySwap? swap,
     WaveConfirmationAction? action,
+    WaveConfirmationTone? tone,
+    WaveAction? pendingAction,
+    WaveUndo? undo,
+    WaveDestination? destination,
+    String? promptVersion,
+    String? aiModel,
+    String? route,
   }) => WaveTranscriptEntry(
     id: _transcriptService.newId(),
     kind: kind,
@@ -698,13 +797,36 @@ class WaveChatViewModel extends ChangeNotifier {
     detail: detail,
     swap: swap,
     action: action,
+    tone: tone,
+    pendingAction: pendingAction,
+    undo: undo,
+    destination: destination,
+    promptVersion: promptVersion,
+    aiModel: aiModel,
+    route: route,
   );
 
   Future<void> _append(WaveTranscriptEntry entry) async {
+    final text = entry.text ?? '';
+    final reveals = entry.kind == WaveMessageKind.reply && text.isNotEmpty;
+    _entering.add(entry.id);
+    if (reveals) _reveals[entry.id] = Completer<void>();
     _entries.add(entry);
     notifyListeners();
     _scrollToLatest();
-    await _transcriptService.save(entry);
+    await Future.wait([
+      _transcriptService.save(entry),
+      if (reveals) _revealOf(entry.id, text),
+    ]);
+  }
+
+  Future<void> _revealOf(String id, String text) {
+    final reveal = _reveals[id];
+    if (reveal == null) return Future.value();
+    return reveal.future.timeout(
+      WaveReveal.durationFor(text) + AppMotion.waveRevealGrace,
+      onTimeout: () => completeReveal(id),
+    );
   }
 
   Future<void> _update(WaveTranscriptEntry entry) async {
@@ -754,6 +876,7 @@ class WaveChatViewModel extends ChangeNotifier {
       title: entry.title ?? '',
       detail: entry.detail ?? '',
       action: entry.action,
+      tone: entry.tone ?? WaveConfirmationTone.success,
     ),
     WaveMessageKind.checkIn => WaveCheckInMessage(
       id: entry.id,
@@ -773,6 +896,12 @@ class WaveChatViewModel extends ChangeNotifier {
       subtitle: 'Tap to add items · WAVE will calculate macros',
       foods: _service.quickFoodsOf(_context),
     ),
+    WaveMessageKind.actionPrompt => WaveActionPromptMessage(
+      id: entry.id,
+      timestamp: entry.createdAt,
+      title: entry.title ?? '',
+      detail: entry.detail ?? '',
+    ),
     WaveMessageKind.dietPlan => WaveDietPlanMessage(
       id: entry.id,
       timestamp: entry.createdAt,
@@ -789,6 +918,14 @@ class WaveChatViewModel extends ChangeNotifier {
       );
 
   WaveDietPlan? _cachedDietPlan;
+
+  void _seedDay() {
+    final cached = _transcriptService.cachedDay(_selectedDay);
+    _entries
+      ..clear()
+      ..addAll(cached ?? const []);
+    _isLoaded = cached != null;
+  }
 
   void _watchContext() {
     _contextSubscription = _contextService.watch().listen((context) {
@@ -808,15 +945,28 @@ class WaveChatViewModel extends ChangeNotifier {
 
   void _watchTranscript() {
     _transcriptSubscription?.cancel();
-    _transcriptSubscription = _transcriptService.watchDay(_selectedDay).listen((
-      entries,
-    ) {
-      if (_transcriptService.userId == null) return;
-      _entries
-        ..clear()
-        ..addAll(entries);
-      notifyListeners();
-    }, onError: (Object error) => debugPrint('wave transcript failed: $error'));
+    _transcriptSubscription = _transcriptService
+        .watchDay(_selectedDay)
+        .listen(
+          (entries) {
+            if (_transcriptService.userId == null) {
+              if (_isLoaded) return;
+              _isLoaded = true;
+              notifyListeners();
+              return;
+            }
+            _entries
+              ..clear()
+              ..addAll(entries);
+            _isLoaded = true;
+            notifyListeners();
+          },
+          onError: (Object error) {
+            debugPrint('wave transcript failed: $error');
+            _isLoaded = true;
+            notifyListeners();
+          },
+        );
   }
 
   void _setBusy(bool value) {
@@ -846,12 +996,15 @@ class WaveChatViewModel extends ChangeNotifier {
 
   @override
   void notifyListeners() {
+    _messages = null;
     if (!_disposed) super.notifyListeners();
   }
 
   @override
   void dispose() {
     _disposed = true;
+    _lastDay = isViewingToday ? null : _selectedDay;
+    if (scrollController.hasClients) _lastOffset = scrollController.offset;
     _contextSubscription?.cancel();
     _transcriptSubscription?.cancel();
     _daysSubscription?.cancel();

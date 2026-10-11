@@ -18,6 +18,7 @@ class FlowModeController extends ChangeNotifier {
   DateTime? _lastTransitionAt;
   int _transitionCount = 0;
   int? _score;
+  AppThemeMode? _override;
   bool _hasBaseline = false;
   bool _isHydrating = false;
   bool _isAppActive = true;
@@ -32,11 +33,12 @@ class FlowModeController extends ChangeNotifier {
 
   bool get isTransitioning => _activeTransition != null;
 
-  void reportScore(int score) {
+  void reportScore(int score, {AppThemeMode? override}) {
     if (_disposed || _isSuspended) return;
     _score = score;
+    _override = override;
 
-    final resolved = AppThemeMode.fromFlowScore(score);
+    final resolved = _resolve(score);
 
     if (!_hasBaseline || _isHydrating) {
       _hasBaseline = true;
@@ -61,6 +63,7 @@ class FlowModeController extends ChangeNotifier {
     _watchdogTimer?.cancel();
     _releaseBaseline();
     _score = null;
+    _override = null;
     _hasBaseline = false;
     _lastTransitionAt = null;
     if (_activeTransition == null) return;
@@ -75,6 +78,7 @@ class FlowModeController extends ChangeNotifier {
     _watchdogTimer?.cancel();
     _releaseBaseline();
     _score = null;
+    _override = null;
     _hasBaseline = false;
     _lastTransitionAt = null;
 
@@ -146,7 +150,7 @@ class FlowModeController extends ChangeNotifier {
       return;
     }
 
-    final resolved = AppThemeMode.fromFlowScore(score);
+    final resolved = _resolve(score);
     if (resolved == mode) return;
 
     final remaining = _cooldownRemaining();
@@ -157,6 +161,9 @@ class FlowModeController extends ChangeNotifier {
 
     _begin(resolved);
   }
+
+  AppThemeMode _resolve(int score) =>
+      _override ?? AppThemeMode.fromFlowScore(score);
 
   Duration _cooldownRemaining() {
     final last = _lastTransitionAt;

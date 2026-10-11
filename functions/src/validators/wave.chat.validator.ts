@@ -19,6 +19,7 @@ export const waveHistoryTurnValidator = z.object({
 export const waveTodayValidator = z.object({
   flowScore: z.number().int().min(0).max(100).default(0),
   mode: label(20).default(""),
+  modeOverride: z.boolean().default(false),
   streakDays: z.number().int().min(0).max(9999).default(0),
   workoutTitle: label(80).default(""),
   workoutDetail: label(80).default(""),
@@ -45,6 +46,11 @@ export const waveTodayValidator = z.object({
   musclesRecovering: z.number().int().min(0).default(0),
   musclesFatigued: z.number().int().min(0).default(0),
   localTime: label(30).default(""),
+  localDate: label(30).default(""),
+  schedule: z.array(label(80)).max(MAX_WAVE_LIST_ITEMS).default([]),
+  activeExercises: z.array(label(80)).max(MAX_WAVE_LONG_LIST).default([]),
+  stepsTarget: z.number().int().min(0).default(0),
+  sleepTargetHours: z.number().min(0).max(24).default(0),
 });
 
 export const waveChatValidator = z.object({

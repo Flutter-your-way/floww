@@ -33,6 +33,7 @@ class AppRouter {
   static const String notificationSettings = '/notification_settings';
   static const String units = '/units';
   static const String privacyData = '/privacy_data';
+  static const String waveMemory = '/wave_memory';
   static const String onboardingAnswers = '/onboarding_answers';
   static const String editOnboardingAnswer = '/edit_onboarding_answer';
 

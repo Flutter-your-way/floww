@@ -147,7 +147,10 @@ class HomeProvider extends ChangeNotifier {
     _snapshot = _builder.build(records, date: _date);
     _isReady = true;
     notifyListeners();
-    _flowModeController.reportScore(_snapshot.displayFlowScorePercent);
+    _flowModeController.reportScore(
+      _snapshot.displayFlowScorePercent,
+      override: records.flowModeOverride,
+    );
   }
 
   Future<void> toggleHabit(String id) async {

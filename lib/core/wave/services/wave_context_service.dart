@@ -1,3 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
 import 'package:floww/core/health/services/health_log_service.dart';
@@ -11,6 +14,7 @@ import 'package:floww/core/progress/services/progress_service.dart';
 import 'package:floww/core/wave/models/wave_context.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
+import 'package:floww/core/workout/services/workout_program_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 
 class WaveContextService {
@@ -18,9 +22,34 @@ class WaveContextService {
     HomeService? homeService,
     HomeSnapshotBuilder? builder,
     CustomFoodService? customFoodService,
+    WorkoutPlanService? planService,
+    WorkoutProgramService? programService,
   }) : _homeService = homeService ?? _defaultHomeService(),
        _customFoodService = customFoodService ?? CustomFoodService(),
-       _builder = builder ?? HomeSnapshotBuilder();
+       _builder = builder ?? HomeSnapshotBuilder(),
+       _planService =
+           planService ?? WorkoutPlanService(WorkoutCatalogService()),
+       _programService = programService ?? WorkoutProgramService();
+
+  static const int scheduleDays = 7;
+
+  static WaveContext? _cached;
+  static String? _cachedKey;
+
+  static String? _cacheKey() {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return null;
+      return '$uid/${AppDateUtils.dateKey(AppDateUtils.dateOnly(DateTime.now()))}';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  WaveContext? get cached {
+    final key = _cacheKey();
+    return key != null && key == _cachedKey ? _cached : null;
+  }
 
   static const NutritionGoalCalculator _goalCalculator =
       NutritionGoalCalculator();
@@ -28,6 +57,21 @@ class WaveContextService {
   final HomeService _homeService;
   final CustomFoodService _customFoodService;
   final HomeSnapshotBuilder _builder;
+  final WorkoutPlanService _planService;
+  final WorkoutProgramService _programService;
+
+  Future<List<WorkoutPlanEntity>> upcomingSchedule() async {
+    final tomorrow = AppDateUtils.addDays(
+      AppDateUtils.dateOnly(DateTime.now()),
+      1,
+    );
+    final state = await _programService.loadState();
+    return _planService.loadScheduleBetween(
+      tomorrow,
+      AppDateUtils.addDays(tomorrow, scheduleDays),
+      activeProgram: state.activeProgram,
+    );
+  }
 
   Stream<WaveContext> watch() {
     final now = DateTime.now();
@@ -38,12 +82,19 @@ class WaveContextService {
         for (final log in records.nutrition.waters)
           if (AppDateUtils.isSameDay(log.loggedAt, today)) log,
       ];
+      final activeSession = records.sessions
+          .where(
+            (session) =>
+                session.isInProgress &&
+                AppDateUtils.isSameDay(session.date, today),
+          )
+          .firstOrNull;
       final waterMl = waters.fold<double>(
         0,
         (total, log) => total + log.amountMl,
       );
 
-      return WaveContext(
+      final context = WaveContext(
         snapshot: _builder.build(records, date: now),
         goal: _goalCalculator.build(records.account),
         waterMl: waterMl,
@@ -55,13 +106,15 @@ class WaveContextService {
         todayWaters: waters,
         customFoods: await _customFoodService.loadFoods(),
         plan: records.plan,
-        hasActiveWorkout: records.sessions.any(
-          (session) =>
-              session.isInProgress &&
-              AppDateUtils.isSameDay(session.date, today),
-        ),
+        hasActiveWorkout: activeSession != null,
         isReady: true,
+        activeSession: activeSession,
+        flowModeOverride: records.flowModeOverride,
+        account: records.account,
       );
+      _cached = context;
+      _cachedKey = _cacheKey();
+      return context;
     });
   }
 

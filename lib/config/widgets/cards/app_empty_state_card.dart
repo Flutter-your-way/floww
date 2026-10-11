@@ -50,7 +50,7 @@ class AppEmptyStateCard extends StatelessWidget {
                     color: context.colors.textPrimary,
                   ),
                 ),
-                SizedBox(height: AppSpacing.md),
+                SizedBox(height: AppSpacing.xs),
                 Text(
                   message,
                   style: AppTypography.labelSmallMedium.copyWith(

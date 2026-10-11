@@ -6,8 +6,8 @@ import {
   userCollection,
 } from "../constants/collections";
 
-const SLEEP_WEIGHT = 0.6;
-const HRV_WEIGHT = 0.4;
+export const SLEEP_WEIGHT = 0.6;
+export const HRV_WEIGHT = 0.4;
 const DEFAULT_SLEEP_TARGET_HOURS = 8;
 const HRV_FLOOR_MS = 20;
 const HRV_RANGE_MS = 60;

@@ -20,7 +20,7 @@ import {
 } from "./src/handlers/premium.handler";
 import {handleFoodImage} from "./src/handlers/food.image.handler";
 import {handleDailyQuote} from "./src/handlers/quote.handler";
-import {handleWaveChat} from "./src/handlers/wave.handler";
+import {handleWaveChat, handleWaveQuota} from "./src/handlers/wave.handler";
 import {
   handleCompleteWorkout,
   handleGenerateWorkoutPlan,
@@ -44,6 +44,10 @@ export {
   onWeightLogWritten,
 } from "./src/triggers/profile.trigger";
 export {onHealthLogWritten} from "./src/triggers/health.trigger";
+export {
+  onWaveMessageCreated,
+  onWaveMessageRated,
+} from "./src/triggers/wave.trigger";
 export {expireSubscriptions} from "./src/scheduled/subscriptions.schedule";
 export {sendScheduledReminders} from "./src/scheduled/reminders.schedule";
 
@@ -126,6 +130,15 @@ export const waveChat = onRequest(
     timeoutSeconds: 120,
   },
   createApp("post", handleWaveChat),
+);
+
+export const waveQuota = onRequest(
+  {
+    cors: true,
+    memory: "256MiB",
+    timeoutSeconds: 30,
+  },
+  createApp("get", handleWaveQuota),
 );
 
 export const deleteAccount = onRequest(

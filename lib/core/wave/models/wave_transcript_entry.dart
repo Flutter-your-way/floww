@@ -1,5 +1,8 @@
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/wave/models/wave_action.dart';
 import 'package:floww/core/wave/models/wave_card_data.dart';
+import 'package:floww/core/wave/models/wave_rating.dart';
+import 'package:floww/core/wave/models/wave_undo.dart';
 
 enum WaveMessageKind {
   user,
@@ -12,6 +15,7 @@ enum WaveMessageKind {
   scoreReport,
   mealLog,
   dietPlan,
+  actionPrompt,
 }
 
 class WaveTranscriptEntry {
@@ -26,6 +30,14 @@ class WaveTranscriptEntry {
     this.feeling,
     this.swap,
     this.action,
+    this.tone,
+    this.pendingAction,
+    this.undo,
+    this.destination,
+    this.promptVersion,
+    this.aiModel,
+    this.route,
+    this.rating,
   });
 
   factory WaveTranscriptEntry.fromJson(Map<String, dynamic> json) =>
@@ -42,6 +54,18 @@ class WaveTranscriptEntry {
         feeling: json['feeling'] as String?,
         swap: _swapOf(json['swap']),
         action: WaveConfirmationAction.values.asNameMap()[json['action']],
+        tone: WaveConfirmationTone.values.asNameMap()[json['tone']],
+        pendingAction: json['pendingAction'] is Map
+            ? WaveAction.fromJson(
+                Map<String, dynamic>.from(json['pendingAction'] as Map),
+              )
+            : null,
+        undo: WaveUndo.fromJson(json['undo']),
+        destination: WaveDestination.values.asNameMap()[json['destination']],
+        promptVersion: json['promptVersion'] as String?,
+        aiModel: json['aiModel'] as String?,
+        route: json['route'] as String?,
+        rating: WaveRating.values.asNameMap()[json['rating']],
       );
 
   final String id;
@@ -54,20 +78,41 @@ class WaveTranscriptEntry {
   final String? feeling;
   final WaveInjurySwap? swap;
   final WaveConfirmationAction? action;
+  final WaveConfirmationTone? tone;
+  final WaveAction? pendingAction;
+  final WaveUndo? undo;
+  final WaveDestination? destination;
+  final String? promptVersion;
+  final String? aiModel;
+  final String? route;
+  final WaveRating? rating;
 
-  WaveTranscriptEntry copyWith({bool? isResolved, String? feeling}) =>
-      WaveTranscriptEntry(
-        id: id,
-        kind: kind,
-        createdAt: createdAt,
-        text: text,
-        title: title,
-        detail: detail,
-        isResolved: isResolved ?? this.isResolved,
-        feeling: feeling ?? this.feeling,
-        swap: swap,
-        action: action,
-      );
+  bool get isRateable => kind == WaveMessageKind.reply && promptVersion != null;
+
+  WaveTranscriptEntry copyWith({
+    bool? isResolved,
+    String? feeling,
+    WaveRating? rating,
+  }) => WaveTranscriptEntry(
+    id: id,
+    kind: kind,
+    createdAt: createdAt,
+    text: text,
+    title: title,
+    detail: detail,
+    isResolved: isResolved ?? this.isResolved,
+    feeling: feeling ?? this.feeling,
+    swap: swap,
+    action: action,
+    tone: tone,
+    pendingAction: pendingAction,
+    undo: undo,
+    destination: destination,
+    promptVersion: promptVersion,
+    aiModel: aiModel,
+    route: route,
+    rating: rating ?? this.rating,
+  );
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -80,6 +125,14 @@ class WaveTranscriptEntry {
     if (feeling != null) 'feeling': feeling,
     if (swap != null) 'swap': _swapJson(swap!),
     if (action != null) 'action': action!.name,
+    if (tone != null) 'tone': tone!.name,
+    if (pendingAction != null) 'pendingAction': pendingAction!.toJson(),
+    if (undo != null) 'undo': undo!.toJson(),
+    if (destination != null) 'destination': destination!.name,
+    'promptVersion': ?promptVersion,
+    'aiModel': ?aiModel,
+    'route': ?route,
+    if (rating != null) 'rating': rating!.name,
   };
 
   static WaveInjurySwap? _swapOf(Object? value) {

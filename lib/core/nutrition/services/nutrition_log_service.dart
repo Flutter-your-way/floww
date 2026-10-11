@@ -113,15 +113,16 @@ class NutritionLogService {
     () => _foodLogs(_requireUserId).doc(id).delete(),
   );
 
-  Future<void> addWaterLog(double amountMl, DateTime loggedAt) => _write(
-    'addWaterLog',
-    'Could not log your water. Please try again.',
-    () {
-      final doc = _waterLogs(_requireUserId).doc();
-      final log = WaterLog(id: doc.id, amountMl: amountMl, loggedAt: loggedAt);
-      return doc.set(log.toJson());
-    },
-  );
+  Future<String> addWaterLog(double amountMl, DateTime loggedAt) async {
+    final doc = _waterLogs(_requireUserId).doc();
+    final log = WaterLog(id: doc.id, amountMl: amountMl, loggedAt: loggedAt);
+    await _write(
+      'addWaterLog',
+      'Could not log your water. Please try again.',
+      () => doc.set(log.toJson()),
+    );
+    return doc.id;
+  }
 
   Future<void> deleteWaterLog(String id) => _write(
     'deleteWaterLog',

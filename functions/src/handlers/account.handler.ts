@@ -8,6 +8,7 @@ import {
   firestore,
   onboardingDetailsCollection,
   usersCollection,
+  waveRatingsCollection,
 } from "../constants/collections";
 import {DELETION_FLAG} from "../helpers/user.clock.helper";
 
@@ -25,8 +26,12 @@ export const handleDeleteAccount = async (req: Request, res: Response) => {
     await firestore.recursiveDelete(usersCollection.doc(uid));
     await onboardingDetailsCollection.doc(uid).delete();
 
-    const usage = await aiUsageCollection.where("userId", "==", uid).get();
-    await Promise.all(usage.docs.map((doc) => doc.ref.delete()));
+    const [usage, ratings] = await Promise.all([
+      aiUsageCollection.where("userId", "==", uid).get(),
+      waveRatingsCollection.where("userId", "==", uid).get(),
+    ]);
+    await Promise.all([...usage.docs, ...ratings.docs]
+      .map((doc) => doc.ref.delete()));
   } catch (error) {
     logger.error("handleDeleteAccount: data wipe failed", {uid, error});
     throw new ApiError("INTERNAL", "Could not delete your data.");

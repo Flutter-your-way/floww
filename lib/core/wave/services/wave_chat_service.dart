@@ -280,62 +280,62 @@ class WaveChatService {
     return true;
   }
 
-  Future<void> logWater(double amountMl) =>
+  Future<String> logWater(double amountMl) =>
       _logService.addWaterLog(amountMl, DateTime.now());
 
-  Future<int> completeHabits({String? title}) async {
+  Future<void> deleteWaterLogs(List<String> ids) async {
+    for (final id in ids) {
+      await _logService.deleteWaterLog(id);
+    }
+  }
+
+  Future<List<String>> completeHabits({String? title}) => _updateHabits(
+    (habit) => _matchesHabit(habit, title?.trim().toLowerCase()),
+    completed: true,
+  );
+
+  Future<List<String>> uncompleteHabits({required String title}) =>
+      _updateHabits(
+        (habit) => _matchesHabit(habit, title.trim().toLowerCase()),
+        completed: false,
+      );
+
+  Future<List<String>> setHabitsCompleted(
+    List<String> ids, {
+    required bool completed,
+  }) => _updateHabits((habit) => ids.contains(habit.id), completed: completed);
+
+  Future<List<String>> _updateHabits(
+    bool Function(Habit habit) matches, {
+    required bool completed,
+  }) async {
     final records = await _habitService.watchRecords().first;
     final today = AppDateUtils.dateOnly(DateTime.now());
     final habits = HabitSnapshot.of(records).habitsFor(today);
-    if (habits.isEmpty) return 0;
+    if (habits.isEmpty) return const [];
 
-    final wanted = title?.trim().toLowerCase();
-    final changedIds = <String>{};
-
+    final changedIds = <String>[];
     final updated = [
       for (final habit in habits)
-        if (_matchesHabit(habit, wanted) && !habit.isCompleted)
+        if (matches(habit) && habit.isCompleted != completed)
           () {
             changedIds.add(habit.id);
-            return habit.completed();
+            return completed ? habit.completed() : habit.reopened();
           }()
         else
           habit,
     ];
 
-    if (changedIds.isEmpty) return 0;
-    await _habitService.saveDay(today, updated, changedIds: changedIds);
-    return changedIds.length;
+    if (changedIds.isEmpty) return const [];
+    await _habitService.saveDay(today, updated, changedIds: changedIds.toSet());
+    return changedIds;
   }
 
-  Future<int> uncompleteHabits({required String title}) async {
-    final records = await _habitService.watchRecords().first;
-    final today = AppDateUtils.dateOnly(DateTime.now());
-    final habits = HabitSnapshot.of(records).habitsFor(today);
-    final wanted = title.trim().toLowerCase();
-    final changedIds = <String>{};
+  Future<String> addHabit(HabitDraft draft) => _habitService.createHabit(draft);
 
-    final updated = [
-      for (final habit in habits)
-        if (_matchesHabit(habit, wanted) && habit.isCompleted)
-          () {
-            changedIds.add(habit.id);
-            return habit.reopened();
-          }()
-        else
-          habit,
-    ];
-
-    if (changedIds.isEmpty) return 0;
-    await _habitService.saveDay(today, updated, changedIds: changedIds);
-    return changedIds.length;
-  }
-
-  Future<void> addHabit(HabitDraft draft) => _habitService.createHabit(draft);
-
-  Future<bool> editHabit(String title, HabitDraft draft) async {
-    final definition = await _habitDefinition(title);
-    if (definition == null) return false;
+  Future<HabitDefinition?> editHabit(String title, HabitDraft draft) async {
+    final definition = await habitDefinition(title);
+    if (definition == null) return null;
     await _habitService.updateHabit(
       definition.id,
       HabitDraft(
@@ -350,17 +350,22 @@ class WaveChatService {
         description: draft.description,
       ),
     );
-    return true;
+    return definition;
   }
 
-  Future<bool> deleteHabit(String title) async {
-    final definition = await _habitDefinition(title);
-    if (definition == null) return false;
+  Future<HabitDefinition?> deleteHabit(String title) async {
+    final definition = await habitDefinition(title);
+    if (definition == null) return null;
     await _habitService.deleteHabit(definition.id);
-    return true;
+    return definition;
   }
 
-  Future<HabitDefinition?> _habitDefinition(String title) async {
+  Future<void> deleteHabitById(String id) => _habitService.deleteHabit(id);
+
+  Future<void> restoreHabit(HabitDefinition definition) =>
+      _habitService.restoreHabit(definition);
+
+  Future<HabitDefinition?> habitDefinition(String title) async {
     final records = await _habitService.watchRecords().first;
     final wanted = title.trim().toLowerCase();
     return records.habits
@@ -394,6 +399,8 @@ class WaveChatService {
   Future<CustomFood> createFood(CustomFoodDraft draft) =>
       _customFoodService.create(draft);
 
+  Future<void> deleteCustomFood(String id) => _customFoodService.delete(id);
+
   Future<WaveQuickFood?> findFood(WaveContext context, String name) async {
     final wanted = name.trim().toLowerCase();
     if (wanted.isEmpty) return null;
@@ -416,16 +423,16 @@ class WaveChatService {
     return null;
   }
 
-  Future<int> logFood(
+  Future<List<String>> logFood(
     WaveQuickFood food,
     WaveMealSlot slot, {
     int servings = 1,
-  }) async {
-    var logged = 0;
-    for (var index = 0; index < servings; index++) {
-      logged += await logFoods([food], slot);
+  }) => logFoods([for (var index = 0; index < servings; index++) food], slot);
+
+  Future<void> deleteFoodLogs(List<String> ids) async {
+    for (final id in ids) {
+      await _logService.deleteFoodLog(id);
     }
-    return logged;
   }
 
   Future<String?> unlogFood(WaveContext context, String name) async {
@@ -488,13 +495,16 @@ class WaveChatService {
         wanted.contains(habit.title.toLowerCase());
   }
 
-  Future<int> logFoods(List<WaveQuickFood> foods, WaveMealSlot slot) async {
+  Future<List<String>> logFoods(
+    List<WaveQuickFood> foods,
+    WaveMealSlot slot,
+  ) async {
     final userId = _logService.userId;
-    if (userId == null || foods.isEmpty) return 0;
+    if (userId == null || foods.isEmpty) return const [];
 
     final now = DateTime.now();
     final meal = _mealTypeOf(slot);
-    var logged = 0;
+    final ids = <String>[];
 
     for (final food in foods) {
       final id = _logService.newFoodLogId();
@@ -508,10 +518,10 @@ class WaveChatService {
       await _logService.addFoodLog(
         FoodLog(food: model, mealType: meal, loggedAt: now),
       );
-      logged += 1;
+      ids.add(id);
     }
 
-    return logged;
+    return ids;
   }
 
   Future<WaveDietPlan?> ensureDietPlan(WaveContext context) async {

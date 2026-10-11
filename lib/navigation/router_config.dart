@@ -77,6 +77,9 @@ import 'package:floww/core/settings/views/notification_settings_view.dart';
 import 'package:floww/core/settings/views/onboarding_answer_edit_view.dart';
 import 'package:floww/core/settings/views/onboarding_answers_view.dart';
 import 'package:floww/core/settings/views/privacy_data_view.dart';
+import 'package:floww/core/settings/view_models/wave_memory_view_model.dart';
+import 'package:floww/core/settings/views/wave_memory_view.dart';
+import 'package:floww/core/wave/services/wave_memory_service.dart';
 import 'package:floww/core/settings/views/units_view.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
@@ -388,6 +391,21 @@ class AppRouterConfig {
             create: (_) =>
                 PrivacyDataViewModel(SettingsService(), AuthService()),
             child: const PrivacyDataView(),
+          ),
+        );
+      case AppRouter.waveMemory:
+        return MaterialPageRoute(
+          builder: (_) => PremiumGate(
+            capability: PremiumCapability.waveMemory,
+            locked: const PremiumLockedPage(
+              title: WaveMemoryViewModel.title,
+              capability: PremiumCapability.waveMemory,
+            ),
+            child: ChangeNotifierProvider(
+              create: (_) =>
+                  WaveMemoryViewModel(WaveMemoryService(), SettingsService()),
+              child: const WaveMemoryView(),
+            ),
           ),
         );
       case AppRouter.premium:

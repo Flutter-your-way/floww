@@ -1,0 +1,64 @@
+name: WAVE chat eval
+
+on:
+  pull_request:
+    paths:
+      - "functions/src/prompts/wave.chat.prompt.ts"
+      - "functions/src/constants/ai.constants.ts"
+      - "functions/src/helpers/wave.*.helper.ts"
+      - "functions/src/models/wave.model.ts"
+      - "functions/src/validators/wave.chat.validator.ts"
+      - "functions/src/evals/**"
+  workflow_dispatch:
+
+jobs:
+  prompt-version:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require a prompt version bump when the WAVE prompt changes
+        run: |
+          base="origin/${{ github.base_ref }}"
+          if git diff --quiet "$base"...HEAD -- functions/src/prompts/wave.chat.prompt.ts; then
+            exit 0
+          fi
+          if git diff "$base"...HEAD -- functions/src/constants/ai.constants.ts \
+            | grep -q '^+export const WAVE_CHAT_PROMPT_VERSION ='; then
+            exit 0
+          fi
+          echo "wave.chat.prompt.ts changed without bumping WAVE_CHAT_PROMPT_VERSION"
+          exit 1
+
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - id: secrets
+        uses: google-github-actions/get-secretmanager-secrets@v2
+        with:
+          secrets: |-
+            openai:floww-fitness/OPENAI_API_KEY
+      - run: npm run eval:wave:light
+        env:
+          OPENAI_API_KEY: ${{ steps.secrets.outputs.openai }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wave-eval-results
+          path: functions/src/evals/results/

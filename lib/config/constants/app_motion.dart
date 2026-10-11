@@ -64,9 +64,105 @@ class AppMotion {
   static const Duration composerGrow = Duration(milliseconds: 240);
   static const Curve composerGrowCurve = Cubic(0.2, 1, 0.3, 1);
 
-  static const Duration waveTyping = Duration(milliseconds: 1100);
-  static const double waveTypingMinOpacity = 0.25;
-  static const double waveTypingStagger = 0.18;
+  static const Duration waveThinkingShimmer = Duration(milliseconds: 1600);
+  static const Duration waveThinkingStep = Duration(milliseconds: 1900);
+  static const Duration waveThinkingSwap = Duration(milliseconds: 360);
+  static const Duration waveThinkingBreath = Duration(milliseconds: 1400);
+  static const Curve waveThinkingBreathCurve = Curves.easeInOutSine;
+  static const double waveThinkingBreathScale = 0.84;
+  static const double waveThinkingBreathOpacity = 0.55;
+  static const double waveThinkingRise = 0.5;
+
+  static const Duration waveRevealPerWord = Duration(milliseconds: 34);
+  static const Duration waveRevealMin = Duration(milliseconds: 450);
+  static const Duration waveRevealMax = Duration(milliseconds: 4200);
+  static const Duration waveRevealGrace = Duration(milliseconds: 1200);
+  static const double waveRevealFadeWords = 4;
+  static const Duration waveRevealGrow = Duration(milliseconds: 260);
+  static const Curve waveRevealGrowCurve = Curves.easeOutCubic;
+
+  static const Duration waveSheetOpen = Duration(milliseconds: 620);
+  static const Duration waveSheetClose = Duration(milliseconds: 340);
+  static const Curve waveSheetOpenCurve = Cubic(0.16, 1, 0.3, 1);
+  static const Curve waveSheetCloseCurve = Cubic(0.5, 0, 0.75, 0);
+  static const double waveSheetOpenScale = 0.94;
+  static const double waveSheetContentRise = 0.04;
+  static const Duration waveSheetSnapBack = Duration(milliseconds: 280);
+  static const Curve waveSheetSnapBackCurve = Curves.easeOutCubic;
+  static const double waveSheetDismissFraction = 0.25;
+  static const double waveSheetDismissVelocity = 700;
+  static const Interval waveSheetHeaderIn = Interval(
+    0.18,
+    0.7,
+    curve: Curves.easeOutCubic,
+  );
+  static const Interval waveSheetBodyIn = Interval(
+    0.28,
+    0.85,
+    curve: Curves.easeOutCubic,
+  );
+  static const Interval waveSheetDockIn = Interval(
+    0.38,
+    1,
+    curve: Curves.easeOutCubic,
+  );
+
+  static const Duration waveSuggestionsShow = Duration(milliseconds: 560);
+  static const Duration waveSuggestionsHide = Duration(milliseconds: 420);
+  static const Interval waveSuggestionsSize = Interval(
+    0,
+    0.6,
+    curve: Curves.easeInOutCubic,
+  );
+  static const Curve waveSuggestionsChipCurve = Cubic(0.2, 1, 0.3, 1);
+  static const double waveSuggestionsChipStart = 0.18;
+  static const double waveSuggestionsStagger = 0.07;
+  static const double waveSuggestionsSpan = 0.5;
+  static const double waveSuggestionsRise = 0.6;
+  static const double waveSuggestionsScale = 0.9;
+
+  static const Duration waveRatingPop = Duration(milliseconds: 620);
+  static const double waveRatingPeakScale = 1.4;
+  static const double waveRatingSettleScale = 0.9;
+  static const double waveRatingTilt = 0.045;
+  static const double waveRatingRingStart = 0.5;
+  static const double waveRatingRingEnd = 1.9;
+  static const double waveRatingRingOpacity = 0.55;
+  static const Interval waveRatingRing = Interval(
+    0,
+    0.7,
+    curve: Curves.easeOutCubic,
+  );
+
+  static const Duration waveEnter = Duration(milliseconds: 620);
+  static const Interval waveEnterSize = Interval(
+    0,
+    0.55,
+    curve: Curves.easeInOutCubic,
+  );
+  static const Interval waveEnterFade = Interval(
+    0.12,
+    0.8,
+    curve: Curves.easeOut,
+  );
+  static const Interval waveEnterRise = Interval(
+    0.08,
+    1,
+    curve: Curves.easeOutQuart,
+  );
+  static const double waveEnterScale = 0.96;
+
+  static const Duration waveVoiceEnter = Duration(milliseconds: 420);
+  static const Curve waveVoiceEnterCurve = Cubic(0.2, 1, 0.3, 1);
+  static const double waveVoiceEnterScale = 0.94;
+  static const double waveVoiceEnterRise = 0.08;
+  static const Duration waveVoiceRipple = Duration(milliseconds: 2400);
+  static const Duration waveVoiceLevel = Duration(milliseconds: 140);
+  static const int waveVoiceRippleCount = 3;
+  static const double waveVoiceOrbBoost = 0.18;
+  static const double waveVoiceRippleSpread = 0.75;
+  static const double waveVoiceRippleIdle = 0.35;
+  static const double waveVoiceRippleOpacity = 0.32;
 
   static const Duration tabSwitch = Duration(milliseconds: 420);
   static const Curve tabSwitchCurve = Curves.easeOutCubic;

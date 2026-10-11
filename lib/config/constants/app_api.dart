@@ -11,6 +11,7 @@ class AppApi {
   static const String foodDescribe = '/describeFood';
   static const String foodImage = '/foodImage';
   static const String waveChat = '/waveChat';
+  static const String waveQuota = '/waveQuota';
   static const String account = '/deleteAccount';
   static const String completeWorkout = '/completeWorkout';
   static const String unlogWorkout = '/unlogWorkout';

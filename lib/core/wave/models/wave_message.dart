@@ -66,11 +66,25 @@ class WaveConfirmationMessage extends WaveMessage {
     required this.title,
     required this.detail,
     this.action,
+    this.tone = WaveConfirmationTone.success,
   });
 
   final String title;
   final String detail;
   final WaveConfirmationAction? action;
+  final WaveConfirmationTone tone;
+}
+
+class WaveActionPromptMessage extends WaveMessage {
+  const WaveActionPromptMessage({
+    required super.id,
+    required super.timestamp,
+    required this.title,
+    required this.detail,
+  });
+
+  final String title;
+  final String detail;
 }
 
 class WaveCheckInMessage extends WaveMessage {

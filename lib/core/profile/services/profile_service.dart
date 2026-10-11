@@ -74,6 +74,54 @@ class ProfileService {
   static const double waterMin = 1;
   static const double waterMax = 8;
   static const double waterStep = 0.5;
+  static const double defaultSteps = 10000;
+  static const double defaultSleep = 8;
+  static const double defaultWater = 3;
+
+  static List<DailyTargetSpec> dailyTargetSpecsOf(ProfileAccount account) => [
+    DailyTargetSpec(
+      target: DailyTarget.steps,
+      title: 'Daily Steps',
+      unit: 'steps',
+      value: clampTarget(
+        account.stepsTarget ?? defaultSteps,
+        stepsMin,
+        stepsMax,
+      ),
+      min: stepsMin,
+      max: stepsMax,
+      step: stepsStep,
+    ),
+    DailyTargetSpec(
+      target: DailyTarget.sleep,
+      title: 'Sleep Goal',
+      unit: 'hrs/night',
+      value: clampTarget(
+        account.sleepTargetHours ?? defaultSleep,
+        sleepMin,
+        sleepMax,
+      ),
+      min: sleepMin,
+      max: sleepMax,
+      step: sleepStep,
+    ),
+    DailyTargetSpec(
+      target: DailyTarget.water,
+      title: 'Water Intake',
+      unit: 'liters',
+      value: clampTarget(
+        account.waterTargetLiters ?? defaultWater,
+        waterMin,
+        waterMax,
+      ),
+      min: waterMin,
+      max: waterMax,
+      step: waterStep,
+    ),
+  ];
+
+  static double clampTarget(double value, double min, double max) =>
+      value < min ? min : (value > max ? max : value);
 
   FirebaseAuth get _auth => FirebaseAuth.instance;
 

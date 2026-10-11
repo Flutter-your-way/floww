@@ -19,15 +19,15 @@ import {
   plannedSetsOf,
 } from "./workout.metrics.helper";
 
-const WORKOUT_POINTS = 35;
-const NUTRITION_POINTS = 25;
-const HABIT_POINTS = 20;
-const RECOVERY_POINTS = 20;
+export const WORKOUT_POINTS = 35;
+export const NUTRITION_POINTS = 25;
+export const HABIT_POINTS = 20;
+export const RECOVERY_POINTS = 20;
 const TARGET_SETS = 20;
-const TARGET_MEALS = 3;
-const TARGET_WATER_ML = 2500;
-const MEAL_SHARE = 0.7;
-const WATER_SHARE = 0.3;
+export const TARGET_MEALS = 3;
+export const TARGET_WATER_ML = 2500;
+export const MEAL_SHARE = 0.7;
+export const WATER_SHARE = 0.3;
 
 export const COMPLETED_STATUS = "completed";
 

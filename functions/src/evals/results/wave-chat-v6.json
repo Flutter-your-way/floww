@@ -1,0 +1,165 @@
+{
+  "promptVersion": "wave-chat-v6",
+  "ranAt": "2026-10-10T18:22:47.605Z",
+  "passed": 12,
+  "total": 12,
+  "passRate": 1,
+  "results": [
+    {
+      "id": "add-habit",
+      "route": "light",
+      "card": "none",
+      "actions": [
+        "addHabit"
+      ],
+      "rejected": [],
+      "reply": "Added. Meditation is now a 10-minute daily habit.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "cancel-workout-active",
+      "route": "light",
+      "card": "none",
+      "actions": [
+        "cancelWorkout"
+      ],
+      "rejected": [],
+      "reply": "I can cancel this workout and discard it so it doesn’t save. Confirm below.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "complete-workout-active",
+      "route": "light",
+      "card": "checkIn",
+      "actions": [
+        "completeWorkout"
+      ],
+      "rejected": [],
+      "reply": "Done — I’m closing out Push A now. You got the session in, and your next win is protein and water: you’re at 56g protein and 1.8L short, plus 1.8L of water left.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "delete-habit",
+      "route": "light",
+      "card": "none",
+      "actions": [
+        "deleteHabit"
+      ],
+      "rejected": [],
+      "reply": "I can delete Read 20 minutes. Confirm below.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "log-weight-kg",
+      "route": "light",
+      "card": "none",
+      "actions": [
+        "logWeight"
+      ],
+      "rejected": [],
+      "reply": "Logged at 82.4kg. You’re still just 6.4kg from target, so keep the cut steady and protect today’s protein.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "plan-lighter-free",
+      "route": "light",
+      "card": "none",
+      "actions": [],
+      "rejected": [],
+      "reply": "That’s a Premium plan change, so I can’t switch the session in chat. Do it as a lighter Push A today: drop 1 set from each main lift and use about 10% less weight, then keep the last 2 exercises easy.",
+      "locked": [
+        "planEdits"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "plan-regenerate-premium",
+      "route": "deep",
+      "card": "plan",
+      "actions": [
+        "regeneratePlan"
+      ],
+      "rejected": [],
+      "reply": "I can rebuild your plan around home dumbbells and keep the same 4-day upper/lower structure. Confirm below.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "plan-reschedule-premium",
+      "route": "deep",
+      "card": "none",
+      "actions": [
+        "rescheduleWorkout"
+      ],
+      "rejected": [],
+      "reply": "I can move today’s Push A to Monday and swap it with Lower B if needed. Confirm below.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "plan-shift-premium",
+      "route": "deep",
+      "card": "none",
+      "actions": [
+        "shiftPlan"
+      ],
+      "rejected": [],
+      "reply": "I can push today’s session to tomorrow and slide the rest of the week back one day. Confirm below.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "plan-skip-free",
+      "route": "light",
+      "card": "none",
+      "actions": [],
+      "rejected": [],
+      "reply": "Skipping today is part of Premium. Since you’re travelling, take today as a rest day and keep the rest of the week as planned; you’re already at 38/100 and recovery is only moderate, so that’s the safest move. Get your steps and water in if you can, then hit Lower B Monday.",
+      "locked": [
+        "planEdits"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "plan-skip-premium",
+      "route": "deep",
+      "card": "none",
+      "actions": [
+        "skipToday"
+      ],
+      "rejected": [],
+      "reply": "Skipping today. Travel day off; pick up with Lower B on Monday.",
+      "locked": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "plan-swap-free",
+      "route": "light",
+      "card": "none",
+      "actions": [],
+      "rejected": [],
+      "reply": "Plan edits are Premium. For today, just start Push A and use dumbbell press instead of barbell bench when you get to that first movement.",
+      "locked": [
+        "planEdits"
+      ],
+      "passed": true,
+      "failures": []
+    }
+  ]
+}

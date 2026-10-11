@@ -23,6 +23,9 @@ class AppCollection {
   static const String progressState = 'state';
   static const String waveMessages = 'wave_messages';
   static const String waveDays = 'wave_days';
+  static const String waveMemories = 'wave_memories';
+  static const String waveState = 'wave_state';
+  static const String waveSummaryDoc = 'summary';
   static const String settings = 'settings';
   static const String settingsDoc = 'preferences';
 }

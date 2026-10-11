@@ -23,6 +23,7 @@ class WorkoutPlanService extends WorkoutFirestore {
   static const String _idField = 'id';
   static const String _movedToField = 'movedTo';
   static const String _sessionField = 'sessionId';
+  static const String _skippedField = 'isSkipped';
   static const int _minAdaptedSets = 1;
   static const int _maxInsightReasons = 3;
   static const int _maxAlternatives = 8;
@@ -336,7 +337,11 @@ class WorkoutPlanService extends WorkoutFirestore {
 
   Future<WorkoutPlanEntity?> postponedPlanOf(DateTime date) async {
     final document = await _documentOf(date);
-    if (document == null || document[_restField] != true) return null;
+    if (document == null ||
+        document[_restField] != true ||
+        document[_skippedField] == true) {
+      return null;
+    }
     final movedTo = document[_movedToField];
     final target = movedTo is String
         ? DateTime.parse(movedTo)
@@ -372,6 +377,73 @@ class WorkoutPlanService extends WorkoutFirestore {
             .toJson(),
       );
       await batch.commit();
+    });
+  }
+
+  Future<Map<String, Map<String, dynamic>?>> planDaysOf(
+    List<DateTime> dates,
+  ) async {
+    final uid = requireUserId;
+    return guard('planDaysOf', _loadFailure, () async {
+      final days = <String, Map<String, dynamic>?>{};
+      for (final date in dates) {
+        final key = AppDateUtils.dateKey(date);
+        days[key] = (await _plans(uid).doc(key).get()).data();
+      }
+      return days;
+    });
+  }
+
+  Future<void> restorePlanDays(Map<String, Map<String, dynamic>?> days) async {
+    final uid = requireUserId;
+    await guard('restorePlanDays', _saveFailure, () {
+      final batch = firestore.batch();
+      for (final day in days.entries) {
+        final document = _plans(uid).doc(day.key);
+        final data = day.value;
+        if (data == null) {
+          batch.delete(document);
+        } else {
+          batch.set(document, data);
+        }
+      }
+      return batch.commit();
+    });
+  }
+
+  Future<void> skipDay(DateTime date) async {
+    final uid = requireUserId;
+    await guard(
+      'skipDay',
+      _saveFailure,
+      () => _plans(uid).doc(AppDateUtils.dateKey(date)).set({
+        ..._restOf(date),
+        _skippedField: true,
+      }),
+    );
+  }
+
+  Future<void> movePlan(
+    WorkoutPlanEntity plan,
+    DateTime to, {
+    WorkoutPlanEntity? swapWith,
+  }) async {
+    final uid = requireUserId;
+    final from = AppDateUtils.dateOnly(plan.date);
+    final target = AppDateUtils.dateOnly(to);
+    await guard('movePlan', _saveFailure, () {
+      final batch = firestore.batch();
+      batch.set(
+        _plans(uid).doc(AppDateUtils.dateKey(target)),
+        plan.copyWith(date: target, isAdapted: false).toJson(),
+      );
+      batch.set(
+        _plans(uid).doc(AppDateUtils.dateKey(from)),
+        swapWith == null
+            ? {..._restOf(from), _skippedField: true}
+            : swapWith.copyWith(date: from, isAdapted: false).toJson(),
+      );
+      return batch.commit();
     });
   }
 

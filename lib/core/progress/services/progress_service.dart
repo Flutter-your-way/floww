@@ -232,7 +232,7 @@ class ProgressService {
             : ProgressGoals.fromJson(data);
       });
 
-  Future<void> addWeightLog(double weightKg, DateTime loggedAt) async {
+  Future<String> addWeightLog(double weightKg, DateTime loggedAt) async {
     final uid = _requireUserId;
     final document = _weightLogs(uid).doc();
     final log = WeightLog(
@@ -245,6 +245,7 @@ class ProgressService {
       'Could not save your weight. Please try again.',
       () => document.set(log.toJson()),
     );
+    return document.id;
   }
 
   Future<void> deleteWeightLog(String id) async {

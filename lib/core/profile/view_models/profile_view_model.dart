@@ -185,6 +185,12 @@ class ProfileViewModel extends ChangeNotifier {
       route: AppRouter.units,
     ),
     const ProfileSettingItem(
+      icon: Icons.psychology_outlined,
+      title: 'WAVE Memory',
+      subtitle: 'What WAVE remembers about you',
+      route: AppRouter.waveMemory,
+    ),
+    const ProfileSettingItem(
       icon: Icons.quiz_outlined,
       title: 'Onboarding Answers',
       subtitle: 'Review & edit your questionnaire',

@@ -1,4 +1,7 @@
 import 'package:floww/config/entities/workout_plan_entity.dart';
+import 'package:floww/config/entities/workout_session_entity.dart';
+import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/core/profile/models/profile_account.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
 import 'package:floww/core/nutrition/models/custom_food.dart';
 import 'package:floww/core/nutrition/models/food_log.dart';
@@ -17,6 +20,9 @@ class WaveContext {
     required this.plan,
     required this.hasActiveWorkout,
     required this.isReady,
+    this.activeSession,
+    this.flowModeOverride,
+    this.account = ProfileAccount.empty,
   });
 
   static const empty = WaveContext(
@@ -42,6 +48,9 @@ class WaveContext {
   final WorkoutPlanEntity? plan;
   final bool hasActiveWorkout;
   final bool isReady;
+  final WorkoutSessionEntity? activeSession;
+  final AppThemeMode? flowModeOverride;
+  final ProfileAccount account;
 
   String get userName => snapshot.userName;
 

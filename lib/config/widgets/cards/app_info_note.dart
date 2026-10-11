@@ -15,20 +15,22 @@ class AppInfoNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: AppSizes.s14, color: context.colors.textMuted),
-        SizedBox(width: AppSpacing.xs),
-        Flexible(
-          child: Text(
-            text,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: context.colors.textMuted,
+    final color = context.colors.textMuted;
+
+    return Text.rich(
+      TextSpan(
+        children: [
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: EdgeInsets.only(right: AppSpacing.xs),
+              child: Icon(icon, size: AppSizes.s14, color: color),
             ),
           ),
-        ),
-      ],
+          TextSpan(text: text),
+        ],
+      ),
+      style: context.textTheme.bodySmall?.copyWith(color: color),
     );
   }
 }

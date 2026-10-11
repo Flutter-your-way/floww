@@ -26,6 +26,7 @@ class AppImages {
   static const String runIcon = '$_iconsBase/run.svg';
 
   static const String waterIcon = '$_iconsBase/water.svg';
+  static const String waterGlassIcon = '$_iconsBase/water_glass.svg';
   static const String fiberIcon = '$_iconsBase/fiber.svg';
   static const String sugarIcon = '$_iconsBase/sugar.svg';
   static const String sodiumIcon = '$_iconsBase/sodium.svg';
