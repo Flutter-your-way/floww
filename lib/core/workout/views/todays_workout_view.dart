@@ -17,13 +17,17 @@ import 'package:floww/core/workout/widgets/todays_workout_exercises_card.dart';
 import 'package:floww/core/workout/widgets/todays_workout_summary_card.dart';
 import 'package:floww/core/workout/widgets/workout_empty_state_card.dart';
 import 'package:floww/core/workout/widgets/workout_shift_card.dart';
+import 'package:floww/core/yoga/views/yoga_safety_sheet.dart';
 import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 class TodaysWorkoutView extends StatelessWidget {
   const TodaysWorkoutView({super.key});
 
-  void _onAction(TodaysWorkoutViewModel viewModel) {
+  Future<void> _onAction(
+    BuildContext context,
+    TodaysWorkoutViewModel viewModel,
+  ) async {
     final sessionId = viewModel.sessionId;
     if (viewModel.action == TodaysWorkoutAction.viewSummary &&
         sessionId != null) {
@@ -34,11 +38,22 @@ class TodaysWorkoutView extends StatelessWidget {
       );
       return;
     }
+    if (await viewModel.needsSafetyCheck()) {
+      if (!context.mounted) return;
+      final accepted = await YogaSafetySheet.show(context);
+      if (!accepted) return;
+      await viewModel.acknowledgeSafety();
+    }
     HapticManager.medium();
     NavigationService.instance.push(
       AppRouter.activeWorkout,
       arguments: viewModel.activeWorkoutArgs,
     );
+  }
+
+  void _openCourse() {
+    HapticManager.light();
+    NavigationService.instance.push(AppRouter.yogaCourse);
   }
 
   @override
@@ -60,7 +75,7 @@ class TodaysWorkoutView extends StatelessWidget {
                         ? PillButtonVariant.neutral
                         : PillButtonVariant.primary,
                     label: viewModel.startLabel,
-                    onPressed: () => _onAction(viewModel),
+                    onPressed: () => _onAction(context, viewModel),
                   ),
             children: [
               if (viewModel.isLoading)
@@ -104,6 +119,15 @@ class TodaysWorkoutView extends StatelessWidget {
                   ),
                   SizedBox(height: AppSpacing.lg),
                   TipCard.note(title: workout.insight),
+                  if (viewModel.isYogaClass) ...[
+                    SizedBox(height: AppSpacing.lg),
+                    PillButton(
+                      variant: PillButtonVariant.outline,
+                      label: viewModel.courseLabel,
+                      icon: Icons.self_improvement,
+                      onPressed: _openCourse,
+                    ),
+                  ],
                 ],
               ],
             ],

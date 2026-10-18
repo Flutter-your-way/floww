@@ -120,18 +120,28 @@ export const referenceWeightKgOf = (details: DocumentData): number | null => {
   return Math.min(weightKg, HEALTHY_BMI_CEILING * heightM * heightM);
 };
 
+const CALISTHENICS_PROTEIN_PER_KG_RANGE = {min: 1.6, max: 2.2};
+
+const proteinRangeOf = (details: DocumentData) =>
+  recordOf(details.trainingSetup).trainingType === "Calisthenics" ?
+    CALISTHENICS_PROTEIN_PER_KG_RANGE :
+    PROTEIN_PER_KG_RANGE;
+
 const adjustmentsOf = (details: DocumentData) => {
   const blueprint = recordOf(details.blueprint);
   const proteinPerKg = positive(blueprint.proteinPerKg);
+  const range = proteinRangeOf(details);
   return {
     calorieFactor: clamp(
       numberOf(blueprint.calorieFactor, 1),
       CALORIE_FACTOR_RANGE.min,
       CALORIE_FACTOR_RANGE.max,
     ),
-    proteinPerKg: proteinPerKg === null ?
-      baselineProteinPerKgOf(details) :
-      clamp(proteinPerKg, PROTEIN_PER_KG_RANGE.min, PROTEIN_PER_KG_RANGE.max),
+    proteinPerKg: clamp(
+      proteinPerKg ?? baselineProteinPerKgOf(details),
+      range.min,
+      range.max,
+    ),
   };
 };
 

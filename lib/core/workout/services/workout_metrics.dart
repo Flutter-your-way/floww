@@ -1,5 +1,6 @@
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
+import 'package:floww/core/workout/models/workout_section_kind.dart';
 
 class ExerciseBest {
   const ExerciseBest({
@@ -43,6 +44,7 @@ class WorkoutTotals {
 class WorkoutMetrics {
   WorkoutMetrics._();
 
+  static const int metricsVersion = 2;
   static const double fallbackBodyWeightKg = 70;
   static const double fallbackMet = 5;
   static const int effectSegments = 7;
@@ -52,6 +54,18 @@ class WorkoutMetrics {
   static const int _targetMinutes = 60;
   static const double _targetMet = 8;
   static const double _weightPrThresholdKg = 0.5;
+
+  static List<WorkoutEntryEntity> effortExercisesOf(
+    List<WorkoutEntryEntity> exercises,
+  ) {
+    final main = [
+      for (final exercise in exercises)
+        if (exercise.section == WorkoutSectionKind.main) exercise,
+    ];
+    return main.any((exercise) => exercise.workingSetCount > 0)
+        ? main
+        : exercises;
+  }
 
   static WorkoutTotals totalsOf(List<WorkoutEntryEntity> exercises) {
     var volume = 0.0;

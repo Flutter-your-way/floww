@@ -9,6 +9,7 @@ import {
 } from "../constants/ai.constants";
 import {
   GeneratedProgram,
+  HATHA_COURSE_ID,
   PlannedDay,
   PlannedExercise,
   ProgramGoalId,
@@ -21,6 +22,10 @@ import {
   buildWorkoutPlanUserText,
 } from "../prompts/workout.plan.prompt";
 import {getOpenAI} from "./openai.helper";
+import {
+  CALISTHENICS_COURSE_PREFIX,
+  CALISTHENICS_LEVELS,
+} from "../constants/calisthenics.constants";
 import {AiTokenUsage} from "./usage.helper";
 import {CatalogExercise, PlanProfile} from "./workout.plan.profile.helper";
 import {
@@ -157,6 +162,19 @@ const sanitizedDay = (
 const weeksOf = (lengthDays: number): number =>
   Math.ceil(lengthDays / DAYS_PER_WEEK);
 
+const lengthDaysOf = (profile: PlanProfile): number =>
+  profile.calLevel > 0 ?
+    CALISTHENICS_LEVELS[profile.calLevel - 1].weeks * DAYS_PER_WEEK :
+    WORKOUT_PLAN_LENGTH_DAYS;
+
+const courseOf = (profile: PlanProfile): {course?: string} => {
+  if (profile.trainingType === "Yoga") return {course: HATHA_COURSE_ID};
+  if (profile.calLevel > 0) {
+    return {course: `${CALISTHENICS_COURSE_PREFIX}${profile.calLevel}`};
+  }
+  return {};
+};
+
 const programOf = (
   profile: PlanProfile,
   days: PlannedDay[],
@@ -167,9 +185,9 @@ const programOf = (
   id: WORKOUT_PLAN_PROGRAM_ID,
   name: WORKOUT_PLAN_NAME,
   description,
-  level: profile.level,
-  weeks: weeksOf(WORKOUT_PLAN_LENGTH_DAYS),
-  lengthDays: WORKOUT_PLAN_LENGTH_DAYS,
+  level: profile.calLevel > 0 ? `Level ${profile.calLevel}` : profile.level,
+  weeks: weeksOf(lengthDaysOf(profile)),
+  lengthDays: lengthDaysOf(profile),
   deloadEvery: 0,
   goal,
   isCustom: true,
@@ -177,6 +195,7 @@ const programOf = (
   source,
   generatedAt: new Date().toISOString(),
   days,
+  ...courseOf(profile),
 });
 
 export const standardProgramOf = (

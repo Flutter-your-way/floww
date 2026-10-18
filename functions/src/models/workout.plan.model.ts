@@ -74,4 +74,7 @@ export interface GeneratedProgram {
   source: "ai" | "standard";
   generatedAt: string;
   days: PlannedDay[];
+  course?: string;
 }
+
+export const HATHA_COURSE_ID = "hatha-beginner";

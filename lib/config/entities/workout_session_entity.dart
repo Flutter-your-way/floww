@@ -82,6 +82,8 @@ class WorkoutSessionEntity {
     this.personalRecords = const [],
     this.notes = '',
     this.recoveryMood,
+    this.selfCheckRatings = const [],
+    this.metricsVersion = 0,
     this.isTimerPaused = false,
     this.restEndsAt,
     this.restRemainingSeconds = 0,
@@ -121,6 +123,8 @@ class WorkoutSessionEntity {
         personalRecords: _recordsOf(json['personalRecords']),
         notes: json['notes'] as String? ?? '',
         recoveryMood: _moodOf(json['recoveryMood'] as String?),
+        selfCheckRatings: _ratingsOf(json['yogaSelfCheck']),
+        metricsVersion: (json['metricsVersion'] as num? ?? 0).toInt(),
         isTimerPaused: json['isTimerPaused'] as bool? ?? false,
         restEndsAt: _dateOf(json['restEndsAt']),
         restRemainingSeconds: (json['restRemainingSeconds'] as num? ?? 0)
@@ -161,6 +165,12 @@ class WorkoutSessionEntity {
   final List<PersonalRecordEntry> personalRecords;
   final String notes;
   final RecoveryMood? recoveryMood;
+  final List<int> selfCheckRatings;
+  final int metricsVersion;
+
+  double? get selfCheckAverage => selfCheckRatings.isEmpty
+      ? null
+      : selfCheckRatings.reduce((a, b) => a + b) / selfCheckRatings.length;
   final bool isTimerPaused;
   final DateTime? restEndsAt;
   final int restRemainingSeconds;
@@ -288,6 +298,8 @@ class WorkoutSessionEntity {
     personalRecords: personalRecords,
     notes: notes ?? this.notes,
     recoveryMood: recoveryMood ?? this.recoveryMood,
+    selfCheckRatings: selfCheckRatings,
+    metricsVersion: metricsVersion,
     isTimerPaused: isTimerPaused ?? this.isTimerPaused,
     restEndsAt: clearRest || clearRestEnd
         ? null
@@ -333,6 +345,7 @@ class WorkoutSessionEntity {
     'personalRecords': [for (final record in personalRecords) record.toJson()],
     'notes': notes,
     if (recoveryMood != null) 'recoveryMood': recoveryMood!.name,
+    if (metricsVersion > 0) 'metricsVersion': metricsVersion,
     'durationSeconds': durationSeconds,
     if (planDate != null) 'planDate': AppDateUtils.dateKey(planDate!),
     ...timerJson,
@@ -357,6 +370,15 @@ class WorkoutSessionEntity {
         (status) => status.name == value,
         orElse: () => WorkoutSessionStatus.inProgress,
       );
+
+  static List<int> _ratingsOf(Object? value) {
+    final ratings = value is Map ? value['ratings'] : null;
+    return [
+      if (ratings is List)
+        for (final rating in ratings)
+          if (rating is num) rating.toInt(),
+    ];
+  }
 
   static RecoveryMood? _moodOf(String? value) {
     if (value == null) return null;

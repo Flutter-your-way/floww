@@ -60,7 +60,7 @@ class SuggestedWorkoutCard extends StatelessWidget {
           _SuggestionReasons(reasons: suggestion.reasons),
           SizedBox(height: AppSpacing.lg),
           BrightActionButton(
-            label: 'START WORKOUT',
+            label: suggestion.actionLabel,
             icon: Icons.play_arrow_rounded,
             onPressed: onStartWorkout,
           ),

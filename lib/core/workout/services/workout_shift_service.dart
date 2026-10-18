@@ -39,7 +39,10 @@ class WorkoutShiftService {
       if (missed != null &&
           missed.sessionId == null &&
           !missed.isScheduledFor(today) &&
-          missed.programId == activeProgram.id) {
+          missed.programId == activeProgram.id &&
+          !missed.date.isBefore(
+            AppDateUtils.dateOnly(activeProgram.startedAt),
+          )) {
         return WorkoutShiftOffer(kind: WorkoutShiftKind.catchUp, plan: missed);
       }
     }

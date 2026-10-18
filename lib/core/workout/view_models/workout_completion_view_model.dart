@@ -64,6 +64,10 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
 
   WorkoutSessionEntity get _session => _result.session;
 
+  String get sessionId => _session.id;
+
+  WorkoutSessionService get sessionService => _service;
+
   int get _flowScoreGain => _result.flowScoreAfter - _result.flowScoreBefore;
 
   List<String> get _muscleTags {

@@ -20,6 +20,7 @@ class RemoteImage extends StatelessWidget {
 
   static const double _thumbnailExtent = AppSizes.s96;
   static const double _thumbnailHeadroom = 2;
+  static const String _assetPrefix = 'assets/';
 
   static ImageProvider providerOf(
     BuildContext context,
@@ -30,8 +31,11 @@ class RemoteImage extends StatelessWidget {
     final extent = isThumbnail
         ? _thumbnailExtent * _thumbnailHeadroom
         : MediaQuery.sizeOf(context).width;
+    final ImageProvider source = url.startsWith(_assetPrefix)
+        ? AssetImage(url)
+        : CachedNetworkImageProvider(url);
     return ResizeImage(
-      CachedNetworkImageProvider(url),
+      source,
       width: (extent * devicePixelRatio).round(),
       policy: ResizeImagePolicy.fit,
     );

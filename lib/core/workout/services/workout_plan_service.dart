@@ -5,15 +5,30 @@ import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:floww/core/calisthenics/models/calisthenics_profile.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_course_service.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_plan_mapper.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_progression.dart';
 import 'package:floww/core/workout/models/program_phase.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
 import 'package:floww/core/workout/services/workout_progression.dart';
 import 'package:floww/core/workout/services/workout_readiness_service.dart';
+import 'package:floww/core/yoga/data/yoga_module_data.dart';
+import 'package:floww/core/yoga/models/yoga_profile.dart';
+import 'package:floww/core/yoga/services/yoga_class_builder.dart';
+import 'package:floww/core/yoga/services/yoga_course_service.dart';
+import 'package:floww/core/yoga/services/yoga_plan_mapper.dart';
 
 class WorkoutPlanService extends WorkoutFirestore {
-  WorkoutPlanService(this._catalogService);
+  WorkoutPlanService(
+    this._catalogService, {
+    YogaCourseService? yogaService,
+    CalisthenicsCourseService? calisthenicsService,
+  }) : _yogaService = yogaService ?? YogaCourseService(),
+       _calisthenicsService =
+           calisthenicsService ?? CalisthenicsCourseService();
 
   static const String _loadFailure = 'Could not load your planned workout.';
   static const String _saveFailure =
@@ -32,6 +47,8 @@ class WorkoutPlanService extends WorkoutFirestore {
   static const double _defaultWeightStepKg = 2.5;
 
   final WorkoutCatalogService _catalogService;
+  final YogaCourseService _yogaService;
+  final CalisthenicsCourseService _calisthenicsService;
 
   CollectionReference<Map<String, dynamic>> _plans(String uid) =>
       collectionOf(uid, AppCollection.workoutPlans);
@@ -145,6 +162,8 @@ class WorkoutPlanService extends WorkoutFirestore {
     final programStart = activeProgram == null
         ? null
         : AppDateUtils.dateOnly(activeProgram.startedAt);
+    final yoga = await _yogaProfileOf(program);
+    final calisthenics = await _calisthenicsProfileOf(program);
 
     final plans = <WorkoutPlanEntity>[];
     for (
@@ -171,6 +190,8 @@ class WorkoutPlanService extends WorkoutFirestore {
         program: program,
         activeProgram: activeProgram,
         catalog: catalog,
+        yoga: yoga,
+        calisthenics: calisthenics,
       );
       if (plan != null) plans.add(plan);
     }
@@ -270,6 +291,9 @@ class WorkoutPlanService extends WorkoutFirestore {
       for (final doc in existing.docs)
         if (doc.data()[_sessionField] != null) doc.id,
     };
+    final yoga = await _yogaProfileOf(program);
+    final calisthenics = await _calisthenicsProfileOf(program);
+    final scheduledIds = <String>{...program.exerciseIds};
     for (var offset = 0; offset < aheadDays; offset++) {
       final date = AppDateUtils.addDays(start, offset);
       final key = AppDateUtils.dateKey(date);
@@ -279,16 +303,19 @@ class WorkoutPlanService extends WorkoutFirestore {
         program: program,
         activeProgram: activeProgram,
         catalog: catalog,
+        yoga: yoga,
+        calisthenics: calisthenics,
       );
       final document = _plans(uid).doc(key);
       if (plan == null) {
         batch.delete(document);
       } else {
         batch.set(document, plan.toJson());
+        scheduledIds.addAll(plan.exercises.map((entry) => entry.exerciseId));
       }
     }
     _catalogService.unlockInto(batch, uid, [
-      for (final id in program.exerciseIds)
+      for (final id in scheduledIds)
         if (catalog[id]?.isAvailable == false) id,
     ]);
   }
@@ -461,7 +488,20 @@ class WorkoutPlanService extends WorkoutFirestore {
     program: program,
     activeProgram: activeProgram,
     catalog: await _catalogMap(),
+    yoga: await _yogaProfileOf(program),
+    calisthenics: await _calisthenicsProfileOf(program),
   );
+
+  Future<YogaProfile?> _yogaProfileOf(WorkoutProgramEntity? program) async =>
+      YogaPlanMapper.isCourse(program?.course)
+      ? _yogaService.loadProfile()
+      : null;
+
+  Future<CalisthenicsProfile?> _calisthenicsProfileOf(
+    WorkoutProgramEntity? program,
+  ) async => CalisthenicsPlanMapper.isCourse(program?.course)
+      ? _calisthenicsService.loadProfile()
+      : null;
 
   Future<WorkoutPlanEntity?> preparePlanFor(
     DateTime date, {
@@ -484,6 +524,9 @@ class WorkoutPlanService extends WorkoutFirestore {
       history: history,
       catalog: await _catalogMap(),
       readiness: await readiness(),
+      calisthenics: CalisthenicsPlanMapper.isPlan(plan)
+          ? await _calisthenicsService.loadProfile()
+          : null,
     );
     await savePlan(adapted);
     return adapted;
@@ -494,7 +537,20 @@ class WorkoutPlanService extends WorkoutFirestore {
     required List<WorkoutSessionEntity> history,
     required Map<String, ExerciseCatalogEntry> catalog,
     required WorkoutReadiness readiness,
+    CalisthenicsProfile? calisthenics,
   }) {
+    if (YogaPlanMapper.isClassPlan(plan)) {
+      return _adaptYogaPlan(plan, readiness);
+    }
+    if (CalisthenicsPlanMapper.isPlan(plan)) {
+      return CalisthenicsProgression.adapt(
+        plan,
+        history: history,
+        catalog: catalog,
+        profile: calisthenics ?? CalisthenicsProfile.standard,
+        readiness: readiness,
+      );
+    }
     final reasons = <String>[];
     final exercises = <WorkoutEntryEntity>[];
     for (final entry in plan.exercises) {
@@ -539,6 +595,21 @@ class WorkoutPlanService extends WorkoutFirestore {
       insight: notes.isEmpty
           ? plan.insight
           : '${plan.insight}\n\n${notes.join('\n')}',
+    );
+  }
+
+  WorkoutPlanEntity _adaptYogaPlan(
+    WorkoutPlanEntity plan,
+    WorkoutReadiness readiness,
+  ) {
+    if (!readiness.isLow) return plan.copyWith(isAdapted: true);
+    return plan.copyWith(
+      exercises: YogaPlanMapper.gentle(plan.exercises),
+      isAdapted: true,
+      insight:
+          '${plan.insight}\n\nReadiness is low (${readiness.reasons.join(', ')}), '
+          'so WAVE kept today gentle: no more than 2 Surya Namaskar rounds and '
+          'shorter holds. Rest whenever you need.',
     );
   }
 
@@ -601,6 +672,8 @@ class WorkoutPlanService extends WorkoutFirestore {
     required WorkoutProgramEntity program,
     required ActiveProgramEntry activeProgram,
     required Map<String, ExerciseCatalogEntry> catalog,
+    YogaProfile? yoga,
+    CalisthenicsProfile? calisthenics,
   }) {
     if (!activeProgram.isActiveOn(date)) return null;
     final day = program.dayOn(
@@ -608,6 +681,26 @@ class WorkoutPlanService extends WorkoutFirestore {
       activeProgram.weekdays,
     );
     if (day == null) return null;
+    if (calisthenics != null) {
+      return CalisthenicsPlanMapper.planOf(
+        date: date,
+        day: day,
+        program: program,
+        activeProgram: activeProgram,
+        catalog: catalog,
+        profile: calisthenics,
+      );
+    }
+    if (yoga != null) {
+      return _yogaPlanOf(
+        date: date,
+        day: day,
+        program: program,
+        activeProgram: activeProgram,
+        catalog: catalog,
+        profile: yoga,
+      );
+    }
 
     final week = activeProgram.weekAt(date);
     final phase = activeProgram.hasFixedLength
@@ -677,6 +770,46 @@ class WorkoutPlanService extends WorkoutFirestore {
           : '${program.name} Program · Week $week'
                 '${isDeload ? ' · Deload' : ''}',
       isDeload: isDeload,
+    );
+  }
+
+  WorkoutPlanEntity? _yogaPlanOf({
+    required DateTime date,
+    required ProgramDayEntry day,
+    required WorkoutProgramEntity program,
+    required ActiveProgramEntry activeProgram,
+    required Map<String, ExerciseCatalogEntry> catalog,
+    required YogaProfile profile,
+  }) {
+    final week = YogaCourseService.weekOf(activeProgram, date, profile);
+    final courseWeek = YogaModuleData.weekAt(week);
+    final classPlan = const YogaClassBuilder().build(
+      week: week,
+      minutes: day.durationMinutes,
+      profile: profile,
+    );
+    final entries = YogaPlanMapper.entriesOf(classPlan, catalog);
+    if (entries.isEmpty) return null;
+    final cautionNotes = [
+      for (final caution in profile.cautions)
+        ?YogaModuleData.cautionNotes[caution],
+    ];
+    return WorkoutPlanEntity(
+      id: '${program.id}-${AppDateUtils.dateKey(date)}',
+      date: AppDateUtils.dateOnly(date),
+      name: 'Hatha Class · Week $week',
+      focus: courseWeek.title,
+      goal: YogaModuleData.motto,
+      insight: [
+        'Week $week of the ${YogaModuleData.brand} Hatha course — '
+            '${courseWeek.title}. ${courseWeek.summary}',
+        ...cautionNotes,
+      ].join('\n\n'),
+      durationMinutes: classPlan.minutes,
+      exercises: entries,
+      programId: program.id,
+      programLabel:
+          '${program.name} · Week $week of ${YogaModuleData.weeks.length}',
     );
   }
 

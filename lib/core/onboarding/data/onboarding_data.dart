@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:floww/core/calisthenics/data/calisthenics_gates_data.dart';
+import 'package:floww/core/calisthenics/models/cal_level.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_placement.dart';
 import '../models/onboarding_models.dart';
 
 class OnboardingData {
@@ -12,7 +15,7 @@ class OnboardingData {
     return [
       ...corePhases,
       if (type == 'gym') gymPhase,
-      if (type == 'calisthenics') calisthenicsPhase,
+      if (type == 'calisthenics') calisthenicsPhaseFor(answers),
       if (type == 'yoga') yogaPhase,
       ...finalPhases,
     ];
@@ -491,164 +494,175 @@ class OnboardingData {
     ],
   );
 
-  static const OnboardingPhase calisthenicsPhase = OnboardingPhase(
-    id: 'calisthenics_phase',
-    title: 'Calisthenics',
-    questions: [
-      OnboardingQuestion(
-        id: 'cal_experience',
-        title: 'Experience Level',
-        subtitle: 'How comfortable are you with bodyweight training?',
-        inputType: InputType.singleSelect,
-        options: [
-          QuestionOption(
-            title: 'Beginner',
-            description: 'Learning basic pull-ups and push-ups',
-          ),
-          QuestionOption(
-            title: 'Intermediate',
-            description: 'Mastered basics, learning skills',
-          ),
-          QuestionOption(
-            title: 'Advanced',
-            description: 'Can perform advanced levers and holds',
-          ),
-        ],
-      ),
-      OnboardingQuestion(
-        id: 'cal_bodyweight',
-        title: 'Current Bodyweight',
-        subtitle: 'Bodyweight is the core resistance in calisthenics.',
-        inputType: InputType.numberSlider,
-        min: 40.0,
-        max: 200.0,
-        suffixText: 'kg',
-      ),
-      OnboardingQuestion(
-        id: 'cal_max_pushups',
-        title: 'Maximum Push-ups',
-        subtitle: 'Unbroken strict repetitions',
-        inputType: InputType.numberSlider,
-        min: 0.0,
-        max: 100.0,
-      ),
-      OnboardingQuestion(
-        id: 'cal_max_pullups',
-        title: 'Maximum Pull-ups',
-        subtitle: 'Unbroken strict repetitions',
-        inputType: InputType.numberSlider,
-        min: 0.0,
-        max: 50.0,
-      ),
-      OnboardingQuestion(
-        id: 'cal_max_dips',
-        title: 'Maximum Dips',
-        subtitle: 'Unbroken strict repetitions',
-        inputType: InputType.numberSlider,
-        min: 0.0,
-        max: 50.0,
-      ),
-      OnboardingQuestion(
-        id: 'cal_skills',
-        title: 'Current Skills',
-        subtitle: 'Which skills can you currently hold for 3+ seconds?',
-        inputType: InputType.multiSelect,
-        options: [
-          QuestionOption(title: 'L-Sit'),
-          QuestionOption(title: 'Handstand'),
-          QuestionOption(title: 'Muscle-Up'),
-          QuestionOption(title: 'Front Lever'),
-          QuestionOption(title: 'Planche'),
-          QuestionOption(title: 'Human Flag'),
-        ],
-      ),
-      OnboardingQuestion(
-        id: 'cal_skill_goals',
-        title: 'Skill Goals',
-        subtitle: 'What skills do you want to unlock next?',
-        inputType: InputType.multiSelect,
-        options: [
-          QuestionOption(title: 'L-Sit'),
-          QuestionOption(title: 'Handstand'),
-          QuestionOption(title: 'Muscle-Up'),
-          QuestionOption(title: 'Front Lever'),
-          QuestionOption(title: 'Planche'),
-          QuestionOption(title: 'Human Flag'),
-        ],
-      ),
-      OnboardingQuestion(
-        id: 'cal_equipment',
-        title: 'Equipment',
-        subtitle: 'What calisthenics equipment do you have access to?',
-        inputType: InputType.multiSelectPill,
-        options: [
-          QuestionOption(title: 'Pull-up Bar'),
-          QuestionOption(title: 'Rings'),
-          QuestionOption(title: 'Bands'),
-          QuestionOption(title: 'Parallettes'),
-          QuestionOption(title: 'Dip Bars'),
-        ],
-      ),
-      OnboardingQuestion(
-        id: 'cal_days',
-        title: 'Training Days',
-        subtitle: 'Which days can you commit to training?',
-        inputType: InputType.multiSelect,
-        options: [
-          QuestionOption(title: 'Monday'),
-          QuestionOption(title: 'Tuesday'),
-          QuestionOption(title: 'Wednesday'),
-          QuestionOption(title: 'Thursday'),
-          QuestionOption(title: 'Friday'),
-          QuestionOption(title: 'Saturday'),
-          QuestionOption(title: 'Sunday'),
-        ],
-      ),
-      OnboardingQuestion(
-        id: 'cal_duration',
-        title: 'Workout Duration',
-        subtitle: 'How long can you train per session?',
-        inputType: InputType.singleSelect,
-        options: [
-          QuestionOption(title: '30 min', description: 'Quick circuit'),
-          QuestionOption(title: '45 min', description: 'Standard workout'),
-          QuestionOption(
-            title: '60 min',
-            description: 'Full session with skill work',
-          ),
-          QuestionOption(
-            title: '90 min',
-            description: 'Advanced skill and volume',
-          ),
-        ],
-      ),
-      OnboardingQuestion(
-        id: 'cal_workout_time',
-        title: 'Preferred Workout Time',
-        subtitle: 'When do you feel most energetic?',
-        inputType: InputType.singleSelect,
-        options: [
-          QuestionOption(title: 'Morning'),
-          QuestionOption(title: 'Afternoon'),
-          QuestionOption(title: 'Evening'),
-          QuestionOption(title: 'Flexible'),
-        ],
-      ),
-      OnboardingQuestion(
-        id: 'cal_injuries',
-        title: 'Injuries / Limitations',
-        subtitle: 'Any joint issues we need to program around?',
-        inputType: InputType.multiSelectPill,
-        options: [
-          QuestionOption(title: 'None'),
-          QuestionOption(title: 'Knee'),
-          QuestionOption(title: 'Back'),
-          QuestionOption(title: 'Shoulder'),
-          QuestionOption(title: 'Elbow'),
-          QuestionOption(title: 'Wrist'),
-          QuestionOption(title: 'Other'),
-        ],
-      ),
+  static OnboardingPhase calisthenicsPhaseFor(Map<String, dynamic> answers) {
+    final results = CalisthenicsPlacement.resultsOf(answers);
+    final level = CalisthenicsPlacement.levelFor(results);
+    return OnboardingPhase(
+      id: 'calisthenics_phase',
+      title: 'Calisthenics',
+      questions: [
+        _calBodyweight,
+        for (final tier in _calTiers)
+          if (CalisthenicsPlacement.showsTier(tier, results))
+            ..._calTestScreensOf(tier),
+        _calSkills,
+        _calSkillGoals,
+        _calEquipment,
+        _calDaysFor(level),
+        _calWorkoutTime,
+        _calInjuries,
+      ],
+    );
+  }
+
+  static const List<int> _calTiers = [1, 2, 3];
+  static const int _calTestsPerScreen = 3;
+
+  static const Map<int, String> _calTierTitles = {
+    1: 'Strength Test',
+    2: 'Skill Test',
+    3: 'Elite Test',
+  };
+
+  static const Map<int, String> _calTierSubtitles = {
+    1: 'Log your best clean result: strict form, full range, no kipping. '
+        'Leave it at 0 if you cannot do it yet.',
+    2: 'You cleared the Level 2 gates. Test these fresh and stop if a joint '
+        'hurts: that one is "not yet".',
+    3: 'You cleared the Level 3 gates. Three elite gates decide Level 4.',
+  };
+
+  static List<OnboardingQuestion> _calTestScreensOf(int tier) {
+    final tests = CalisthenicsGatesData.ofTier(tier);
+    final screens = (tests.length / _calTestsPerScreen).ceil();
+    return [
+      for (var screen = 0; screen < screens; screen++)
+        OnboardingQuestion(
+          id: 'cal_test_tier${tier}_$screen',
+          title: screens > 1
+              ? '${_calTierTitles[tier]} (${screen + 1}/$screens)'
+              : _calTierTitles[tier]!,
+          subtitle: screen == 0
+              ? _calTierSubtitles[tier]
+              : CalisthenicsGatesData.rules[1],
+          inputType: InputType.multiQuestion,
+          subQuestions: [
+            for (final test in tests.skip(screen * _calTestsPerScreen).take(
+              _calTestsPerScreen,
+            ))
+              OnboardingQuestion(
+                id: test.id,
+                title: test.shortName,
+                inputType: InputType.inlineSlider,
+                min: 0,
+                max: test.max,
+                suffixText: test.unit,
+              ),
+          ],
+        ),
+    ];
+  }
+
+  static OnboardingQuestion _calDaysFor(CalLevel level) => OnboardingQuestion(
+    id: 'cal_days',
+    title: 'Training Days',
+    subtitle:
+        'You placed at ${level.label} · ${level.focus}: ${level.sessions} '
+        'sessions a week, ${level.minuteRange}. Pick ${level.sessions} days, '
+        'ideally not back-to-back. Fewer days moves you to the level that '
+        'fits.',
+    inputType: InputType.multiSelect,
+    options: const [
+      QuestionOption(title: 'Monday'),
+      QuestionOption(title: 'Tuesday'),
+      QuestionOption(title: 'Wednesday'),
+      QuestionOption(title: 'Thursday'),
+      QuestionOption(title: 'Friday'),
+      QuestionOption(title: 'Saturday'),
+      QuestionOption(title: 'Sunday'),
+    ],
+  );
+
+  static const OnboardingQuestion _calBodyweight = OnboardingQuestion(
+    id: 'cal_bodyweight',
+    title: 'Current Bodyweight',
+    subtitle: 'Bodyweight is the core resistance in calisthenics.',
+    inputType: InputType.numberSlider,
+    min: 40.0,
+    max: 200.0,
+    suffixText: 'kg',
+  );
+
+  static const OnboardingQuestion _calSkills = OnboardingQuestion(
+    id: 'cal_skills',
+    title: 'Current Skills',
+    subtitle: 'Which skills can you currently hold for 3+ seconds?',
+    inputType: InputType.multiSelect,
+    options: [
+      QuestionOption(title: 'L-Sit'),
+      QuestionOption(title: 'Handstand'),
+      QuestionOption(title: 'Muscle-Up'),
+      QuestionOption(title: 'Front Lever'),
+      QuestionOption(title: 'Planche'),
+      QuestionOption(title: 'Human Flag'),
+    ],
+  );
+
+  static const OnboardingQuestion _calSkillGoals = OnboardingQuestion(
+    id: 'cal_skill_goals',
+    title: 'Skill Goals',
+    subtitle: 'What skills do you want to unlock next?',
+    inputType: InputType.multiSelect,
+    options: [
+      QuestionOption(title: 'L-Sit'),
+      QuestionOption(title: 'Handstand'),
+      QuestionOption(title: 'Muscle-Up'),
+      QuestionOption(title: 'Front Lever'),
+      QuestionOption(title: 'Planche'),
+      QuestionOption(title: 'Human Flag'),
+    ],
+  );
+
+  static const OnboardingQuestion _calEquipment = OnboardingQuestion(
+    id: 'cal_equipment',
+    title: 'Equipment',
+    subtitle: 'What calisthenics equipment do you have access to?',
+    inputType: InputType.multiSelectPill,
+    options: [
+      QuestionOption(title: 'Pull-up Bar'),
+      QuestionOption(title: 'Rings'),
+      QuestionOption(title: 'Bands'),
+      QuestionOption(title: 'Parallettes'),
+      QuestionOption(title: 'Dip Bars'),
+    ],
+  );
+
+  static const OnboardingQuestion _calWorkoutTime = OnboardingQuestion(
+    id: 'cal_workout_time',
+    title: 'Preferred Workout Time',
+    subtitle: 'When do you feel most energetic?',
+    inputType: InputType.singleSelect,
+    options: [
+      QuestionOption(title: 'Morning'),
+      QuestionOption(title: 'Afternoon'),
+      QuestionOption(title: 'Evening'),
+      QuestionOption(title: 'Flexible'),
+    ],
+  );
+
+  static const OnboardingQuestion _calInjuries = OnboardingQuestion(
+    id: 'cal_injuries',
+    title: 'Injuries / Limitations',
+    subtitle: 'Any joint issues we need to program around?',
+    inputType: InputType.multiSelectPill,
+    options: [
+      QuestionOption(title: 'None'),
+      QuestionOption(title: 'Knee'),
+      QuestionOption(title: 'Back'),
+      QuestionOption(title: 'Shoulder'),
+      QuestionOption(title: 'Elbow'),
+      QuestionOption(title: 'Wrist'),
+      QuestionOption(title: 'Other'),
     ],
   );
 

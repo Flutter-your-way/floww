@@ -36,6 +36,7 @@ class WorkoutOverviewSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final overview = this.overview;
     final heartRate = overview?.heartRate;
+    final trainingEffect = overview?.trainingEffect;
     final spacing = EdgeInsets.only(bottom: AppSpacing.lg);
 
     return Column(
@@ -58,7 +59,7 @@ class WorkoutOverviewSection extends StatelessWidget {
         AppPopReveal(
           trigger: revealTrigger,
           appearOnMount: true,
-          child: overview != null
+          child: trainingEffect != null
               ? Padding(
                   padding: spacing,
                   child: PremiumGate(
@@ -68,7 +69,7 @@ class WorkoutOverviewSection extends StatelessWidget {
                       capability: PremiumCapability.advancedAnalytics,
                     ),
                     child: TrainingEffectCard(
-                      effect: overview.trainingEffect,
+                      effect: trainingEffect,
                       onInfo: onTrainingEffectInfo,
                     ),
                   ),

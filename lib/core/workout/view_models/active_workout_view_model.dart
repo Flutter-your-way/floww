@@ -26,6 +26,7 @@ import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/workout/services/workout_readiness_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/view_models/workout_completion_view_model.dart';
+import 'package:floww/core/yoga/services/yoga_plan_mapper.dart';
 
 class _SetDraft {
   const _SetDraft({
@@ -149,6 +150,25 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   void markCompletionStarted() => _completionStarted = true;
 
   bool get isResting => _restRemaining > 0;
+
+  int get restRemaining => _restRemaining;
+
+  bool get isPaused => _isPaused;
+
+  int get activeSeconds => _activeSeconds;
+
+  bool get isYogaClass => YogaPlanMapper.isClass(_exercises);
+
+  List<WorkoutEntryEntity> get entries => _exercises;
+
+  WorkoutEntryEntity? get currentEntry => _exercise;
+
+  String? get sessionId => _session?.id;
+
+  void completeTimedSet(int seconds) {
+    _updateDraft((draft) => draft.copyWith(seconds: seconds));
+    completeSet();
+  }
 
   Future<void> load() async {
     final seededPlan = _launch.plan;
@@ -311,7 +331,10 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   void _scheduleRestAlert() {
     final session = _session;
     final endsAt = session?.restEndsAt;
-    if (session == null || endsAt == null || session.isTimerPaused) {
+    if (session == null ||
+        endsAt == null ||
+        session.isTimerPaused ||
+        isYogaClass) {
       unawaited(_alertService.cancelRestEnd());
       return;
     }

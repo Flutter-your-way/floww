@@ -5,18 +5,70 @@ import 'package:floww/core/onboarding/data/onboarding_data.dart';
 import 'package:floww/core/onboarding/models/onboarding_models.dart';
 import 'package:floww/core/settings/models/onboarding_answers_data.dart';
 import 'package:floww/core/settings/services/onboarding_answers_service.dart';
+import 'package:floww/core/workout/services/workout_firestore.dart';
+import 'package:floww/core/workout/services/workout_plan_generator_service.dart';
+import 'package:floww/core/workout/services/workout_plan_service.dart';
+import 'package:floww/core/workout/services/workout_program_service.dart';
 
 class OnboardingAnswersViewModel extends ChangeNotifier {
-  OnboardingAnswersViewModel(this._service) {
+  OnboardingAnswersViewModel(
+    this._service,
+    this._generatorService,
+    this._programService,
+    this._planService,
+  ) {
     load();
   }
 
   final OnboardingAnswersService _service;
+  final WorkoutPlanGeneratorService _generatorService;
+  final WorkoutProgramService _programService;
+  final WorkoutPlanService _planService;
 
   Map<String, dynamic> _answers = const {};
   bool _isLoading = true;
+  bool _isRebuilding = false;
   bool _disposed = false;
   String? _errorMessage;
+  String? _rebuildMessage;
+
+  bool get isRebuilding => _isRebuilding;
+
+  String? get rebuildMessage => _rebuildMessage;
+
+  String get rebuildTitle => 'Update your training plan?';
+
+  String get rebuildPrompt =>
+      'WAVE already knows your new answers. Rebuild your workout plan so '
+      'your sessions match them, starting today.';
+
+  String get rebuildConfirmLabel => 'Rebuild Plan';
+
+  String get rebuildLaterLabel => 'Not Now';
+
+  Future<void> rebuildPlan() async {
+    if (_isRebuilding) return;
+    _isRebuilding = true;
+    _rebuildMessage = 'WAVE is rebuilding your plan…';
+    _notify();
+    try {
+      final program = await _generatorService.generate();
+      final today = DateTime.now();
+      final active = _programService.activeEntryFor(program, startDate: today);
+      await _planService.scheduleProgram(
+        program,
+        active,
+        from: today,
+        saveActive: true,
+      );
+      _rebuildMessage = 'Your new plan is ready in Workouts.';
+    } on WorkoutException catch (error) {
+      _rebuildMessage = error.message;
+    } finally {
+      _isRebuilding = false;
+      _notify();
+    }
+  }
 
   String get title => 'Onboarding Answers';
 

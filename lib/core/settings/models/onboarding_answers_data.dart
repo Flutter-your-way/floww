@@ -28,3 +28,5 @@ class OnboardingAnswerEditArgs {
   final String questionId;
   final Map<String, dynamic> answers;
 }
+
+enum OnboardingAnswerEditResult { saved, trainingChanged }

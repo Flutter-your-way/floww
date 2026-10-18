@@ -6,12 +6,19 @@ import 'package:floww/core/workout/views/workout_complete_sheet.dart';
 import 'package:floww/core/workout/views/workout_share_sheet.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
+typedef WorkoutCheckIn =
+    Future<void> Function({
+      required BuildContext context,
+      required WorkoutCompletionViewModel viewModel,
+    });
+
 class WorkoutCompletionFlow {
   WorkoutCompletionFlow._();
 
   static Future<void> start({
     required BuildContext context,
     required WorkoutCompletionViewModel viewModel,
+    WorkoutCheckIn? checkIn,
   }) async {
     try {
       final action = await WorkoutCompleteSheet.show(
@@ -24,7 +31,7 @@ class WorkoutCompletionFlow {
       if (context.mounted) NavigationService.instance.pop();
       final exitContext = NavigationService.navigatorKey.currentContext;
       if (exitContext == null || !exitContext.mounted) return;
-      await RecoveryCheckInSheet.show(
+      await (checkIn ?? RecoveryCheckInSheet.show)(
         context: exitContext,
         viewModel: viewModel,
       );

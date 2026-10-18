@@ -82,7 +82,12 @@ import 'package:floww/core/settings/views/wave_memory_view.dart';
 import 'package:floww/core/wave/services/wave_memory_service.dart';
 import 'package:floww/core/settings/views/units_view.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
+import 'package:floww/core/workout/services/workout_plan_generator_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
+import 'package:floww/core/yoga/services/yoga_course_service.dart';
+import 'package:floww/core/yoga/view_models/yoga_class_view_model.dart';
+import 'package:floww/core/yoga/view_models/yoga_course_view_model.dart';
+import 'package:floww/core/yoga/views/yoga_course_view.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
 import 'package:floww/core/workout/services/workout_alert_service.dart';
 import 'package:floww/core/workout/services/workout_readiness_service.dart';
@@ -273,7 +278,24 @@ class AppRouterConfig {
               context.read<PremiumAccessProvider>(),
               launch,
             )..load(),
-            child: const ActiveWorkoutView(),
+            child: ChangeNotifierProvider(
+              create: (context) => YogaClassViewModel(
+                context.read<ActiveWorkoutViewModel>(),
+                YogaCourseService(),
+              ),
+              child: const ActiveWorkoutView(),
+            ),
+          ),
+        );
+      case AppRouter.yogaCourse:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => YogaCourseViewModel(
+              WorkoutProgramService(),
+              WorkoutCatalogService(),
+              YogaCourseService(),
+            )..load(),
+            child: const YogaCourseView(),
           ),
         );
       case AppRouter.programEditor:
@@ -371,8 +393,12 @@ class AppRouterConfig {
       case AppRouter.onboardingAnswers:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) =>
-                OnboardingAnswersViewModel(OnboardingAnswersService()),
+            create: (_) => OnboardingAnswersViewModel(
+              OnboardingAnswersService(),
+              WorkoutPlanGeneratorService(),
+              WorkoutProgramService(),
+              WorkoutPlanService(WorkoutCatalogService()),
+            ),
             child: const OnboardingAnswersView(),
           ),
         );

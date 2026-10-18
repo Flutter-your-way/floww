@@ -2,6 +2,7 @@ import {DocumentData} from "firebase-admin/firestore";
 import {clamp, listOf, numberOf, recordOf} from "../common/utils";
 
 export const FALLBACK_BODY_WEIGHT_KG = 70;
+export const METRICS_VERSION = 2;
 const FALLBACK_MET = 5;
 const MAX_TRAINING_EFFECT = 5;
 const SECONDS_PER_HOUR = 3600;
@@ -24,6 +25,7 @@ interface LoggedSet {
 export interface WorkoutEntry {
   exerciseId: string;
   name: string;
+  section: string;
   targetSets: number;
   met: number;
   muscleShares: Record<string, number>;
@@ -86,6 +88,7 @@ export const entryOf = (value: unknown): WorkoutEntry => {
   return {
     exerciseId: typeof json.exerciseId === "string" ? json.exerciseId : id,
     name: typeof json.name === "string" ? json.name : "",
+    section: typeof json.section === "string" ? json.section : "",
     targetSets: Math.trunc(numberOf(json.targetSets)),
     met: numberOf(json.met, FALLBACK_MET),
     muscleShares: sharesOf(json.muscleShares),
@@ -105,6 +108,13 @@ const volumeOf = (set: LoggedSet): number =>
 
 const effortRepsOf = (set: LoggedSet): number =>
   set.reps + (set.durationSeconds ?? 0) / SECONDS_PER_EFFORT_REP;
+
+const MAIN_SECTION = "main-exercises";
+
+export const effortEntriesOf = (entries: WorkoutEntry[]): WorkoutEntry[] => {
+  const main = entries.filter((entry) => entry.section === MAIN_SECTION);
+  return main.some((entry) => workingSets(entry).length > 0) ? main : entries;
+};
 
 export const totalsOf = (entries: WorkoutEntry[]): WorkoutTotals => {
   let volume = 0;

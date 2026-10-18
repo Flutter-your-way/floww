@@ -16,6 +16,7 @@ class RestTimerCard extends StatelessWidget {
     required this.onAdjust,
     required this.canShorten,
     this.nextUpLabel,
+    this.title = 'REST',
   });
 
   static const double _aspectRatio = 1;
@@ -26,6 +27,7 @@ class RestTimerCard extends StatelessWidget {
   final ValueChanged<int> onAdjust;
   final bool canShorten;
   final String? nextUpLabel;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,7 @@ class RestTimerCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'REST',
+              title,
               style: AppTypography.labelLargeMedium.copyWith(
                 color: colors.textSecondary,
               ),

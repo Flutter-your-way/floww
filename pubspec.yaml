@@ -91,6 +91,7 @@ flutter:
     - assets/icons/
     - assets/icons/programs/
     - assets/images/
+    - assets/images/yoga/
     - assets/fonts/
 
   shaders:

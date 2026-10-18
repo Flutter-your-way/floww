@@ -21,7 +21,16 @@ import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
 import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/widgets/premium_gate.dart';
 import 'package:floww/core/premium/widgets/premium_locked_card.dart';
+import 'package:floww/core/calisthenics/widgets/calisthenics_library_section.dart';
 import 'package:floww/core/workout/models/program_start_config.dart';
+import 'package:floww/core/workout/models/workout_course_view_data.dart';
+import 'package:floww/core/workout/models/workout_discipline.dart';
+import 'package:floww/core/workout/models/workout_tab.dart';
+import 'package:floww/core/workout/view_models/exercise_library_view_model.dart';
+import 'package:floww/core/workout/views/exercise_detail_sheet.dart';
+import 'package:floww/core/workout/widgets/workout_course_card.dart';
+import 'package:floww/core/yoga/views/yoga_pose_lesson_sheet.dart';
+import 'package:floww/core/yoga/widgets/yoga_library_section.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/view_models/workout_view_model.dart';
 import 'package:floww/core/workout/views/missed_workout_sheet.dart';
@@ -210,6 +219,12 @@ class WorkoutView extends StatelessWidget {
       onStop: detail.isActive
           ? () => _confirmStop(context, viewModel, detail)
           : null,
+      onCourse: detail.isCourse
+          ? () {
+              Navigator.of(context).maybePop();
+              NavigationService.instance.push(AppRouter.yogaCourse);
+            }
+          : null,
     );
   }
 
@@ -224,6 +239,30 @@ class WorkoutView extends StatelessWidget {
       context: context,
       setup: setup,
       onStart: (config) => viewModel.startProgram(id, config),
+    );
+  }
+
+  void _onCourseAction(WorkoutViewModel viewModel, WorkoutCourseAction action) {
+    HapticManager.light();
+    switch (action) {
+      case WorkoutCourseAction.openYogaCourse:
+        _openYogaCourse();
+      case WorkoutCourseAction.openLibrary:
+        viewModel.selectTab(WorkoutTab.exercises);
+    }
+  }
+
+  void _openYogaCourse() {
+    HapticManager.light();
+    NavigationService.instance.push(AppRouter.yogaCourse);
+  }
+
+  void _openMove(BuildContext context, String moveId) {
+    HapticManager.light();
+    ExerciseDetailSheet.show(
+      context: context,
+      viewModel: context.read<ExerciseLibraryViewModel>(),
+      exerciseId: moveId,
     );
   }
 
@@ -299,6 +338,7 @@ class WorkoutView extends StatelessWidget {
           final shiftOffer = viewModel.shiftOffer;
           final agenda = viewModel.agenda;
           final planBuilder = viewModel.planBuilder;
+          final course = viewModel.course;
           final history = viewModel.showHistory ? viewModel.history : null;
           final revealTrigger = viewModel.selectedDate;
 
@@ -484,6 +524,24 @@ class WorkoutView extends StatelessWidget {
                                     ],
                                   ),
                                 ),
+                              if (viewModel.historyResetLabel
+                                  case final resetLabel?) ...[
+                                TipCard.inline(
+                                  title: 'New plan',
+                                  message: resetLabel,
+                                  icon: Icons.restart_alt_rounded,
+                                ),
+                                SizedBox(height: AppSpacing.md),
+                                PillButton(
+                                  variant: PillButtonVariant.outline,
+                                  label: viewModel.historyToggleLabel,
+                                  onPressed: () {
+                                    HapticManager.selection();
+                                    viewModel.toggleEarlierHistory();
+                                  },
+                                ),
+                                SizedBox(height: AppSpacing.xl),
+                              ],
                               if (viewModel.showHistory && history != null)
                                 WorkoutHistorySection(
                                   history: history,
@@ -527,8 +585,51 @@ class WorkoutView extends StatelessWidget {
                                       )
                                     : null,
                               ),
+                              AppPopReveal(
+                                trigger: revealTrigger,
+                                appearOnMount: true,
+                                child: course == null
+                                    ? null
+                                    : Padding(
+                                        padding: EdgeInsets.only(
+                                          top: AppSpacing.lg,
+                                        ),
+                                        child: WorkoutCourseCard(
+                                          course: course,
+                                          onAction: () => _onCourseAction(
+                                            viewModel,
+                                            course.action,
+                                          ),
+                                        ),
+                                      ),
+                              ),
                               if (viewModel.showExercises)
-                                const ExerciseLibrarySection(),
+                                switch (viewModel.discipline) {
+                                  WorkoutDiscipline.gym =>
+                                    const ExerciseLibrarySection(),
+                                  WorkoutDiscipline.yoga => YogaLibrarySection(
+                                    families: viewModel.yogaLibrary,
+                                    suryaSteps: viewModel.yogaSuryaSteps,
+                                    suryaIntro: viewModel.yogaSuryaIntro,
+                                    onOpenPose: (id) =>
+                                        YogaPoseLessonSheet.show(
+                                          context: context,
+                                          postureId: id,
+                                          profile: viewModel.yogaProfile,
+                                        ),
+                                    onOpenCourse: _openYogaCourse,
+                                  ),
+                                  WorkoutDiscipline.calisthenics =>
+                                    CalisthenicsLibrarySection(
+                                      levelLabel: viewModel.calLevelLabel,
+                                      ladders: viewModel.calLadders,
+                                      warmUp: viewModel.calWarmUp,
+                                      coolDown: viewModel.calCoolDown,
+                                      principles: viewModel.calPrinciples,
+                                      onOpenMove: (id) =>
+                                          _openMove(context, id),
+                                    ),
+                                },
                               if (viewModel.showPrograms) ...[
                                 if (activeProgram != null &&
                                     activeProgramId != null) ...[
@@ -558,10 +659,12 @@ class WorkoutView extends StatelessWidget {
                                     viewModel,
                                     program.id,
                                   ),
-                                  onCreate: () => _openEditor(
-                                    viewModel,
-                                    const ProgramEditorArgs(),
-                                  ),
+                                  onCreate: viewModel.canCreateProgram
+                                      ? () => _openEditor(
+                                          viewModel,
+                                          const ProgramEditorArgs(),
+                                        )
+                                      : null,
                                   isPremiumUnlocked: context
                                       .watch<PremiumAccessProvider>()
                                       .canUse(

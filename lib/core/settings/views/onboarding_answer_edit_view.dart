@@ -23,9 +23,10 @@ class OnboardingAnswerEditView extends StatelessWidget {
 
   Future<void> _proceed(OnboardingAnswerEditViewModel viewModel) async {
     HapticManager.light();
-    if (await viewModel.proceed()) {
+    final result = await viewModel.proceed();
+    if (result != null) {
       HapticManager.success();
-      NavigationService.instance.pop(true);
+      NavigationService.instance.pop(result);
       return;
     }
     if (viewModel.errorMessage != null) HapticManager.error();

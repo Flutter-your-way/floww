@@ -5,11 +5,14 @@ import 'package:floww/core/workout/models/exercise.dart';
 import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/models/set_type.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_catalog.dart';
+import 'package:floww/core/yoga/data/yoga_module_data.dart';
+import 'package:floww/core/yoga/services/yoga_catalog.dart';
 
 class WorkoutCatalogData {
   WorkoutCatalogData._();
 
-  static const int version = 6;
+  static const int version = 8;
 
   static final Map<String, String> _imageById = {
     for (final exercise in exercises)
@@ -25,7 +28,7 @@ class WorkoutCatalogData {
 
   static bool isPool(String exerciseId) => _poolIds.contains(exerciseId);
 
-  static const List<ExerciseCatalogEntry> exercises = [
+  static final List<ExerciseCatalogEntry> exercises = [
     ExerciseCatalogEntry(
       id: 'barbell-back-squat',
       name: 'Barbell Back Squat',
@@ -1086,32 +1089,6 @@ class WorkoutCatalogData {
       ],
     ),
     ExerciseCatalogEntry(
-      id: 'sun-salutation',
-      name: 'Sun Salutation',
-      group: MuscleGroup.other,
-      equipment: Equipment.bodyweight,
-      met: 3.5,
-      muscleShares: {'Hamstrings': 0.5, 'Shoulders': 0.5, 'Core': 0.5},
-      defaultSets: 2,
-      defaultReps: 60,
-      defaultRestSeconds: 30,
-      defaultRepsInReserve: 4,
-      trackingMode: TrackingMode.duration,
-      imageUrl: AppImages.sunSalutation,
-      isPool: true,
-      mistakes: [
-        ExerciseCueEntry(text: 'Rushing through the poses'),
-        ExerciseCueEntry(text: 'Holding the breath'),
-        ExerciseCueEntry(text: 'Collapsing the lower back'),
-      ],
-      guidelines: [
-        ExerciseCueEntry(text: 'Link each move to one breath'),
-        ExerciseCueEntry(text: 'Hinge from the hips'),
-        ExerciseCueEntry(text: 'Move smoothly between poses'),
-      ],
-      equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
-    ),
-    ExerciseCatalogEntry(
       id: 'downward-dog',
       name: 'Downward Dog',
       group: MuscleGroup.other,
@@ -1134,110 +1111,6 @@ class WorkoutCatalogData {
         ExerciseCueEntry(text: 'Push the floor away'),
         ExerciseCueEntry(text: 'Lift the hips up and back'),
         ExerciseCueEntry(text: 'Soft knees, long spine'),
-      ],
-      equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
-    ),
-    ExerciseCatalogEntry(
-      id: 'warrior-two',
-      name: 'Warrior II',
-      group: MuscleGroup.other,
-      equipment: Equipment.bodyweight,
-      met: 3,
-      muscleShares: {'Quadriceps': 0.7, 'Glutes': 0.5, 'Shoulders': 0.4},
-      defaultSets: 2,
-      defaultReps: 45,
-      defaultRestSeconds: 20,
-      defaultRepsInReserve: 4,
-      trackingMode: TrackingMode.duration,
-      imageUrl: AppImages.warriorTwo,
-      isPool: true,
-      mistakes: [
-        ExerciseCueEntry(text: 'Front knee caving inward'),
-        ExerciseCueEntry(text: 'Leaning over the front leg'),
-        ExerciseCueEntry(text: 'Dropping the arms'),
-      ],
-      guidelines: [
-        ExerciseCueEntry(text: 'Front knee over the ankle'),
-        ExerciseCueEntry(text: 'Hips open to the side'),
-        ExerciseCueEntry(text: 'Reach long through both arms'),
-      ],
-      equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
-    ),
-    ExerciseCatalogEntry(
-      id: 'cobra-pose',
-      name: 'Cobra Pose',
-      group: MuscleGroup.other,
-      equipment: Equipment.bodyweight,
-      met: 2.5,
-      muscleShares: {'Back': 0.5, 'Core': 0.3},
-      defaultSets: 2,
-      defaultReps: 30,
-      defaultRestSeconds: 20,
-      defaultRepsInReserve: 4,
-      trackingMode: TrackingMode.duration,
-      imageUrl: AppImages.cobraPose,
-      isPool: true,
-      mistakes: [
-        ExerciseCueEntry(text: 'Pushing up with the arms only'),
-        ExerciseCueEntry(text: 'Crunching the neck'),
-        ExerciseCueEntry(text: 'Lifting the hips off the mat'),
-      ],
-      guidelines: [
-        ExerciseCueEntry(text: 'Hips stay on the mat'),
-        ExerciseCueEntry(text: 'Lift with the back muscles'),
-        ExerciseCueEntry(text: 'Keep the neck long'),
-      ],
-      equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
-    ),
-    ExerciseCatalogEntry(
-      id: 'childs-pose',
-      name: 'Child\'s Pose',
-      group: MuscleGroup.other,
-      equipment: Equipment.bodyweight,
-      met: 2,
-      muscleShares: {'Back': 0.3, 'Glutes': 0.3},
-      defaultSets: 1,
-      defaultReps: 60,
-      defaultRestSeconds: 15,
-      defaultRepsInReserve: 5,
-      trackingMode: TrackingMode.duration,
-      imageUrl: AppImages.childsPose,
-      isPool: true,
-      mistakes: [
-        ExerciseCueEntry(text: 'Holding tension in the shoulders'),
-        ExerciseCueEntry(text: 'Forcing the hips down'),
-        ExerciseCueEntry(text: 'Shallow breathing'),
-      ],
-      guidelines: [
-        ExerciseCueEntry(text: 'Knees wide, big toes together'),
-        ExerciseCueEntry(text: 'Reach the arms long'),
-        ExerciseCueEntry(text: 'Breathe into the back'),
-      ],
-      equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
-    ),
-    ExerciseCatalogEntry(
-      id: 'cat-cow',
-      name: 'Cat-Cow',
-      group: MuscleGroup.other,
-      equipment: Equipment.bodyweight,
-      met: 2.5,
-      muscleShares: {'Back': 0.4, 'Core': 0.3},
-      defaultSets: 1,
-      defaultReps: 45,
-      defaultRestSeconds: 15,
-      defaultRepsInReserve: 5,
-      trackingMode: TrackingMode.duration,
-      imageUrl: AppImages.catCow,
-      isPool: true,
-      mistakes: [
-        ExerciseCueEntry(text: 'Moving only the neck'),
-        ExerciseCueEntry(text: 'Rushing the rhythm'),
-        ExerciseCueEntry(text: 'Shifting weight off the hands'),
-      ],
-      guidelines: [
-        ExerciseCueEntry(text: 'Hands under shoulders, knees under hips'),
-        ExerciseCueEntry(text: 'Arch on the inhale, round on the exhale'),
-        ExerciseCueEntry(text: 'Move one vertebra at a time'),
       ],
       equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
     ),
@@ -1267,87 +1140,11 @@ class WorkoutCatalogData {
       ],
       equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
     ),
-    ExerciseCatalogEntry(
-      id: 'tree-pose',
-      name: 'Tree Pose',
-      group: MuscleGroup.other,
-      equipment: Equipment.bodyweight,
-      met: 2.5,
-      muscleShares: {'Core': 0.5, 'Glutes': 0.4, 'Calves': 0.3},
-      defaultSets: 2,
-      defaultReps: 30,
-      defaultRestSeconds: 15,
-      defaultRepsInReserve: 4,
-      trackingMode: TrackingMode.duration,
-      imageUrl: AppImages.treePose,
-      isPool: true,
-      mistakes: [
-        ExerciseCueEntry(text: 'Foot pressing on the knee'),
-        ExerciseCueEntry(text: 'Hips jutting to one side'),
-        ExerciseCueEntry(text: 'Staring around the room'),
-      ],
-      guidelines: [
-        ExerciseCueEntry(text: 'Foot on the calf or inner thigh'),
-        ExerciseCueEntry(text: 'Press foot and leg together'),
-        ExerciseCueEntry(text: 'Fix your gaze on one point'),
-      ],
-      equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
-    ),
-    ExerciseCatalogEntry(
-      id: 'chair-pose',
-      name: 'Chair Pose',
-      group: MuscleGroup.other,
-      equipment: Equipment.bodyweight,
-      met: 3.5,
-      muscleShares: {'Quadriceps': 1, 'Glutes': 0.6, 'Core': 0.4},
-      defaultSets: 2,
-      defaultReps: 30,
-      defaultRestSeconds: 20,
-      defaultRepsInReserve: 3,
-      trackingMode: TrackingMode.duration,
-      imageUrl: AppImages.chairPose,
-      isPool: true,
-      mistakes: [
-        ExerciseCueEntry(text: 'Knees shooting past the toes'),
-        ExerciseCueEntry(text: 'Arching the lower back'),
-        ExerciseCueEntry(text: 'Lifting the heels'),
-      ],
-      guidelines: [
-        ExerciseCueEntry(text: 'Sit back as if into a chair'),
-        ExerciseCueEntry(text: 'Weight in the heels'),
-        ExerciseCueEntry(text: 'Reach the arms up beside the ears'),
-      ],
-      equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Yoga mat')],
-    ),
-    ExerciseCatalogEntry(
-      id: 'seated-meditation',
-      name: 'Seated Meditation',
-      group: MuscleGroup.other,
-      equipment: Equipment.bodyweight,
-      met: 1.5,
-      muscleShares: {'Core': 0.1},
-      defaultSets: 1,
-      defaultReps: 180,
-      defaultRestSeconds: 15,
-      defaultRepsInReserve: 5,
-      trackingMode: TrackingMode.duration,
-      imageUrl: AppImages.seatedMeditation,
-      isPool: true,
-      mistakes: [
-        ExerciseCueEntry(text: 'Slumping the spine'),
-        ExerciseCueEntry(text: 'Forcing the breath'),
-        ExerciseCueEntry(text: 'Judging a wandering mind'),
-      ],
-      guidelines: [
-        ExerciseCueEntry(text: 'Sit tall with relaxed shoulders'),
-        ExerciseCueEntry(text: 'Breathe slowly through the nose'),
-        ExerciseCueEntry(text: 'Gently return to the breath'),
-      ],
-      equipmentItems: [ExerciseCueEntry(label: 'Mat', text: 'Cushion or mat')],
-    ),
+    ...YogaCatalog.entries,
+    ...CalisthenicsCatalog.entries,
   ];
 
-  static const List<WorkoutProgramEntity> programs = [
+  static final List<WorkoutProgramEntity> programs = [
     WorkoutProgramEntity(
       id: 'strength-builder',
       goal: ProgramGoal.strength,
@@ -2534,5 +2331,166 @@ class WorkoutCatalogData {
         ),
       ],
     ),
+    WorkoutProgramEntity(
+      id: YogaModuleData.programId,
+      goal: ProgramGoal.mobility,
+      name: 'NYASP Hatha Foundations',
+      description:
+          'A gentle 4-week beginner Hatha course: asanas, modified Surya '
+          'Namaskar and a complete 35–45 minute class',
+      level: 'Beginner',
+      weeks: 4,
+      course: YogaModuleData.courseId,
+      days: [
+        ProgramDayEntry(
+          weekday: DateTime.monday,
+          name: 'Hatha Class',
+          focus: 'Familiarity',
+          goal: 'Move with steadiness. Breathe without force.',
+          durationMinutes: YogaModuleData.classMinutes,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'seated-meditation',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'neck-turns',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'shoulder-rolls',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'wrist-ankle-circles',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'seated-side-bend',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'tadasana',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'cat-cow',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'sukhasana',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'apanasana',
+              section: WorkoutSectionKind.coolDown,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'savasana',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.wednesday,
+          name: 'Hatha Class',
+          focus: 'Familiarity',
+          goal: 'Move with steadiness. Breathe without force.',
+          durationMinutes: YogaModuleData.classMinutes,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'seated-meditation',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'neck-turns',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'shoulder-rolls',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'wrist-ankle-circles',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'seated-side-bend',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'tadasana',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'cat-cow',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'sukhasana',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'apanasana',
+              section: WorkoutSectionKind.coolDown,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'savasana',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+        ProgramDayEntry(
+          weekday: DateTime.friday,
+          name: 'Hatha Class',
+          focus: 'Familiarity',
+          goal: 'Move with steadiness. Breathe without force.',
+          durationMinutes: YogaModuleData.classMinutes,
+          exercises: [
+            ProgramExerciseEntry(
+              exerciseId: 'seated-meditation',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'neck-turns',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'shoulder-rolls',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'wrist-ankle-circles',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'seated-side-bend',
+              section: WorkoutSectionKind.warmUp,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'tadasana',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'cat-cow',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'sukhasana',
+              section: WorkoutSectionKind.main,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'apanasana',
+              section: WorkoutSectionKind.coolDown,
+            ),
+            ProgramExerciseEntry(
+              exerciseId: 'savasana',
+              section: WorkoutSectionKind.coolDown,
+            ),
+          ],
+        ),
+      ],
+    ),
+    ...CalisthenicsCatalog.programs,
   ];
 }

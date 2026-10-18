@@ -85,10 +85,6 @@ export const buildWorkoutPlanUserText = (
     targetMuscles: profile.focusMuscles,
     injuries: profile.injuries,
     healthConditions: profile.healthConditions,
-    yogaStyle: profile.yogaStyle || undefined,
-    wantsMeditation: profile.trainingType === "Yoga" ?
-      profile.wantsMeditation :
-      undefined,
     maxPushups: profile.maxPushups || undefined,
     maxPullups: profile.maxPullups || undefined,
     maxDips: profile.maxDips || undefined,

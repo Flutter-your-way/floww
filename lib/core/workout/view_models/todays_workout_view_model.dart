@@ -19,6 +19,9 @@ import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/workout/services/workout_readiness_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/services/workout_shift_service.dart';
+import 'package:floww/core/yoga/services/yoga_course_service.dart';
+import 'package:floww/core/workout/models/workout_discipline.dart';
+import 'package:floww/core/yoga/services/yoga_plan_mapper.dart';
 
 enum TodaysWorkoutAction { start, resume, viewSummary }
 
@@ -31,7 +34,9 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     this._access,
     DateTime date, {
     DateTime? catchUpFrom,
+    YogaCourseService? yogaService,
   }) : _date = AppDateUtils.dateOnly(date),
+       _yogaService = yogaService ?? YogaCourseService(),
        _catchUpFrom = catchUpFrom == null
            ? null
            : AppDateUtils.dateOnly(catchUpFrom),
@@ -60,6 +65,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     'run': Icons.monitor_heart,
     'mobility': Icons.self_improvement,
     'yoga': Icons.self_improvement,
+    'hatha': Icons.self_improvement,
     'recovery': Icons.self_improvement,
   };
 
@@ -69,6 +75,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   final WorkoutReadinessService _readinessService;
   final PremiumAccessProvider _access;
   final WorkoutShiftService _shiftService;
+  final YogaCourseService _yogaService;
   final DateTime _date;
   final DateTime? _catchUpFrom;
 
@@ -95,6 +102,20 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   bool get hasWorkout => _plan != null;
+
+  bool get isYogaClass {
+    final plan = _plan;
+    return plan != null && YogaPlanMapper.isClassPlan(plan);
+  }
+
+  String get courseLabel => 'About this yoga course';
+
+  Future<bool> needsSafetyCheck() async =>
+      isYogaClass &&
+      !isCompleted &&
+      !await _yogaService.hasAcknowledgedSafety();
+
+  Future<void> acknowledgeSafety() => _yogaService.acknowledgeSafety();
 
   String get title => isCatchUp
       ? 'Catch-up Workout'
@@ -132,9 +153,16 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     return TodaysWorkoutAction.resume;
   }
 
+  WorkoutDiscipline get _discipline {
+    final plan = _plan;
+    return plan == null ? WorkoutDiscipline.gym : WorkoutDiscipline.ofPlan(plan);
+  }
+
   String get startLabel => switch (action) {
-    TodaysWorkoutAction.start => 'Start Workout',
-    TodaysWorkoutAction.resume => 'Resume Workout',
+    TodaysWorkoutAction.start => _discipline.startLabel,
+    TodaysWorkoutAction.resume =>
+      'Resume ${_discipline.sessionNoun[0].toUpperCase()}'
+          '${_discipline.sessionNoun.substring(1)}',
     TodaysWorkoutAction.viewSummary => 'View Summary',
   };
 
@@ -293,17 +321,25 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
           value: plan.focus,
           unit: '',
         ),
-        WorkoutStatItem(
-          icon: Icons.bar_chart,
-          title: 'Sets',
-          value: '${plan.totalSets}',
-          unit: 'total',
-        ),
+        if (_discipline == WorkoutDiscipline.yoga)
+          WorkoutStatItem(
+            icon: Icons.self_improvement,
+            title: 'Poses',
+            value: '${plan.exercises.length}',
+            unit: 'total',
+          )
+        else
+          WorkoutStatItem(
+            icon: Icons.bar_chart,
+            title: 'Sets',
+            value: '${plan.totalSets}',
+            unit: 'total',
+          ),
       ],
       goalTitle: isCatchUp ? 'Catch-up Goal' : "Today's Goal",
       goal: plan.goal,
       insight: plan.insight,
-      exerciseCountLabel: '${plan.exercises.length} exercises',
+      exerciseCountLabel: _discipline.countLabel(plan.exercises.length),
       exercises: [for (final entry in plan.exercises) _exerciseOf(entry)],
     );
   }

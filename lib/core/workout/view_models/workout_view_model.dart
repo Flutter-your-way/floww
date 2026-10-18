@@ -10,17 +10,24 @@ import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/dates/date_change_direction.dart';
 import 'package:floww/config/utils/dates/day_rollover_timer.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
+import 'package:floww/core/calisthenics/models/cal_level.dart';
+import 'package:floww/core/calisthenics/models/cal_library_view_data.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_library_presenter.dart';
+import 'package:floww/core/settings/services/onboarding_answers_service.dart';
 import 'package:floww/core/workout/models/active_workout_args.dart';
 import 'package:floww/core/workout/models/program_artwork.dart';
 import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/models/program_start_config.dart';
 import 'package:floww/core/workout/models/todays_workout_args.dart';
+import 'package:floww/core/workout/models/workout_course_view_data.dart';
+import 'package:floww/core/workout/models/workout_discipline.dart';
 import 'package:floww/core/workout/models/workout_history.dart';
 import 'package:floww/core/workout/models/workout_shift_offer.dart';
 import 'package:floww/core/workout/models/workout_tab.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/services/workout_catalog_data.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
+import 'package:floww/core/workout/services/workout_course_presenter.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
 import 'package:floww/core/workout/services/workout_history_analyzer.dart';
 import 'package:floww/core/workout/services/workout_metrics.dart';
@@ -29,6 +36,12 @@ import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/services/workout_shift_service.dart';
+import 'package:floww/core/yoga/data/yoga_module_data.dart';
+import 'package:floww/core/yoga/models/yoga_course_view_data.dart';
+import 'package:floww/core/yoga/models/yoga_profile.dart';
+import 'package:floww/core/yoga/services/yoga_course_service.dart';
+import 'package:floww/core/yoga/services/yoga_library_presenter.dart';
+import 'package:floww/core/yoga/services/yoga_plan_mapper.dart';
 
 enum WorkoutDayStatus { past, today, future }
 
@@ -40,9 +53,11 @@ class WorkoutViewModel extends ChangeNotifier {
     this._planService,
     this._programService,
     this._catalogService,
-    this._generatorService,
-  ) : _selectedDate = AppDateUtils.dateOnly(DateTime.now()),
-      _shiftService = WorkoutShiftService(_planService) {
+    this._generatorService, {
+    OnboardingAnswersService? answersService,
+  }) : _selectedDate = AppDateUtils.dateOnly(DateTime.now()),
+       _answersService = answersService ?? OnboardingAnswersService(),
+       _shiftService = WorkoutShiftService(_planService) {
     _dayRollover = DayRolloverTimer(_onNewDay);
     _start();
   }
@@ -67,7 +82,9 @@ class WorkoutViewModel extends ChangeNotifier {
   final WorkoutCatalogService _catalogService;
   final WorkoutPlanGeneratorService _generatorService;
   final WorkoutShiftService _shiftService;
+  final OnboardingAnswersService _answersService;
 
+  StreamSubscription<Map<String, dynamic>>? _answersSubscription;
   StreamSubscription<List<WorkoutSessionEntity>>? _sessionSubscription;
   StreamSubscription<WorkoutStateEntity>? _stateSubscription;
   StreamSubscription<List<WorkoutProgramEntity>>? _programSubscription;
@@ -81,7 +98,9 @@ class WorkoutViewModel extends ChangeNotifier {
   late final DayRolloverTimer _dayRollover;
 
   List<WorkoutSessionEntity> _sessions = const [];
-  List<WorkoutProgramEntity> _programs = const [];
+  List<WorkoutProgramEntity> _allPrograms = const [];
+  Map<String, dynamic> _answers = const {};
+  WorkoutDiscipline _discipline = WorkoutDiscipline.gym;
   WorkoutStateEntity _state = WorkoutStateEntity.empty;
   WorkoutPlanEntity? _plan;
   List<WorkoutPlanEntity> _catchUps = const [];
@@ -100,12 +119,86 @@ class WorkoutViewModel extends ChangeNotifier {
   WorkoutHistoryOverviewItem? _historyCache;
   DateTime? _historyFrom;
   bool _historyLoaded = false;
+  bool _showEarlierHistory = false;
+  bool _isHealingPlan = false;
+  bool _metricsRefreshed = false;
+  String? _healedProgramKey;
   int _historyRequest = 0;
   bool _isLoading = true;
   bool _disposed = false;
   String? _errorMessage;
 
   bool get isLoading => _isLoading;
+
+  WorkoutDiscipline get discipline => _discipline;
+
+  List<WorkoutProgramEntity> get _programs => [
+    for (final program in _allPrograms)
+      if (_discipline.matches(program)) program,
+  ];
+
+  WorkoutProgramEntity? get _activeProgramEntity {
+    final active = _state.activeProgram;
+    return active == null ? null : _programById(active.id);
+  }
+
+  CalLevel? get _courseLevel => CalLevel.fromCourse(_activeProgramEntity?.course);
+
+  bool get _isYogaCourseActive =>
+      YogaPlanMapper.isCourse(_activeProgramEntity?.course);
+
+  YogaProfile get yogaProfile => YogaCourseService.profileOf(_answers);
+
+  WorkoutCourseItem? get course {
+    if (!isOverviewTab || dayStatus == WorkoutDayStatus.past) return null;
+    final active = _state.activeProgram;
+    if (active == null) return null;
+    final level = _courseLevel;
+    if (_discipline == WorkoutDiscipline.calisthenics && level != null) {
+      return WorkoutCoursePresenter.calisthenics(
+        level: level,
+        active: active,
+        date: _selectedDate,
+        answers: _answers,
+      );
+    }
+    if (_discipline == WorkoutDiscipline.yoga && _isYogaCourseActive) {
+      return WorkoutCoursePresenter.yoga(
+        active: active,
+        date: _selectedDate,
+        answers: _answers,
+      );
+    }
+    return null;
+  }
+
+  List<YogaFamilyItem> get yogaLibrary =>
+      YogaLibraryPresenter.familiesOf(yogaProfile);
+
+  List<YogaTimelineItem> get yogaSuryaSteps =>
+      YogaLibraryPresenter.suryaStepsOf(yogaProfile);
+
+  String get yogaSuryaIntro => YogaModuleData.suryaIntro;
+
+  CalLevel get calLevel => _courseLevel ?? CalLevel.one;
+
+  String get calLevelLabel => calLevel.fullTitle;
+
+  List<CalLadderItem> get calLadders =>
+      CalisthenicsLibraryPresenter.laddersOf(calLevel);
+
+  List<CalRoutineItem> get calWarmUp => CalisthenicsLibraryPresenter.warmUp;
+
+  List<CalRoutineItem> get calCoolDown => CalisthenicsLibraryPresenter.coolDown;
+
+  List<String> get calPrinciples => CalisthenicsLibraryPresenter.principles;
+
+  bool get canCreateProgram => _discipline == WorkoutDiscipline.gym;
+
+  bool get _activeMatchesDiscipline {
+    final program = _activeProgramEntity;
+    return program == null || _discipline.matches(program);
+  }
 
   String? get errorMessage => _errorMessage;
 
@@ -164,6 +257,19 @@ class WorkoutViewModel extends ChangeNotifier {
       return;
     }
 
+    _answersSubscription = _answersService.watchAnswers().listen((answers) {
+      _answers = answers;
+      final discipline = WorkoutDiscipline.fromAnswers(answers);
+      if (discipline != _discipline) {
+        _discipline = discipline;
+        _goalFilter = _allFilter;
+        _levelFilter = null;
+        _shiftOffer = null;
+        unawaited(_refreshShiftOffer());
+      }
+      notifyListeners();
+    }, onError: (_) {});
+
     _sessionSubscription = _sessionService.watchRecentSessions().listen((
       sessions,
     ) {
@@ -172,6 +278,7 @@ class WorkoutViewModel extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
       unawaited(_refreshShiftOffer());
+      unawaited(_refreshStaleMetrics());
       final loadedFrom = _historyFrom;
       if (loadedFrom == null || _historyStart.isBefore(loadedFrom)) {
         _reloadHistoryIfVisible();
@@ -191,8 +298,9 @@ class WorkoutViewModel extends ChangeNotifier {
     }, onError: _onError);
 
     _programSubscription = _catalogService.watchPrograms().listen((programs) {
-      _programs = programs;
+      _allPrograms = programs;
       notifyListeners();
+      unawaited(_healStalePlan());
       unawaited(_renameGeneratedPlan());
     }, onError: _onError);
 
@@ -205,6 +313,7 @@ class WorkoutViewModel extends ChangeNotifier {
       _plan = plan;
       notifyListeners();
       unawaited(_refreshShiftOffer());
+      unawaited(_healStalePlan());
     }, onError: _onError);
     _catchUpSubscription?.cancel();
     _catchUpSubscription = _planService.watchCatchUps(_selectedDate).listen((
@@ -213,6 +322,40 @@ class WorkoutViewModel extends ChangeNotifier {
       _catchUps = plans;
       notifyListeners();
     }, onError: _onError);
+  }
+
+  Future<void> _refreshStaleMetrics() async {
+    if (_metricsRefreshed) return;
+    _metricsRefreshed = true;
+    try {
+      await _sessionService.refreshMetrics(_sessions);
+    } on WorkoutException catch (_) {
+      _metricsRefreshed = false;
+    }
+  }
+
+  Future<void> _healStalePlan() async {
+    final plan = _plan;
+    final active = _state.activeProgram;
+    final program = _activeProgramEntity;
+    if (plan == null || active == null || program == null || _isHealingPlan) {
+      return;
+    }
+    if (plan.sessionId != null || plan.programId != program.id) return;
+    if (WorkoutDiscipline.ofPlan(plan) == WorkoutDiscipline.ofProgram(program)) {
+      return;
+    }
+    final key = '${program.id}:${program.course}';
+    if (_healedProgramKey == key) return;
+    _healedProgramKey = key;
+    _isHealingPlan = true;
+    try {
+      await _planService.scheduleProgram(program, active, from: _today);
+    } on WorkoutException catch (_) {
+      _healedProgramKey = null;
+    } finally {
+      _isHealingPlan = false;
+    }
   }
 
   Future<void> _ensurePlan() async {
@@ -385,7 +528,7 @@ class WorkoutViewModel extends ChangeNotifier {
   }
 
   String get primaryActionLabel =>
-      _nextPending?.isCatchUp ?? false ? 'Start Catch-up' : 'Start Workout';
+      _nextPending?.isCatchUp ?? false ? 'Start Catch-up' : _discipline.startLabel;
 
   TodaysWorkoutArgs get startArgs {
     final next = _nextPending;
@@ -553,7 +696,7 @@ class WorkoutViewModel extends ChangeNotifier {
     final plan = workout.plan;
     if (session != null && session.isCompleted) {
       return '${_durationLabel(session.trackedSeconds)} min · '
-          '${session.exerciseCount} exercises · '
+          '${_discipline.countLabel(session.exerciseCount)} · '
           '${NumberFormatter.grouped(session.caloriesKcal)} kcal';
     }
     if (session != null) {
@@ -564,8 +707,9 @@ class WorkoutViewModel extends ChangeNotifier {
       return '$logged/${session.plannedSets} sets logged';
     }
     if (plan == null) return '';
-    return '${plan.durationMinutes} min · ${plan.exercises.length} exercises '
-        '· ${plan.totalSets} sets';
+    return '${plan.durationMinutes} min · '
+        '${_discipline.countLabel(plan.exercises.length)}'
+        '${_discipline == WorkoutDiscipline.yoga ? '' : ' · ${plan.totalSets} sets'}';
   }
 
   TodaysWorkoutArgs? startArgsFor(String id) {
@@ -633,7 +777,7 @@ class WorkoutViewModel extends ChangeNotifier {
   Future<void> _renameGeneratedPlan() async {
     if (_isRenamingPlan || _isBuildingPlan) return;
     WorkoutProgramEntity? stale;
-    for (final program in _programs) {
+    for (final program in _allPrograms) {
       if (program.needsGeneratedName) stale = program;
     }
     if (stale == null) return;
@@ -667,8 +811,13 @@ class WorkoutViewModel extends ChangeNotifier {
     final isVisible = switch (_selectedTab) {
       WorkoutTab.overview =>
         _isBuildingPlan ||
-            (active == null && dayStatus != WorkoutDayStatus.past),
-      WorkoutTab.programs => true,
+            ((active == null || !_activeMatchesDiscipline) &&
+                dayStatus != WorkoutDayStatus.past),
+      WorkoutTab.programs =>
+        _isBuildingPlan ||
+            _planBuildError != null ||
+            !isGeneratedActive ||
+            !_activeMatchesDiscipline,
       _ => false,
     };
     if (!isVisible) return null;
@@ -681,6 +830,25 @@ class WorkoutViewModel extends ChangeNotifier {
         actionLabel: 'Building…',
       );
     }
+    final generated = generatedId == null ? null : _programById(generatedId);
+    final calLevel = CalLevel.fromCourse(generated?.course);
+    if (isGeneratedActive && calLevel != null) {
+      return WorkoutPlanBuilderItem(
+        title: 'Calisthenics ${calLevel.fullTitle}',
+        message:
+            'Finished your retest week? Update your strength test in '
+            'Settings → Onboarding answers, then rebuild. Clearing 80% of the '
+            'next level\'s gates moves you up; logged workouts stay in your '
+            'history.',
+        actionLabel: 'Rebuild my plan',
+        errorMessage: _planBuildError,
+      );
+    }
+    final courseCopy = _courseBuilderCopy(
+      isGeneratedActive: isGeneratedActive,
+      hasGenerated: generatedId != null,
+    );
+    if (courseCopy != null) return courseCopy;
     return WorkoutPlanBuilderItem(
       title: isGeneratedActive
           ? 'Your WAVE 30-day plan'
@@ -699,6 +867,40 @@ class WorkoutViewModel extends ChangeNotifier {
       actionLabel: generatedId == null ? 'Build my plan' : 'Rebuild my plan',
       errorMessage: _planBuildError,
     );
+  }
+
+  WorkoutPlanBuilderItem? _courseBuilderCopy({
+    required bool isGeneratedActive,
+    required bool hasGenerated,
+  }) {
+    final actionLabel = hasGenerated ? 'Rebuild my plan' : 'Build my plan';
+    return switch (_discipline) {
+      WorkoutDiscipline.yoga => WorkoutPlanBuilderItem(
+        title: isGeneratedActive && _isYogaCourseActive
+            ? 'Your NYASP Hatha course'
+            : 'Start your NYASP Hatha course',
+        message: isGeneratedActive && _isYogaCourseActive
+            ? 'Changed your practice days, class length or limitations? '
+                  'Rebuild from your latest answers. Logged classes stay in '
+                  'your history.'
+            : 'WAVE builds the 4-week beginner Hatha course from your '
+                  'answers: practice days, class length, experience and any '
+                  'limitations, with safe alternatives for each.',
+        actionLabel: actionLabel,
+        errorMessage: _planBuildError,
+      ),
+      WorkoutDiscipline.calisthenics when _courseLevel == null =>
+        WorkoutPlanBuilderItem(
+          title: 'Find your calisthenics level',
+          message:
+              'WAVE places you in Level 1–4 from your strength tests and '
+              'builds that level\'s weekly sessions, progressions and '
+              'periodization.',
+          actionLabel: actionLabel,
+          errorMessage: _planBuildError,
+        ),
+      _ => null,
+    };
   }
 
   Future<void> buildPlan({bool showResult = true}) async {
@@ -745,8 +947,15 @@ class WorkoutViewModel extends ChangeNotifier {
     }
   }
 
-  WorkoutShiftOffer? get shiftOffer =>
-      _selectedTab == WorkoutTab.overview ? _shiftOffer : null;
+  WorkoutShiftOffer? get shiftOffer {
+    final offer = _shiftOffer;
+    if (_selectedTab != WorkoutTab.overview || offer == null) return null;
+    if (_discipline == WorkoutDiscipline.yoga &&
+        offer.kind == WorkoutShiftKind.catchUp) {
+      return null;
+    }
+    return offer;
+  }
 
   bool get isShifting => _isShifting;
 
@@ -767,7 +976,29 @@ class WorkoutViewModel extends ChangeNotifier {
     unawaited(_refreshShiftOffer());
   }
 
+  bool get _isRestDay =>
+      _state.activeProgram != null &&
+      _activeMatchesDiscipline &&
+      _plan == null &&
+      _catchUps.isEmpty &&
+      dayStatus != WorkoutDayStatus.past;
+
+  String get _restDayMessage => switch (_discipline) {
+    WorkoutDiscipline.calisthenics => calLevel.restGuidance,
+    WorkoutDiscipline.yoga =>
+      'No class scheduled. Gentle walking and easy breathing are enough; '
+          'your next class follows your practice days.',
+    WorkoutDiscipline.gym =>
+      'No workout scheduled. Recover well: walk, stretch and sleep so your '
+          'next session counts.',
+  };
+
   WorkoutEmptyState get emptyState => switch (_selectedTab) {
+    WorkoutTab.overview when _isRestDay => WorkoutEmptyState(
+      icon: Icons.bedtime_outlined,
+      title: 'Rest day',
+      message: _restDayMessage,
+    ),
     WorkoutTab.overview =>
       dayStatus == WorkoutDayStatus.future
           ? WorkoutEmptyState(
@@ -778,20 +1009,22 @@ class WorkoutViewModel extends ChangeNotifier {
                   '${AppDateUtils.weekdayName(_selectedDate)} to log your '
                   'workout, or start a program to schedule one.',
             )
-          : const WorkoutEmptyState(
+          : WorkoutEmptyState(
               icon: Icons.directions_run,
               iconAsset: AppImages.runIcon,
-              title: 'No workout logged yet',
-              message:
-                  'Start your first session to unlock training stats, muscle '
-                  'tracking, and progress insights.',
+              title: 'No ${_discipline.sessionNoun} logged yet',
+              message: _discipline == WorkoutDiscipline.yoga
+                  ? 'Start your first class to track practice minutes, your '
+                        'self-check and your progress through the course.'
+                  : 'Start your first session to unlock training stats, '
+                        'muscle tracking, and progress insights.',
             ),
-    WorkoutTab.history => const WorkoutEmptyState(
+    WorkoutTab.history => WorkoutEmptyState(
       icon: Icons.pending_actions,
-      title: 'No workout history',
+      title: 'No ${_discipline.sessionNoun} history',
       message:
-          'Complete your first workout session and it\'ll appear here with '
-          'full stats and training data.',
+          'Complete your first ${_discipline.sessionNoun} and it\'ll appear '
+          'here with your stats.',
     ),
     WorkoutTab.programs => const WorkoutEmptyState(
       icon: Icons.pending_actions,
@@ -829,14 +1062,66 @@ class WorkoutViewModel extends ChangeNotifier {
       !showExercises &&
       !showSuggestion;
 
+  DateTime? get _planStart => _state.activeProgram?.startDate;
+
+  bool get _hasEarlierHistory {
+    final start = _planStart;
+    if (start == null) return false;
+    return _sessions.any((session) => session.scheduledDate.isBefore(start)) ||
+        _historyPlans.any((plan) => plan.date.isBefore(start));
+  }
+
+  DateTime? get _historyCutoff =>
+      _showEarlierHistory || !_hasEarlierHistory ? null : _planStart;
+
+  String? get historyResetLabel {
+    final start = _planStart;
+    if (_selectedTab != WorkoutTab.history ||
+        start == null ||
+        !_hasEarlierHistory) {
+      return null;
+    }
+    final name = _state.activeProgram?.name ?? 'current plan';
+    return _showEarlierHistory
+        ? 'Showing everything, including sessions from before $name started '
+              'on ${AppDateUtils.dayMonth(start)}.'
+        : 'History restarted on ${AppDateUtils.dayMonth(start)} when $name '
+              'began. Earlier sessions are saved, not deleted.';
+  }
+
+  String get historyToggleLabel =>
+      _showEarlierHistory ? 'Show current plan only' : 'Show earlier history';
+
+  void toggleEarlierHistory() {
+    _showEarlierHistory = !_showEarlierHistory;
+    notifyListeners();
+  }
+
   WorkoutHistoryAnalysis? get _historyAnalysis {
     final from = _historyFrom;
     if (!_historyLoaded || from == null) return null;
+    final cutoff = _historyCutoff;
+    if (cutoff == null) {
+      return WorkoutHistoryAnalyzer.analyze(
+        today: _today,
+        from: from,
+        plans: _historyPlans,
+        sessions: _sessions,
+        activeProgram: _state.activeProgram,
+      );
+    }
+    final cutoffWeek = AppDateUtils.startOfWeek(cutoff);
     return WorkoutHistoryAnalyzer.analyze(
       today: _today,
-      from: from,
-      plans: _historyPlans,
-      sessions: _sessions,
+      from: from.isAfter(cutoffWeek) ? from : cutoffWeek,
+      plans: [
+        for (final plan in _historyPlans)
+          if (!plan.date.isBefore(cutoff)) plan,
+      ],
+      sessions: [
+        for (final session in _sessions)
+          if (!session.scheduledDate.isBefore(cutoff)) session,
+      ],
       activeProgram: _state.activeProgram,
     );
   }
@@ -849,6 +1134,7 @@ class WorkoutViewModel extends ChangeNotifier {
       _historyPlans,
       _sessions,
       _state.activeProgram,
+      _showEarlierHistory,
     ];
     final cachedInputs = _historyCacheInputs;
     if (cachedInputs != null && _sameInputs(cachedInputs, inputs)) {
@@ -964,7 +1250,10 @@ class WorkoutViewModel extends ChangeNotifier {
           ? '$dateLabel · Catch-up for '
                 '${AppDateUtils.shortWeekday(session.scheduledDate)}'
           : dateLabel,
-      effectLabel: session.trainingEffect.toStringAsFixed(1),
+      effectLabel: _discipline == WorkoutDiscipline.yoga
+          ? session.selfCheckAverage?.toStringAsFixed(1) ?? '—'
+          : session.trainingEffect.toStringAsFixed(1),
+      effectCaption: _discipline == WorkoutDiscipline.yoga ? 'comfort' : 'effect',
       metrics: [
         WorkoutMetricItem(
           icon: Icons.schedule,
@@ -976,7 +1265,7 @@ class WorkoutViewModel extends ChangeNotifier {
         ),
         WorkoutMetricItem(
           icon: Icons.bar_chart,
-          label: '${session.exerciseCount} exercises',
+          label: _discipline.countLabel(session.exerciseCount),
         ),
       ],
       statusLabel: session.isCompleted
@@ -1011,7 +1300,7 @@ class WorkoutViewModel extends ChangeNotifier {
         ),
         WorkoutMetricItem(
           icon: Icons.bar_chart,
-          label: '${plan.exercises.length} exercises',
+          label: _discipline.countLabel(plan.exercises.length),
         ),
         WorkoutMetricItem(
           icon: Icons.layers_outlined,
@@ -1032,7 +1321,10 @@ class WorkoutViewModel extends ChangeNotifier {
           ),
       ],
       goal: plan.goal.isNotEmpty ? plan.goal : plan.focus,
-      actionLabel: insight.canSchedule ? 'Do it today' : null,
+      actionLabel:
+          insight.canSchedule && _discipline != WorkoutDiscipline.yoga
+          ? 'Do it today'
+          : null,
     );
   }
 
@@ -1044,6 +1336,16 @@ class WorkoutViewModel extends ChangeNotifier {
     final musclesLabel = muscles.join(' & ');
     final keyExercise = insight.keyExercise;
     final coveredOn = insight.coveredOn;
+    if (_discipline == WorkoutDiscipline.yoga) {
+      return (
+        title: 'Continue with the course',
+        message:
+            'No need to make up a missed class or double up. Pick up with '
+            'your next class at a comfortable pace; the course progresses '
+            'only when breathing and movement stay comfortable.',
+        tone: WorkoutStatTone.neutral,
+      );
+    }
     switch (insight.recovery) {
       case MissedRecovery.scheduled:
         return (
@@ -1254,12 +1556,15 @@ class WorkoutViewModel extends ChangeNotifier {
   WorkoutOverviewItem? get overview {
     final session = _selectedSession;
     if (session == null) return null;
+    final isYoga = _discipline == WorkoutDiscipline.yoga;
     return WorkoutOverviewItem(
       summary: _summaryOf(session),
-      trainingEffect: _trainingEffectOf(session),
-      muscles: _musclesOf(session),
+      trainingEffect: isYoga ? null : _trainingEffectOf(session),
+      muscles: isYoga ? const [] : _musclesOf(session),
       heartRate: _heartRateOf(session),
-      performance: _performanceOf(session),
+      performance: isYoga
+          ? _yogaPerformanceOf(session)
+          : _performanceOf(session),
     );
   }
 
@@ -1282,12 +1587,7 @@ class WorkoutViewModel extends ChangeNotifier {
           value: _durationLabel(session.trackedSeconds),
           unit: 'min',
         ),
-        WorkoutStatItem(
-          icon: Icons.bar_chart,
-          title: 'VOLUME',
-          value: NumberFormatter.grouped(session.volumeKg.round()),
-          unit: 'kg',
-        ),
+        _loadStatOf(session),
         WorkoutStatItem(
           icon: Icons.local_fire_department,
           title: 'CALORIES',
@@ -1306,14 +1606,88 @@ class WorkoutViewModel extends ChangeNotifier {
     );
   }
 
+  WorkoutStatItem _loadStatOf(WorkoutSessionEntity session) =>
+      switch (_discipline) {
+        WorkoutDiscipline.gym => WorkoutStatItem(
+          icon: Icons.bar_chart,
+          title: 'VOLUME',
+          value: NumberFormatter.grouped(session.volumeKg.round()),
+          unit: 'kg',
+        ),
+        WorkoutDiscipline.calisthenics => WorkoutStatItem(
+          icon: Icons.bar_chart,
+          title: 'TOTAL REPS',
+          value: NumberFormatter.grouped(session.totalReps),
+          unit: _holdLabelOf(session),
+        ),
+        WorkoutDiscipline.yoga => WorkoutStatItem(
+          icon: Icons.self_improvement,
+          title: 'COMFORT',
+          value: session.selfCheckAverage?.toStringAsFixed(1) ?? '—',
+          unit: session.selfCheckAverage == null ? '' : '/ 5',
+        ),
+      };
+
+  int _holdSecondsOf(WorkoutSessionEntity session) {
+    var total = 0;
+    for (final exercise in session.exercises) {
+      if (exercise.isTimed) total += exercise.completedSeconds;
+    }
+    return total;
+  }
+
+  String _holdLabelOf(WorkoutSessionEntity session) {
+    final seconds = _holdSecondsOf(session);
+    return seconds == 0 ? '' : '+ ${_durationLabel(seconds)} hold';
+  }
+
+  PerformanceItem _yogaPerformanceOf(WorkoutSessionEntity session) {
+    var sides = 0;
+    for (final exercise in session.exercises) {
+      sides += exercise.workingSetCount;
+    }
+    return PerformanceItem(
+      stats: [
+        PerformanceStatItem(
+          label: 'Poses Practised',
+          value: '${session.exerciseCount}',
+          tone: WorkoutStatTone.accent,
+        ),
+        PerformanceStatItem(
+          label: 'Holds & Rounds',
+          value: '$sides',
+          tone: WorkoutStatTone.neutral,
+        ),
+        PerformanceStatItem(
+          label: 'Time in Poses',
+          value: '${_durationLabel(_holdSecondsOf(session))} min',
+          tone: WorkoutStatTone.neutral,
+        ),
+        PerformanceStatItem(
+          label: 'Self-check',
+          value: session.selfCheckAverage == null
+              ? 'Not saved'
+              : '${session.selfCheckAverage!.toStringAsFixed(1)} / 5',
+          tone: WorkoutStatTone.neutral,
+        ),
+      ],
+      records: const [],
+    );
+  }
+
   String _exercisesLabelOf(WorkoutSessionEntity session) {
     if (session.isInProgress) {
       final done = session.exercises.where((entry) => entry.isComplete).length;
-      return '$done / ${session.exercises.length} Exercises done';
+      return '$done / ${session.exercises.length} '
+          '${_capitalized(_discipline.itemsNoun)} done';
     }
     final count = session.exerciseCount;
-    return '$count ${count == 1 ? 'Exercise' : 'Exercises'}';
+    final noun = count == 1 ? _discipline.itemNoun : _discipline.itemsNoun;
+    return '$count ${_capitalized(noun)}';
   }
+
+  static String _capitalized(String text) =>
+      text.isEmpty ? text : '${text[0].toUpperCase()}${text.substring(1)}';
 
   TrainingEffectItem _trainingEffectOf(WorkoutSessionEntity session) {
     const total = WorkoutMetrics.effectSegments;
@@ -1345,12 +1719,25 @@ class WorkoutViewModel extends ChangeNotifier {
       ),
   ];
 
-  String get summaryInfoMessage =>
+  String get summaryInfoMessage => switch (_discipline) {
+    WorkoutDiscipline.yoga =>
+      '$titlePrefix overview: class length, calories, your self-check comfort '
+          'score and heart rate. Comfort is the average of the five 1–5 '
+          'statements you rate after class: steady breath, knowing when to '
+          'modify, slow transitions, using support and finishing settled.',
+    WorkoutDiscipline.calisthenics =>
+      '$titlePrefix overview: session length, total reps and time under '
+          'hold, calories and heart rate. Bodyweight work is tracked in reps '
+          'and seconds rather than kilograms, so progress shows as harder '
+          'progressions and more clean reps.',
+    WorkoutDiscipline.gym =>
       '$titlePrefix overview: total volume, calories burned, and average '
-      'heart rate from your logged session. Volume is the weight you lifted '
-      'multiplied by the reps you completed across every set. Calories use '
-      'your logged body weight and the intensity of each movement. Heart '
-      'rate is read from Apple Health or Health Connect when connected.';
+          'heart rate from your logged session. Volume is the weight you '
+          'lifted multiplied by the reps you completed across every set. '
+          'Calories use your logged body weight and the intensity of each '
+          'movement. Heart rate is read from Apple Health or Health Connect '
+          'when connected.',
+  };
 
   String get trainingEffectInfoMessage =>
       'Training Effect (1–5) measures how much this session moved your '
@@ -1504,6 +1891,7 @@ class WorkoutViewModel extends ChangeNotifier {
     final plan = next?.plan;
     if (next == null || plan == null) return null;
     final active = _state.activeProgram;
+    final kind = WorkoutDiscipline.ofPlan(plan);
     return WorkoutSuggestionItem(
       title: plan.name,
       durationLabel: '${plan.durationMinutes}m',
@@ -1512,11 +1900,21 @@ class WorkoutViewModel extends ChangeNotifier {
         if (next.isCatchUp)
           'Missed on ${AppDateUtils.weekdayName(plan.date)}, '
               '${AppDateUtils.dayMonth(plan.date)}',
-        if (active != null) _programProgressLabel(active, plan.date),
-        '${plan.exercises.length} exercises · ${plan.totalSets} sets',
+        if (kind != WorkoutDiscipline.gym && plan.programLabel.isNotEmpty)
+          plan.programLabel
+        else if (active != null)
+          _programProgressLabel(active, plan.date),
+        kind == WorkoutDiscipline.yoga
+            ? '${kind.countLabel(plan.exercises.length)} · '
+                  '${plan.durationMinutes} min class'
+            : '${kind.countLabel(plan.exercises.length)} · '
+                  '${plan.totalSets} sets',
         if (plan.goal.isNotEmpty) plan.goal,
       ],
       imageUrl: _suggestionImageOf(plan),
+      actionLabel: next.isCatchUp
+          ? 'START CATCH-UP'
+          : kind.startLabel.toUpperCase(),
     );
   }
 
@@ -1638,9 +2036,16 @@ class WorkoutViewModel extends ChangeNotifier {
     return '$count ${count == 1 ? 'program' : 'programs'}';
   }
 
-  String get programsEmptyMessage =>
+  String get programsEmptyMessage => switch (_discipline) {
+    WorkoutDiscipline.yoga =>
+      'Your yoga programs are still syncing. Pull back in a moment to see '
+          'the NYASP Hatha course.',
+    WorkoutDiscipline.calisthenics =>
+      'No calisthenics levels match this filter. Try another level.',
+    WorkoutDiscipline.gym =>
       'No programs match these filters. Try another goal or level, or build '
-      'your own.';
+          'your own.',
+  };
 
   ProgramStartSetup? programStartSetupFor(String id) {
     final program = _programById(id);
@@ -1682,6 +2087,7 @@ class WorkoutViewModel extends ChangeNotifier {
       isCustom: program.isCustom,
       isPremium: program.goal.isPremium && !program.isCustom,
       isWave: program.isGenerated,
+      isCourse: YogaPlanMapper.isCourse(program.course),
       schedule: [
         for (final index in order)
           ProgramScheduleItem(
@@ -1784,7 +2190,7 @@ class WorkoutViewModel extends ChangeNotifier {
   }
 
   WorkoutProgramEntity? _programById(String id) {
-    for (final program in _programs) {
+    for (final program in _allPrograms) {
       if (program.id == id) return program;
     }
     return null;
@@ -1901,6 +2307,7 @@ class WorkoutViewModel extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _dayRollover.cancel();
+    _answersSubscription?.cancel();
     _sessionSubscription?.cancel();
     _stateSubscription?.cancel();
     _programSubscription?.cancel();

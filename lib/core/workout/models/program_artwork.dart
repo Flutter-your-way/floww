@@ -19,6 +19,7 @@ class ProgramArtwork {
     'glute-leg-focus': AppImages.programLegsPhoto,
     'conditioning-express': AppImages.programConditioningPhoto,
     'core-mobility': AppImages.programMobilityPhoto,
+    'nyasp-hatha-foundations': AppImages.seatedMeditation,
   };
 
   static const Map<ProgramGoal, String> _byGoal = {

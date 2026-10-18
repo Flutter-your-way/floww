@@ -68,7 +68,7 @@ class WorkoutHistoryCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'effect',
+                    session.effectCaption,
                     style: AppTypography.labelSmallMedium.copyWith(
                       color: colors.textSecondary,
                     ),

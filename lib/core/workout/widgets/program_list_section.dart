@@ -46,11 +46,13 @@ class ProgramListSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppPopReveal(
-          appearOnMount: true,
-          child: CreateProgramCard(onTap: onCreate),
-        ),
-        SizedBox(height: AppSpacing.xl3),
+        if (onCreate != null) ...[
+          AppPopReveal(
+            appearOnMount: true,
+            child: CreateProgramCard(onTap: onCreate),
+          ),
+          SizedBox(height: AppSpacing.xl3),
+        ],
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           clipBehavior: Clip.none,

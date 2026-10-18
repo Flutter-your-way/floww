@@ -23,12 +23,14 @@ class WorkoutSuggestionItem {
     required this.intensityLabel,
     required this.reasons,
     this.imageUrl,
+    this.actionLabel = 'START WORKOUT',
   });
 
   final String title;
   final String durationLabel;
   final String intensityLabel;
   final List<String> reasons;
+  final String actionLabel;
   final String? imageUrl;
 }
 
@@ -246,12 +248,14 @@ class WorkoutHistoryItem {
     required this.metrics,
     required this.statusLabel,
     required this.isHighlighted,
+    this.effectCaption = 'effect',
   });
 
   final String id;
   final String name;
   final String dateLabel;
   final String effectLabel;
+  final String effectCaption;
   final List<WorkoutMetricItem> metrics;
   final String? statusLabel;
   final bool isHighlighted;
@@ -387,7 +391,7 @@ class WorkoutOverviewItem {
   });
 
   final WorkoutSummaryItem summary;
-  final TrainingEffectItem trainingEffect;
+  final TrainingEffectItem? trainingEffect;
   final List<MuscleFocusEntry> muscles;
   final HeartRateItem? heartRate;
   final PerformanceItem performance;
@@ -504,6 +508,7 @@ class ProgramDetailItem {
     required this.isCustom,
     this.isPremium = false,
     this.isWave = false,
+    this.isCourse = false,
   });
 
   final String id;
@@ -512,6 +517,7 @@ class ProgramDetailItem {
   final String logo;
   final List<WorkoutStatItem> stats;
   final List<ProgramScheduleItem> schedule;
+  final bool isCourse;
   final String? warning;
   final bool isActive;
   final bool isCustom;

@@ -1,3 +1,6 @@
+import 'package:floww/core/calisthenics/data/calisthenics_gates_data.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_placement.dart';
+
 String _hhmm(DateTime time) {
   final hour = time.hour.toString().padLeft(2, '0');
   final minute = time.minute.toString().padLeft(2, '0');
@@ -202,7 +205,32 @@ class OnboardingCalisthenicsDetails {
     required this.workoutDuration,
     required this.preferredWorkoutTime,
     required this.injuries,
+    this.gateResults = const {},
+    this.placedLevel = 1,
   });
+
+  factory OnboardingCalisthenicsDetails.fromAnswers(
+    Map<String, dynamic> answers,
+  ) {
+    final results = CalisthenicsPlacement.resultsOf(answers);
+    final level = CalisthenicsPlacement.levelFor(results);
+    return OnboardingCalisthenicsDetails(
+      experienceLevel: level.experience,
+      bodyweightKg: (answers['cal_bodyweight'] as num?)?.toDouble() ?? 0,
+      maxPushups: results[CalisthenicsGatesData.pushUps] ?? 0,
+      maxPullups: results[CalisthenicsGatesData.pullUps] ?? 0,
+      maxDips: results[CalisthenicsGatesData.dips] ?? 0,
+      currentSkills: _stringList(answers['cal_skills']),
+      skillGoals: _stringList(answers['cal_skill_goals']),
+      equipment: _stringList(answers['cal_equipment']),
+      trainingDays: _stringList(answers['cal_days']),
+      workoutDuration: '${level.minutes} min',
+      preferredWorkoutTime: answers['cal_workout_time'] as String? ?? '',
+      injuries: _stringList(answers['cal_injuries']),
+      gateResults: results,
+      placedLevel: level.number,
+    );
+  }
 
   final String experienceLevel;
   final double bodyweightKg;
@@ -216,6 +244,8 @@ class OnboardingCalisthenicsDetails {
   final String workoutDuration;
   final String preferredWorkoutTime;
   final List<String> injuries;
+  final Map<String, double> gateResults;
+  final int placedLevel;
 
   factory OnboardingCalisthenicsDetails.fromJson(Map<String, dynamic> json) =>
       OnboardingCalisthenicsDetails(
@@ -224,6 +254,13 @@ class OnboardingCalisthenicsDetails {
         maxPushups: (json['maxPushups'] as num).toDouble(),
         maxPullups: (json['maxPullups'] as num).toDouble(),
         maxDips: (json['maxDips'] as num).toDouble(),
+        gateResults: {
+          if (json['gateResults'] case final Map<String, dynamic> results)
+            for (final entry in results.entries)
+              if (entry.value is num)
+                entry.key: (entry.value as num).toDouble(),
+        },
+        placedLevel: (json['placedLevel'] as num? ?? 1).toInt(),
         currentSkills: _stringList(json['currentSkills']),
         skillGoals: _stringList(json['skillGoals']),
         equipment: _stringList(json['equipment']),
@@ -246,6 +283,8 @@ class OnboardingCalisthenicsDetails {
     'workoutDuration': workoutDuration,
     'preferredWorkoutTime': preferredWorkoutTime,
     'injuries': injuries,
+    'gateResults': gateResults,
+    'placedLevel': placedLevel,
   };
 }
 
@@ -463,7 +502,9 @@ class OnboardingDetailsEntity {
         trainingType: answers['training_type'] as String,
         experienceLevel: switch (answers['training_type']) {
           'Gym' => answers['gym_experience'] as String?,
-          'Calisthenics' => answers['cal_experience'] as String?,
+          'Calisthenics' => CalisthenicsPlacement.levelFor(
+            CalisthenicsPlacement.resultsOf(answers),
+          ).experience,
           'Yoga' => answers['yoga_experience'] as String?,
           _ => null,
         },
@@ -485,19 +526,8 @@ class OnboardingDetailsEntity {
           targetMuscleGroups: _stringList(answers['gym_muscle_groups']),
         );
       case 'Calisthenics':
-        calisthenicsDetails = OnboardingCalisthenicsDetails(
-          experienceLevel: answers['cal_experience'] as String,
-          bodyweightKg: (answers['cal_bodyweight'] as num).toDouble(),
-          maxPushups: (answers['cal_max_pushups'] as num).toDouble(),
-          maxPullups: (answers['cal_max_pullups'] as num).toDouble(),
-          maxDips: (answers['cal_max_dips'] as num).toDouble(),
-          currentSkills: _stringList(answers['cal_skills']),
-          skillGoals: _stringList(answers['cal_skill_goals']),
-          equipment: _stringList(answers['cal_equipment']),
-          trainingDays: _stringList(answers['cal_days']),
-          workoutDuration: answers['cal_duration'] as String,
-          preferredWorkoutTime: answers['cal_workout_time'] as String,
-          injuries: _stringList(answers['cal_injuries']),
+        calisthenicsDetails = OnboardingCalisthenicsDetails.fromAnswers(
+          answers,
         );
       case 'Yoga':
         yogaDetails = OnboardingYogaDetails(

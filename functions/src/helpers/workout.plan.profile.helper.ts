@@ -1,6 +1,10 @@
 import {DocumentData} from "firebase-admin/firestore";
 import {clamp, listOf, numberOf, recordOf} from "../common/utils";
 import {ProgramGoalId} from "../models/workout.plan.model";
+import {
+  CALISTHENICS_LEVELS,
+  CalLevelSpec,
+} from "../constants/calisthenics.constants";
 
 export type TrainingType = "Gym" | "Calisthenics" | "Yoga";
 
@@ -55,6 +59,7 @@ export interface PlanProfile {
   maxDips: number;
   pushIntensity: string;
   recoverySpeed: string;
+  calLevel: number;
 }
 
 const WEEKDAYS: Record<string, number> = {
@@ -224,6 +229,34 @@ const splitOf = (
   return "Full Body";
 };
 
+const placedLevelOf = (
+  section: Record<string, unknown>,
+  level: PlanProfile["level"],
+): number => {
+  const placed = Math.round(numberOf(section.placedLevel));
+  if (placed >= 1 && placed <= CALISTHENICS_LEVELS.length) return placed;
+  if (level === "Advanced") return 3;
+  return level === "Intermediate" ? 2 : 1;
+};
+
+export const fittingLevelOf = (
+  placed: number,
+  days: number,
+): CalLevelSpec => {
+  let spec = CALISTHENICS_LEVELS[clamp(placed, 1,
+    CALISTHENICS_LEVELS.length) - 1];
+  while (spec.number > 1 && spec.sessions > days) {
+    spec = CALISTHENICS_LEVELS[spec.number - 2];
+  }
+  return spec;
+};
+
+const spreadDays = (weekdays: number[], count: number): number[] =>
+  weekdays.length <= count ?
+    weekdays :
+    Array.from({length: count}, (_, index) =>
+      weekdays[Math.floor(index * weekdays.length / count)]);
+
 export const planProfileOf = (details: DocumentData): PlanProfile => {
   const type = trainingTypeOf(details);
   const section = recordOf(details[SECTION_KEYS[type]]);
@@ -235,16 +268,22 @@ export const planProfileOf = (details: DocumentData): PlanProfile => {
   const level = levelOf(
     textOf(section.experienceLevel) || textOf(setup.experienceLevel),
   );
-  const weekdays = weekdaysOf(section, level);
+  const chosenDays = weekdaysOf(section, level);
+  const calSpec = type === "Calisthenics" ?
+    fittingLevelOf(placedLevelOf(section, level), chosenDays.length) :
+    null;
+  const weekdays = calSpec ?
+    spreadDays(chosenDays, calSpec.sessions) :
+    chosenDays;
   const primaryGoal = textOf(goals.primaryGoal);
   const goal = goalOf(type, section, primaryGoal);
 
   return {
     firstName: textOf(recordOf(details.profile).name).split(/\s+/)[0] || "",
     trainingType: type,
-    level,
+    level: calSpec?.experience ?? level,
     weekdays,
-    sessionMinutes: minutesOf(section.workoutDuration ??
+    sessionMinutes: calSpec?.minutes ?? minutesOf(section.workoutDuration ??
       section.practiceDuration),
     goal,
     goalLabel: GOAL_LABELS[goal],
@@ -263,6 +302,7 @@ export const planProfileOf = (details: DocumentData): PlanProfile => {
     maxDips: numberOf(section.maxDips),
     pushIntensity: textOf(floState.pushIntensity),
     recoverySpeed: textOf(floState.recoverySpeed),
+    calLevel: calSpec?.number ?? 0,
   };
 };
 
@@ -274,6 +314,17 @@ const INJURY_EXCLUSIONS: Record<string, string[]> = {
     "dumbbell-shoulder-press"],
   Elbow: ["parallel-bar-dip", "triceps-pushdown", "barbell-curl"],
   Wrist: ["pike-push-up", "burpee"],
+};
+
+const YOGA_INJURY_EXCLUSIONS: Record<string, string[]> = {
+  Knee: ["cat-cow", "bird-dog", "childs-pose", "anahatasana", "vajrasana",
+    "chair-pose", "warrior-two"],
+  Shoulder: ["sun-salutation", "cat-cow", "bird-dog", "anahatasana",
+    "cobra-pose", "downward-dog", "plank"],
+  Wrist: ["cat-cow", "bird-dog", "anahatasana", "cobra-pose", "downward-dog",
+    "plank"],
+  Back: ["cobra-pose", "setu-bandha"],
+  Neck: ["setu-bandha"],
 };
 
 const CALISTHENICS_REQUIREMENTS: Record<string, string[]> = {
@@ -291,8 +342,11 @@ export const allowedExercisesOf = (
   profile: PlanProfile,
   details: DocumentData,
 ): CatalogExercise[] => {
+  const exclusions = profile.trainingType === "Yoga" ?
+    YOGA_INJURY_EXCLUSIONS :
+    INJURY_EXCLUSIONS;
   const excluded = new Set(
-    profile.injuries.flatMap((injury) => INJURY_EXCLUSIONS[injury] ?? []),
+    profile.injuries.flatMap((injury) => exclusions[injury] ?? []),
   );
   if (profile.equipmentLabel === HOME_GYM) {
     for (const id of Object.keys(CALISTHENICS_REQUIREMENTS)) excluded.add(id);

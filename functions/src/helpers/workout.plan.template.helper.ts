@@ -6,6 +6,13 @@ import {
   WorkoutSection,
 } from "../models/workout.plan.model";
 import {CatalogExercise, PlanProfile} from "./workout.plan.profile.helper";
+import {
+  CALISTHENICS_COOL_DOWN,
+  CALISTHENICS_LEVELS,
+  CALISTHENICS_RESERVE,
+  CALISTHENICS_SESSIONS,
+  CALISTHENICS_WARM_UP,
+} from "../constants/calisthenics.constants";
 
 type Slot =
   | "squat" | "hinge" | "lunge" | "quad" | "calf"
@@ -14,8 +21,9 @@ type Slot =
   | "core" | "core2" | "conditioning"
   | "warmUpper" | "warmLower" | "warmFull"
   | "coolUpper" | "coolLower"
-  | "yogaOpen" | "yogaStand" | "yogaBalance" | "yogaHip" | "yogaBack"
-  | "yogaStrength" | "yogaRest" | "meditation";
+  | "hathaArrival" | "hathaNeck" | "hathaShoulders" | "hathaJoints"
+  | "hathaSpine" | "hathaStand" | "hathaKneel" | "hathaSeat" | "hathaSupine"
+  | "hathaRelax";
 
 const SLOT_CANDIDATES: Record<Slot, string[]> = {
   squat: ["barbell-back-squat", "leg-press", "goblet-squat",
@@ -44,14 +52,16 @@ const SLOT_CANDIDATES: Record<Slot, string[]> = {
   warmFull: ["bodyweight-squat", "mountain-climber", "cat-cow"],
   coolUpper: ["childs-pose", "cobra-pose", "hamstring-stretch"],
   coolLower: ["hamstring-stretch", "foam-roll-quads", "pigeon-pose"],
-  yogaOpen: ["sun-salutation", "cat-cow"],
-  yogaStand: ["warrior-two", "chair-pose"],
-  yogaBalance: ["tree-pose", "warrior-two"],
-  yogaHip: ["pigeon-pose", "hip-flexor-stretch"],
-  yogaBack: ["cobra-pose", "downward-dog"],
-  yogaStrength: ["plank", "chair-pose"],
-  yogaRest: ["childs-pose", "hamstring-stretch"],
-  meditation: ["seated-meditation"],
+  hathaArrival: ["seated-meditation"],
+  hathaNeck: ["neck-turns"],
+  hathaShoulders: ["shoulder-rolls"],
+  hathaJoints: ["wrist-ankle-circles"],
+  hathaSpine: ["seated-side-bend", "seated-cat-cow"],
+  hathaStand: ["tadasana"],
+  hathaKneel: ["cat-cow", "seated-cat-cow"],
+  hathaSeat: ["sukhasana", "dandasana"],
+  hathaSupine: ["apanasana", "pelvic-tilts"],
+  hathaRelax: ["savasana", "seated-meditation"],
 };
 
 interface DayTemplate {
@@ -178,31 +188,14 @@ const ARMS: DayTemplate = {
   coolDown: ["coolUpper"],
 };
 
-const YOGA_STRENGTH: DayTemplate = {
-  name: "Strength Flow",
-  focus: "Strength",
-  goal: "Hold every pose with steady breath.",
-  warmUp: ["yogaOpen"],
-  main: ["yogaStand", "yogaStrength", "yogaBalance", "yogaBack", "yogaHip"],
-  coolDown: ["yogaRest", "meditation"],
-};
-
-const YOGA_MOBILITY: DayTemplate = {
-  name: "Mobility Flow",
-  focus: "Mobility",
-  goal: "Ease deeper into each stretch, never force it.",
-  warmUp: ["yogaOpen"],
-  main: ["yogaBack", "yogaHip", "yogaStand", "yogaRest", "yogaBalance"],
-  coolDown: ["yogaRest", "meditation"],
-};
-
-const YOGA_BALANCE: DayTemplate = {
-  name: "Balance Flow",
-  focus: "Balance",
-  goal: "Find a still point in every balance.",
-  warmUp: ["yogaOpen"],
-  main: ["yogaBalance", "yogaStand", "yogaStrength", "yogaHip", "yogaBack"],
-  coolDown: ["yogaRest", "meditation"],
+const HATHA_CLASS: DayTemplate = {
+  name: "Hatha Class",
+  focus: "Familiarity",
+  goal: "Move with steadiness. Breathe without force. Honour your limits.",
+  warmUp: ["hathaArrival", "hathaNeck", "hathaShoulders", "hathaJoints",
+    "hathaSpine"],
+  main: ["hathaStand", "hathaKneel", "hathaSeat"],
+  coolDown: ["hathaSupine", "hathaRelax"],
 };
 
 const SPLIT_TEMPLATES: Record<PlanProfile["split"], DayTemplate[]> = {
@@ -210,7 +203,7 @@ const SPLIT_TEMPLATES: Record<PlanProfile["split"], DayTemplate[]> = {
   "Upper Lower": [UPPER_A, LOWER_A, UPPER_B, LOWER_B],
   "Push Pull Legs": [PUSH, PULL, LEGS],
   "Bro Split": [CHEST, BACK, LEGS, SHOULDERS, ARMS],
-  "Yoga Flow": [YOGA_STRENGTH, YOGA_MOBILITY, YOGA_BALANCE],
+  "Yoga Flow": [HATHA_CLASS],
 };
 
 const FIVE_DAY_PPL = [PUSH, PULL, LEGS, UPPER_A, LOWER_B];
@@ -296,6 +289,16 @@ const prescriptionOf = (
   isPrimary: boolean,
   profile: PlanProfile,
 ): PlannedExercise => {
+  if (profile.trainingType === "Yoga") {
+    return {
+      exerciseId: exercise.id,
+      section,
+      sets: exercise.defaultSets,
+      reps: exercise.defaultReps,
+      restSeconds: exercise.defaultRestSeconds,
+      repsInReserve: exercise.defaultRepsInReserve,
+    };
+  }
   if (section !== "main-exercises") {
     return {
       exerciseId: exercise.id,
@@ -387,10 +390,7 @@ const dayOf = (
   }
   if (wantsConditioning) add("conditioning", "main-exercises", false);
 
-  for (const slot of template.coolDown) {
-    if (slot === "meditation" && !profile.wantsMeditation) continue;
-    add(slot, "cool-down", false);
-  }
+  for (const slot of template.coolDown) add(slot, "cool-down", false);
 
   return {
     weekday,
@@ -402,16 +402,84 @@ const dayOf = (
   };
 };
 
+const calisthenicsDaysOf = (
+  profile: PlanProfile,
+  allowed: Map<string, CatalogExercise>,
+): PlannedDay[] => {
+  const spec = CALISTHENICS_LEVELS[profile.calLevel - 1];
+  const sessions = CALISTHENICS_SESSIONS[spec.number];
+  const prepOf = (
+    id: string,
+    section: WorkoutSection,
+  ): PlannedExercise[] => {
+    const exercise = allowed.get(id);
+    return exercise ? [{
+      exerciseId: id,
+      section,
+      sets: PREP_SETS,
+      reps: exercise.defaultReps,
+      restSeconds: PREP_REST_SECONDS,
+      repsInReserve: PREP_RESERVE,
+    }] : [];
+  };
+  return profile.weekdays.map((weekday, index) => {
+    const session = sessions[index % sessions.length];
+    const seen = new Set<string>();
+    const main: PlannedExercise[] = [];
+    for (const [exerciseId, sets, reps, restSeconds] of session.moves) {
+      if (!allowed.has(exerciseId) || seen.has(exerciseId)) continue;
+      seen.add(exerciseId);
+      main.push({
+        exerciseId,
+        section: "main-exercises",
+        sets,
+        reps,
+        restSeconds,
+        repsInReserve: CALISTHENICS_RESERVE,
+      });
+    }
+    return {
+      weekday,
+      name: session.name,
+      focus: session.focus,
+      goal: session.goal,
+      durationMinutes: spec.minutes,
+      exercises: [
+        ...prepOf(CALISTHENICS_WARM_UP, "warm-up"),
+        ...main,
+        ...prepOf(CALISTHENICS_COOL_DOWN, "cool-down"),
+      ],
+    };
+  });
+};
+
 export const standardDaysOf = (
   profile: PlanProfile,
   allowed: CatalogExercise[],
 ): PlannedDay[] => {
   const byId = new Map(allowed.map((exercise) => [exercise.id, exercise]));
+  if (profile.trainingType === "Calisthenics" && profile.calLevel > 0) {
+    return calisthenicsDaysOf(profile, byId);
+  }
   return templatesOf(profile).map((template, index) =>
     dayOf(template, profile.weekdays[index], profile, byId));
 };
 
-export const standardDescriptionOf = (profile: PlanProfile): string =>
-  `${profile.weekdays.length}x/week ${profile.split.toLowerCase()} built ` +
+const calisthenicsDescriptionOf = (profile: PlanProfile): string => {
+  const spec = CALISTHENICS_LEVELS[profile.calLevel - 1];
+  return `Calisthenics Level ${spec.number} · ${spec.focus}: ` +
+    `${spec.weeks}-week block, ${profile.weekdays.length}x/week, ` +
+    `${spec.minutes}-minute sessions placed by your strength test.`;
+};
+
+export const standardDescriptionOf = (profile: PlanProfile): string => {
+  if (profile.trainingType === "Calisthenics" && profile.calLevel > 0) {
+    return calisthenicsDescriptionOf(profile);
+  }
+  return profile.trainingType === "Yoga" ?
+    `${profile.weekdays.length}x/week NYASP Hatha beginner course: ` +
+      `${profile.sessionMinutes}-minute classes that progress over 4 weeks.` :
+    `${profile.weekdays.length}x/week ${profile.split.toLowerCase()} built ` +
   `from your onboarding: ${profile.goalLabel.toLowerCase()} focus, ` +
   `${profile.sessionMinutes}-minute sessions.`;
+};

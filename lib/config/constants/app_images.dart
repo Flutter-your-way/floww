@@ -177,6 +177,36 @@ class AppImages {
   static const String seatedMeditation =
       '${_photoBase}1506126613408-eca07ce68773$_photoQuery';
 
+  static const String _yogaBase = '$_imagesBase/yoga';
+  static const String yogaNeckTurns = '$_yogaBase/neck_turns.png';
+  static const String yogaShoulderRolls = '$_yogaBase/shoulder_rolls.png';
+  static const String yogaWristAnkleCircles = '$_yogaBase/wrist_ankle_circles.png';
+  static const String yogaSeatedSideBend = '$_yogaBase/seated_side_bend.png';
+  static const String yogaSeatedCatCow = '$_yogaBase/seated_cat_cow.png';
+  static const String yogaStandingArmSpine = '$_yogaBase/standing_arm_spine.png';
+  static const String yogaTadasana = '$_yogaBase/tadasana.png';
+  static const String yogaUrdhvaHastasana = '$_yogaBase/urdhva_hastasana.png';
+  static const String yogaParsvaTadasana = '$_yogaBase/parsva_tadasana.png';
+  static const String yogaTrikonasana = '$_yogaBase/trikonasana.png';
+  static const String yogaPrasaritaPadottanasana = '$_yogaBase/prasarita_padottanasana.png';
+  static const String yogaBirdDog = '$_yogaBase/bird_dog.png';
+  static const String yogaAnahatasana = '$_yogaBase/anahatasana.png';
+  static const String yogaVajrasana = '$_yogaBase/vajrasana.png';
+  static const String yogaDandasana = '$_yogaBase/dandasana.png';
+  static const String yogaSukhasana = '$_yogaBase/sukhasana.png';
+  static const String yogaBaddhaKonasana = '$_yogaBase/baddha_konasana.png';
+  static const String yogaPaschimottanasana = '$_yogaBase/paschimottanasana.png';
+  static const String yogaJanuSirsasana = '$_yogaBase/janu_sirsasana.png';
+  static const String yogaBharadvajasana = '$_yogaBase/bharadvajasana.png';
+  static const String yogaApanasana = '$_yogaBase/apanasana.png';
+  static const String yogaSuptaMatsyendrasana = '$_yogaBase/supta_matsyendrasana.png';
+  static const String yogaSetuBandha = '$_yogaBase/setu_bandha.png';
+  static const String yogaPelvicTilts = '$_yogaBase/pelvic_tilts.png';
+  static const String yogaSuptaBaddhaKonasana = '$_yogaBase/supta_baddha_konasana.png';
+  static const String yogaPavanamuktasana = '$_yogaBase/pavanamuktasana.png';
+  static const String yogaMakarasana = '$_yogaBase/makarasana.png';
+  static const String yogaSavasana = '$_yogaBase/savasana.png';
+
   static const String programStrengthPhoto =
       '${_photoBase}1517836357463-d25dfeac3438$_photoQuery';
   static const String programFatLossPhoto =

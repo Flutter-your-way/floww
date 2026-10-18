@@ -40,6 +40,7 @@ class WorkoutSessionService extends WorkoutFirestore {
   static const String _dateField = 'date';
   static const String _startedAtField = 'startedAt';
   static const int _historyLimit = 60;
+  static const int _metricsBatchSize = 400;
   static const int _heartRateBuckets = 11;
 
   final HealthService _healthService;
@@ -252,9 +253,10 @@ class WorkoutSessionService extends WorkoutFirestore {
         if (entry.id != session.id && entry.isCompleted) entry,
     ];
 
-    final muscles = WorkoutMetrics.muscleActivationOf(session.exercises);
+    final effort = WorkoutMetrics.effortExercisesOf(session.exercises);
+    final muscles = WorkoutMetrics.muscleActivationOf(effort);
     final effect = WorkoutMetrics.trainingEffectOf(
-      totals: totals,
+      totals: WorkoutMetrics.totalsOf(effort),
       durationSeconds: session.durationSeconds,
     );
     final records = WorkoutMetrics.personalRecordsOf(
@@ -290,6 +292,7 @@ class WorkoutSessionService extends WorkoutFirestore {
       ),
       'trainingEffect': effect,
       'muscleActivation': [for (final muscle in muscles) muscle.toJson()],
+      'metricsVersion': WorkoutMetrics.metricsVersion,
       'personalRecords': [for (final record in records) record.toJson()],
       'flowPoints': flow.after - flow.before,
       'flowScoreBefore': flow.before,
@@ -359,6 +362,52 @@ class WorkoutSessionService extends WorkoutFirestore {
       () => _sessions(
         uid,
       ).doc(id).set({'recoveryMood': mood.name}, SetOptions(merge: true)),
+    );
+  }
+
+  Future<void> refreshMetrics(List<WorkoutSessionEntity> sessions) async {
+    final uid = userId;
+    if (uid == null) return;
+    final stale = [
+      for (final session in sessions)
+        if (session.isCompleted &&
+            session.metricsVersion < WorkoutMetrics.metricsVersion)
+          session,
+    ];
+    if (stale.isEmpty) return;
+    await guard('refreshMetrics', _saveFailure, () async {
+      for (var start = 0; start < stale.length; start += _metricsBatchSize) {
+        final batch = firestore.batch();
+        for (final session in stale.skip(start).take(_metricsBatchSize)) {
+          final effort = WorkoutMetrics.effortExercisesOf(session.exercises);
+          batch.set(_sessions(uid).doc(session.id), {
+            'trainingEffect': WorkoutMetrics.trainingEffectOf(
+              totals: WorkoutMetrics.totalsOf(effort),
+              durationSeconds: session.durationSeconds,
+            ),
+            'muscleActivation': [
+              for (final muscle in WorkoutMetrics.muscleActivationOf(effort))
+                muscle.toJson(),
+            ],
+            'metricsVersion': WorkoutMetrics.metricsVersion,
+          }, SetOptions(merge: true));
+        }
+        await batch.commit();
+      }
+    });
+  }
+
+  Future<void> saveYogaSelfCheck(String id, List<int> ratings) async {
+    final uid = requireUserId;
+    await guard(
+      'saveYogaSelfCheck',
+      _saveFailure,
+      () => _sessions(uid).doc(id).set({
+        'yogaSelfCheck': {
+          'ratings': ratings,
+          'savedAt': AppDateUtils.isoKey(DateTime.now()),
+        },
+      }, SetOptions(merge: true)),
     );
   }
 

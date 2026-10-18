@@ -21,9 +21,11 @@ class ProgramDetailSheet extends StatelessWidget {
     this.onCustomize,
     this.onDelete,
     this.onStop,
+    this.onCourse,
     this.isLocked = false,
   });
 
+  static const String courseLabel = 'View course & asana library';
   static const String startLabel = 'Start program';
   static const String unlockLabel = 'Unlock with Premium';
 
@@ -35,6 +37,7 @@ class ProgramDetailSheet extends StatelessWidget {
     VoidCallback? onCustomize,
     VoidCallback? onDelete,
     VoidCallback? onStop,
+    VoidCallback? onCourse,
   }) {
     return showAppFloatingSheet<void>(
       context: context,
@@ -44,6 +47,7 @@ class ProgramDetailSheet extends StatelessWidget {
         onCustomize: onCustomize,
         onDelete: onDelete,
         onStop: onStop,
+        onCourse: onCourse,
         isLocked: isLocked,
       ),
     );
@@ -54,6 +58,7 @@ class ProgramDetailSheet extends StatelessWidget {
   final VoidCallback? onCustomize;
   final VoidCallback? onDelete;
   final VoidCallback? onStop;
+  final VoidCallback? onCourse;
   final bool isLocked;
 
   @override
@@ -62,6 +67,7 @@ class ProgramDetailSheet extends StatelessWidget {
     final warning = detail.warning;
     final onDelete = this.onDelete;
     final onStop = this.onStop;
+    final onCourse = this.onCourse;
 
     return AppFloatingSheet(
       child: AppSheetPanel(
@@ -91,6 +97,15 @@ class ProgramDetailSheet extends StatelessWidget {
             for (var i = 0; i < detail.schedule.length; i++) ...[
               if (i > 0) SizedBox(height: AppSpacing.md),
               _ScheduleRow(item: detail.schedule[i]),
+            ],
+            if (onCourse != null) ...[
+              SizedBox(height: AppSpacing.xl),
+              PillButton(
+                variant: PillButtonVariant.outline,
+                label: courseLabel,
+                icon: Icons.self_improvement,
+                onPressed: onCourse,
+              ),
             ],
           ],
         ),

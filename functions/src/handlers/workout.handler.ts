@@ -44,9 +44,11 @@ import {flowDoc} from "../helpers/flow.sync.helper";
 import {UserClock, clockOf, loadActiveUser} from "../helpers/user.clock.helper";
 import {
   FALLBACK_BODY_WEIGHT_KG,
+  METRICS_VERSION,
   bestsOf,
   caloriesOf,
   entriesOf,
+  effortEntriesOf,
   muscleActivationOf,
   personalRecordsOf,
   plannedSetsOf,
@@ -156,7 +158,8 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
       .filter((doc) =>
         doc.id !== body.sessionId && doc.get("status") === COMPLETED_STATUS)
       .map((doc) => doc.data());
-    const effect = trainingEffectOf(totals, body.durationSeconds);
+    const effort = effortEntriesOf(entries);
+    const effect = trainingEffectOf(totalsOf(effort), body.durationSeconds);
 
     const before = withoutSession(activity, body.sessionId, session);
     const beforeEntry = flowEntryOf(day, before, readiness);
@@ -183,7 +186,8 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
       exerciseCount: totals.exerciseCount,
       caloriesKcal: caloriesOf(totals, body.durationSeconds, bodyWeightKg),
       trainingEffect: effect,
-      muscleActivation: muscleActivationOf(entries),
+      muscleActivation: muscleActivationOf(effort),
+      metricsVersion: METRICS_VERSION,
       personalRecords: personalRecordsOf(entries, bestsOf(previous)),
       flowPoints: afterEntry.score - beforeEntry.score,
       flowScoreBefore: beforeEntry.score,
@@ -310,7 +314,8 @@ export const handleGenerateWorkoutPlan = async (
     );
   }
 
-  const program = (useAi ?
+  const usesCourse = profile.trainingType === "Yoga" || profile.calLevel > 0;
+  const program = (useAi && !usesCourse ?
     await aiProgramFor(uid, profile, allowed, draft) :
     null) ?? standardProgramOf(profile, draft);
 

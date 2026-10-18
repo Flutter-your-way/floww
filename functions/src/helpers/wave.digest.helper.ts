@@ -65,6 +65,9 @@ const trainingLine = (details: DocumentData): string | null => {
 
   if (Object.keys(cal).length > 0) {
     return line("Calisthenics", [
+      amount(cal.placedLevel) &&
+        "placed at Calisthenics Training System Level " +
+          `${amount(cal.placedLevel)} (80% gate rule)`,
       text(cal.experienceLevel),
       amount(cal.maxPushups) && `${amount(cal.maxPushups)} pushups`,
       amount(cal.maxPullups) && `${amount(cal.maxPullups)} pullups`,
