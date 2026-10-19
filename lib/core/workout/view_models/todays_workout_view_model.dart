@@ -7,9 +7,11 @@ import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
+import 'package:floww/core/settings/services/onboarding_answers_service.dart';
 import 'package:floww/core/workout/services/workout_catalog_data.dart';
 import 'package:floww/core/workout/models/active_workout_args.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
+import 'package:floww/core/workout/models/todays_workout_args.dart';
 import 'package:floww/core/workout/models/workout_shift_offer.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
@@ -35,8 +37,10 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     DateTime date, {
     DateTime? catchUpFrom,
     YogaCourseService? yogaService,
+    OnboardingAnswersService? answersService,
   }) : _date = AppDateUtils.dateOnly(date),
        _yogaService = yogaService ?? YogaCourseService(),
+       _answersService = answersService ?? OnboardingAnswersService(),
        _catchUpFrom = catchUpFrom == null
            ? null
            : AppDateUtils.dateOnly(catchUpFrom),
@@ -76,10 +80,13 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   final PremiumAccessProvider _access;
   final WorkoutShiftService _shiftService;
   final YogaCourseService _yogaService;
+  final OnboardingAnswersService _answersService;
   final DateTime _date;
-  final DateTime? _catchUpFrom;
+  DateTime? _catchUpFrom;
 
   WorkoutPlanEntity? _plan;
+  WorkoutPlanEntity? _pendingCatchUp;
+  WorkoutDiscipline _answersDiscipline = WorkoutDiscipline.gym;
   WorkoutShiftOffer? _shiftOffer;
   WorkoutSessionEntity? _session;
   List<WorkoutSessionEntity> _history = const [];
@@ -97,6 +104,34 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
 
   DateTime get _planDate => _catchUpFrom ?? _date;
 
+  DateTime get _today => AppDateUtils.dateOnly(DateTime.now());
+
+  DateTime get _yesterday => AppDateUtils.addDays(_today, -1);
+
+  bool get _isToday => AppDateUtils.isSameDay(_date, _today);
+
+  bool get _isUpcoming => _date.isAfter(_today);
+
+  bool get _isStartableDay {
+    if (!_isToday) return false;
+    final catchUpFrom = _catchUpFrom;
+    return catchUpFrom == null ||
+        AppDateUtils.isSameDay(catchUpFrom, _yesterday);
+  }
+
+  bool get isLocked =>
+      hasWorkout && action == TodaysWorkoutAction.start && !_isStartableDay;
+
+  String get lockedMessage {
+    final noun = _discipline.sessionNoun;
+    if (_isUpcoming) {
+      return 'This $noun opens on ${AppDateUtils.weekdayName(_date)}, '
+          '${AppDateUtils.dayMonth(_date)}. Sessions can only be started on '
+          'the day they are planned.';
+    }
+    return 'Only yesterday\'s $noun can be made up, and only today. Older '
+        'sessions stay in your history as missed.';
+  }
   bool get isLoading => _isLoading;
 
   String? get errorMessage => _errorMessage;
@@ -117,33 +152,59 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
 
   Future<void> acknowledgeSafety() => _yogaService.acknowledgeSafety();
 
-  String get title => isCatchUp
-      ? 'Catch-up Workout'
-      : AppDateUtils.isSameDay(_date, DateTime.now())
-      ? "Today's Workout"
-      : "${AppDateUtils.weekdayName(_date)}'s Workout";
+  String get title {
+    final noun = _discipline.titleNoun;
+    if (isCatchUp) return 'Catch-up $noun';
+    if (_isToday) return "Today's $noun";
+    return "${AppDateUtils.weekdayName(_date)}'s $noun";
+  }
+
+  String get _dayReference =>
+      _isToday ? 'today' : 'on ${AppDateUtils.weekdayName(_date)}';
 
   bool get _isRestDay => _plan == null && _activeProgram != null && !isCatchUp;
 
   IconData get emptyIcon =>
       _isRestDay ? Icons.self_improvement : Icons.calendar_today;
 
-  String get emptyTitle => _isRestDay ? 'Rest day' : 'No workout scheduled';
+  String get emptyTitle => _isRestDay
+      ? 'Rest day'
+      : 'No ${_discipline.sessionNoun} scheduled';
 
   String get emptyMessage {
+    final noun = _discipline.sessionNoun;
     if (!_isRestDay) {
       return 'Pick a program from the Programs tab and WAVE will schedule your '
-          'sessions, or add exercises to build one yourself.';
+          '${_discipline.sessionsNoun}.';
     }
     final next = _nextPlan;
     final program = _activeProgram!.name;
     if (next == null) {
-      return '$program has no session planned for today. Recover well and '
+      return '$program has no $noun planned $_dayReference. Recover well and '
           'check back on your next training day.';
     }
-    return '$program has no session planned for today. Your next one is '
+    return '$program has no $noun planned $_dayReference. Your next one is '
         '${next.name} on ${AppDateUtils.weekdayName(next.date)}, '
         '${AppDateUtils.dayMonth(next.date)}.';
+  }
+
+  bool get hasPendingCatchUp => _pendingCatchUp != null;
+
+  String get catchUpTitle {
+    final pending = _pendingCatchUp;
+    return pending == null ? '' : 'Yesterday\'s ${pending.name} is on today';
+  }
+
+  String get catchUpMessage =>
+      'You added it as a catch-up. Do it before or after today\'s '
+      '${_discipline.sessionNoun}; both show up in your history.';
+
+  String get catchUpActionLabel => 'Open catch-up';
+
+  TodaysWorkoutArgs? get catchUpArgs {
+    final pending = _pendingCatchUp;
+    if (pending == null) return null;
+    return TodaysWorkoutArgs(date: _date, catchUpFrom: pending.date);
   }
 
   TodaysWorkoutAction get action {
@@ -155,10 +216,14 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
 
   WorkoutDiscipline get _discipline {
     final plan = _plan;
-    return plan == null ? WorkoutDiscipline.gym : WorkoutDiscipline.ofPlan(plan);
+    return plan == null ? _answersDiscipline : WorkoutDiscipline.ofPlan(plan);
   }
 
   String get startLabel => switch (action) {
+    TodaysWorkoutAction.start when isLocked =>
+      _isUpcoming
+          ? 'Opens ${AppDateUtils.weekdayName(_date)}'
+          : 'No longer available',
     TodaysWorkoutAction.start => _discipline.startLabel,
     TodaysWorkoutAction.resume =>
       'Resume ${_discipline.sessionNoun[0].toUpperCase()}'
@@ -212,6 +277,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     try {
       final state = await _programService.loadState();
       _activeProgram = state.activeProgram;
+      _answersDiscipline = await _loadAnswersDiscipline();
       final history = await _sessionService.loadRecentSessions();
       _history = history;
       final catchUpFrom = _catchUpFrom;
@@ -224,10 +290,6 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
               readiness: () => _readinessService.assess(history),
               adaptive: _access.canUse(PremiumCapability.adaptiveEngine),
             );
-      _session = _primarySessionOf([
-        for (final session in history)
-          if (AppDateUtils.isSameDay(session.date, _date)) session,
-      ]);
       _shiftOffer = catchUpFrom != null
           ? null
           : await _shiftService.offerFor(
@@ -236,6 +298,19 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
               sessions: history,
               todayPlan: _plan,
             );
+      _pendingCatchUp = catchUpFrom != null
+          ? null
+          : await _pendingCatchUpOf(state.activeProgram, history);
+      final pending = _pendingCatchUp;
+      if (pending != null && _plan == null) {
+        _catchUpFrom = pending.date;
+        _plan = pending;
+        _pendingCatchUp = null;
+      }
+      _session = _primarySessionOf([
+        for (final session in history)
+          if (AppDateUtils.isSameDay(session.date, _date)) session,
+      ]);
       _nextPlan = _isRestDay ? await _planService.nextPlanAfter(_date) : null;
       _errorMessage = null;
       _watchSessions();
@@ -246,6 +321,36 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     }
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<WorkoutDiscipline> _loadAnswersDiscipline() async {
+    try {
+      return WorkoutDiscipline.fromAnswers(await _answersService.loadAnswers());
+    } catch (_) {
+      return _answersDiscipline;
+    }
+  }
+
+  Future<WorkoutPlanEntity?> _pendingCatchUpOf(
+    ActiveProgramEntry? activeProgram,
+    List<WorkoutSessionEntity> history,
+  ) async {
+    if (!_isToday || activeProgram == null) return null;
+    final yesterday = _yesterday;
+    final isDone = history.any(
+      (session) =>
+          AppDateUtils.isSameDay(session.scheduledDate, yesterday) &&
+          session.isCompleted,
+    );
+    if (isDone) return null;
+    final plans = await _planService.watchCatchUps(_date).first;
+    for (final plan in plans) {
+      if (AppDateUtils.isSameDay(plan.date, yesterday) &&
+          plan.programId == activeProgram.id) {
+        return plan;
+      }
+    }
+    return null;
   }
 
   bool get isShifting => _isShifting;
@@ -336,7 +441,11 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
             unit: 'total',
           ),
       ],
-      goalTitle: isCatchUp ? 'Catch-up Goal' : "Today's Goal",
+      goalTitle: isCatchUp
+          ? 'Catch-up Goal'
+          : _isToday
+          ? "Today's Goal"
+          : "${AppDateUtils.weekdayName(_date)}'s Goal",
       goal: plan.goal,
       insight: plan.insight,
       exerciseCountLabel: _discipline.countLabel(plan.exercises.length),

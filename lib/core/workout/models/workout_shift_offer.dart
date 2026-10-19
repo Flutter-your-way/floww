@@ -19,8 +19,8 @@ class WorkoutShiftOffer {
       'Changed your mind? Bring ${plan.name} back to today and the rest of '
           'your program moves back with it.',
     WorkoutShiftKind.catchUp =>
-      'Add ${plan.name} to today alongside your scheduled session. Your '
-          'program stays on track and nothing gets lost.',
+      'Do ${plan.name} today instead. Anything already planned for today '
+          'stays put, and both show up in your history.',
     WorkoutShiftKind.postpone =>
       'Move today\'s session to tomorrow. Every later session shifts by a day '
           'so your program stays in order.',

@@ -477,9 +477,14 @@ class WorkoutViewModel extends ChangeNotifier {
       );
     }
     final activeId = _state.activeProgram?.id;
+    final catchUpDay = AppDateUtils.addDays(_selectedDate, -1);
     for (final catchUp in _catchUps) {
       final session = _sessionFor(catchUp.date);
-      if (session == null && catchUp.programId != activeId) continue;
+      if (session == null &&
+          (catchUp.programId != activeId ||
+              !AppDateUtils.isSameDay(catchUp.date, catchUpDay))) {
+        continue;
+      }
       if (session != null) matched.add(session.id);
       workouts.add(
         _DayWorkout(
@@ -521,7 +526,7 @@ class WorkoutViewModel extends ChangeNotifier {
   String? get overviewWorkoutId => _selectedSession?.id;
 
   WorkoutPrimaryAction? get primaryAction {
-    if (dayStatus == WorkoutDayStatus.past) return null;
+    if (dayStatus != WorkoutDayStatus.today) return null;
     if (_activeSession != null) return WorkoutPrimaryAction.resume;
     if (_nextPending != null) return WorkoutPrimaryAction.start;
     return _daySessions.isEmpty ? WorkoutPrimaryAction.start : null;
@@ -950,10 +955,6 @@ class WorkoutViewModel extends ChangeNotifier {
   WorkoutShiftOffer? get shiftOffer {
     final offer = _shiftOffer;
     if (_selectedTab != WorkoutTab.overview || offer == null) return null;
-    if (_discipline == WorkoutDiscipline.yoga &&
-        offer.kind == WorkoutShiftKind.catchUp) {
-      return null;
-    }
     return offer;
   }
 
@@ -1321,10 +1322,7 @@ class WorkoutViewModel extends ChangeNotifier {
           ),
       ],
       goal: plan.goal.isNotEmpty ? plan.goal : plan.focus,
-      actionLabel:
-          insight.canSchedule && _discipline != WorkoutDiscipline.yoga
-          ? 'Do it today'
-          : null,
+      actionLabel: insight.canSchedule ? 'Do it today' : null,
     );
   }
 
@@ -1337,30 +1335,48 @@ class WorkoutViewModel extends ChangeNotifier {
     final keyExercise = insight.keyExercise;
     final coveredOn = insight.coveredOn;
     if (_discipline == WorkoutDiscipline.yoga) {
-      return (
-        title: 'Continue with the course',
-        message:
-            'No need to make up a missed class or double up. Pick up with '
-            'your next class at a comfortable pace; the course progresses '
-            'only when breathing and movement stay comfortable.',
-        tone: WorkoutStatTone.neutral,
-      );
+      return switch (insight.recovery) {
+        MissedRecovery.scheduled => (
+          title: 'Scheduled for today',
+          message:
+              '${plan.name} is on today\'s practice. Move at an easy pace and '
+              'rest whenever you need; it counts toward yesterday.',
+          tone: WorkoutStatTone.accent,
+        ),
+        MissedRecovery.catchUp => (
+          title: 'Practise it today',
+          message:
+              'Missed yesterday\'s class? Add ${plan.name} to today. Today\'s '
+              'own class stays on your plan, so keep both gentle.',
+          tone: WorkoutStatTone.accent,
+        ),
+        _ => (
+          title: 'Continue with the course',
+          message:
+              'Only yesterday\'s class can be made up. Pick up with your next '
+              'class at a comfortable pace; the course progresses only when '
+              'breathing and movement stay comfortable.',
+          tone: WorkoutStatTone.neutral,
+        ),
+      };
     }
     switch (insight.recovery) {
       case MissedRecovery.scheduled:
         return (
           title: 'Scheduled for today',
           message:
-              '${plan.name} is on today\'s plan alongside your scheduled '
-              'session. Do both and nothing gets lost.',
+              '${plan.name} is on today\'s plan. Today\'s own '
+              '${_discipline.sessionNoun} stays too, so do both and nothing '
+              'gets lost.',
           tone: WorkoutStatTone.accent,
         );
       case MissedRecovery.catchUp:
         return (
           title: 'Catch up today',
           message:
-              'Add ${plan.name} to today alongside your scheduled session. '
-              'Your program stays on track and nothing gets lost.',
+              'Add ${plan.name} to today. Today\'s own '
+              '${_discipline.sessionNoun} stays on your plan, and both show up '
+              'in your history.',
           tone: WorkoutStatTone.accent,
         );
       case MissedRecovery.covered:
@@ -1378,9 +1394,9 @@ class WorkoutViewModel extends ChangeNotifier {
             : '$musclesLabel ${muscles.length == 1 ? 'hasn\'t' : 'haven\'t'} '
                   'been trained since';
         final addition = keyExercise == null
-            ? 'Do it today alongside your plan, or add a few extra sets to '
-                  'your next session'
-            : 'Do it today alongside your plan, or add 2–3 sets of '
+            ? 'Only yesterday\'s session can be made up, so add a few extra '
+                  'sets to your next session'
+            : 'Only yesterday\'s session can be made up, so add 2–3 sets of '
                   '$keyExercise to your next session';
         return (
           title: 'Make it up this week',
@@ -1512,7 +1528,10 @@ class WorkoutViewModel extends ChangeNotifier {
   }
 
   Future<void> catchUp(MissedWorkoutItem item) async {
-    if (_isShifting) return;
+    if (_isShifting ||
+        !AppDateUtils.isSameDay(item.date, AppDateUtils.addDays(_today, -1))) {
+      return;
+    }
     WorkoutPlanEntity? missed;
     for (final plan in _historyPlans) {
       if (AppDateUtils.isSameDay(plan.date, item.date)) missed = plan;
@@ -1912,7 +1931,9 @@ class WorkoutViewModel extends ChangeNotifier {
         if (plan.goal.isNotEmpty) plan.goal,
       ],
       imageUrl: _suggestionImageOf(plan),
-      actionLabel: next.isCatchUp
+      actionLabel: dayStatus == WorkoutDayStatus.future
+          ? 'PREVIEW ${kind.sessionNoun.toUpperCase()}'
+          : next.isCatchUp
           ? 'START CATCH-UP'
           : kind.startLabel.toUpperCase(),
     );

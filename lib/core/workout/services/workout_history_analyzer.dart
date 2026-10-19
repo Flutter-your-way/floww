@@ -119,13 +119,14 @@ class WorkoutHistoryAnalyzer {
     final isScheduled = plan.isScheduledFor(today);
     final canSchedule =
         !isScheduled &&
-        age <= prioritizeWindowDays &&
+        age == catchUpWindowDays &&
         activeProgram != null &&
-        plan.programId == activeProgram.id;
+        plan.programId == activeProgram.id &&
+        !date.isBefore(AppDateUtils.dateOnly(activeProgram.startedAt));
 
     final recovery = isScheduled
         ? MissedRecovery.scheduled
-        : canSchedule && age == catchUpWindowDays
+        : canSchedule
         ? MissedRecovery.catchUp
         : coveredOn != null
         ? MissedRecovery.covered

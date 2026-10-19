@@ -190,6 +190,13 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      final lockReason = _launch.session == null ? _lockReasonOf(plan) : null;
+      if (lockReason != null) {
+        _errorMessage = lockReason;
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
       final session =
           _launch.session ??
           await _sessionService.startSession(
@@ -226,6 +233,22 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  String? _lockReasonOf(WorkoutPlanEntity plan) {
+    final today = AppDateUtils.dateOnly(DateTime.now());
+    if (_date.isAfter(today)) {
+      return 'This session opens on ${AppDateUtils.weekdayName(_date)}. '
+          'Sessions can only be started on the day they are planned.';
+    }
+    final planDate = AppDateUtils.dateOnly(plan.date);
+    final isCurrent =
+        AppDateUtils.isSameDay(planDate, today) ||
+        AppDateUtils.isSameDay(planDate, AppDateUtils.addDays(today, -1));
+    if (!AppDateUtils.isSameDay(_date, today) || !isCurrent) {
+      return 'Only yesterday\'s session can be made up, and only today.';
+    }
+    return null;
   }
 
   Future<WorkoutPlanEntity?> _preparePlan() async {

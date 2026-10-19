@@ -51,6 +51,13 @@ class TodaysWorkoutView extends StatelessWidget {
     );
   }
 
+  void _openCatchUp(TodaysWorkoutViewModel viewModel) {
+    final args = viewModel.catchUpArgs;
+    if (args == null) return;
+    HapticManager.medium();
+    NavigationService.instance.push(AppRouter.todaysWorkout, arguments: args);
+  }
+
   void _openCourse() {
     HapticManager.light();
     NavigationService.instance.push(AppRouter.yogaCourse);
@@ -71,11 +78,13 @@ class TodaysWorkoutView extends StatelessWidget {
             footer: workout == null
                 ? null
                 : PillButton(
-                    variant: viewModel.isCompleted
+                    variant: viewModel.isCompleted || viewModel.isLocked
                         ? PillButtonVariant.neutral
                         : PillButtonVariant.primary,
                     label: viewModel.startLabel,
-                    onPressed: () => _onAction(context, viewModel),
+                    onPressed: viewModel.isLocked
+                        ? null
+                        : () => _onAction(context, viewModel),
                   ),
             children: [
               if (viewModel.isLoading)
@@ -101,6 +110,22 @@ class TodaysWorkoutView extends StatelessWidget {
                         viewModel.shiftSchedule();
                       },
                     ),
+                  ),
+                  SizedBox(height: AppSpacing.lg),
+                ],
+                if (viewModel.hasPendingCatchUp) ...[
+                  WorkoutShiftCard(
+                    title: viewModel.catchUpTitle,
+                    message: viewModel.catchUpMessage,
+                    actionLabel: viewModel.catchUpActionLabel,
+                    onAction: () => _openCatchUp(viewModel),
+                  ),
+                  SizedBox(height: AppSpacing.lg),
+                ],
+                if (viewModel.isLocked) ...[
+                  TipCard(
+                    title: viewModel.lockedMessage,
+                    icon: Icons.lock_clock_rounded,
                   ),
                   SizedBox(height: AppSpacing.lg),
                 ],

@@ -10,6 +10,7 @@ enum WorkoutDiscipline {
   gym(
     'gym',
     startLabel: 'Start Workout',
+    titleNoun: 'Workout',
     sessionNoun: 'workout',
     sessionsNoun: 'workouts',
     itemNoun: 'exercise',
@@ -19,6 +20,7 @@ enum WorkoutDiscipline {
   calisthenics(
     'calisthenics',
     startLabel: 'Start Session',
+    titleNoun: 'Training',
     sessionNoun: 'session',
     sessionsNoun: 'sessions',
     itemNoun: 'move',
@@ -28,6 +30,7 @@ enum WorkoutDiscipline {
   yoga(
     'yoga',
     startLabel: 'Start Class',
+    titleNoun: 'Practice',
     sessionNoun: 'class',
     sessionsNoun: 'classes',
     itemNoun: 'pose',
@@ -38,6 +41,7 @@ enum WorkoutDiscipline {
   const WorkoutDiscipline(
     this.id, {
     required this.startLabel,
+    required this.titleNoun,
     required this.sessionNoun,
     required this.sessionsNoun,
     required this.itemNoun,
@@ -49,6 +53,7 @@ enum WorkoutDiscipline {
 
   final String id;
   final String startLabel;
+  final String titleNoun;
   final String sessionNoun;
   final String sessionsNoun;
   final String itemNoun;
