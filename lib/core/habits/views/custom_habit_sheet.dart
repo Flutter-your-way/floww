@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
@@ -66,23 +67,23 @@ class CustomHabitSheet extends StatelessWidget {
                     title: viewModel.title,
                     subtitle: viewModel.subtitle,
                   ),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.xl),
                   AppSheetFieldLabel(label: viewModel.nameLabel),
-                  SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: AppSpacing.md),
                   HabitTextField(
                     hint: viewModel.nameHint,
                     onChanged: viewModel.updateName,
                   ),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.xl),
                   AppSheetFieldLabel(label: viewModel.descriptionLabel),
-                  SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: AppSpacing.md),
                   HabitTextField(
                     hint: viewModel.descriptionHint,
                     onChanged: viewModel.updateDescription,
                   ),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.xl),
                   AppSheetFieldLabel(label: viewModel.targetLabel),
-                  SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: AppSpacing.md),
                   HabitTextField(
                     hint: viewModel.targetHint,
                     isNumeric: true,
@@ -94,22 +95,16 @@ class CustomHabitSheet extends StatelessWidget {
                       onSelected: viewModel.selectMetric,
                     ),
                   ),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.xl),
                   const HabitRulesFields(),
-                  SizedBox(height: AppSpacing.xl2),
-                  Align(
-                    child: IntrinsicWidth(
-                      child: PillButton(
-                        label: viewModel.submitLabel,
-                        icon: Icons.add_rounded,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl3,
-                        ),
-                        onPressed: viewModel.canSubmit
-                            ? () => _submit(context, viewModel)
-                            : null,
-                      ),
-                    ),
+                  SizedBox(height: AppSpacing.xl),
+                  PillButton(
+                    label: viewModel.submitLabel,
+                    icon: Icons.add_rounded,
+                    height: AppSizes.s44,
+                    onPressed: viewModel.canSubmit
+                        ? () => _submit(context, viewModel)
+                        : null,
                   ),
                 ],
               ),

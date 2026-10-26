@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
@@ -132,25 +133,25 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 title: _viewModel.editSheetTitle,
                 subtitle: _viewModel.editSheetSubtitle,
               ),
-              SizedBox(height: AppSpacing.xl2),
+              SizedBox(height: AppSpacing.xl),
               AppSheetFieldLabel(label: _viewModel.nameLabel),
-              SizedBox(height: AppSpacing.lg),
+              SizedBox(height: AppSpacing.md),
               HabitTextField(
                 controller: _name,
                 hint: _viewModel.nameHint,
                 onChanged: (value) => setState(() {}),
               ),
-              SizedBox(height: AppSpacing.xl2),
+              SizedBox(height: AppSpacing.xl),
               AppSheetFieldLabel(label: _viewModel.descriptionLabel),
-              SizedBox(height: AppSpacing.lg),
+              SizedBox(height: AppSpacing.md),
               HabitTextField(
                 controller: _description,
                 hint: _viewModel.descriptionHint,
                 onChanged: (value) => setState(() {}),
               ),
-              SizedBox(height: AppSpacing.xl2),
+              SizedBox(height: AppSpacing.xl),
               AppSheetFieldLabel(label: _viewModel.targetLabel),
-              SizedBox(height: AppSpacing.lg),
+              SizedBox(height: AppSpacing.md),
               HabitTextField(
                 controller: _target,
                 hint: _viewModel.targetHint,
@@ -161,21 +162,17 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                   onPressed: _openMetrics,
                 ),
               ),
-              SizedBox(height: AppSpacing.xl2),
+              SizedBox(height: AppSpacing.xl),
               ChangeNotifierProvider.value(
                 value: _rules,
                 child: const HabitRulesFields(),
               ),
-              SizedBox(height: AppSpacing.xl2),
-              Align(
-                child: IntrinsicWidth(
-                  child: PillButton(
-                    label: _viewModel.submitLabel,
-                    icon: Icons.check_rounded,
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
-                    onPressed: _canSubmit ? _submit : null,
-                  ),
-                ),
+              SizedBox(height: AppSpacing.xl),
+              PillButton(
+                label: _viewModel.submitLabel,
+                icon: Icons.check_rounded,
+                height: AppSizes.s44,
+                onPressed: _canSubmit ? _submit : null,
               ),
             ],
           ),

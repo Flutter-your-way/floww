@@ -47,7 +47,7 @@ class HabitRulesFields extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AppSheetFieldLabel(label: rules.goalLabel),
-            SizedBox(height: AppSpacing.lg),
+            SizedBox(height: AppSpacing.md),
             AppChipTabs<HabitGoalType>(
               items: rules.goalTypes,
               selected: rules.goalType,
@@ -57,9 +57,9 @@ class HabitRulesFields extends StatelessWidget {
                 rules.selectGoal(goalType);
               },
             ),
-            SizedBox(height: AppSpacing.xl2),
+            SizedBox(height: AppSpacing.xl),
             AppSheetFieldLabel(label: rules.scheduleLabel),
-            SizedBox(height: AppSpacing.lg),
+            SizedBox(height: AppSpacing.md),
             Align(
               alignment: Alignment.centerLeft,
               child: HabitChevronButton(
@@ -75,9 +75,9 @@ class HabitRulesFields extends StatelessWidget {
               ),
             ],
             if (rules.showsSource) ...[
-              SizedBox(height: AppSpacing.xl2),
+              SizedBox(height: AppSpacing.xl),
               AppSheetFieldLabel(label: rules.sourceLabel),
-              SizedBox(height: AppSpacing.lg),
+              SizedBox(height: AppSpacing.md),
               Align(
                 alignment: Alignment.centerLeft,
                 child: HabitChevronButton(

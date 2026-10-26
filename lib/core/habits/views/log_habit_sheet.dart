@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
@@ -78,9 +79,9 @@ class _LogHabitSheetState extends State<LogHabitSheet> {
                 title: _viewModel.logSheetTitle,
                 subtitle: _viewModel.logSheetSubtitle,
               ),
-              SizedBox(height: AppSpacing.xl2),
+              SizedBox(height: AppSpacing.xl),
               AppSheetFieldLabel(label: _viewModel.logValueLabel),
-              SizedBox(height: AppSpacing.lg),
+              SizedBox(height: AppSpacing.md),
               HabitTextField(
                 controller: _value,
                 hint: _viewModel.logValueHint,
@@ -95,9 +96,10 @@ class _LogHabitSheetState extends State<LogHabitSheet> {
                   color: context.colors.textSecondary,
                 ),
               ),
-              SizedBox(height: AppSpacing.xl2),
+              SizedBox(height: AppSpacing.xl),
               PillButton(
                 label: _viewModel.logSubmitLabel,
+                height: AppSizes.s44,
                 icon: Icons.check_rounded,
                 onPressed: _canSubmit ? _submit : null,
               ),

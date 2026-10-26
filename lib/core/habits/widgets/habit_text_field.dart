@@ -30,11 +30,11 @@ class HabitTextField extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.xl,
-        vertical: AppSpacing.md,
+        vertical: AppSpacing.xs,
       ),
       decoration: AppShapes.decoration(
-        color: colors.backgroundSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        color: colors.backgroundPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(color: colors.borderSubtle, width: AppSizes.s1),
       ),
       child: Row(
@@ -43,7 +43,7 @@ class HabitTextField extends StatelessWidget {
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: context.textTheme.bodyLarge,
+              style: context.textTheme.bodyMedium,
               cursorColor: colors.primary,
               keyboardType: isNumeric
                   ? const TextInputType.numberWithOptions(decimal: true)
@@ -61,8 +61,8 @@ class HabitTextField extends StatelessWidget {
                 focusedBorder: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                 hintText: hint,
-                hintStyle: context.textTheme.bodyLarge?.copyWith(
-                  color: colors.textSecondary,
+                hintStyle: context.textTheme.bodyMedium?.copyWith(
+                  color: colors.textTertiary,
                 ),
               ),
             ),

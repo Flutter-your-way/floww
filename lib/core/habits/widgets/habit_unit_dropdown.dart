@@ -45,18 +45,18 @@ class HabitUnitDropdown extends StatelessWidget {
         for (final value in metrics)
           PopupMenuItem<HabitMetric>(
             value: value,
-            height: AppSizes.s40,
+            height: AppSizes.s36,
             child: Text(
               labelOf(value),
-              style: AppTypography.labelLargeMedium.copyWith(
+              style: AppTypography.bodyMediumMedium.copyWith(
                 color: value == metric ? colors.primaryAlt : colors.textPrimary,
               ),
             ),
           ),
       ],
       child: Container(
-        height: AppSizes.s40,
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        height: AppSizes.s32,
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
         decoration: AppShapes.decoration(
           color: colors.backgroundElevated,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -65,11 +65,11 @@ class HabitUnitDropdown extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(labelOf(metric), style: AppTypography.labelLargeMedium),
-            SizedBox(width: AppSpacing.md),
+            Text(labelOf(metric), style: AppTypography.bodyMediumMedium),
+            SizedBox(width: AppSpacing.xs),
             Icon(
               Icons.keyboard_arrow_down_rounded,
-              size: AppSizes.s20,
+              size: AppSizes.s16,
               color: colors.textSecondary,
             ),
           ],

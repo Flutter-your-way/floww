@@ -20,19 +20,24 @@ class AppSheetHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: context.textTheme.displaySmall),
+              Text(
+                title,
+                style: context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               SizedBox(height: AppSpacing.xxs),
               Text(
                 subtitle,
-                style: context.textTheme.bodyLarge?.copyWith(
+                style: context.textTheme.bodySmall?.copyWith(
                   color: context.colors.textSecondary,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
@@ -41,8 +46,8 @@ class AppSheetHeader extends StatelessWidget {
         SizedBox(width: AppSpacing.md),
         CircularHeaderButton(
           icon: Icons.close_rounded,
-          size: AppSizes.s40,
-          iconSize: AppSizes.s20,
+          size: AppSizes.s28,
+          iconSize: AppSizes.s16,
           backgroundColor: context.colors.backgroundPrimary,
           onPressed: onClose ?? () => Navigator.of(context).maybePop(),
         ),
@@ -62,7 +67,7 @@ class AppSheetFieldLabel extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Text(
         label,
-        style: context.textTheme.bodyLarge?.copyWith(
+        style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.textSecondary,
         ),
       ),

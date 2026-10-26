@@ -26,8 +26,8 @@ class HabitChevronButton extends StatelessWidget {
       onTap: onPressed,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        height: AppSizes.s40,
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        height: AppSizes.s32,
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
         decoration: AppShapes.decoration(
           color: backgroundColor ?? colors.backgroundElevated,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -36,11 +36,11 @@ class HabitChevronButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: AppTypography.labelLargeMedium),
-            SizedBox(width: AppSpacing.md),
+            Text(label, style: AppTypography.bodyMediumMedium),
+            SizedBox(width: AppSpacing.xs),
             Icon(
               Icons.keyboard_arrow_down_rounded,
-              size: AppSizes.s20,
+              size: AppSizes.s16,
               color: colors.textSecondary,
             ),
           ],

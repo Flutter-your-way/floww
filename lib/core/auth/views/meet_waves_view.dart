@@ -582,7 +582,7 @@ class _StepTwoContentState extends State<_StepTwoContent> {
                           ),
                         ),
                       ),
-                      SizedBox(height: MediaQuery.paddingOf(context).bottom),
+                      const SizedBox(height: AppSpacing.xl),
                     ],
                   ),
                 ),
