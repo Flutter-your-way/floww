@@ -80,15 +80,19 @@ class _Chip extends StatelessWidget {
             width: AppSizes.hairline,
           ),
         ),
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: isSelected
-              ? context.textTheme.labelMedium?.copyWith(color: colors.primary)
-              : context.textTheme.bodySmall?.copyWith(
-                  color: colors.textSecondary,
-                ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: isSelected
+                ? context.textTheme.labelMedium?.copyWith(
+                    color: colors.primary,
+                  )
+                : context.textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+          ),
         ),
       ),
     );

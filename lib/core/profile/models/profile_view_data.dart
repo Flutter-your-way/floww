@@ -66,10 +66,12 @@ class ProfileSettingItem {
     required this.title,
     required this.subtitle,
     required this.route,
+    this.replaysGuide = false,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final String route;
+  final bool replaysGuide;
 }

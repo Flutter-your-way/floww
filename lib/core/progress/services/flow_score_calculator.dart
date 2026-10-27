@@ -1,29 +1,82 @@
 import 'package:floww/config/entities/daily_flow_entity.dart';
+import 'package:floww/config/entities/workout_session_entity.dart';
+import 'package:floww/config/entities/workout_session_log_entity.dart';
+
+class WorkoutCredit {
+  const WorkoutCredit({
+    required this.creditedSets,
+    required this.plannedSets,
+    required this.loggedSets,
+  });
+
+  static const WorkoutCredit none = WorkoutCredit(
+    creditedSets: 0,
+    plannedSets: 0,
+    loggedSets: 0,
+  );
+
+  static WorkoutCredit ofSessions(Iterable<WorkoutSessionEntity> sessions) {
+    var credit = none;
+    for (final session in sessions) {
+      credit += WorkoutCredit(
+        creditedSets: session.creditedSets,
+        plannedSets: session.plannedSets,
+        loggedSets: session.totalSets,
+      );
+    }
+    return credit;
+  }
+
+  static WorkoutCredit ofLogs(Iterable<WorkoutSessionLog> sessions) {
+    var credit = none;
+    for (final session in sessions) {
+      credit += WorkoutCredit(
+        creditedSets: session.creditedSets,
+        plannedSets: session.plannedSets,
+        loggedSets: session.totalSets,
+      );
+    }
+    return credit;
+  }
+
+  final double creditedSets;
+  final int plannedSets;
+  final int loggedSets;
+
+  bool get hasPlan => plannedSets > 0;
+
+  int get target =>
+      hasPlan ? plannedSets : FlowScoreCalculator.targetSetsPerSession;
+
+  int get done => hasPlan ? creditedSets.floor() : loggedSets;
+
+  double get ratio => hasPlan
+      ? creditedSets / plannedSets
+      : loggedSets / FlowScoreCalculator.targetSetsPerSession;
+
+  WorkoutCredit operator +(WorkoutCredit other) => WorkoutCredit(
+    creditedSets: creditedSets + other.creditedSets,
+    plannedSets: plannedSets + other.plannedSets,
+    loggedSets: loggedSets + other.loggedSets,
+  );
+}
 
 class FlowScoreInputs {
   const FlowScoreInputs({
     required this.date,
-    required this.workoutSets,
+    required this.workout,
     required this.habitCompletion,
     required this.mealCount,
     required this.waterMl,
-    this.workoutPlannedSets = 0,
     this.readinessScore = 0,
   });
 
   final DateTime date;
-  final int workoutSets;
-  final int workoutPlannedSets;
+  final WorkoutCredit workout;
   final double habitCompletion;
   final int mealCount;
   final double waterMl;
   final int readinessScore;
-
-  bool get isEmpty =>
-      workoutSets == 0 &&
-      habitCompletion == 0 &&
-      mealCount == 0 &&
-      waterMl == 0;
 }
 
 class FlowScoreCalculator {
@@ -43,10 +96,7 @@ class FlowScoreCalculator {
   DailyFlowEntry scoreOf(FlowScoreInputs inputs) => _entryOf(
     date: inputs.date,
     readiness: inputs.readinessScore,
-    workout: workoutPercentOf(
-      inputs.workoutSets,
-      plannedSets: inputs.workoutPlannedSets,
-    ),
+    workout: workoutPercentOf(inputs.workout),
     habit: _percent(inputs.habitCompletion),
     nutrition: _percent(
       (inputs.mealCount / targetMealsPerDay).clamp(0.0, 1.0) *
@@ -56,23 +106,17 @@ class FlowScoreCalculator {
     ),
   );
 
-  DailyFlowEntry withWorkoutSets(
-    DailyFlowEntry entry,
-    int sets, {
-    int plannedSets = 0,
-  }) => _entryOf(
-    date: entry.date,
-    readiness: entry.readinessScore,
-    workout: workoutPercentOf(sets, plannedSets: plannedSets),
-    habit: entry.habitScore.toDouble(),
-    nutrition: entry.nutritionScore.toDouble(),
-  );
+  DailyFlowEntry withWorkout(DailyFlowEntry entry, WorkoutCredit workout) =>
+      _entryOf(
+        date: entry.date,
+        readiness: entry.readinessScore,
+        workout: workoutPercentOf(workout),
+        habit: entry.habitScore.toDouble(),
+        nutrition: entry.nutritionScore.toDouble(),
+      );
 
-  static int workoutTargetOf(int plannedSets) =>
-      plannedSets > 0 ? plannedSets : targetSetsPerSession;
-
-  static double workoutPercentOf(int sets, {int plannedSets = 0}) =>
-      _percent(sets / workoutTargetOf(plannedSets));
+  static double workoutPercentOf(WorkoutCredit workout) =>
+      _percent(workout.ratio);
 
   static int pointsOf(int maxPoints, num percent) =>
       (maxPoints * percent.clamp(0, 100) / 100).round();
@@ -100,5 +144,6 @@ class FlowScoreCalculator {
     );
   }
 
-  static double _percent(double ratio) => (ratio.clamp(0.0, 1.0)) * 100;
+  static double _percent(double ratio) =>
+      ratio.isFinite ? ratio.clamp(0.0, 1.0) * 100 : 0;
 }

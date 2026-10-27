@@ -6,7 +6,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
-import 'package:floww/core/wave/widgets/wave_avatar_badge.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 
 class WaveChatHeader extends StatelessWidget {
   const WaveChatHeader({

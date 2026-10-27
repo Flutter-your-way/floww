@@ -188,6 +188,21 @@ class WorkoutEntryEntity {
 
   bool get isDone => isSkipped || isComplete;
 
+  double get creditedSets {
+    if (targetSets <= 0) return 0;
+    var credit = 0.0;
+    for (final set in workingSets) {
+      credit += _creditOf(set);
+    }
+    return credit > targetSets ? targetSets.toDouble() : credit;
+  }
+
+  double _creditOf(LoggedSetEntry set) {
+    final seconds = set.durationSeconds;
+    if (!isTimed || targetReps <= 0 || seconds == null) return 1;
+    return (seconds / targetReps).clamp(0.0, 1.0);
+  }
+
   int get completedReps {
     var total = 0;
     for (final set in workingSets) {
@@ -465,6 +480,14 @@ class WorkoutPlanEntity {
     if (rescheduledTo != null)
       rescheduledToField: AppDateUtils.dateKey(rescheduledTo!),
   };
+
+  static double creditedSetsOf(List<WorkoutEntryEntity> entries) {
+    var credit = 0.0;
+    for (final entry in entries) {
+      credit += entry.creditedSets;
+    }
+    return credit;
+  }
 
   static List<WorkoutEntryEntity> entriesOf(Object? value) {
     if (value is! List) return const [];

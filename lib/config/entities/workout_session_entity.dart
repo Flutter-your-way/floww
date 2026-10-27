@@ -248,10 +248,12 @@ class WorkoutSessionEntity {
   int get plannedSets {
     var count = 0;
     for (final exercise in exercises) {
-      count += exercise.targetSets;
+      if (exercise.targetSets > 0) count += exercise.targetSets;
     }
     return count;
   }
+
+  double get creditedSets => WorkoutPlanEntity.creditedSetsOf(exercises);
 
   WorkoutSessionEntity copyWith({
     WorkoutSessionStatus? status,

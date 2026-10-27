@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/core/guide/models/guide_step.dart';
+import 'package:floww/core/guide/widgets/guide_target.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -79,7 +81,10 @@ class ProgressView extends StatelessWidget {
               else if (errorMessage != null)
                 AppErrorCard(message: errorMessage, onRetry: viewModel.retry)
               else ...[
-                ProgressOverviewRow(stats: viewModel.overviewStats),
+                GuideTarget(
+                  id: GuideTargetId.progressOverview,
+                  child: ProgressOverviewRow(stats: viewModel.overviewStats),
+                ),
                 SizedBox(height: AppSpacing.lg),
                 if (viewModel.showChecklist) ...[
                   GettingStartedCard(
@@ -100,81 +105,94 @@ class ProgressView extends StatelessWidget {
                   ),
                   SizedBox(height: AppSpacing.lg),
                 ],
-                FlowScoreSummaryCard(
-                  title: viewModel.flowScoreTitle,
-                  rangeLabel: viewModel.weeklyRangeLabel,
-                  summary: viewModel.flowScore,
-                  scoreLabel: viewModel.flowScoreValueLabel,
-                  deltaLabel: viewModel.flowScoreDeltaLabel,
-                  isImproving: viewModel.isFlowScoreImproving,
-                  emptyTitle: viewModel.flowScoreEmptyTitle,
-                  emptyMessage: viewModel.flowScoreEmptyMessage,
-                  emptyButtonLabel: viewModel.startWorkoutLabel,
-                ),
-                SizedBox(height: AppSpacing.lg),
-                WeightTrackingCard(
-                  viewModel: viewModel,
-                  onAddWeight: () => LogWeightSheet.show(
-                    context: context,
-                    viewModel: viewModel,
-                  ),
-                  onUnlogWeight: () => UnlogWeightSheet.show(
-                    context: context,
-                    viewModel: viewModel,
+                GuideTarget(
+                  id: GuideTargetId.progressFlowScore,
+                  child: FlowScoreSummaryCard(
+                    title: viewModel.flowScoreTitle,
+                    rangeLabel: viewModel.weeklyRangeLabel,
+                    summary: viewModel.flowScore,
+                    scoreLabel: viewModel.flowScoreValueLabel,
+                    deltaLabel: viewModel.flowScoreDeltaLabel,
+                    isImproving: viewModel.isFlowScoreImproving,
+                    emptyTitle: viewModel.flowScoreEmptyTitle,
+                    emptyMessage: viewModel.flowScoreEmptyMessage,
+                    emptyButtonLabel: viewModel.startWorkoutLabel,
                   ),
                 ),
                 SizedBox(height: AppSpacing.lg),
-                PremiumGate(
-                  capability: PremiumCapability.advancedAnalytics,
-                  placeholder: const SizedBox.shrink(),
-                  locked: const PremiumLockedCard(
+                GuideTarget(
+                  id: GuideTargetId.progressWeight,
+                  child: WeightTrackingCard(
+                    viewModel: viewModel,
+                    onAddWeight: () => LogWeightSheet.show(
+                      context: context,
+                      viewModel: viewModel,
+                    ),
+                    onUnlogWeight: () => UnlogWeightSheet.show(
+                      context: context,
+                      viewModel: viewModel,
+                    ),
+                  ),
+                ),
+                SizedBox(height: AppSpacing.lg),
+                GuideTarget(
+                  id: GuideTargetId.progressAnalytics,
+                  child: PremiumGate(
                     capability: PremiumCapability.advancedAnalytics,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      WorkoutVolumeCard(
-                        title: viewModel.volumeTitle,
-                        rangeLabel: viewModel.weeklyRangeLabel,
-                        volume: viewModel.volume,
-                        summaryLabel: viewModel.volumeSummaryLabel,
-                        emptyTitle: viewModel.volumeEmptyTitle,
-                        emptyMessage: viewModel.volumeEmptyMessage,
-                        emptyButtonLabel: viewModel.logWorkoutLabel,
-                      ),
-                      SizedBox(height: AppSpacing.lg),
-                      HabitConsistencyCard(
-                        title: viewModel.habitsTitle,
-                        items: viewModel.habits,
-                        strongestLabel: viewModel.strongestHabitLabel,
-                        weakestLabel: viewModel.weakestHabitLabel,
-                        strongestHabit: viewModel.strongestHabit,
-                        weakestHabit: viewModel.weakestHabit,
-                      ),
-                      if (viewModel.showRecords) ...[
-                        SizedBox(height: AppSpacing.lg),
-                        PersonalRecordsCard(
-                          title: viewModel.recordsTitle,
-                          records: viewModel.records,
+                    placeholder: const SizedBox.shrink(),
+                    locked: const PremiumLockedCard(
+                      capability: PremiumCapability.advancedAnalytics,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        WorkoutVolumeCard(
+                          title: viewModel.volumeTitle,
+                          rangeLabel: viewModel.weeklyRangeLabel,
+                          volume: viewModel.volume,
+                          summaryLabel: viewModel.volumeSummaryLabel,
+                          emptyTitle: viewModel.volumeEmptyTitle,
+                          emptyMessage: viewModel.volumeEmptyMessage,
+                          emptyButtonLabel: viewModel.logWorkoutLabel,
                         ),
+                        SizedBox(height: AppSpacing.lg),
+                        HabitConsistencyCard(
+                          title: viewModel.habitsTitle,
+                          items: viewModel.habits,
+                          strongestLabel: viewModel.strongestHabitLabel,
+                          weakestLabel: viewModel.weakestHabitLabel,
+                          strongestHabit: viewModel.strongestHabit,
+                          weakestHabit: viewModel.weakestHabit,
+                        ),
+                        if (viewModel.showRecords) ...[
+                          SizedBox(height: AppSpacing.lg),
+                          PersonalRecordsCard(
+                            title: viewModel.recordsTitle,
+                            records: viewModel.records,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
                 SizedBox(height: AppSpacing.lg),
                 if (insights != null) ...[
-                  PremiumGate(
-                    capability: PremiumCapability.personalizedRecommendations,
-                    placeholder: const SizedBox.shrink(),
-                    locked: const PremiumLockedCard(
+                  GuideTarget(
+                    id: GuideTargetId.progressInsights,
+                    child: PremiumGate(
                       capability: PremiumCapability.personalizedRecommendations,
-                    ),
-                    child: WaveInsightsCard(
-                      title: viewModel.insightsTitle,
-                      rangeLabel: viewModel.monthlyRangeLabel,
-                      insights: insights,
-                      improvementLabel: viewModel.improvementLabel,
-                      weaknessLabel: viewModel.weaknessLabel,
+                      placeholder: const SizedBox.shrink(),
+                      locked: const PremiumLockedCard(
+                        capability:
+                            PremiumCapability.personalizedRecommendations,
+                      ),
+                      child: WaveInsightsCard(
+                        title: viewModel.insightsTitle,
+                        rangeLabel: viewModel.monthlyRangeLabel,
+                        insights: insights,
+                        improvementLabel: viewModel.improvementLabel,
+                        weaknessLabel: viewModel.weaknessLabel,
+                      ),
                     ),
                   ),
                   SizedBox(height: AppSpacing.lg),

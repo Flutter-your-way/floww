@@ -10,6 +10,7 @@ import 'package:floww/core/habits/models/habit_day.dart';
 import 'package:floww/core/habits/models/habit_draft.dart';
 import 'package:floww/core/habits/models/habit_suggestion.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
+import 'package:floww/core/habits/models/habit_reminder_setting.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
 import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
@@ -330,8 +331,10 @@ class HabitsViewModel extends ChangeNotifier {
 
   void selectDate(DateTime date) => _setDate(AppDateUtils.dateOnly(date));
 
-  Future<void> addSuggestion(HabitSuggestion suggestion) =>
-      _run(() => _service.addSuggestion(suggestion));
+  Future<void> addSuggestion(
+    HabitSuggestion suggestion, [
+    HabitReminderSetting reminder = const HabitReminderSetting.auto(),
+  ]) => _run(() => _service.addSuggestion(suggestion, reminder: reminder));
 
   Future<void> addSuggestedHabit(String id) async {
     final suggestion = suggestions

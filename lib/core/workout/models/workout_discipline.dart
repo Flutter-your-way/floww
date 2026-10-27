@@ -15,6 +15,7 @@ enum WorkoutDiscipline {
     sessionsNoun: 'workouts',
     itemNoun: 'exercise',
     itemsNoun: 'exercises',
+    unitsNoun: 'sets',
     icon: Icons.fitness_center,
   ),
   calisthenics(
@@ -25,6 +26,7 @@ enum WorkoutDiscipline {
     sessionsNoun: 'sessions',
     itemNoun: 'move',
     itemsNoun: 'moves',
+    unitsNoun: 'sets',
     icon: Icons.sports_gymnastics,
   ),
   yoga(
@@ -35,6 +37,7 @@ enum WorkoutDiscipline {
     sessionsNoun: 'classes',
     itemNoun: 'pose',
     itemsNoun: 'poses',
+    unitsNoun: 'holds',
     icon: Icons.self_improvement,
   );
 
@@ -46,6 +49,7 @@ enum WorkoutDiscipline {
     required this.sessionsNoun,
     required this.itemNoun,
     required this.itemsNoun,
+    required this.unitsNoun,
     required this.icon,
   });
 
@@ -58,6 +62,7 @@ enum WorkoutDiscipline {
   final String sessionsNoun;
   final String itemNoun;
   final String itemsNoun;
+  final String unitsNoun;
   final IconData icon;
 
   String countLabel(int count) => '$count ${count == 1 ? itemNoun : itemsNoun}';
@@ -76,9 +81,12 @@ enum WorkoutDiscipline {
     return WorkoutDiscipline.gym;
   }
 
-  static WorkoutDiscipline ofPlan(WorkoutPlanEntity plan) {
-    if (YogaPlanMapper.isClassPlan(plan)) return WorkoutDiscipline.yoga;
-    if (CalisthenicsPlanMapper.isPlan(plan)) {
+  static WorkoutDiscipline ofPlan(WorkoutPlanEntity plan) =>
+      ofEntries(plan.exercises);
+
+  static WorkoutDiscipline ofEntries(List<WorkoutEntryEntity> entries) {
+    if (YogaPlanMapper.isClass(entries)) return WorkoutDiscipline.yoga;
+    if (CalisthenicsPlanMapper.isEntries(entries)) {
       return WorkoutDiscipline.calisthenics;
     }
     return WorkoutDiscipline.gym;

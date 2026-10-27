@@ -59,6 +59,7 @@ class PremiumPaymentMethodCard extends StatelessWidget {
                     SizedBox(height: AppSpacing.xxs),
                     Text(
                       expiryLabel,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.bodySmallRegularTight.copyWith(
                         color: colors.textSubtle,

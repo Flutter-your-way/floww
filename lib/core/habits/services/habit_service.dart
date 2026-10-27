@@ -9,6 +9,7 @@ import 'package:floww/config/utils/streams/combine_latest.dart';
 import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/models/habit_definition.dart';
 import 'package:floww/core/habits/models/habit_draft.dart';
+import 'package:floww/core/habits/models/habit_reminder_setting.dart';
 import 'package:floww/core/habits/models/habit_suggestion.dart';
 import 'package:floww/core/habits/services/habit_catalog_data.dart';
 import 'package:floww/core/habits/services/habit_log_service.dart';
@@ -70,13 +71,22 @@ class HabitService {
 
   List<HabitSuggestionGroup> get suggestionGroups => HabitCatalogData.groups;
 
-  Stream<HabitRecords> watchRecords() {
+  Stream<String?> watchUserId() {
+    try {
+      return _auth.authStateChanges().map((user) => user?.uid);
+    } catch (e) {
+      debugPrint('Firebase unavailable, skipping habit user watch: $e');
+      return Stream.value(null);
+    }
+  }
+
+  Stream<HabitRecords> watchRecords({int days = historyDays}) {
     final uid = userId;
     if (uid == null) return Stream.value(HabitRecords.empty);
 
     final from = AppDateUtils.addDays(
       AppDateUtils.dateOnly(DateTime.now()),
-      -historyDays,
+      -days,
     );
 
     return combineLatest([_habitStream(uid), _logService.watchDays(from)]).map(
@@ -110,6 +120,7 @@ class HabitService {
         source: draft.source,
         createdAt: AppDateUtils.dateOnly(DateTime.now()),
         sortOrder: DateTime.now().millisecondsSinceEpoch,
+        reminder: draft.reminder,
         description: draft.description,
         about: about,
       );
@@ -118,13 +129,17 @@ class HabitService {
     },
   );
 
-  Future<void> addSuggestion(HabitSuggestion suggestion) => createHabit(
+  Future<void> addSuggestion(
+    HabitSuggestion suggestion, {
+    HabitReminderSetting reminder = const HabitReminderSetting.auto(),
+  }) => createHabit(
     HabitDraft(
       title: suggestion.title,
       target: suggestion.target,
       metric: suggestion.metric,
       goalType: suggestion.goalType,
       source: suggestion.source,
+      reminder: reminder,
       description: suggestion.description,
     ),
     id: suggestion.id,
@@ -142,6 +157,7 @@ class HabitService {
       'schedule': draft.schedule.toJson(),
       'goalType': draft.goalType.name,
       'source': draft.source.name,
+      'reminderTime': draft.reminder.toJson(),
       'description': draft.description,
     }),
   );
@@ -149,9 +165,7 @@ class HabitService {
   Future<void> restoreHabit(HabitDefinition definition) => _guard(
     'restoreHabit',
     'Could not restore this habit. Please try again.',
-    () => _habits(
-      _requireUserId,
-    ).doc(definition.id).set(definition.toJson()),
+    () => _habits(_requireUserId).doc(definition.id).set(definition.toJson()),
   );
 
   Future<void> deleteHabit(String id) => _guard(

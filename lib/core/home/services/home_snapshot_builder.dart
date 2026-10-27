@@ -1,5 +1,6 @@
 import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/health_day_entity.dart';
+import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
@@ -21,6 +22,7 @@ import 'package:floww/core/progress/services/flow_readiness_calculator.dart';
 import 'package:floww/core/recovery/models/muscle_recovery_status.dart';
 import 'package:floww/core/recovery/services/muscle_recovery_service.dart';
 import 'package:floww/core/workout/models/program_artwork.dart';
+import 'package:floww/core/workout/models/workout_discipline.dart';
 
 class HomeSnapshotBuilder {
   HomeSnapshotBuilder({MuscleRecoveryService? muscleRecoveryService})
@@ -28,8 +30,6 @@ class HomeSnapshotBuilder {
 
   static const int weeklyWindowDays = 7;
   static const int mealsPerDay = FlowScoreCalculator.targetMealsPerDay;
-  static const int targetSetsPerSession =
-      FlowScoreCalculator.targetSetsPerSession;
 
   static const int _workoutPoints = FlowScoreCalculator.workoutPoints;
   static const int _habitPoints = FlowScoreCalculator.habitPoints;
@@ -88,14 +88,8 @@ class HomeSnapshotBuilder {
     final nutritionDay = _nutritionDayOf(records, today, goal);
 
     final completedToday = _completedSessionsOn(records.sessions, today);
-    final workoutSets = completedToday.fold<int>(
-      0,
-      (total, session) => total + session.totalSets,
-    );
-    final workoutPlannedSets = completedToday.fold<int>(
-      0,
-      (total, session) => total + session.plannedSets,
-    );
+    final workout = WorkoutCredit.ofSessions(completedToday);
+    final workoutSets = workout.loggedSets;
 
     final mealCount = records.nutrition.foods
         .where((log) => AppDateUtils.isSameDay(log.loggedAt, today))
@@ -110,8 +104,7 @@ class HomeSnapshotBuilder {
       FlowScoreInputs(
         date: today,
         readinessScore: _readinessOf(records, today),
-        workoutSets: workoutSets,
-        workoutPlannedSets: workoutPlannedSets,
+        workout: workout,
         habitCompletion: habitCompletion,
         mealCount: mealCount,
         waterMl: waterMl,
@@ -155,8 +148,8 @@ class HomeSnapshotBuilder {
         weeklyAveragePercent: _weeklyAverageOf(flowHistory, today),
         components: _componentsOf(
           entry: todayEntry,
-          workoutSets: workoutSets,
-          workoutPlannedSets: workoutPlannedSets,
+          workout: workout,
+          discipline: _disciplineOf(completedToday, records.plan),
           habits: habits,
           mealCount: mealCount,
           waterMl: waterMl,
@@ -272,19 +265,29 @@ class HomeSnapshotBuilder {
     return days == 0 ? 0 : (total / days).round();
   }
 
+  static WorkoutDiscipline _disciplineOf(
+    List<WorkoutSessionEntity> sessions,
+    WorkoutPlanEntity? plan,
+  ) {
+    if (sessions.isNotEmpty) {
+      return WorkoutDiscipline.ofEntries(sessions.last.exercises);
+    }
+    return plan == null
+        ? WorkoutDiscipline.gym
+        : WorkoutDiscipline.ofPlan(plan);
+  }
+
   List<FlowScoreComponent> _componentsOf({
     required DailyFlowEntry entry,
-    required int workoutSets,
-    required int workoutPlannedSets,
+    required WorkoutCredit workout,
+    required WorkoutDiscipline discipline,
     required List<Habit> habits,
     required int mealCount,
     required double waterMl,
     required bool hasRecoveryData,
     double? sleepTargetHours,
   }) {
-    final workoutTarget = FlowScoreCalculator.workoutTargetOf(
-      workoutPlannedSets,
-    );
+    final units = discipline.unitsNoun;
     final habitsDone = habits.where((habit) => habit.isCompleted).length;
     final waterLiters = NutritionLabels.liters(waterMl);
     final sleepHours = NumberFormatter.trimmed(
@@ -294,13 +297,13 @@ class HomeSnapshotBuilder {
     return [
       _componentOf(
         emoji: '💪',
-        title: 'Workout',
-        detail: '$workoutSets / $workoutTarget sets logged',
+        title: discipline.titleNoun,
+        detail: '${workout.done} / ${workout.target} $units done',
         score: entry.workoutScore,
         maxPoints: _workoutPoints,
-        hint: workoutSets == 0
-            ? "Complete today's workout"
-            : 'Log the remaining sets',
+        hint: workout.loggedSets == 0
+            ? "Complete today's ${discipline.sessionNoun}"
+            : 'Finish the remaining $units',
       ),
       _componentOf(
         emoji: '🥗',

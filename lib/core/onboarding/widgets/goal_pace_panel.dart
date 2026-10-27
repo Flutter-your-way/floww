@@ -62,13 +62,15 @@ class GoalPaceRateCard extends StatelessWidget {
             children: [
               Icon(config.icon, size: AppSizes.s20, color: colors.primary),
               SizedBox(width: AppSpacing.md),
-              Text(
-                config.label,
-                style: AppTypography.bodyLargeMedium.copyWith(
-                  color: colors.textPrimary,
+              Expanded(
+                child: Text(
+                  config.label,
+                  style: AppTypography.bodyLargeMedium.copyWith(
+                    color: colors.textPrimary,
+                  ),
                 ),
               ),
-              const Spacer(),
+              SizedBox(width: AppSpacing.md),
               Text(
                 '${GoalPaceConfig.horizonWeeks} wk outlook',
                 style: AppTypography.bodySmallMedium.copyWith(

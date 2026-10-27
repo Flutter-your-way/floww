@@ -20,6 +20,9 @@ class NavigationService {
 
   void pop([Object? result]) => navigatorKey.currentState!.pop(result);
 
+  void popToRoot() =>
+      navigatorKey.currentState!.popUntil((route) => route.isFirst);
+
   Future<dynamic> pushAndRemoveUntil(String routeName, {Object? arguments}) =>
       navigatorKey.currentState!.pushNamedAndRemoveUntil(
         routeName,

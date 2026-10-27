@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:floww/config/widgets/buttons/select_buttons/weekday_picker.dart';
 import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_reminder_setting.dart';
 import 'package:floww/core/habits/models/habit_schedule.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
@@ -12,6 +13,7 @@ class HabitRulesViewModel extends ChangeNotifier {
     this._goalType = HabitGoalType.build,
     this._schedule = const HabitSchedule.daily(),
     this._source = HabitSource.manual,
+    this._reminderMinutes = HabitReminderSetting.fallbackMinutes,
   });
 
   static const List<int> _defaultWeekdays = [
@@ -24,11 +26,23 @@ class HabitRulesViewModel extends ChangeNotifier {
   static const String _dailyId = 'daily';
   static const String _weekdaysId = 'weekdays';
   static const String _weeklyPrefix = 'weekly_';
+  static const String _reminderOffId = 'reminder_off';
+  static const String _reminderCustomId = 'reminder_custom';
+  static const String _reminderPrefix = 'reminder_';
+  static const int _morningMinutes = 8 * Duration.minutesPerHour;
+  static const int _afternoonMinutes = 13 * Duration.minutesPerHour;
+  static const int _eveningMinutes = 19 * Duration.minutesPerHour;
+  static const List<int> _presetMinutes = [
+    _morningMinutes,
+    _afternoonMinutes,
+    _eveningMinutes,
+  ];
 
   HabitMetric _metric;
   HabitGoalType _goalType;
   HabitSchedule _schedule;
   HabitSource _source;
+  int? _reminderMinutes;
 
   HabitMetric get metric => _metric;
 
@@ -37,6 +51,11 @@ class HabitRulesViewModel extends ChangeNotifier {
   HabitSchedule get schedule => _schedule;
 
   HabitSource get source => _source;
+
+  int? get reminderMinutes => _reminderMinutes;
+
+  HabitReminderSetting get reminder =>
+      HabitReminderSetting.of(_reminderMinutes);
 
   String get goalLabel => 'Goal';
 
@@ -95,6 +114,65 @@ class HabitRulesViewModel extends ChangeNotifier {
     for (final source in _sources)
       HabitOptionItem(id: source.name, label: HabitLabels.source(source)),
   ];
+
+  String get reminderLabel => 'Reminder';
+
+  String get reminderSheetSubtitle =>
+      'Pick when you want a nudge for this habit';
+
+  String get reminderValueLabel {
+    final minutes = _reminderMinutes;
+    return minutes == null ? 'Off' : HabitLabels.timeOfDay(minutes);
+  }
+
+  String get reminderId {
+    final minutes = _reminderMinutes;
+    if (minutes == null) return _reminderOffId;
+    if (_presetMinutes.contains(minutes)) return '$_reminderPrefix$minutes';
+    return _reminderCustomId;
+  }
+
+  int get reminderPickerMinutes =>
+      _reminderMinutes ?? HabitReminderSetting.fallbackMinutes;
+
+  List<HabitOptionItem> get reminderItems => [
+    const HabitOptionItem(id: _reminderOffId, label: 'Off'),
+    HabitOptionItem(
+      id: '$_reminderPrefix$_morningMinutes',
+      label: 'Morning · ${HabitLabels.timeOfDay(_morningMinutes)}',
+    ),
+    HabitOptionItem(
+      id: '$_reminderPrefix$_afternoonMinutes',
+      label: 'Afternoon · ${HabitLabels.timeOfDay(_afternoonMinutes)}',
+    ),
+    HabitOptionItem(
+      id: '$_reminderPrefix$_eveningMinutes',
+      label: 'Evening · ${HabitLabels.timeOfDay(_eveningMinutes)}',
+    ),
+    HabitOptionItem(
+      id: _reminderCustomId,
+      label: reminderId == _reminderCustomId
+          ? 'Custom · $reminderValueLabel'
+          : 'Custom time',
+    ),
+  ];
+
+  bool isCustomReminder(String id) => id == _reminderCustomId;
+
+  void selectReminder(String id) {
+    if (id == _reminderOffId) {
+      setReminder(null);
+    } else if (id.startsWith(_reminderPrefix) && id != _reminderCustomId) {
+      final minutes = int.tryParse(id.substring(_reminderPrefix.length));
+      if (minutes != null) setReminder(minutes);
+    }
+  }
+
+  void setReminder(int? minutes) {
+    if (minutes == _reminderMinutes) return;
+    _reminderMinutes = minutes;
+    notifyListeners();
+  }
 
   bool isValidTarget(double? target) {
     if (target == null) return false;

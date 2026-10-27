@@ -76,6 +76,7 @@ class DangerZoneCard extends StatelessWidget {
                         SizedBox(height: AppSpacing.xxs),
                         Text(
                           actionSubtitle,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.bodyMediumMedium.copyWith(
                             color: colors.textSubtle,

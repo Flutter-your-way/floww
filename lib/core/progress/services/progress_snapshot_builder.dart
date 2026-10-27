@@ -64,7 +64,7 @@ class ProgressSnapshotBuilder {
   ProgressSnapshotResult build(ProgressRecords records, {DateTime? now}) {
     final today = AppDateUtils.dateOnly(now ?? DateTime.now());
     final setsByDay = _setsByDay(records.sessions);
-    final plannedByDay = _plannedSetsByDay(records.sessions);
+    final workoutByDay = _workoutByDay(records.sessions);
     final habitByDay = {
       for (final day in records.habitDays) AppDateUtils.dateKey(day.date): day,
     };
@@ -96,8 +96,7 @@ class ProgressSnapshotBuilder {
         FlowScoreInputs(
           date: date,
           readinessScore: offset == 0 ? todayReadiness : 0,
-          workoutSets: setsByDay[key] ?? 0,
-          workoutPlannedSets: plannedByDay[key] ?? 0,
+          workout: workoutByDay[key] ?? WorkoutCredit.none,
           habitCompletion: habitByDay[key]?.completion ?? 0,
           mealCount: mealsByDay[key] ?? 0,
           waterMl: waterByDay[key] ?? 0,
@@ -172,14 +171,15 @@ class ProgressSnapshotBuilder {
     return sets;
   }
 
-  Map<String, int> _plannedSetsByDay(List<WorkoutSessionLog> sessions) {
-    final sets = <String, int>{};
+  Map<String, WorkoutCredit> _workoutByDay(List<WorkoutSessionLog> sessions) {
+    final credit = <String, WorkoutCredit>{};
     for (final session in sessions) {
       if (!session.isCompleted) continue;
       final key = AppDateUtils.dateKey(session.date);
-      sets[key] = (sets[key] ?? 0) + session.plannedSets;
+      credit[key] =
+          (credit[key] ?? WorkoutCredit.none) + WorkoutCredit.ofLogs([session]);
     }
-    return sets;
+    return credit;
   }
 
   FlowScoreSummary _flowSummary({

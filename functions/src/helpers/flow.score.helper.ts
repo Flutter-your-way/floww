@@ -15,6 +15,7 @@ import {
 } from "./habit.day.helper";
 import {UserClock} from "./user.clock.helper";
 import {
+  creditedSetsOf,
   entriesOf as workoutEntriesOf,
   plannedSetsOf,
 } from "./workout.metrics.helper";
@@ -43,13 +44,15 @@ export interface FlowEntry {
 export interface DayActivity {
   workoutSets: number;
   workoutPlannedSets: number;
+  workoutCreditedSets: number;
   habitCompletion: number;
   mealCount: number;
   waterMl: number;
   sessionIds: string[];
 }
 
-const percent = (ratio: number): number => clamp(ratio, 0, 1) * 100;
+const percent = (ratio: number): number =>
+  Number.isFinite(ratio) ? clamp(ratio, 0, 1) * 100 : 0;
 
 export const emptyFlowEntry = (date: string): FlowEntry => ({
   date,
@@ -63,23 +66,33 @@ export const emptyFlowEntry = (date: string): FlowEntry => ({
 const pointsOf = (maxPoints: number, percentValue: number): number =>
   Math.round(maxPoints * clamp(percentValue, 0, 100) / 100);
 
-export const workoutTargetOf = (plannedSets: number): number =>
-  plannedSets > 0 ? plannedSets : TARGET_SETS;
-
 export const sessionPlannedSetsOf = (session: DocumentData): number => {
   const stored = numberOf(session.plannedSets);
   if (stored > 0) return stored;
   return plannedSetsOf(workoutEntriesOf(session.exercises));
 };
 
+export const sessionCreditedSetsOf = (session: DocumentData): number => {
+  const entries = workoutEntriesOf(session.exercises);
+  if (entries.length > 0) return creditedSetsOf(entries);
+  const stored = numberOf(session.creditedSets);
+  if (stored > 0) return stored;
+  const planned = sessionPlannedSetsOf(session);
+  const logged = numberOf(session.totalSets);
+  return planned > 0 ? Math.min(logged, planned) : logged;
+};
+
+export const workoutRatioOf = (activity: DayActivity): number =>
+  activity.workoutPlannedSets > 0 ?
+    activity.workoutCreditedSets / activity.workoutPlannedSets :
+    activity.workoutSets / TARGET_SETS;
+
 export const flowEntryOf = (
   date: string,
   activity: DayActivity,
   readiness = 0,
 ): FlowEntry => {
-  const workout = Math.round(percent(
-    activity.workoutSets / workoutTargetOf(activity.workoutPlannedSets),
-  ));
+  const workout = Math.round(percent(workoutRatioOf(activity)));
   const habit = Math.round(percent(activity.habitCompletion));
   const nutrition = Math.round(percent(
     clamp(activity.mealCount / TARGET_MEALS, 0, 1) * MEAL_SHARE +
@@ -189,6 +202,10 @@ export const readDayActivity = async (
     ),
     workoutPlannedSets: completed.reduce(
       (total, doc) => total + sessionPlannedSetsOf(doc.data()),
+      0,
+    ),
+    workoutCreditedSets: completed.reduce(
+      (total, doc) => total + sessionCreditedSetsOf(doc.data()),
       0,
     ),
     habitCompletion: completionOf(

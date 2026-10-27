@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/core/guide/models/guide_step.dart';
+import 'package:floww/core/guide/widgets/guide_target.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
@@ -158,18 +160,23 @@ class _HabitsViewState extends State<HabitsView> {
                           height:
                               MediaQuery.paddingOf(context).top + AppSpacing.lg,
                         ),
-                        ScreenDateHeader(
-                          titlePrefix: viewModel.titlePrefix,
-                          title: 'Habits',
-                          dateLabel: viewModel.dateLabel,
-                          direction: viewModel.dateDirection,
-                          onPreviousDay: viewModel.canGoPrevious
-                              ? viewModel.previousDay
-                              : null,
-                          onNextDay: viewModel.canGoNext
-                              ? viewModel.nextDay
-                              : null,
-                          onPickDate: () => _pickDate(context, viewModel),
+                        GuideTarget(
+                          id: GuideTargetId.habitsDate,
+                          radius: AppRadius.lg,
+                          padding: AppSpacing.lg,
+                          child: ScreenDateHeader(
+                            titlePrefix: viewModel.titlePrefix,
+                            title: 'Habits',
+                            dateLabel: viewModel.dateLabel,
+                            direction: viewModel.dateDirection,
+                            onPreviousDay: viewModel.canGoPrevious
+                                ? viewModel.previousDay
+                                : null,
+                            onNextDay: viewModel.canGoNext
+                                ? viewModel.nextDay
+                                : null,
+                            onPickDate: () => _pickDate(context, viewModel),
+                          ),
                         ),
                         SizedBox(height: AppSpacing.xl4),
                         if (viewModel.isLoading)
@@ -252,14 +259,19 @@ class _HabitsViewState extends State<HabitsView> {
                                               padding: EdgeInsets.only(
                                                 bottom: AppSpacing.lg,
                                               ),
-                                              child: HabitsEmptyStateCard(
-                                                title: viewModel.emptyTitle,
-                                                message: viewModel.emptyMessage,
-                                                buttonLabel: viewModel
-                                                    .createFirstHabitLabel,
-                                                onCreateHabit: () => _addHabit(
-                                                  context,
-                                                  viewModel,
+                                              child: GuideTarget(
+                                                id: GuideTargetId.habitsEmpty,
+                                                child: HabitsEmptyStateCard(
+                                                  title: viewModel.emptyTitle,
+                                                  message:
+                                                      viewModel.emptyMessage,
+                                                  buttonLabel: viewModel
+                                                      .createFirstHabitLabel,
+                                                  onCreateHabit: () =>
+                                                      _addHabit(
+                                                        context,
+                                                        viewModel,
+                                                      ),
                                                 ),
                                               ),
                                             )
@@ -291,20 +303,24 @@ class _HabitsViewState extends State<HabitsView> {
                                               padding: EdgeInsets.only(
                                                 bottom: AppSpacing.lg,
                                               ),
-                                              child: HabitScoreCard(
-                                                scoreLabel:
-                                                    viewModel.scoreLabel,
-                                                scoreTotalLabel:
-                                                    viewModel.scoreTotalLabel,
-                                                headline: viewModel.headline,
-                                                message:
-                                                    viewModel.headlineMessage,
-                                                dailyScoreLabel:
-                                                    viewModel.dailyScoreLabel,
-                                                flowPointsLabel:
-                                                    viewModel.flowPointsLabel,
-                                                progress: viewModel.dailyScore,
-                                                stats: viewModel.stats,
+                                              child: GuideTarget(
+                                                id: GuideTargetId.habitsScore,
+                                                child: HabitScoreCard(
+                                                  scoreLabel:
+                                                      viewModel.scoreLabel,
+                                                  scoreTotalLabel:
+                                                      viewModel.scoreTotalLabel,
+                                                  headline: viewModel.headline,
+                                                  message:
+                                                      viewModel.headlineMessage,
+                                                  dailyScoreLabel:
+                                                      viewModel.dailyScoreLabel,
+                                                  flowPointsLabel:
+                                                      viewModel.flowPointsLabel,
+                                                  progress:
+                                                      viewModel.dailyScore,
+                                                  stats: viewModel.stats,
+                                                ),
                                               ),
                                             )
                                           : null,
@@ -316,20 +332,25 @@ class _HabitsViewState extends State<HabitsView> {
                                               padding: EdgeInsets.only(
                                                 bottom: AppSpacing.lg,
                                               ),
-                                              child: TodayHabitsCard(
-                                                title: viewModel.habitsTitle,
-                                                items: viewModel.habits,
-                                                onToggle: viewModel.canEdit
-                                                    ? (item) => viewModel
-                                                          .toggleHabit(item.id)
-                                                    : null,
-                                                onOpen: (item) =>
-                                                    NavigationService.instance
-                                                        .push(
-                                                          AppRouter
-                                                              .habitDetails,
-                                                          arguments: item.id,
-                                                        ),
+                                              child: GuideTarget(
+                                                id: GuideTargetId.habitsToday,
+                                                child: TodayHabitsCard(
+                                                  title: viewModel.habitsTitle,
+                                                  items: viewModel.habits,
+                                                  onToggle: viewModel.canEdit
+                                                      ? (item) => viewModel
+                                                            .toggleHabit(
+                                                              item.id,
+                                                            )
+                                                      : null,
+                                                  onOpen: (item) =>
+                                                      NavigationService.instance
+                                                          .push(
+                                                            AppRouter
+                                                                .habitDetails,
+                                                            arguments: item.id,
+                                                          ),
+                                                ),
                                               ),
                                             )
                                           : null,
@@ -341,16 +362,19 @@ class _HabitsViewState extends State<HabitsView> {
                                               padding: EdgeInsets.only(
                                                 bottom: AppSpacing.lg,
                                               ),
-                                              child: WeeklyProgressCard(
-                                                days: viewModel.weekdays,
-                                                legend: viewModel.legend,
-                                                onTap: () => NavigationService
-                                                    .instance
-                                                    .push(
-                                                      AppRouter.habitCalendar,
-                                                      arguments: viewModel
-                                                          .selectedDate,
-                                                    ),
+                                              child: GuideTarget(
+                                                id: GuideTargetId.habitsWeekly,
+                                                child: WeeklyProgressCard(
+                                                  days: viewModel.weekdays,
+                                                  legend: viewModel.legend,
+                                                  onTap: () => NavigationService
+                                                      .instance
+                                                      .push(
+                                                        AppRouter.habitCalendar,
+                                                        arguments: viewModel
+                                                            .selectedDate,
+                                                      ),
+                                                ),
                                               ),
                                             )
                                           : null,
@@ -413,16 +437,21 @@ class _AddHabitButton extends StatelessWidget {
         child: AnimatedOpacity(
           opacity: isVisible ? 1 : 0,
           duration: AppMotion.expand,
-          child: PillButton(
-            onPressed: onPressed,
-            height: AppSizes.s46,
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.xl2,
-              vertical: AppSpacing.lg,
+          child: GuideTarget(
+            id: GuideTargetId.habitsAdd,
+            radius: AppRadius.full,
+            padding: AppSpacing.xs,
+            child: PillButton(
+              onPressed: onPressed,
+              height: AppSizes.s46,
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.xl2,
+                vertical: AppSpacing.lg,
+              ),
+              icon: Icons.add_rounded,
+              label: 'Add a Habit',
+              labelStyle: AppTypography.labelMediumSemiBold,
             ),
-            icon: Icons.add_rounded,
-            label: 'Add a Habit',
-            labelStyle: AppTypography.labelMediumSemiBold,
           ),
         ),
       ),

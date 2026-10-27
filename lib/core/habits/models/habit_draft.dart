@@ -1,4 +1,5 @@
 import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_reminder_setting.dart';
 import 'package:floww/core/habits/models/habit_schedule.dart';
 
 class HabitDraft {
@@ -9,6 +10,7 @@ class HabitDraft {
     this.schedule = const HabitSchedule.daily(),
     this.goalType = HabitGoalType.build,
     this.source = HabitSource.manual,
+    this.reminder = const HabitReminderSetting.auto(),
     this.description,
   });
 
@@ -18,5 +20,6 @@ class HabitDraft {
   final HabitSchedule schedule;
   final HabitGoalType goalType;
   final HabitSource source;
+  final HabitReminderSetting reminder;
   final String? description;
 }

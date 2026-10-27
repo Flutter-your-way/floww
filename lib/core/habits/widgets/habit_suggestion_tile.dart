@@ -60,6 +60,7 @@ class HabitSuggestionTile extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.labelMediumSemiBold,
                   ),

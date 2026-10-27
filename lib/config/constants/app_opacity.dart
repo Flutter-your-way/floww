@@ -16,6 +16,12 @@ class AppOpacity {
   static const double frostedSheet = 0.82;
   static const double frostedDialog = 0.94;
   static const double frostedTile = 0.08;
+  static const double guideScrim = 0.74;
+  static const double guideHalo = 0.45;
+  static const double guideAurora = 0.32;
+  static const double guideWatermark = 0.06;
+  static const double guideMoving = 0.72;
+  static const double guideConnectorTail = 0.35;
   static const double placeholderPulseMin = 0.04;
   static const double placeholderPulseMax = 0.12;
 }

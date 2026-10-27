@@ -266,6 +266,8 @@ class HabitDetailsViewModel extends ChangeNotifier {
 
   HabitSource get initialSource => _detail?.source ?? HabitSource.manual;
 
+  int? get initialReminderMinutes => _detail?.reminderMinutes;
+
   void selectPeriod(HabitPeriod period) {
     if (period == _period) return;
     _period = period;

@@ -37,6 +37,7 @@ import {
   flowDocOf,
   flowEntryOf,
   readDayActivity,
+  sessionCreditedSetsOf,
   sessionPlannedSetsOf,
 } from "../helpers/flow.score.helper";
 import {readDayReadiness} from "../helpers/flow.readiness.helper";
@@ -47,6 +48,7 @@ import {
   METRICS_VERSION,
   bestsOf,
   caloriesOf,
+  creditedSetsOf,
   entriesOf,
   effortEntriesOf,
   muscleActivationOf,
@@ -127,6 +129,10 @@ const withoutSession = (
       0,
       activity.workoutPlannedSets - sessionPlannedSetsOf(session),
     ),
+    workoutCreditedSets: Math.max(
+      0,
+      activity.workoutCreditedSets - sessionCreditedSetsOf(session),
+    ),
     sessionIds: activity.sessionIds.filter((id) => id !== sessionId),
   };
 };
@@ -154,6 +160,7 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
     const entries = entriesOf(body.exercises);
     const totals = totalsOf(entries);
     const plannedSets = plannedSetsOf(entries);
+    const creditedSets = creditedSetsOf(entries);
     const previous = history.docs
       .filter((doc) =>
         doc.id !== body.sessionId && doc.get("status") === COMPLETED_STATUS)
@@ -167,6 +174,7 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
       ...before,
       workoutSets: before.workoutSets + totals.totalSets,
       workoutPlannedSets: before.workoutPlannedSets + plannedSets,
+      workoutCreditedSets: before.workoutCreditedSets + creditedSets,
     }, readiness);
 
     const heartRate = body.heartRate;
@@ -182,6 +190,7 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
       volumeKg: totals.volumeKg,
       totalSets: totals.totalSets,
       plannedSets,
+      creditedSets,
       totalReps: totals.totalReps,
       exerciseCount: totals.exerciseCount,
       caloriesKcal: caloriesOf(totals, body.durationSeconds, bodyWeightKg),

@@ -49,7 +49,7 @@ class WorkoutCompleteSheet extends StatelessWidget {
     final colors = context.colors;
 
     return AppFloatingSheet(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.xl,
           vertical: AppSpacing.xl,

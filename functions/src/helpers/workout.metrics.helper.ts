@@ -27,6 +27,7 @@ export interface WorkoutEntry {
   name: string;
   section: string;
   targetSets: number;
+  targetReps: number;
   met: number;
   muscleShares: Record<string, number>;
   isTimed: boolean;
@@ -90,6 +91,7 @@ export const entryOf = (value: unknown): WorkoutEntry => {
     name: typeof json.name === "string" ? json.name : "",
     section: typeof json.section === "string" ? json.section : "",
     targetSets: Math.trunc(numberOf(json.targetSets)),
+    targetReps: Math.trunc(numberOf(json.targetReps)),
     met: numberOf(json.met, FALLBACK_MET),
     muscleShares: sharesOf(json.muscleShares),
     isTimed: json.trackingMode === DURATION_MODE,
@@ -144,6 +146,23 @@ export const totalsOf = (entries: WorkoutEntry[]): WorkoutTotals => {
 
 export const plannedSetsOf = (entries: WorkoutEntry[]): number =>
   entries.reduce((total, entry) => total + Math.max(0, entry.targetSets), 0);
+
+const setCreditOf = (entry: WorkoutEntry, set: LoggedSet): number => {
+  if (!entry.isTimed || entry.targetReps <= 0 || set.durationSeconds === null) {
+    return 1;
+  }
+  return clamp(set.durationSeconds / entry.targetReps, 0, 1);
+};
+
+export const entryCreditOf = (entry: WorkoutEntry): number => {
+  if (entry.targetSets <= 0) return 0;
+  const credit = workingSets(entry)
+    .reduce((total, set) => total + setCreditOf(entry, set), 0);
+  return Math.min(credit, entry.targetSets);
+};
+
+export const creditedSetsOf = (entries: WorkoutEntry[]): number =>
+  entries.reduce((total, entry) => total + entryCreditOf(entry), 0);
 
 export const caloriesOf = (
   totals: WorkoutTotals,

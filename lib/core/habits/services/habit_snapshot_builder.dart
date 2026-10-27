@@ -277,6 +277,7 @@ class HabitSnapshot {
       schedule: definition.schedule,
       goalType: definition.goalType,
       source: definition.source,
+      reminderMinutes: definition.reminderMinutes,
       currentStreakDays: currentStreak(habitId: id),
       longestStreakDays: longestStreak(habitId: id),
       weeklyAveragePercent: weeklyAveragePercent(habitId: id),

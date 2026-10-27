@@ -64,117 +64,114 @@ class _OnboardingBlueprintScreenState extends State<OnboardingBlueprintScreen>
           child: Column(
             children: [
               Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.xl,
-                  ),
-                  child: Column(
-                    children: [
-                      StepRevealItem(
-                        presence: presence(0),
-                        child: Text(
-                          'YOUR FLOWW BLUEPRINT',
-                          style: AppTypography.labelLargeSemiBold.copyWith(
-                            color: colors.textSubtle,
-                            letterSpacing: AppSizes.s1,
-                          ),
-                        ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                      vertical: AppSpacing.xl,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - AppSpacing.xl * 2,
                       ),
-                      Expanded(
-                        child: StepRevealItem(
-                          presence: presence(1),
-                          child: const Center(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: SizedBox.square(
-                                dimension: _orbBoxSize,
-                                child: OverflowBox(
-                                  maxWidth: _orbSize,
-                                  maxHeight: _orbSize,
-                                  child: AnimatedOrb(
-                                    size: _orbSize,
-                                    palette: AppOrbPalette.flow,
-                                    showWave: true,
-                                    playIntro: false,
-                                  ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          children: [
+                            StepRevealItem(
+                              presence: presence(0),
+                              child: Text(
+                                'YOUR FLOWW BLUEPRINT',
+                                style: AppTypography.labelLargeSemiBold
+                                    .copyWith(
+                                      color: colors.textSubtle,
+                                      letterSpacing: AppSizes.s1,
+                                    ),
+                              ),
+                            ),
+                            Expanded(
+                              child: StepRevealItem(
+                                presence: presence(1),
+                                child: const _BlueprintOrb(),
+                              ),
+                            ),
+                            StepRevealItem(
+                              presence: presence(2),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  widget.title,
+                                  textAlign: TextAlign.center,
+                                  style: context.textTheme.displayLarge
+                                      ?.copyWith(
+                                        color: colors.textPrimary,
+                                        letterSpacing: -0.6,
+                                      ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                      StepRevealItem(
-                        presence: presence(2),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            widget.title,
-                            textAlign: TextAlign.center,
-                            style: context.textTheme.displayLarge?.copyWith(
-                              color: colors.textPrimary,
-                              letterSpacing: -0.6,
+                            SizedBox(height: AppSpacing.md),
+                            StepRevealItem(
+                              presence: presence(3),
+                              child: Text(
+                                analysis.headline.isEmpty
+                                    ? 'Designed by WAVE just for you'
+                                    : analysis.headline,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.labelLargeMedium.copyWith(
+                                  color: colors.textSubtle,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: AppSpacing.md),
-                      StepRevealItem(
-                        presence: presence(3),
-                        child: Text(
-                          analysis.headline.isEmpty
-                              ? 'Designed by WAVE just for you'
-                              : analysis.headline,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.labelLargeMedium.copyWith(
-                            color: colors.textSubtle,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: AppSpacing.xl3),
-                      StepRevealItem(
-                        presence: presence(4),
-                        child: _FlowScoreCard(blueprint: analysis.blueprint),
-                      ),
-                      SizedBox(height: AppSpacing.lg),
-                      StepRevealItem(
-                        presence: presence(5),
-                        child: _CaloriesCard(targets: targets),
-                      ),
-                      SizedBox(height: AppSpacing.lg),
-                      StepRevealItem(
-                        presence: presence(6),
-                        child: IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: AppSpacing.lg,
-                            children: [
-                              Expanded(
-                                child: _GoalTile(
-                                  icon: Icons.water_drop_rounded,
-                                  title: 'Water Goal',
-                                  value: (targets.waterMl / _mlPerLiter)
-                                      .toStringAsFixed(1),
-                                  unit: 'Liters',
+                            SizedBox(height: AppSpacing.xl3),
+                            StepRevealItem(
+                              presence: presence(4),
+                              child: _FlowScoreCard(
+                                blueprint: analysis.blueprint,
+                              ),
+                            ),
+                            SizedBox(height: AppSpacing.lg),
+                            StepRevealItem(
+                              presence: presence(5),
+                              child: _CaloriesCard(targets: targets),
+                            ),
+                            SizedBox(height: AppSpacing.lg),
+                            StepRevealItem(
+                              presence: presence(6),
+                              child: IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  spacing: AppSpacing.lg,
+                                  children: [
+                                    Expanded(
+                                      child: _GoalTile(
+                                        icon: Icons.water_drop_rounded,
+                                        title: 'Water Goal',
+                                        value: (targets.waterMl / _mlPerLiter)
+                                            .toStringAsFixed(1),
+                                        unit: 'Liters',
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: _GoalTile(
+                                        icon: Icons.nightlight_round,
+                                        title: 'Sleep Goal',
+                                        value: NumberFormatter.trimmed(
+                                          analysis.blueprint.sleepHours,
+                                        ),
+                                        unit: 'Hours',
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Expanded(
-                                child: _GoalTile(
-                                  icon: Icons.nightlight_round,
-                                  title: 'Sleep Goal',
-                                  value: NumberFormatter.trimmed(
-                                    analysis.blueprint.sleepHours,
-                                  ),
-                                  unit: 'Hours',
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -210,6 +207,41 @@ class _OnboardingBlueprintScreenState extends State<OnboardingBlueprintScreen>
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BlueprintOrb extends StatelessWidget {
+  const _BlueprintOrb();
+
+  static const double _minHeight = AppSizes.s96;
+
+  @override
+  Widget build(BuildContext context) {
+    return const Stack(
+      children: [
+        SizedBox(width: double.infinity, height: _minHeight),
+        Positioned.fill(
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox.square(
+                dimension: _orbBoxSize,
+                child: OverflowBox(
+                  maxWidth: _orbSize,
+                  maxHeight: _orbSize,
+                  child: AnimatedOrb(
+                    size: _orbSize,
+                    palette: AppOrbPalette.flow,
+                    showWave: true,
+                    playIntro: false,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -347,6 +347,7 @@ class WaveChatService {
         source: definition.source.supports(draft.metric)
             ? definition.source
             : HabitSource.manual,
+        reminder: definition.reminder,
         description: draft.description,
       ),
     );

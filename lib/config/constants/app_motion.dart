@@ -212,6 +212,44 @@ class AppMotion {
   static const double staggerRevealStep = 0.09;
   static const double staggerRevealSpan = 0.4;
 
+  static const Duration guideStartDelay = Duration(milliseconds: 900);
+  static const Duration guideSectionDelay = Duration(milliseconds: 520);
+  static const Duration guideEnter = Duration(milliseconds: 380);
+  static const Duration guideExit = Duration(milliseconds: 260);
+  static const Curve guideEnterCurve = Cubic(0.16, 1, 0.3, 1);
+  static const double guideEnterScale = 0.96;
+  static const Duration guideStep = Duration(milliseconds: 240);
+  static const double guideStepShift = 0.08;
+  static const Duration guideTyping = Duration(milliseconds: 14);
+  static const double guideCardRise = 0.18;
+  static const Duration guideSpotlight = Duration(milliseconds: 440);
+  static const Curve guideSpotlightCurve = Curves.fastLinearToSlowEaseIn;
+  static const Duration guideCardTravel = Duration(milliseconds: 440);
+  static const Curve guideCardTravelCurve = Curves.fastLinearToSlowEaseIn;
+  static const Duration guideCardSettle = Duration(milliseconds: 200);
+  static const Duration guideCardShrink = Duration(milliseconds: 160);
+  static const Curve guideCardShrinkCurve = Curves.easeOutCubic;
+  static const Duration guideCardGrow = Duration(milliseconds: 380);
+  static const Curve guideCardGrowCurve = Curves.fastLinearToSlowEaseIn;
+  static const double guideMovingScale = 0.86;
+  static const Duration guideBurst = Duration(milliseconds: 600);
+  static const double guideBurstSpread = AppSizes.s28;
+  static const Duration guideConnectorDraw = Duration(milliseconds: 280);
+  static const Curve guideConnectorCurve = Curves.fastLinearToSlowEaseIn;
+  static const Duration guideTitleReveal = Duration(milliseconds: 440);
+  static const double guideTitleSpan = 0.55;
+  static const double guideTitleRise = AppSizes.s10;
+  static const double guideTitleBlur = AppSizes.s8;
+  static const Duration guidePulse = Duration(milliseconds: 1800);
+  static const double guidePulseSpread = AppSizes.s6;
+  static const Duration guideScroll = Duration(milliseconds: 380);
+  static const Curve guideScrollCurve = Curves.fastLinearToSlowEaseIn;
+  static const double guideScrollAlignment = 0.16;
+  static const double guideScrollStep = 0.7;
+  static const int guideScrollAttempts = 8;
+  static const Duration guideLocatePoll = Duration(milliseconds: 120);
+  static const int guideLocateAttempts = 10;
+
   static const Duration tabReveal = Duration(milliseconds: 260);
   static const Curve tabRevealCurve = Curves.easeOutCubic;
 

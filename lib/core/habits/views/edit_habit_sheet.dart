@@ -57,6 +57,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
       goalType: _viewModel.initialGoalType,
       schedule: _viewModel.initialSchedule,
       source: _viewModel.initialSource,
+      reminderMinutes: _viewModel.initialReminderMinutes,
     )..addListener(_onRulesChanged);
   }
 
@@ -113,6 +114,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
         schedule: _rules.schedule,
         goalType: _rules.goalType,
         source: _rules.source,
+        reminder: _rules.reminder,
         description: description.isEmpty ? null : description,
       ),
     );

@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/theme/app_shapes.dart';
-import 'floww_time_picker.dart';
+import 'package:floww/config/widgets/pickers/floww_time_picker.dart';
 
 class CustomDateTimeSelector extends StatelessWidget {
   final String title;

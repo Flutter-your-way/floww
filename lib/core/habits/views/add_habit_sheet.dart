@@ -11,19 +11,24 @@ import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/widgets/premium_gate.dart';
 import 'package:floww/core/premium/widgets/premium_locked_card.dart';
+import 'package:floww/core/habits/models/habit_reminder_setting.dart';
 import 'package:floww/core/habits/models/habit_suggestion.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/view_models/add_habit_view_model.dart';
+import 'package:floww/core/habits/view_models/habit_rules_view_model.dart';
 import 'package:floww/core/habits/views/custom_habit_sheet.dart';
+import 'package:floww/core/habits/views/habit_reminder_sheet.dart';
 import 'package:floww/core/habits/widgets/habit_suggestion_tile.dart';
 import 'package:floww/core/habits/widgets/wave_suggestion_card.dart';
 
-typedef HabitSuggestionCallback = void Function(HabitSuggestion suggestion);
+typedef HabitSuggestionCallback =
+    Future<void> Function(
+      HabitSuggestion suggestion,
+      HabitReminderSetting reminder,
+    );
 
 class AddHabitSheet extends StatelessWidget {
-  const AddHabitSheet({super.key, required this.onAdd});
-
-  final HabitSuggestionCallback onAdd;
+  const AddHabitSheet({super.key});
 
   static Future<void> show({
     required BuildContext context,
@@ -32,16 +37,28 @@ class AddHabitSheet extends StatelessWidget {
     required HabitSuggestionCallback onAdd,
     required CustomHabitCallback onCreateCustom,
   }) async {
-    final wantsCustom = await showAppFloatingSheet<bool>(
+    final choice = await showAppFloatingSheet<AddHabitChoice>(
       context: context,
       builder: (_) => ChangeNotifierProvider(
         create: (_) =>
             AddHabitViewModel(suggestions: suggestions, groups: groups),
-        child: AddHabitSheet(onAdd: onAdd),
+        child: const AddHabitSheet(),
       ),
     );
-    if (wantsCustom != true || !context.mounted) return;
-    await CustomHabitSheet.show(context: context, onCreate: onCreateCustom);
+    if (choice == null || !context.mounted) return;
+    final suggestion = choice.suggestion;
+    if (suggestion == null) {
+      await CustomHabitSheet.show(context: context, onCreate: onCreateCustom);
+      return;
+    }
+    final rules = HabitRulesViewModel(
+      reminderMinutes: HabitReminderSetting.defaultMinutesFor(suggestion.icon),
+    );
+    await HabitReminderSheet.show(context: context, rules: rules);
+    final reminder = rules.reminder;
+    rules.dispose();
+    HapticManager.success();
+    await onAdd(suggestion, reminder);
   }
 
   void _add(
@@ -51,9 +68,8 @@ class AddHabitSheet extends StatelessWidget {
   ) {
     final suggestion = viewModel.suggestionOf(item.id);
     if (suggestion == null) return;
-    HapticManager.success();
-    onAdd(suggestion);
-    Navigator.of(context).pop();
+    HapticManager.selection();
+    Navigator.of(context).pop(AddHabitChoice.suggestion(suggestion));
   }
 
   @override
@@ -106,7 +122,8 @@ class AddHabitSheet extends StatelessWidget {
                   label: viewModel.createCustomLabel,
                   icon: Icons.add_rounded,
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
-                  onPressed: () => Navigator.of(context).pop(true),
+                  onPressed: () =>
+                      Navigator.of(context).pop(const AddHabitChoice.custom()),
                 ),
               ),
             ),
@@ -115,6 +132,14 @@ class AddHabitSheet extends StatelessWidget {
       },
     );
   }
+}
+
+class AddHabitChoice {
+  const AddHabitChoice.custom() : suggestion = null;
+
+  const AddHabitChoice.suggestion(HabitSuggestion this.suggestion);
+
+  final HabitSuggestion? suggestion;
 }
 
 class _EmptySuggestions extends StatelessWidget {

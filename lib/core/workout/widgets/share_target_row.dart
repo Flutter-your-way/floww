@@ -81,14 +81,11 @@ class _ShareTargetTile extends StatelessWidget {
                   : _ShareTargetGlyph(target: target),
             ),
             SizedBox(height: AppSpacing.md),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-              child: Text(
-                target.label,
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySmallMedium.copyWith(
-                  color: colors.textSecondary,
-                ),
+            Text(
+              target.label,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySmallMedium.copyWith(
+                color: colors.textSecondary,
               ),
             ),
           ],

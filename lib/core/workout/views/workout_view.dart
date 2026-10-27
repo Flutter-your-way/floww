@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/core/guide/models/guide_step.dart';
+import 'package:floww/core/guide/widgets/guide_target.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -360,26 +362,35 @@ class WorkoutView extends StatelessWidget {
                       ),
                       Padding(
                         padding: horizontalPadding,
-                        child: ScreenDateHeader(
-                          titlePrefix: viewModel.titlePrefix,
-                          title: 'Workouts',
-                          dateLabel: viewModel.dateLabel,
-                          direction: viewModel.dateDirection,
-                          onPreviousDay: viewModel.canGoPrevious
-                              ? viewModel.previousDay
-                              : null,
-                          onNextDay: viewModel.canGoNext
-                              ? viewModel.nextDay
-                              : null,
-                          onPickDate: () => _pickDate(context, viewModel),
-                          showDateSelector: viewModel.showDateSelector,
+                        child: GuideTarget(
+                          id: GuideTargetId.workoutDate,
+                          radius: AppRadius.lg,
+                          padding: AppSpacing.lg,
+                          child: ScreenDateHeader(
+                            titlePrefix: viewModel.titlePrefix,
+                            title: 'Workouts',
+                            dateLabel: viewModel.dateLabel,
+                            direction: viewModel.dateDirection,
+                            onPreviousDay: viewModel.canGoPrevious
+                                ? viewModel.previousDay
+                                : null,
+                            onNextDay: viewModel.canGoNext
+                                ? viewModel.nextDay
+                                : null,
+                            onPickDate: () => _pickDate(context, viewModel),
+                            showDateSelector: viewModel.showDateSelector,
+                          ),
                         ),
                       ),
                       SizedBox(height: AppSpacing.xl3),
-                      WorkoutTabBar(
-                        tabs: viewModel.tabs,
-                        selected: viewModel.selectedTab,
-                        onSelected: viewModel.selectTab,
+                      GuideTarget(
+                        id: GuideTargetId.workoutTabs,
+                        radius: AppRadius.full,
+                        child: WorkoutTabBar(
+                          tabs: viewModel.tabs,
+                          selected: viewModel.selectedTab,
+                          onSelected: viewModel.selectTab,
+                        ),
                       ),
                       SizedBox(height: AppSpacing.lg),
                       Padding(
@@ -466,18 +477,22 @@ class WorkoutView extends StatelessWidget {
                                                 padding: EdgeInsets.only(
                                                   bottom: AppSpacing.lg,
                                                 ),
-                                                child: WorkoutAgendaCard(
-                                                  agenda: agenda,
-                                                  onAction: (entry) =>
-                                                      _onAgendaAction(
-                                                        viewModel,
-                                                        entry,
-                                                      ),
-                                                  onRemove: (entry) =>
-                                                      _removeCatchUp(
-                                                        viewModel,
-                                                        entry,
-                                                      ),
+                                                child: GuideTarget(
+                                                  id: GuideTargetId
+                                                      .workoutAgenda,
+                                                  child: WorkoutAgendaCard(
+                                                    agenda: agenda,
+                                                    onAction: (entry) =>
+                                                        _onAgendaAction(
+                                                          viewModel,
+                                                          entry,
+                                                        ),
+                                                    onRemove: (entry) =>
+                                                        _removeCatchUp(
+                                                          viewModel,
+                                                          entry,
+                                                        ),
+                                                  ),
                                                 ),
                                               ),
                                       ),
@@ -498,27 +513,32 @@ class WorkoutView extends StatelessWidget {
                                               )
                                             : null,
                                       ),
-                                      WorkoutOverviewSection(
-                                        overview: overview,
-                                        revealTrigger: revealTrigger,
-                                        showSummary: !viewModel.isReadOnly,
-                                        onViewAnatomy: () =>
-                                            _openAnatomy(context, viewModel),
-                                        onViewDetails: overviewWorkoutId == null
-                                            ? null
-                                            : () => _openWorkoutDetails(
-                                                overviewWorkoutId,
-                                              ),
-                                        onSummaryInfo: () => _showInfo(
-                                          context,
-                                          title: 'Workout Summary',
-                                          message: viewModel.summaryInfoMessage,
-                                        ),
-                                        onTrainingEffectInfo: () => _showInfo(
-                                          context,
-                                          title: 'Training Effect',
-                                          message: viewModel
-                                              .trainingEffectInfoMessage,
+                                      GuideTarget(
+                                        id: GuideTargetId.workoutOverview,
+                                        child: WorkoutOverviewSection(
+                                          overview: overview,
+                                          revealTrigger: revealTrigger,
+                                          showSummary: !viewModel.isReadOnly,
+                                          onViewAnatomy: () =>
+                                              _openAnatomy(context, viewModel),
+                                          onViewDetails:
+                                              overviewWorkoutId == null
+                                              ? null
+                                              : () => _openWorkoutDetails(
+                                                  overviewWorkoutId,
+                                                ),
+                                          onSummaryInfo: () => _showInfo(
+                                            context,
+                                            title: 'Workout Summary',
+                                            message:
+                                                viewModel.summaryInfoMessage,
+                                          ),
+                                          onTrainingEffectInfo: () => _showInfo(
+                                            context,
+                                            title: 'Training Effect',
+                                            message: viewModel
+                                                .trainingEffectInfoMessage,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -686,11 +706,18 @@ class WorkoutView extends StatelessWidget {
                   Positioned(
                     right: context.sizes.screenHorizontalPadding,
                     bottom: actionsBottom,
-                    child: PillButton(
-                      label: viewModel.primaryActionLabel,
-                      icon: Icons.play_arrow_rounded,
-                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),
-                      onPressed: () => _startWorkout(viewModel),
+                    child: GuideTarget(
+                      id: GuideTargetId.workoutStart,
+                      radius: AppRadius.full,
+                      padding: AppSpacing.xs,
+                      child: PillButton(
+                        label: viewModel.primaryActionLabel,
+                        icon: Icons.play_arrow_rounded,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl3,
+                        ),
+                        onPressed: () => _startWorkout(viewModel),
+                      ),
                     ),
                   ),
                 if (viewModel.primaryAction == WorkoutPrimaryAction.resume)

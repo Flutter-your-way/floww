@@ -8,6 +8,7 @@ import 'package:floww/config/widgets/tabs/app_chip_tabs.dart';
 import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/view_models/habit_rules_view_model.dart';
 import 'package:floww/core/habits/views/habit_option_sheet.dart';
+import 'package:floww/core/habits/views/habit_reminder_sheet.dart';
 import 'package:floww/core/habits/widgets/habit_chevron_button.dart';
 import 'package:floww/config/widgets/buttons/select_buttons/weekday_picker.dart';
 
@@ -36,6 +37,11 @@ class HabitRulesFields extends StatelessWidget {
       selectedId: rules.source.name,
       onSelect: rules.selectSource,
     );
+  }
+
+  void _openReminder(BuildContext context, HabitRulesViewModel rules) {
+    HapticManager.light();
+    HabitReminderSheet.show(context: context, rules: rules);
   }
 
   @override
@@ -74,6 +80,16 @@ class HabitRulesFields extends StatelessWidget {
                 onToggle: rules.toggleWeekday,
               ),
             ],
+            SizedBox(height: AppSpacing.xl),
+            AppSheetFieldLabel(label: rules.reminderLabel),
+            SizedBox(height: AppSpacing.md),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: HabitChevronButton(
+                label: rules.reminderValueLabel,
+                onPressed: () => _openReminder(context, rules),
+              ),
+            ),
             if (rules.showsSource) ...[
               SizedBox(height: AppSpacing.xl),
               AppSheetFieldLabel(label: rules.sourceLabel),

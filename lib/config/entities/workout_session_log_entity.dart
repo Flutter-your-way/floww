@@ -1,3 +1,4 @@
+import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 
@@ -12,13 +13,20 @@ class WorkoutSessionLog {
     required this.totalSets,
     required this.volumeKg,
     this.plannedSets = 0,
+    double? creditedSets,
     DateTime? date,
     this.status = WorkoutSessionStatus.completed,
-  }) : date = date ?? AppDateUtils.dateOnly(completedAt);
+  }) : date = date ?? AppDateUtils.dateOnly(completedAt),
+       creditedSets =
+           creditedSets ??
+           (plannedSets > 0 && totalSets > plannedSets ? plannedSets : totalSets)
+               .toDouble();
 
   factory WorkoutSessionLog.fromJson(Map<String, dynamic> json) {
     final completedAt = DateTime.parse(json['completedAt'] as String).toLocal();
     final date = json['date'] as String?;
+    final totalSets = (json['totalSets'] as num).toInt();
+    final plannedSets = _plannedSetsOf(json);
     return WorkoutSessionLog(
       id: json['id'] as String,
       workoutId: json['workoutId'] as String,
@@ -28,9 +36,10 @@ class WorkoutSessionLog {
       status: _statusOf(json['status'] as String?),
       durationSeconds: (json['durationSeconds'] as num).toInt(),
       exerciseCount: (json['exerciseCount'] as num).toInt(),
-      totalSets: (json['totalSets'] as num).toInt(),
+      totalSets: totalSets,
       volumeKg: (json['volumeKg'] as num).toDouble(),
-      plannedSets: _plannedSetsOf(json),
+      plannedSets: plannedSets,
+      creditedSets: _creditedSetsOf(json),
     );
   }
 
@@ -45,6 +54,7 @@ class WorkoutSessionLog {
   final int totalSets;
   final double volumeKg;
   final int plannedSets;
+  final double creditedSets;
 
   bool get isCompleted => status == WorkoutSessionStatus.completed;
 
@@ -56,6 +66,12 @@ class WorkoutSessionLog {
       if (entry is Map) total += (entry['targetSets'] as num? ?? 0).toInt();
     }
     return total;
+  }
+
+  static double? _creditedSetsOf(Map<String, dynamic> json) {
+    final entries = WorkoutPlanEntity.entriesOf(json['exercises']);
+    if (entries.isNotEmpty) return WorkoutPlanEntity.creditedSetsOf(entries);
+    return (json['creditedSets'] as num?)?.toDouble();
   }
 
   static WorkoutSessionStatus _statusOf(String? value) =>
@@ -75,6 +91,7 @@ class WorkoutSessionLog {
     'exerciseCount': exerciseCount,
     'totalSets': totalSets,
     'plannedSets': plannedSets,
+    'creditedSets': creditedSets,
     'volumeKg': volumeKg,
   };
 }

@@ -73,6 +73,7 @@ class CustomHabitViewModel extends ChangeNotifier {
       schedule: _rules.schedule,
       goalType: _rules.goalType,
       source: _rules.source,
+      reminder: _rules.reminder,
       description: description.isEmpty ? null : description,
     );
   }

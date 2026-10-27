@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/core/wave/widgets/wave_avatar_badge.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 
 class WaveReplyFrame extends StatelessWidget {
   const WaveReplyFrame({

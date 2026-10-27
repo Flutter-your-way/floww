@@ -86,6 +86,16 @@ class HabitLabels {
 
   static String weekdayInitial(int weekday) => _weekdayInitials[weekday - 1];
 
+  static String timeOfDay(int minutes) => AppDateUtils.time(
+    DateTime(
+      0,
+      1,
+      1,
+      minutes ~/ Duration.minutesPerHour,
+      minutes % Duration.minutesPerHour,
+    ),
+  );
+
   static String schedule(HabitSchedule schedule) => switch (schedule.type) {
     HabitScheduleType.daily => 'Every day',
     HabitScheduleType.weekdays => [

@@ -6,6 +6,9 @@ import 'package:floww/config/widgets/images/image_precacher.dart';
 import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/core/flow_mode/widgets/flow_mode_ambient_layer.dart';
+import 'package:floww/core/guide/models/guide_step.dart';
+import 'package:floww/core/guide/providers/guide_controller.dart';
+import 'package:floww/core/guide/widgets/guide_overlay.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/health/services/health_log_service.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
@@ -50,6 +53,15 @@ class MainTabView extends StatefulWidget {
 
 class _MainTabViewState extends State<MainTabView> {
   final MainTabController _controller = MainTabController();
+  late final GuideController _guide;
+
+  static const _tabSections = [
+    GuideSection.home,
+    GuideSection.nutrition,
+    GuideSection.workout,
+    GuideSection.habits,
+    GuideSection.progress,
+  ];
 
   static const _tabs = [
     NavTabItem(iconAsset: AppImages.tab_1, semanticLabel: 'Home'),
@@ -135,6 +147,8 @@ class _MainTabViewState extends State<MainTabView> {
 
   @override
   void dispose() {
+    _controller.removeListener(_onTabChanged);
+    _guide.stop();
     _controller.dispose();
     super.dispose();
   }
@@ -142,11 +156,16 @@ class _MainTabViewState extends State<MainTabView> {
   @override
   void initState() {
     super.initState();
+    _guide = context.read<GuideController>();
+    _controller.addListener(_onTabChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<HealthProvider>().refresh();
+      _guide.start(_tabSections[_controller.index]);
     });
   }
+
+  void _onTabChanged() => _guide.visit(_tabSections[_controller.index]);
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +209,7 @@ class _MainTabViewState extends State<MainTabView> {
           Positioned(
             left: AppSpacing.xl,
             right: AppSpacing.xl,
-            bottom: MediaQuery.viewPaddingOf(context).bottom,
+            bottom: AppBottomNavBar.bottomInsetOf(context),
             child: Row(
               children: [
                 Expanded(
@@ -210,6 +229,7 @@ class _MainTabViewState extends State<MainTabView> {
               ],
             ),
           ),
+          Positioned.fill(child: const GuideOverlay()),
         ],
       ),
     );

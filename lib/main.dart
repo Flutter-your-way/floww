@@ -7,6 +7,9 @@ import 'package:floww/core/auth/services/auth_service.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
 import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/core/flow_mode/views/flow_mode_transition_host.dart';
+import 'package:floww/core/guide/providers/guide_controller.dart';
+import 'package:floww/core/guide/services/guide_service.dart';
+import 'package:floww/core/habits/providers/habit_reminder_provider.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/health/services/health_service.dart';
 import 'package:floww/core/nutrition/providers/food_photo_provider.dart';
@@ -61,6 +64,12 @@ class MainApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => FoodPhotoProvider(FoodImageService())..start(),
+        ),
+        ChangeNotifierProvider(create: (_) => GuideController(GuideService())),
+        Provider(
+          create: (_) => HabitReminderProvider()..start(),
+          dispose: (_, provider) => provider.dispose(),
+          lazy: false,
         ),
       ],
       child: Consumer<ThemeModeController>(

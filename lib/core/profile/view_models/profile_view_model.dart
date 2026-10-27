@@ -197,6 +197,13 @@ class ProfileViewModel extends ChangeNotifier {
       route: AppRouter.onboardingAnswers,
     ),
     const ProfileSettingItem(
+      icon: Icons.explore_outlined,
+      title: 'App Tour',
+      subtitle: 'Replay the guide for each tab',
+      route: AppRouter.home,
+      replaysGuide: true,
+    ),
+    const ProfileSettingItem(
       icon: Icons.shield_outlined,
       title: 'Privacy & Data',
       subtitle: 'Export data · Delete account',

@@ -27,9 +27,11 @@ class FlowScoreBoostCard extends StatelessWidget {
                 size: AppSizes.s20,
               ),
               SizedBox(width: AppSpacing.sm),
-              Text(
-                'How to Increase Your Flow Score',
-                style: context.textTheme.titleLarge,
+              Expanded(
+                child: Text(
+                  'How to Increase Your Flow Score',
+                  style: context.textTheme.titleLarge,
+                ),
               ),
             ],
           ),

@@ -26,9 +26,11 @@ class CalisthenicsPlanMapper {
 
   static bool isCourse(String? course) => CalLevel.fromCourse(course) != null;
 
-  static bool isPlan(WorkoutPlanEntity plan) =>
-      plan.exercises.isNotEmpty &&
-      plan.exercises.every((entry) => CalEntryKey.parse(entry.id) != null);
+  static bool isPlan(WorkoutPlanEntity plan) => isEntries(plan.exercises);
+
+  static bool isEntries(List<WorkoutEntryEntity> entries) =>
+      entries.isNotEmpty &&
+      entries.every((entry) => CalEntryKey.parse(entry.id) != null);
 
   static ExerciseCatalogEntry? exerciseOf(
     String id,

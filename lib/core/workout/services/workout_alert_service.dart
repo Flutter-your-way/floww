@@ -1,23 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'package:floww/config/utils/notifications/local_notifications.dart';
+
 class WorkoutAlertService {
   WorkoutAlertService({FlutterLocalNotificationsPlugin? plugin})
-    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+    : _plugin = plugin ?? LocalNotifications.plugin;
 
   static const int _restNotificationId = 4101;
   static const String _channelId = 'workout_rest';
   static const String _channelName = 'Rest timer';
   static const String _channelDescription =
       'Tells you when your rest between sets is over';
-  static const String _androidIcon = '@mipmap/ic_launcher';
   static const String _title = 'Rest is over';
-
-  static bool _initialized = false;
-  static bool _permissionRequested = false;
 
   final FlutterLocalNotificationsPlugin _plugin;
 
@@ -31,7 +28,7 @@ class WorkoutAlertService {
 
   Future<void> scheduleRestEnd(DateTime endsAt, String nextLabel) async {
     try {
-      await _ensureInitialized();
+      await LocalNotifications.requestPermissionOnce();
       await _plugin.cancel(id: _restNotificationId);
       if (!endsAt.isAfter(DateTime.now())) return;
       await _plugin.zonedSchedule(
@@ -62,39 +59,10 @@ class WorkoutAlertService {
 
   Future<void> cancelRestEnd() async {
     try {
-      if (!_initialized) return;
+      if (!LocalNotifications.isInitialized) return;
       await _plugin.cancel(id: _restNotificationId);
     } catch (error) {
       debugPrint('cancelRestEnd failed: $error');
     }
-  }
-
-  Future<void> _ensureInitialized() async {
-    if (!_initialized) {
-      tz_data.initializeTimeZones();
-      await _plugin.initialize(
-        settings: const InitializationSettings(
-          android: AndroidInitializationSettings(_androidIcon),
-          iOS: DarwinInitializationSettings(
-            requestAlertPermission: false,
-            requestBadgePermission: false,
-            requestSoundPermission: false,
-          ),
-        ),
-      );
-      _initialized = true;
-    }
-    if (_permissionRequested) return;
-    _permissionRequested = true;
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >()
-        ?.requestPermissions(alert: true, sound: true);
   }
 }

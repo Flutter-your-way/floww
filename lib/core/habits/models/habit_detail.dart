@@ -13,6 +13,7 @@ class HabitDetail {
     required this.schedule,
     required this.goalType,
     required this.source,
+    required this.reminderMinutes,
     required this.currentStreakDays,
     required this.longestStreakDays,
     required this.weeklyAveragePercent,
@@ -29,6 +30,7 @@ class HabitDetail {
   final HabitSchedule schedule;
   final HabitGoalType goalType;
   final HabitSource source;
+  final int? reminderMinutes;
   final int currentStreakDays;
   final int longestStreakDays;
   final int weeklyAveragePercent;

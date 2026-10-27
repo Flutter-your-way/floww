@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:floww/core/guide/models/guide_step.dart';
+import 'package:floww/core/guide/widgets/guide_target.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -133,18 +135,23 @@ class NutritionView extends StatelessWidget {
                         height:
                             MediaQuery.paddingOf(context).top + AppSpacing.lg,
                       ),
-                      ScreenDateHeader(
-                        titlePrefix: viewModel.titlePrefix,
-                        title: 'Nutrition',
-                        dateLabel: viewModel.dateLabel,
-                        direction: viewModel.dateDirection,
-                        onPreviousDay: viewModel.canGoPrevious
-                            ? viewModel.previousDay
-                            : null,
-                        onNextDay: viewModel.canGoNext
-                            ? viewModel.nextDay
-                            : null,
-                        onPickDate: () => _pickDate(context, viewModel),
+                      GuideTarget(
+                        id: GuideTargetId.nutritionDate,
+                        radius: AppRadius.lg,
+                        padding: AppSpacing.lg,
+                        child: ScreenDateHeader(
+                          titlePrefix: viewModel.titlePrefix,
+                          title: 'Nutrition',
+                          dateLabel: viewModel.dateLabel,
+                          direction: viewModel.dateDirection,
+                          onPreviousDay: viewModel.canGoPrevious
+                              ? viewModel.previousDay
+                              : null,
+                          onNextDay: viewModel.canGoNext
+                              ? viewModel.nextDay
+                              : null,
+                          onPickDate: () => _pickDate(context, viewModel),
+                        ),
                       ),
                       SizedBox(height: AppSpacing.xl4),
                       Column(
@@ -299,16 +306,20 @@ class NutritionView extends StatelessWidget {
                                           padding: EdgeInsets.only(
                                             bottom: AppSpacing.lg,
                                           ),
-                                          child: CalorieSummaryCard(
-                                            goalValue:
-                                                viewModel.calorieGoalLabel,
-                                            remainingValue: viewModel
-                                                .caloriesRemainingLabel,
-                                            consumedValue:
-                                                viewModel.caloriesConsumedLabel,
-                                            shareLabel:
-                                                viewModel.calorieShareLabel,
-                                            progress: viewModel.calorieProgress,
+                                          child: GuideTarget(
+                                            id: GuideTargetId.nutritionCalories,
+                                            child: CalorieSummaryCard(
+                                              goalValue:
+                                                  viewModel.calorieGoalLabel,
+                                              remainingValue: viewModel
+                                                  .caloriesRemainingLabel,
+                                              consumedValue: viewModel
+                                                  .caloriesConsumedLabel,
+                                              shareLabel:
+                                                  viewModel.calorieShareLabel,
+                                              progress:
+                                                  viewModel.calorieProgress,
+                                            ),
                                           ),
                                         )
                                       : null,
@@ -320,13 +331,16 @@ class NutritionView extends StatelessWidget {
                                           padding: EdgeInsets.only(
                                             bottom: AppSpacing.lg,
                                           ),
-                                          child: MacronutrientsCard(
-                                            items: viewModel.macros,
-                                            onLearnMore: () =>
-                                                MacronutrientsSheet.show(
-                                                  context,
-                                                  day: viewModel.day,
-                                                ),
+                                          child: GuideTarget(
+                                            id: GuideTargetId.nutritionMacros,
+                                            child: MacronutrientsCard(
+                                              items: viewModel.macros,
+                                              onLearnMore: () =>
+                                                  MacronutrientsSheet.show(
+                                                    context,
+                                                    day: viewModel.day,
+                                                  ),
+                                            ),
                                           ),
                                         )
                                       : null,
@@ -338,28 +352,32 @@ class NutritionView extends StatelessWidget {
                                           padding: EdgeInsets.only(
                                             bottom: AppSpacing.lg,
                                           ),
-                                          child: MicronutrientTiles(
-                                            items: viewModel.micronutrients,
-                                            onOpenWater: () =>
-                                                WaterIntakeSheet.show(
-                                                  context,
-                                                  date: viewModel.selectedDate,
-                                                  goal: viewModel.goal,
-                                                ),
-                                            onAddWater: viewModel.canLog
-                                                ? () => WaterIntakeSheet.show(
+                                          child: GuideTarget(
+                                            id: GuideTargetId.nutritionMicros,
+                                            child: MicronutrientTiles(
+                                              items: viewModel.micronutrients,
+                                              onOpenWater: () =>
+                                                  WaterIntakeSheet.show(
                                                     context,
                                                     date:
                                                         viewModel.selectedDate,
                                                     goal: viewModel.goal,
-                                                  )
-                                                : null,
-                                            onOpenNutrient: (kind) =>
-                                                MicronutrientSourcesSheet.show(
-                                                  context,
-                                                  day: viewModel.day,
-                                                  kind: kind,
-                                                ),
+                                                  ),
+                                              onAddWater: viewModel.canLog
+                                                  ? () => WaterIntakeSheet.show(
+                                                      context,
+                                                      date: viewModel
+                                                          .selectedDate,
+                                                      goal: viewModel.goal,
+                                                    )
+                                                  : null,
+                                              onOpenNutrient: (kind) =>
+                                                  MicronutrientSourcesSheet.show(
+                                                    context,
+                                                    day: viewModel.day,
+                                                    kind: kind,
+                                                  ),
+                                            ),
                                           ),
                                         )
                                       : null,
@@ -371,23 +389,26 @@ class NutritionView extends StatelessWidget {
                                           padding: EdgeInsets.only(
                                             bottom: AppSpacing.lg,
                                           ),
-                                          child: MealBreakdownCard(
-                                            items: viewModel.meals,
-                                            onOpenMeal: (meal) =>
-                                                _openMeal(viewModel, meal),
-                                            onAddToMeal: viewModel.canLog
-                                                ? (meal) => _logFood(
-                                                    context,
-                                                    viewModel,
-                                                    meal,
-                                                  )
-                                                : null,
-                                            onAddMeal: viewModel.canLog
-                                                ? () => _logFood(
-                                                    context,
-                                                    viewModel,
-                                                  )
-                                                : null,
+                                          child: GuideTarget(
+                                            id: GuideTargetId.nutritionMeals,
+                                            child: MealBreakdownCard(
+                                              items: viewModel.meals,
+                                              onOpenMeal: (meal) =>
+                                                  _openMeal(viewModel, meal),
+                                              onAddToMeal: viewModel.canLog
+                                                  ? (meal) => _logFood(
+                                                      context,
+                                                      viewModel,
+                                                      meal,
+                                                    )
+                                                  : null,
+                                              onAddMeal: viewModel.canLog
+                                                  ? () => _logFood(
+                                                      context,
+                                                      viewModel,
+                                                    )
+                                                  : null,
+                                            ),
                                           ),
                                         )
                                       : null,

@@ -1,5 +1,6 @@
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_reminder_setting.dart';
 import 'package:floww/core/habits/models/habit_schedule.dart';
 
 class HabitDefinition {
@@ -14,7 +15,7 @@ class HabitDefinition {
     this.schedule = const HabitSchedule.daily(),
     this.goalType = HabitGoalType.build,
     this.source = HabitSource.manual,
-    this.reminderMinutes,
+    this.reminder = const HabitReminderSetting.auto(),
     this.archivedAt,
     this.description,
     this.about,
@@ -38,7 +39,7 @@ class HabitDefinition {
         json['source'] as String?,
         legacyId: json['id'] as String,
       ),
-      reminderMinutes: _minutesOf(json['reminderTime'] as String?),
+      reminder: HabitReminderSetting.fromJson(json['reminderTime']),
       archivedAt: archivedAt == null
           ? null
           : AppDateUtils.dateOnly(DateTime.parse(archivedAt).toLocal()),
@@ -55,8 +56,6 @@ class HabitDefinition {
     'outdoor_walk': HabitSource.steps,
     'sleep': HabitSource.sleep,
   };
-
-  static const int _minutesPerHour = 60;
 
   static String titleOf(String title) => _legacyTitles[title] ?? title;
 
@@ -84,22 +83,6 @@ class HabitDefinition {
     );
   }
 
-  static int? _minutesOf(String? time) {
-    final parts = time?.split(':');
-    if (parts == null || parts.length != 2) return null;
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) return null;
-    return hour * _minutesPerHour + minute;
-  }
-
-  static String? _timeOf(int? minutes) {
-    if (minutes == null) return null;
-    final hour = (minutes ~/ _minutesPerHour).toString().padLeft(2, '0');
-    final minute = (minutes % _minutesPerHour).toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
-
   final String id;
   final String title;
   final double target;
@@ -110,12 +93,14 @@ class HabitDefinition {
   final HabitSchedule schedule;
   final HabitGoalType goalType;
   final HabitSource source;
-  final int? reminderMinutes;
+  final HabitReminderSetting reminder;
   final DateTime? archivedAt;
   final String? description;
   final String? about;
 
   bool get isArchived => archivedAt != null;
+
+  int? get reminderMinutes => reminder.resolve(icon);
 
   bool existedOn(DateTime date) => !createdAt.isAfter(date);
 
@@ -147,7 +132,7 @@ class HabitDefinition {
     'schedule': schedule.toJson(),
     'goalType': goalType.name,
     'source': source.name,
-    'reminderTime': _timeOf(reminderMinutes),
+    'reminderTime': reminder.toJson(),
     'archivedAt': archivedAt == null ? null : AppDateUtils.isoKey(archivedAt!),
     'description': description,
     'about': about,

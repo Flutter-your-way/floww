@@ -53,12 +53,17 @@ class ActiveWorkoutProgressHeader extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              exerciseLabel,
-              style: AppTypography.bodySmallMediumTight.copyWith(
-                color: colors.textSecondary,
+            Flexible(
+              child: Text(
+                exerciseLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodySmallMediumTight.copyWith(
+                  color: colors.textSecondary,
+                ),
               ),
             ),
+            SizedBox(width: AppSpacing.md),
             Text(
               setLabel,
               style: AppTypography.bodySmallMediumTight.copyWith(

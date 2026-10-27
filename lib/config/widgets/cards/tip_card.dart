@@ -55,10 +55,12 @@ class TipCard extends StatelessWidget {
               children: [
                 Icon(icon, size: AppSizes.s16, color: context.colors.primary),
                 SizedBox(width: AppSpacing.sm),
-                Text(
-                  title,
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: context.colors.primary,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: context.textTheme.labelMedium?.copyWith(
+                      color: context.colors.primary,
+                    ),
                   ),
                 ),
               ],

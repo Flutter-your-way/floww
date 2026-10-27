@@ -67,6 +67,7 @@ const sessionChanged = (
   return before?.date !== after?.date ||
     numberOf(before?.totalSets) !== numberOf(after?.totalSets) ||
     numberOf(before?.plannedSets) !== numberOf(after?.plannedSets) ||
+    numberOf(before?.creditedSets) !== numberOf(after?.creditedSets) ||
     numberOf(before?.durationSeconds) !== numberOf(after?.durationSeconds);
 };
 

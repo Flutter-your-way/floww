@@ -265,26 +265,41 @@ class _MealTotalsRow extends StatelessWidget {
     return WaveCardSection(
       child: Row(
         children: [
-          _MacroTotal(
-            value: totals.calories,
-            unit: 'kcal',
-            color: colors.accentOrange,
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _MacroTotal(
+                    value: totals.calories,
+                    unit: 'kcal',
+                    color: colors.accentOrange,
+                  ),
+                  SizedBox(width: AppSpacing.lg),
+                  _MacroTotal(
+                    value: totals.protein,
+                    unit: 'pro',
+                    color: colors.proteinAccent,
+                  ),
+                  SizedBox(width: AppSpacing.lg),
+                  _MacroTotal(
+                    value: totals.carbs,
+                    unit: 'carb',
+                    color: colors.carbsAccent,
+                  ),
+                  SizedBox(width: AppSpacing.lg),
+                  _MacroTotal(
+                    value: totals.fat,
+                    unit: 'fat',
+                    color: colors.fatAccent,
+                  ),
+                ],
+              ),
+            ),
           ),
-          SizedBox(width: AppSpacing.lg),
-          _MacroTotal(
-            value: totals.protein,
-            unit: 'pro',
-            color: colors.proteinAccent,
-          ),
-          SizedBox(width: AppSpacing.lg),
-          _MacroTotal(
-            value: totals.carbs,
-            unit: 'carb',
-            color: colors.carbsAccent,
-          ),
-          SizedBox(width: AppSpacing.lg),
-          _MacroTotal(value: totals.fat, unit: 'fat', color: colors.fatAccent),
-          const Spacer(),
+          SizedBox(width: AppSpacing.md),
           Text(
             totals.itemCountLabel,
             style: context.textTheme.bodySmall?.copyWith(color: colors.textDim),

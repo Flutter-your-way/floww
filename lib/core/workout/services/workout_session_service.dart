@@ -181,6 +181,7 @@ class WorkoutSessionService extends WorkoutFirestore {
         'completedAt': AppDateUtils.isoKey(DateTime.now()),
         'volumeKg': totals.volumeKg,
         'totalSets': totals.totalSets,
+        'creditedSets': session.creditedSets,
         'totalReps': totals.totalReps,
         'exerciseCount': totals.exerciseCount,
         ...session.restJson,
@@ -266,8 +267,7 @@ class WorkoutSessionService extends WorkoutFirestore {
     final flow = await _estimateFlowScore(
       uid,
       date: session.date,
-      totalSets: totals.totalSets,
-      plannedSets: session.plannedSets,
+      workout: WorkoutCredit.ofSessions([session]),
       previousSessions: previous,
     );
 
@@ -283,6 +283,7 @@ class WorkoutSessionService extends WorkoutFirestore {
       'volumeKg': totals.volumeKg,
       'totalSets': totals.totalSets,
       'plannedSets': session.plannedSets,
+      'creditedSets': session.creditedSets,
       'totalReps': totals.totalReps,
       'exerciseCount': totals.exerciseCount,
       'caloriesKcal': WorkoutMetrics.caloriesOf(
@@ -484,8 +485,7 @@ class WorkoutSessionService extends WorkoutFirestore {
   Future<_FlowScoreChange> _estimateFlowScore(
     String uid, {
     required DateTime date,
-    required int totalSets,
-    required int plannedSets,
+    required WorkoutCredit workout,
     required List<WorkoutSessionEntity> previousSessions,
   }) async {
     const calculator = FlowScoreCalculator();
@@ -499,25 +499,13 @@ class WorkoutSessionService extends WorkoutFirestore {
           ? DailyFlowEntry.empty(date)
           : DailyFlowEntry.fromJson(data);
 
-      var priorSets = 0;
-      var priorPlanned = 0;
-      for (final session in previousSessions) {
-        if (AppDateUtils.isSameDay(session.date, date)) {
-          priorSets += session.totalSets;
-          priorPlanned += session.plannedSets;
-        }
-      }
+      final prior = WorkoutCredit.ofSessions([
+        for (final session in previousSessions)
+          if (AppDateUtils.isSameDay(session.date, date)) session,
+      ]);
 
-      final before = calculator.withWorkoutSets(
-        entry,
-        priorSets,
-        plannedSets: priorPlanned,
-      );
-      final after = calculator.withWorkoutSets(
-        entry,
-        priorSets + totalSets,
-        plannedSets: priorPlanned + plannedSets,
-      );
+      final before = calculator.withWorkout(entry, prior);
+      final after = calculator.withWorkout(entry, prior + workout);
       return _FlowScoreChange(before.score, after.score);
     } catch (_) {
       return const _FlowScoreChange(0, 0);

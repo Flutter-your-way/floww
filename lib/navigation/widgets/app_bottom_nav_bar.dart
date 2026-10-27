@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:floww/config/constants/app_glass.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
+import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/effects/inner_glow.dart';
@@ -19,6 +21,11 @@ class AppBottomNavBar extends StatelessWidget {
     required this.selectedIndex,
     required this.onTabSelected,
   });
+
+  static const double height = AppSizes.s64;
+
+  static double bottomInsetOf(BuildContext context) =>
+      math.max(MediaQuery.viewPaddingOf(context).bottom, AppSpacing.lg);
 
   final List<NavTabItem> items;
   final int selectedIndex;
@@ -36,7 +43,7 @@ class AppBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: AppSizes.s64,
+      height: height,
       child: LiquidGlass(
         borderRadius: BorderRadius.circular(AppRadius.full),
         shadows: [

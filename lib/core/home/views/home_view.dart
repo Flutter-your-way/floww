@@ -17,6 +17,9 @@ import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/widgets/premium_gate.dart';
 import 'package:floww/core/premium/widgets/premium_locked_card.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
+import 'package:floww/core/guide/models/guide_step.dart';
+import 'package:floww/core/guide/widgets/guide_replay_button.dart';
+import 'package:floww/core/guide/widgets/guide_target.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
 import 'package:floww/core/home/views/flow_mode_sheet.dart';
 import 'package:floww/core/home/views/flow_score_breakdown_sheet.dart';
@@ -165,18 +168,22 @@ class HomeView extends StatelessWidget {
                     avatarInitial: context.watch<AuthViewModel>().avatarInitial,
                     onAvatarTap: _openProfile,
                     onStreakTap: () => _openStreak(context, home),
+                    action: const GuideReplayButton(),
                   ),
                   SizedBox(height: AppSpacing.xl2),
-                  FlowModeDebugTrigger(
-                    child: FlowScoreCard(
-                      percent: home.displayFlowScorePercent,
-                      recoveryLevel: home.recoveryLevel,
-                      hasRecoveryData: home.hasRecoveryData,
-                      todayMode: activeMode,
-                      onStartWorkout: () => _startWorkout(context, home),
-                      onBreakdownTap: () => _openBreakdown(context, home),
-                      onRecoveryTap: () => _openRecovery(context, home),
-                      onModeTap: () => _openFlowMode(context, home, flowMode),
+                  GuideTarget(
+                    id: GuideTargetId.homeFlowScore,
+                    child: FlowModeDebugTrigger(
+                      child: FlowScoreCard(
+                        percent: home.displayFlowScorePercent,
+                        recoveryLevel: home.recoveryLevel,
+                        hasRecoveryData: home.hasRecoveryData,
+                        todayMode: activeMode,
+                        onStartWorkout: () => _startWorkout(context, home),
+                        onBreakdownTap: () => _openBreakdown(context, home),
+                        onRecoveryTap: () => _openRecovery(context, home),
+                        onModeTap: () => _openFlowMode(context, home, flowMode),
+                      ),
                     ),
                   ),
                   AppCollapsibleSection(
@@ -196,33 +203,45 @@ class HomeView extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
-                  TodayHabitCard(
-                    habits: home.habits,
-                    onCreateFirstHabit: () => _createFirstHabit(context),
-                    onTap: () => _openHabits(context),
-                    onToggleHabit: (habit) => _toggleHabit(context, habit),
+                  GuideTarget(
+                    id: GuideTargetId.homeHabits,
+                    child: TodayHabitCard(
+                      habits: home.habits,
+                      onCreateFirstHabit: () => _createFirstHabit(context),
+                      onTap: () => _openHabits(context),
+                      onToggleHabit: (habit) => _toggleHabit(context, habit),
+                    ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
-                  TodayWorkoutCard(
-                    workout: home.workout,
-                    completed: home.completedWorkout,
-                    onStartWorkout: () => _startWorkout(context, home),
-                    onViewSummary: () =>
-                        _openWorkoutSummary(home.completedWorkout),
+                  GuideTarget(
+                    id: GuideTargetId.homeWorkout,
+                    child: TodayWorkoutCard(
+                      workout: home.workout,
+                      completed: home.completedWorkout,
+                      onStartWorkout: () => _startWorkout(context, home),
+                      onViewSummary: () =>
+                          _openWorkoutSummary(home.completedWorkout),
+                    ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
-                  NutritionSummaryCard(
-                    nutrition: home.nutrition,
-                    onTap: _openNutrition,
+                  GuideTarget(
+                    id: GuideTargetId.homeNutrition,
+                    child: NutritionSummaryCard(
+                      nutrition: home.nutrition,
+                      onTap: _openNutrition,
+                    ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
-                  HealthSyncCard(
-                    sourceName: health.sourceName,
-                    iconAsset: health.sourceIcon,
-                    connected: health.isConnected,
-                    syncDetail: health.statusLabel,
-                    onConnect: health.connect,
-                    onDisconnect: health.disconnect,
+                  GuideTarget(
+                    id: GuideTargetId.homeHealth,
+                    child: HealthSyncCard(
+                      sourceName: health.sourceName,
+                      iconAsset: health.sourceIcon,
+                      connected: health.isConnected,
+                      syncDetail: health.statusLabel,
+                      onConnect: health.connect,
+                      onDisconnect: health.disconnect,
+                    ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
                   TodayProgressCard(progress: home.todayProgress),

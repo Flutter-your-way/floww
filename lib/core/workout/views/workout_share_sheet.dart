@@ -97,7 +97,7 @@ class _WorkoutShareSheetState extends State<WorkoutShareSheet> {
         return AppFloatingSheet(
           child: Stack(
             children: [
-              Padding(
+              SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                   horizontal: AppSpacing.xl,
                   vertical: AppSpacing.xl2,

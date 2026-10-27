@@ -10,6 +10,7 @@ import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
 import 'package:floww/config/widgets/sheets/app_confirm_sheet.dart';
 import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
+import 'package:floww/core/guide/providers/guide_controller.dart';
 import 'package:floww/core/profile/models/profile_view_data.dart';
 import 'package:floww/core/profile/view_models/profile_view_model.dart';
 import 'package:floww/core/profile/widgets/profile_identity_card.dart';
@@ -41,8 +42,13 @@ class ProfileView extends StatelessWidget {
     NavigationService.instance.push(route);
   }
 
-  void _openSetting(ProfileSettingItem item) {
+  void _openSetting(BuildContext context, ProfileSettingItem item) {
     HapticManager.light();
+    if (item.replaysGuide) {
+      context.read<GuideController>().replay();
+      NavigationService.instance.popToRoot();
+      return;
+    }
     NavigationService.instance.push(item.route);
   }
 
@@ -120,7 +126,7 @@ class ProfileView extends StatelessWidget {
               ProfileSettingsCard(
                 title: viewModel.settingsTitle,
                 items: viewModel.settings,
-                onItemTap: _openSetting,
+                onItemTap: (item) => _openSetting(context, item),
               ),
               SizedBox(height: AppSpacing.xl2),
               ProfileLogOutButton(

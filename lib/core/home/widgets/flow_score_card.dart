@@ -1,3 +1,5 @@
+import 'package:floww/core/guide/models/guide_step.dart';
+import 'package:floww/core/guide/widgets/guide_target.dart';
 import 'package:floww/config/widgets/animations/app_card_pop.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:flutter/material.dart';
@@ -126,11 +128,15 @@ class FlowScoreCard extends StatelessWidget {
                             color: context.colors.borderSubtle,
                           ),
                         ),
-                        AppStatColumn(
-                          label: "TODAY'S MODE",
-                          value: todayMode.name.toUpperCase(),
-                          showInfoIcon: true,
-                          onTap: onModeTap,
+                        GuideTarget(
+                          id: GuideTargetId.homeMode,
+                          radius: AppRadius.md,
+                          child: AppStatColumn(
+                            label: "TODAY'S MODE",
+                            value: todayMode.name.toUpperCase(),
+                            showInfoIcon: true,
+                            onTap: onModeTap,
+                          ),
                         ),
                       ],
                     ),
