@@ -5,6 +5,7 @@ import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/progress/models/progress_view_data.dart';
 import 'package:floww/core/progress/services/flow_readiness_calculator.dart';
 import 'package:floww/core/progress/services/flow_score_calculator.dart';
+import 'package:floww/core/progress/services/flow_streak.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
 
 class ProgressSnapshotResult {
@@ -86,18 +87,30 @@ class ProgressSnapshotBuilder {
         AppDateUtils.dateKey(entry.date): entry,
     };
     final computedFlow = <String, DailyFlowEntry>{};
-    final todayReadiness = const FlowReadinessCalculator().readinessOf(
-      baseline: records.goals.flowBaseline,
-    );
+    final healthByDay = {
+      for (final day in records.healthDays) AppDateUtils.dateKey(day.date): day,
+    };
     for (var offset = ProgressService.habitHistoryDays; offset >= 0; offset--) {
       final date = AppDateUtils.addDays(today, -offset);
       final key = AppDateUtils.dateKey(date);
+      final health = healthByDay[key];
+      final workout =
+          (workoutByDay[key] ?? WorkoutCredit.none) +
+          (records.restDays.contains(key)
+              ? WorkoutCredit.restDay
+              : WorkoutCredit.none);
       computedFlow[key] = _calculator.scoreOf(
         FlowScoreInputs(
           date: date,
-          readinessScore: offset == 0 ? todayReadiness : 0,
-          workout: workoutByDay[key] ?? WorkoutCredit.none,
+          readinessScore: const FlowReadinessCalculator().readinessOf(
+            baseline: records.goals.flowBaseline,
+            sleepMinutes: health?.sleepMinutes ?? 0,
+            hrvMs: health?.hrvMs,
+            sleepTargetHours: records.goals.sleepTargetHours,
+          ),
+          workout: workout,
           habitCompletion: habitByDay[key]?.completion ?? 0,
+          habitEngaged: habitByDay[key]?.isEngaged ?? false,
           mealCount: mealsByDay[key] ?? 0,
           waterMl: waterByDay[key] ?? 0,
         ),
@@ -108,7 +121,11 @@ class ProgressSnapshotBuilder {
     final weekStart = AppDateUtils.startOfWeek(today);
     computedFlow.forEach((key, entry) {
       if (storedFlow.containsKey(key)) return;
-      if (!entry.hasActivity && key != AppDateUtils.dateKey(today)) return;
+      if (!entry.hasActivity &&
+          !entry.isRestDay &&
+          key != AppDateUtils.dateKey(today)) {
+        return;
+      }
       flow[key] = entry;
     });
 
@@ -459,33 +476,18 @@ class ProgressSnapshotBuilder {
     return items.every((item) => item.isCompleted) ? const [] : items;
   }
 
-  int _streakOf(Map<String, DailyFlowEntry> flow, DateTime today) {
-    var streak = 0;
-    var cursor = today;
-    if (!(flow[AppDateUtils.dateKey(cursor)]?.hasActivity ?? false)) {
-      cursor = AppDateUtils.addDays(cursor, -1);
-    }
-    while (flow[AppDateUtils.dateKey(cursor)]?.hasActivity ?? false) {
-      streak++;
-      cursor = AppDateUtils.addDays(cursor, -1);
-    }
-    return streak;
-  }
+  int _streakOf(Map<String, DailyFlowEntry> flow, DateTime today) =>
+      FlowStreak.currentOf(flow, today);
 
-  int _longestStreakOf(Map<String, DailyFlowEntry> flow, DateTime today) {
-    var longest = 0;
-    var running = 0;
-    for (var offset = ProgressService.historyDays; offset >= 0; offset--) {
-      final key = AppDateUtils.dateKey(AppDateUtils.addDays(today, -offset));
-      if (flow[key]?.hasActivity ?? false) {
-        running++;
-        if (running > longest) longest = running;
-      } else {
-        running = 0;
-      }
-    }
-    return longest;
-  }
+  int _longestStreakOf(Map<String, DailyFlowEntry> flow, DateTime today) =>
+      FlowStreak.longestOf({
+        for (final entry in flow.entries)
+          if (!entry.value.date.isBefore(
+                AppDateUtils.addDays(today, -ProgressService.historyDays),
+              ) &&
+              !entry.value.date.isAfter(today))
+            entry.key: entry.value,
+      });
 
   int _bestWeekAverageOf(Map<String, DailyFlowEntry> flow, DateTime today) {
     final weekStart = AppDateUtils.startOfWeek(today);

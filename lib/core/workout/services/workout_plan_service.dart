@@ -202,7 +202,10 @@ class WorkoutPlanService extends WorkoutFirestore {
     final uid = requireUserId;
     await guard('savePlan', _saveFailure, () {
       final batch = firestore.batch();
-      batch.set(_plans(uid).doc(AppDateUtils.dateKey(plan.date)), plan.toJson());
+      batch.set(
+        _plans(uid).doc(AppDateUtils.dateKey(plan.date)),
+        plan.toJson(),
+      );
       _catalogService.unlockInto(batch, uid, [
         for (final entry in plan.exercises) entry.exerciseId,
       ]);

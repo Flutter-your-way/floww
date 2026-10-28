@@ -8,12 +8,31 @@ class GuideContent {
   static const String _sectionFinish = 'Got it';
 
   static GuideFlow flowFor(GuideSection section) => switch (section) {
+    GuideSection.intro => intro,
     GuideSection.home => home,
     GuideSection.nutrition => nutrition,
     GuideSection.workout => workout,
     GuideSection.habits => habits,
     GuideSection.progress => progress,
   };
+
+  static const GuideFlow intro = GuideFlow(
+    section: GuideSection.intro,
+    host: GuideSection.home,
+    label: 'APP TOUR',
+    finishLabel: _sectionFinish,
+    steps: [
+      GuideStep(
+        icon: Icons.waving_hand_outlined,
+        hero: true,
+        action: 'Show me around',
+        title: "Hi, I'm WAVE 👋",
+        body:
+            "Your coach in Floww. I'll show you the flow: your score, "
+            'workouts, food and habits. It takes about a minute.',
+      ),
+    ],
+  );
 
   static const GuideFlow home = GuideFlow(
     section: GuideSection.home,
@@ -133,17 +152,25 @@ class GuideContent {
       ),
       GuideStep(
         icon: Icons.event_note_rounded,
-        targets: [GuideTargetId.workoutAgenda, GuideTargetId.workoutOverview],
+        optional: true,
+        targets: [GuideTargetId.workoutAgenda, GuideTargetId.workoutShift],
         title: "Today's plan",
         body:
             'What is scheduled today. Missed yesterday? You can add it to today '
             'as a catch-up.',
       ),
       GuideStep(
-        icon: Icons.insights_rounded,
-        targets: [GuideTargetId.workoutOverview],
-        title: 'Your training',
-        body: 'Summary and training effect from your recent sessions.',
+        icon: Icons.today_rounded,
+        targets: [
+          GuideTargetId.workoutToday,
+          GuideTargetId.workoutOverview,
+          GuideTargetId.workoutEmpty,
+          GuideTargetId.workoutAgenda,
+        ],
+        title: "Today's session",
+        body:
+            'What WAVE lined up for today and why it picked it. Once you '
+            'train, your summary and training effect show up here.',
       ),
       GuideStep(
         icon: Icons.play_arrow_rounded,
@@ -222,12 +249,35 @@ class GuideContent {
         body: 'Log a weigh-in and follow the trend.',
       ),
       GuideStep(
-        icon: Icons.emoji_events_outlined,
-        targets: [GuideTargetId.progressAnalytics],
-        title: 'Volume, habits, records',
+        icon: Icons.fitness_center_rounded,
+        targets: [
+          GuideTargetId.progressVolume,
+          GuideTargetId.progressAnalytics,
+        ],
+        title: 'Workout volume',
         body:
-            'Training volume, habit consistency and personal records. Part of '
-            'Premium.',
+            'How much you lifted each day this week. Every session you finish '
+            'adds a bar. Part of Premium.',
+      ),
+      GuideStep(
+        icon: Icons.checklist_rounded,
+        targets: [
+          GuideTargetId.progressHabits,
+          GuideTargetId.progressAnalytics,
+        ],
+        title: 'Habit consistency',
+        body:
+            'How many days this week you hit each habit, with your strongest '
+            'and weakest called out.',
+      ),
+      GuideStep(
+        icon: Icons.emoji_events_outlined,
+        targets: [
+          GuideTargetId.progressRecords,
+          GuideTargetId.progressAnalytics,
+        ],
+        title: 'Personal records',
+        body: 'Your longest streak, highest Flow Score and best week so far.',
       ),
       GuideStep(
         icon: Icons.lightbulb_outline_rounded,

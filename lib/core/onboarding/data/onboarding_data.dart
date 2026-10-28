@@ -525,9 +525,11 @@ class OnboardingData {
   };
 
   static const Map<int, String> _calTierSubtitles = {
-    1: 'Log your best clean result: strict form, full range, no kipping. '
+    1:
+        'Log your best clean result: strict form, full range, no kipping. '
         'Leave it at 0 if you cannot do it yet.',
-    2: 'You cleared the Level 2 gates. Test these fresh and stop if a joint '
+    2:
+        'You cleared the Level 2 gates. Test these fresh and stop if a joint '
         'hurts: that one is "not yet".',
     3: 'You cleared the Level 3 gates. Three elite gates decide Level 4.',
   };
@@ -547,9 +549,10 @@ class OnboardingData {
               : CalisthenicsGatesData.rules[1],
           inputType: InputType.multiQuestion,
           subQuestions: [
-            for (final test in tests.skip(screen * _calTestsPerScreen).take(
-              _calTestsPerScreen,
-            ))
+            for (final test
+                in tests
+                    .skip(screen * _calTestsPerScreen)
+                    .take(_calTestsPerScreen))
               OnboardingQuestion(
                 id: test.id,
                 title: test.shortName,

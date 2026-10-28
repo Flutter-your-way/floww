@@ -12,7 +12,10 @@ import {
   definitionOf,
   entriesOf,
   habitsForDay,
+  isLimitEntry,
+  progressOf,
 } from "./habit.day.helper";
+import {readRestDay} from "./flow.rest.helper";
 import {UserClock} from "./user.clock.helper";
 import {
   creditedSetsOf,
@@ -39,13 +42,18 @@ export interface FlowEntry {
   habitScore: number;
   nutritionScore: number;
   readinessScore: number;
+  isActive: boolean;
+  isRestDay: boolean;
 }
 
 export interface DayActivity {
   workoutSets: number;
   workoutPlannedSets: number;
   workoutCreditedSets: number;
+  workoutRatio: number;
+  isRestDay: boolean;
   habitCompletion: number;
+  habitEngaged: boolean;
   mealCount: number;
   waterMl: number;
   sessionIds: string[];
@@ -61,6 +69,8 @@ export const emptyFlowEntry = (date: string): FlowEntry => ({
   habitScore: 0,
   nutritionScore: 0,
   readinessScore: 0,
+  isActive: false,
+  isRestDay: false,
 });
 
 const pointsOf = (maxPoints: number, percentValue: number): number =>
@@ -75,17 +85,31 @@ export const sessionPlannedSetsOf = (session: DocumentData): number => {
 export const sessionCreditedSetsOf = (session: DocumentData): number => {
   const entries = workoutEntriesOf(session.exercises);
   if (entries.length > 0) return creditedSetsOf(entries);
-  const stored = numberOf(session.creditedSets);
-  if (stored > 0) return stored;
+  const stored = session.creditedSets;
+  if (typeof stored === "number" && Number.isFinite(stored)) {
+    return Math.max(0, stored);
+  }
   const planned = sessionPlannedSetsOf(session);
   const logged = numberOf(session.totalSets);
   return planned > 0 ? Math.min(logged, planned) : logged;
 };
 
+export const ratioOf = (
+  plannedSets: number,
+  creditedSets: number,
+  loggedSets: number,
+): number =>
+  plannedSets > 0 ? creditedSets / plannedSets : loggedSets / TARGET_SETS;
+
+export const sessionRatioOf = (session: DocumentData): number =>
+  ratioOf(
+    sessionPlannedSetsOf(session),
+    sessionCreditedSetsOf(session),
+    numberOf(session.totalSets),
+  );
+
 export const workoutRatioOf = (activity: DayActivity): number =>
-  activity.workoutPlannedSets > 0 ?
-    activity.workoutCreditedSets / activity.workoutPlannedSets :
-    activity.workoutSets / TARGET_SETS;
+  activity.workoutRatio + (activity.isRestDay ? 1 : 0);
 
 export const flowEntryOf = (
   date: string,
@@ -93,11 +117,13 @@ export const flowEntryOf = (
   readiness = 0,
 ): FlowEntry => {
   const workout = Math.round(percent(workoutRatioOf(activity)));
-  const habit = Math.round(percent(activity.habitCompletion));
+  const trained = Math.round(percent(activity.workoutRatio));
   const nutrition = Math.round(percent(
     clamp(activity.mealCount / TARGET_MEALS, 0, 1) * MEAL_SHARE +
       clamp(activity.waterMl / TARGET_WATER_ML, 0, 1) * WATER_SHARE,
   ));
+  const isActive = trained > 0 || nutrition > 0 || activity.habitEngaged;
+  const habit = isActive ? Math.round(percent(activity.habitCompletion)) : 0;
 
   return {
     date,
@@ -113,6 +139,8 @@ export const flowEntryOf = (
     workoutScore: workout,
     habitScore: habit,
     nutritionScore: nutrition,
+    isActive,
+    isRestDay: activity.isRestDay,
   };
 };
 
@@ -125,7 +153,9 @@ export const sameFlowValues = (
   numberOf(stored.workoutScore) === entry.workoutScore &&
   numberOf(stored.habitScore) === entry.habitScore &&
   numberOf(stored.nutritionScore) === entry.nutritionScore &&
-  numberOf(stored.readinessScore) === entry.readinessScore;
+  numberOf(stored.readinessScore) === entry.readinessScore &&
+  stored.isActive === entry.isActive &&
+  stored.isRestDay === entry.isRestDay;
 
 export const flowDocOf = (entry: FlowEntry): DocumentData => ({
   ...entry,
@@ -172,28 +202,31 @@ export const readDayActivity = async (
 ): Promise<DayActivity> => {
   const {start, end} = dayBoundsUtc(day, clock.offsetMinutes);
 
-  const [sessions, foods, waters, definitions, logs] = await Promise.all([
-    transaction.get(
-      userCollection(uid, USER_COLLECTIONS.workoutSessions)
-        .where("date", "==", day),
-    ),
-    transaction.get(
-      userCollection(uid, USER_COLLECTIONS.foodLogs)
-        .where("loggedAt", ">=", start)
-        .where("loggedAt", "<", end),
-    ),
-    transaction.get(
-      userCollection(uid, USER_COLLECTIONS.waterLogs)
-        .where("loggedAt", ">=", start)
-        .where("loggedAt", "<", end),
-    ),
-    loadHabitDefinitions(transaction, uid, clock),
-    loadHabitLogs(transaction, uid, startOfWeekKey(day), day),
-  ]);
+  const [sessions, foods, waters, definitions, logs, isRestDay] =
+    await Promise.all([
+      transaction.get(
+        userCollection(uid, USER_COLLECTIONS.workoutSessions)
+          .where("date", "==", day),
+      ),
+      transaction.get(
+        userCollection(uid, USER_COLLECTIONS.foodLogs)
+          .where("loggedAt", ">=", start)
+          .where("loggedAt", "<", end),
+      ),
+      transaction.get(
+        userCollection(uid, USER_COLLECTIONS.waterLogs)
+          .where("loggedAt", ">=", start)
+          .where("loggedAt", "<", end),
+      ),
+      loadHabitDefinitions(transaction, uid, clock),
+      loadHabitLogs(transaction, uid, startOfWeekKey(day), day),
+      readRestDay(transaction, uid, day, clock),
+    ]);
 
   const completed = sessions.docs.filter(
     (doc) => doc.get("status") === COMPLETED_STATUS,
   );
+  const habits = habitsForDay(definitions, logs, day, clock.today);
 
   return {
     workoutSets: completed.reduce(
@@ -208,9 +241,14 @@ export const readDayActivity = async (
       (total, doc) => total + sessionCreditedSetsOf(doc.data()),
       0,
     ),
-    habitCompletion: completionOf(
-      habitsForDay(definitions, logs, day, clock.today),
+    workoutRatio: completed.reduce(
+      (total, doc) => total + sessionRatioOf(doc.data()),
+      0,
     ),
+    isRestDay,
+    habitCompletion: completionOf(habits),
+    habitEngaged: habits.some((entry) =>
+      entry.due && !isLimitEntry(entry) && progressOf(entry) > 0),
     mealCount: foods.size,
     waterMl: waters.docs.reduce(
       (total, doc) => total + numberOf(doc.get("amountMl")),

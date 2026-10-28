@@ -1,20 +1,20 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_opacity.dart';
-import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/core/guide/models/guide_step.dart';
 import 'package:floww/core/guide/providers/guide_controller.dart';
 import 'package:floww/core/guide/widgets/guide_card.dart';
-import 'package:floww/core/guide/widgets/guide_connector.dart';
 import 'package:floww/core/guide/widgets/guide_spotlight.dart';
+import 'package:floww/core/guide/widgets/guide_welcome.dart';
 import 'package:floww/navigation/widgets/app_bottom_nav_bar.dart';
 
 class GuideOverlay extends StatelessWidget {
@@ -27,11 +27,6 @@ class GuideOverlay extends StatelessWidget {
       HapticManager.selection();
     }
     guide.next();
-  }
-
-  void _back(GuideController guide) {
-    HapticManager.selection();
-    guide.back();
   }
 
   void _skip(GuideController guide) {
@@ -61,9 +56,7 @@ class GuideOverlay extends StatelessWidget {
               view: view,
               locate: guide.targetEntry,
               onNext: () => _next(guide, view),
-              onBack: () => _back(guide),
               onSkip: () => _skip(guide),
-              onUnavailable: guide.passUnavailableStep,
             )
           : const SizedBox.shrink(),
     );
@@ -78,17 +71,13 @@ class _GuideLayer extends StatefulWidget {
     required this.view,
     required this.locate,
     required this.onNext,
-    required this.onBack,
     required this.onSkip,
-    required this.onUnavailable,
   });
 
   final GuideViewState view;
   final GuideTargetEntry? Function(GuideTargetId id) locate;
   final VoidCallback onNext;
-  final VoidCallback onBack;
   final VoidCallback onSkip;
-  final VoidCallback onUnavailable;
 
   @override
   State<_GuideLayer> createState() => _GuideLayerState();
@@ -96,7 +85,8 @@ class _GuideLayer extends StatefulWidget {
 
 class _GuideLayerState extends State<_GuideLayer>
     with TickerProviderStateMixin {
-  static const double _cardGap = AppSpacing.xl4;
+  static const double _cardGap = AppSpacing.sm + GuideCard.caretHeight;
+  static const double _cardWidthFactor = 0.82;
 
   late final AnimationController _entrance = AnimationController(
     vsync: this,
@@ -108,23 +98,21 @@ class _GuideLayerState extends State<_GuideLayer>
     curve: AppMotion.guideEnterCurve,
   );
 
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: AppMotion.guidePulse,
-  )..repeat();
-
-  late final AnimationController _burst = AnimationController(
-    vsync: this,
-    duration: AppMotion.guideBurst,
-  );
-
-  late final Ticker _tracker = createTicker((_) => _track());
+  late final Ticker _tracker = createTicker(_track);
 
   final GlobalKey _cardKey = GlobalKey();
 
+  final List<_Spring> _holeSprings = List.generate(5, (_) => _Spring());
+  final _Spring _cardX = _Spring();
+  final _Spring _cardY = _Spring();
+
   GuideHole _hole = GuideHole.collapsed(Offset.zero);
+  _CardPlacement _placement = _CardPlacement.dock;
   GuideTargetEntry? _entry;
   Offset? _lastCenter;
+  Duration _lastTick = Duration.zero;
+  ScrollPosition? _scroll;
+  double? _scrollTo;
   double _cardHeight = 0;
   bool _ready = false;
   bool _hasLanded = false;
@@ -149,8 +137,6 @@ class _GuideLayerState extends State<_GuideLayer>
     _token++;
     _tracker.dispose();
     _entrance.dispose();
-    _pulse.dispose();
-    _burst.dispose();
     super.dispose();
   }
 
@@ -167,7 +153,6 @@ class _GuideLayerState extends State<_GuideLayer>
         await Future<void>.delayed(AppMotion.guideCardShrink);
         if (!_isCurrent(token)) return;
         _entry = null;
-        _track();
         await Future<void>.delayed(AppMotion.guideCardSettle);
       }
       if (!_isCurrent(token)) return;
@@ -175,27 +160,41 @@ class _GuideLayerState extends State<_GuideLayer>
       return;
     }
 
-    setState(() => _ready = false);
-    final shrink = Future<void>.delayed(AppMotion.guideCardShrink);
-    final entry = await _locate(step.targets, token);
-    await shrink;
-    if (!_isCurrent(token)) return;
-    if (entry == null) {
-      widget.onUnavailable();
+    final stay = _stayOn(step.targets);
+    if (stay != null) {
+      _entry = stay;
+      if (!_ready) _land();
       return;
     }
 
-    if (entry.context.mounted) {
-      await Scrollable.ensureVisible(
-        entry.context,
-        alignment: AppMotion.guideScrollAlignment,
-        duration: AppMotion.guideScroll,
-        curve: AppMotion.guideScrollCurve,
-      );
-    }
+    setState(() => _ready = false);
+    final shrink = Future<void>.delayed(AppMotion.guideCardShrink);
+    final entry = await _locate(step.targets, token);
     if (!_isCurrent(token)) return;
+    if (entry == null) {
+      _entry = null;
+      if (_hasLanded) await Future<void>.delayed(AppMotion.guideCardSettle);
+      if (!_isCurrent(token)) return;
+      _land();
+      return;
+    }
+
+    final reveal = _revealFor(entry);
+    _scroll = reveal?.position;
+    _scrollTo = reveal?.offset;
     _entry = entry;
-    _track();
+    await Future.wait([
+      shrink,
+      if (reveal != null)
+        reveal.position.animateTo(
+          reveal.offset,
+          duration: AppMotion.guideScroll,
+          curve: AppMotion.guideScrollCurve,
+        ),
+    ]);
+    if (!_isCurrent(token)) return;
+    _scroll = null;
+    _scrollTo = null;
     if (_hasLanded) await Future<void>.delayed(AppMotion.guideCardSettle);
     if (!_isCurrent(token)) return;
     _land();
@@ -208,10 +207,7 @@ class _GuideLayerState extends State<_GuideLayer>
       _hasLanded = true;
     });
     if (isFirst) _entrance.forward();
-    if (widget.view.step.targets.isNotEmpty) {
-      _burst.forward(from: 0);
-      if (!isFirst) HapticManager.soft();
-    }
+    if (!isFirst && widget.view.step.targets.isNotEmpty) HapticManager.soft();
   }
 
   Future<GuideTargetEntry?> _locate(List<GuideTargetId> ids, int token) async {
@@ -219,18 +215,53 @@ class _GuideLayerState extends State<_GuideLayer>
       final primaryOnly = i < AppMotion.guideLocateAttempts ~/ 2;
       final found = _firstMounted(primaryOnly ? ids.take(1) : ids);
       if (found != null) return found;
+      if (!primaryOnly && _onlyEmpty(ids)) return null;
       await Future<void>.delayed(AppMotion.guideLocatePoll);
       if (!_isCurrent(token)) return null;
     }
     return _scrollSearch(ids, token);
   }
 
+  ({ScrollPosition position, double offset})? _revealFor(
+    GuideTargetEntry entry,
+  ) {
+    if (!entry.context.mounted) return null;
+    final object = entry.context.findRenderObject();
+    final position = Scrollable.maybeOf(entry.context)?.position;
+    if (object == null || position == null) return null;
+    final viewport = RenderAbstractViewport.maybeOf(object);
+    if (viewport == null) return null;
+    final offset = viewport
+        .getOffsetToReveal(object, AppMotion.guideScrollAlignment)
+        .offset
+        .clamp(position.minScrollExtent, position.maxScrollExtent);
+    if (offset == position.pixels) return null;
+    return (position: position, offset: offset);
+  }
+
+  GuideTargetEntry? _stayOn(List<GuideTargetId> ids) {
+    final current = _entry;
+    if (current == null || !current.context.mounted) return null;
+    final found = _firstMounted(ids);
+    return found?.context == current.context ? found : null;
+  }
+
   GuideTargetEntry? _firstMounted(Iterable<GuideTargetId> ids) {
     for (final id in ids) {
       final entry = widget.locate(id);
-      if (entry != null) return entry;
+      if (entry != null && !_isEmpty(entry)) return entry;
     }
     return null;
+  }
+
+  bool _isEmpty(GuideTargetEntry entry) {
+    final box = entry.context.findRenderObject();
+    return box is RenderBox && box.hasSize && box.size.isEmpty;
+  }
+
+  bool _onlyEmpty(List<GuideTargetId> ids) {
+    final mounted = [for (final id in ids) ?widget.locate(id)];
+    return mounted.isNotEmpty && mounted.every(_isEmpty);
   }
 
   ScrollPosition? _sectionScroll() {
@@ -278,14 +309,57 @@ class _GuideLayerState extends State<_GuideLayer>
     return null;
   }
 
-  void _track() {
+  void _track(Duration elapsed) {
     if (!mounted) return;
-    final hole = _measure();
+    final dt = math.min(
+      (elapsed - _lastTick).inMicroseconds / Duration.microsecondsPerSecond,
+      AppMotion.guideSpringMaxStep,
+    );
+    _lastTick = elapsed;
+    final origin = _origin;
+    final size = origin?.size ?? MediaQuery.sizeOf(context);
+    final padding = MediaQuery.viewPaddingOf(context);
     final cardBox = _cardKey.currentContext?.findRenderObject();
     final cardHeight = cardBox is RenderBox && cardBox.hasSize
         ? cardBox.size.height
         : _cardHeight;
-    if (hole == _hole && cardHeight == _cardHeight) return;
+
+    final live = _liveHole(origin, size);
+    final liveValues = [
+      live.rect.left,
+      live.rect.top,
+      live.rect.right,
+      live.rect.bottom,
+      live.radius,
+    ];
+    var moved = false;
+    for (var i = 0; i < _holeSprings.length; i++) {
+      moved =
+          _holeSprings[i].follow(liveValues[i], dt, snap: !_hasLanded) || moved;
+    }
+    final hole = _clip(
+      GuideHole(
+        Rect.fromLTRB(
+          _holeSprings[0].value,
+          _holeSprings[1].value,
+          _holeSprings[2].value,
+          _holeSprings[3].value,
+        ),
+        _holeSprings[4].value,
+      ),
+      size,
+      padding,
+    );
+
+    final liveClipped = _clip(live, size, padding);
+    _placement = _placementFor(liveClipped, cardHeight, size, padding);
+    final cardWidth = size.width * _cardWidthFactor;
+    final targetX = _cardLeftFor(liveClipped, cardWidth, size);
+    final targetY = _cardTopFor(liveClipped, cardHeight, size);
+    moved = _cardX.follow(targetX, dt, snap: !_hasLanded) || moved;
+    moved = _cardY.follow(targetY, dt, snap: !_hasLanded) || moved;
+
+    if (!moved && hole == _hole && cardHeight == _cardHeight) return;
     setState(() {
       _hole = hole;
       _cardHeight = cardHeight;
@@ -305,39 +379,59 @@ class _GuideLayerState extends State<_GuideLayer>
     return topLeft & box.size;
   }
 
-  GuideHole _measure() {
-    final origin = _origin;
-    final hole = _targetHole(origin);
-    if (hole != null) {
-      _lastCenter = hole.rect.center;
-      return hole;
+  GuideHole _liveHole(RenderBox? origin, Size size) {
+    final entry = _entry;
+    final rect = entry == null || !entry.context.mounted
+        ? null
+        : _rectOf(
+            entry.context,
+            origin,
+          )?.inflate(entry.padding).shift(_pendingScroll);
+    if (entry != null && rect != null) {
+      _lastCenter = rect.center;
+      return GuideHole(rect, entry.radius + entry.padding);
     }
-    final size = origin?.size ?? MediaQuery.sizeOf(context);
     return GuideHole.collapsed(
       _lastCenter ?? Offset(size.width / 2, size.height),
     );
   }
 
-  GuideHole? _targetHole(RenderBox? origin) {
-    final entry = _entry;
-    if (entry == null || !entry.context.mounted) return null;
-    final rect = _rectOf(entry.context, origin)?.inflate(entry.padding);
-    if (rect == null) return null;
-    final padding = MediaQuery.viewPaddingOf(context);
-    final size = origin?.size ?? MediaQuery.sizeOf(context);
-    final clipped = Rect.fromLTRB(
-      math.max(rect.left, AppSpacing.xs),
-      math.max(rect.top, padding.top),
-      math.min(rect.right, size.width - AppSpacing.xs),
-      math.min(
-        rect.bottom,
-        size.height -
-            AppBottomNavBar.bottomInsetOf(context) -
-            AppBottomNavBar.height,
+  Offset get _pendingScroll {
+    final position = _scroll;
+    final destination = _scrollTo;
+    if (position == null || destination == null || !position.hasPixels) {
+      return Offset.zero;
+    }
+    final shift = position.pixels - destination;
+    return position.axis == Axis.vertical ? Offset(0, shift) : Offset(shift, 0);
+  }
+
+  double _floorOf(Size size) =>
+      size.height -
+      AppBottomNavBar.bottomInsetOf(context) -
+      AppBottomNavBar.height;
+
+  GuideHole _clip(GuideHole hole, Size size, EdgeInsets padding) {
+    final rect = hole.rect;
+    final top = math.max(rect.top, padding.top);
+    final bottom = math.min(rect.bottom, _floorOf(size));
+    if (bottom <= top) {
+      return GuideHole.collapsed(
+        Offset(
+          rect.center.dx,
+          rect.center.dy.clamp(padding.top, _floorOf(size)),
+        ),
+      );
+    }
+    return GuideHole(
+      Rect.fromLTRB(
+        math.max(rect.left, AppSpacing.xs),
+        top,
+        math.min(rect.right, size.width - AppSpacing.xs),
+        bottom,
       ),
+      hole.radius,
     );
-    if (clipped.height <= 0) return null;
-    return GuideHole(clipped, entry.radius + entry.padding);
   }
 
   void _handleTap(TapUpDetails details) {
@@ -345,54 +439,84 @@ class _GuideLayerState extends State<_GuideLayer>
     if (_hole.contains(details.localPosition)) widget.onNext();
   }
 
-  _CardPlacement _placementFor(Size size, EdgeInsets padding) {
-    if (_entry == null || !_hole.isVisible) return _CardPlacement.dock;
-    final needed = _cardHeight + _cardGap;
-    final navTop =
-        size.height -
-        AppBottomNavBar.bottomInsetOf(context) -
-        AppBottomNavBar.height;
-    final below = navTop - AppSpacing.xl - _hole.rect.bottom;
-    final above = _hole.rect.top - padding.top - AppSpacing.xl;
+  _CardPlacement _placementFor(
+    GuideHole hole,
+    double cardHeight,
+    Size size,
+    EdgeInsets padding,
+  ) {
+    if (_entry == null || !hole.isVisible) return _CardPlacement.dock;
+    final needed = cardHeight + _cardGap;
+    final below = _floorOf(size) - AppSpacing.xl - hole.rect.bottom;
+    final above = hole.rect.top - padding.top - AppSpacing.xl;
     if (below >= needed) return _CardPlacement.below;
     if (above >= needed) return _CardPlacement.above;
     return _CardPlacement.dock;
   }
 
-  double _cardTopFor(_CardPlacement placement, Size size, EdgeInsets padding) {
-    final rect = _hole.rect;
-    return switch (placement) {
-      _CardPlacement.below => rect.bottom + _cardGap,
-      _CardPlacement.above => rect.top - _cardGap - _cardHeight,
-      _CardPlacement.dock =>
-        size.height -
-            AppBottomNavBar.bottomInsetOf(context) -
-            AppBottomNavBar.height -
-            AppSpacing.xl -
-            _cardHeight,
+  double _cardLeftFor(GuideHole hole, double cardWidth, Size size) {
+    if (_placement == _CardPlacement.dock) return (size.width - cardWidth) / 2;
+    final horizontal = AppSpacing.xl;
+    return (hole.rect.center.dx - cardWidth / 2).clamp(
+      horizontal,
+      size.width - horizontal - cardWidth,
+    );
+  }
+
+  double _cardTopFor(GuideHole hole, double cardHeight, Size size) {
+    return switch (_placement) {
+      _CardPlacement.below => hole.rect.bottom + _cardGap,
+      _CardPlacement.above => hole.rect.top - _cardGap - cardHeight,
+      _CardPlacement.dock => _floorOf(size) - AppSpacing.xl - cardHeight,
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.view.step.hero) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            child: GuideSpotlight(
+              hole: _hole,
+              dim: AppOpacity.guideWelcomeScrim,
+            ),
+          ),
+          Center(
+            child: GuideWelcome(
+              view: widget.view,
+              onNext: widget.onNext,
+              onSkip: widget.onSkip,
+            ),
+          ),
+        ],
+      );
+    }
+
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.viewPaddingOf(context);
-    final placement = _placementFor(size, padding);
-    final rect = _hole.rect;
-    final horizontal = AppSpacing.xl;
-    final connectorX = (rect.center.dx - GuideConnector.width / 2).clamp(
-      horizontal + AppRadius.xl,
-      size.width - horizontal - AppRadius.xl - GuideConnector.width,
+    final placement = _placement;
+    final cardWidth = size.width * _cardWidthFactor;
+    final left = _cardX.value;
+    final caretInset = GuideCard.radius + GuideCard.caretWidth / 2;
+    final caretOffset = (_hole.rect.center.dx - left).clamp(
+      caretInset,
+      cardWidth - caretInset,
     );
 
     final card = KeyedSubtree(
       key: _cardKey,
       child: GuideCard(
         view: widget.view,
-        revealed: _ready,
         onNext: widget.onNext,
-        onBack: widget.onBack,
         onSkip: widget.onSkip,
+        caretOffset: caretOffset,
+        caret: switch (placement) {
+          _CardPlacement.below => GuideCaret.up,
+          _CardPlacement.above => GuideCaret.down,
+          _CardPlacement.dock => GuideCaret.none,
+        },
       ),
     );
 
@@ -402,46 +526,12 @@ class _GuideLayerState extends State<_GuideLayer>
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapUp: _handleTap,
-          child: GuideSpotlight(hole: _hole, pulse: _pulse, burst: _burst),
+          child: GuideSpotlight(hole: _hole),
         ),
-        TweenAnimationBuilder<double>(
-          key: ValueKey(_hasLanded),
-          tween: Tween(end: _cardTopFor(placement, size, padding)),
-          duration: AppMotion.guideCardTravel,
-          curve: AppMotion.guideCardTravelCurve,
-          builder: (context, top, child) => Stack(
-            fit: StackFit.expand,
-            children: [
-              if (placement == _CardPlacement.below)
-                Positioned(
-                  left: connectorX,
-                  top: rect.bottom,
-                  child: GuideConnector(
-                    length: math.max(0, top - rect.bottom),
-                    pointsUp: true,
-                    visible: _ready,
-                    flow: _pulse,
-                  ),
-                ),
-              if (placement == _CardPlacement.above)
-                Positioned(
-                  left: connectorX,
-                  top: top + _cardHeight,
-                  child: GuideConnector(
-                    length: math.max(0, rect.top - top - _cardHeight),
-                    pointsUp: false,
-                    visible: _ready,
-                    flow: _pulse,
-                  ),
-                ),
-              Positioned(
-                left: horizontal,
-                right: horizontal,
-                top: top,
-                child: child!,
-              ),
-            ],
-          ),
+        Positioned(
+          left: left,
+          top: _cardY.value,
+          width: cardWidth,
           child: Opacity(
             opacity: _hasLanded ? 1 : 0,
             child: FadeTransition(
@@ -470,6 +560,32 @@ class _GuideLayerState extends State<_GuideLayer>
         ),
       ],
     );
+  }
+}
+
+class _Spring {
+  double value = 0;
+  double velocity = 0;
+
+  bool follow(double target, double dt, {required bool snap}) {
+    if (snap || dt <= 0) {
+      final changed = value != target;
+      value = target;
+      velocity = 0;
+      return changed;
+    }
+    const omega = AppMotion.guideSpringOmega;
+    final offset = target - value;
+    if (offset.abs() < AppMotion.guideSpringRest &&
+        velocity.abs() < AppMotion.guideSpringRest) {
+      final changed = value != target;
+      value = target;
+      velocity = 0;
+      return changed;
+    }
+    velocity += (omega * omega * offset - 2 * omega * velocity) * dt;
+    value += velocity * dt;
+    return true;
   }
 }
 

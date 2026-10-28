@@ -199,7 +199,7 @@ class ProfileViewModel extends ChangeNotifier {
     const ProfileSettingItem(
       icon: Icons.explore_outlined,
       title: 'App Tour',
-      subtitle: 'Replay the guide for each tab',
+      subtitle: 'Replay the full app walkthrough',
       route: AppRouter.home,
       replaysGuide: true,
     ),

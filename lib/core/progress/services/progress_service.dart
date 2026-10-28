@@ -5,12 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/habit_day_log_entity.dart';
+import 'package:floww/config/entities/health_day_entity.dart';
 import 'package:floww/config/entities/progress_state_entity.dart';
 import 'package:floww/config/entities/weight_log_entity.dart';
 import 'package:floww/config/entities/workout_session_log_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/streams/combine_latest.dart';
+import 'package:floww/core/health/services/health_log_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
+import 'package:floww/core/workout/services/workout_program_service.dart';
 
 class ProgressException implements Exception {
   ProgressException(this.message);
@@ -26,6 +29,7 @@ class ProgressGoals {
     this.startWeightKg,
     this.targetWeightKg,
     this.flowBaseline,
+    this.sleepTargetHours,
   });
 
   static const empty = ProgressGoals();
@@ -34,16 +38,19 @@ class ProgressGoals {
     final profile = json['profile'] as Map<String, dynamic>?;
     final goals = json['goalsActivity'] as Map<String, dynamic>?;
     final blueprint = json['blueprint'] as Map<String, dynamic>?;
+    final targets = json['targetsPermissions'] as Map<String, dynamic>?;
     return ProgressGoals(
       startWeightKg: (profile?['weightKg'] as num?)?.toDouble(),
       targetWeightKg: (goals?['targetWeightKg'] as num?)?.toDouble(),
       flowBaseline: (blueprint?['flowScore'] as num?)?.round(),
+      sleepTargetHours: (targets?['sleepTargetHours'] as num?)?.toDouble(),
     );
   }
 
   final double? startWeightKg;
   final double? targetWeightKg;
   final int? flowBaseline;
+  final double? sleepTargetHours;
 }
 
 class ProgressRecords {
@@ -55,6 +62,8 @@ class ProgressRecords {
     required this.nutrition,
     required this.state,
     required this.goals,
+    this.healthDays = const [],
+    this.restDays = const {},
   });
 
   static const empty = ProgressRecords(
@@ -74,11 +83,19 @@ class ProgressRecords {
   final NutritionLogs nutrition;
   final ProgressState state;
   final ProgressGoals goals;
+  final List<HealthDayLog> healthDays;
+  final Set<String> restDays;
 }
 
 class ProgressService {
-  ProgressService({NutritionLogService? nutritionLogService}) {
+  ProgressService({
+    NutritionLogService? nutritionLogService,
+    HealthLogService? healthLogService,
+    WorkoutProgramService? programService,
+  }) {
     _nutritionLogService = nutritionLogService;
+    _healthLogService = healthLogService;
+    _programService = programService;
   }
 
   static const int historyDays = 180;
@@ -91,9 +108,16 @@ class ProgressService {
   static const String _dateField = 'date';
 
   NutritionLogService? _nutritionLogService;
+  HealthLogService? _healthLogService;
+  WorkoutProgramService? _programService;
 
   NutritionLogService get _nutritionLogs =>
       _nutritionLogService ??= NutritionLogService();
+
+  HealthLogService get _healthLogs => _healthLogService ??= HealthLogService();
+
+  WorkoutProgramService get _programs =>
+      _programService ??= WorkoutProgramService();
 
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
@@ -167,6 +191,12 @@ class ProgressService {
       }),
       _stateStream(uid),
       _goalsStream(uid),
+      _healthLogs.watchDays(habitStart).handleError((Object error) {
+        debugPrint('Progress health logs unavailable: $error');
+      }),
+      _programs.watchRestDays(habitStart, now).handleError((Object error) {
+        debugPrint('Progress rest days unavailable: $error');
+      }),
     ]).map(
       (values) => ProgressRecords(
         weights: values[0]! as List<WeightLog>,
@@ -176,6 +206,8 @@ class ProgressService {
         nutrition: values[4]! as NutritionLogs,
         state: values[5]! as ProgressState,
         goals: values[6]! as ProgressGoals,
+        healthDays: values[7]! as List<HealthDayLog>,
+        restDays: values[8]! as Set<String>,
       ),
     );
   }

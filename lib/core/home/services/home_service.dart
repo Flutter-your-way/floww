@@ -18,6 +18,7 @@ import 'package:floww/core/profile/services/profile_service.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
 import 'package:floww/core/settings/services/settings_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
+import 'package:floww/core/workout/services/workout_program_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 
 class HomeRecords {
@@ -30,6 +31,7 @@ class HomeRecords {
     required this.healthDays,
     required this.flowHistory,
     this.flowModeOverride,
+    this.isRestDay = false,
   });
 
   static const empty = HomeRecords(
@@ -50,6 +52,7 @@ class HomeRecords {
   final List<HealthDayLog> healthDays;
   final List<DailyFlowEntry> flowHistory;
   final AppThemeMode? flowModeOverride;
+  final bool isRestDay;
 }
 
 class HomeService {
@@ -62,7 +65,9 @@ class HomeService {
     this._healthLogService,
     this._progressService, {
     SettingsService? settingsService,
-  }) : _settingsService = settingsService ?? SettingsService();
+    WorkoutProgramService? programService,
+  }) : _settingsService = settingsService ?? SettingsService(),
+       _programService = programService ?? WorkoutProgramService();
 
   static const int healthHistoryDays = 30;
   static const int flowHistoryDays = 90;
@@ -75,6 +80,7 @@ class HomeService {
   final HealthLogService _healthLogService;
   final ProgressService _progressService;
   final SettingsService _settingsService;
+  final WorkoutProgramService _programService;
 
   Stream<HomeRecords> watchRecords(DateTime date) {
     final day = AppDateUtils.dateOnly(date);
@@ -116,6 +122,13 @@ class HomeService {
         null,
         'flow mode override',
       ),
+      _guarded<bool>(
+        _programService
+            .watchRestDays(day, day)
+            .map((days) => days.contains(AppDateUtils.dateKey(day))),
+        false,
+        'rest day',
+      ),
     ]).map(
       (values) => HomeRecords(
         account: values[0]! as ProfileAccount,
@@ -126,6 +139,7 @@ class HomeService {
         healthDays: values[5]! as List<HealthDayLog>,
         flowHistory: values[6]! as List<DailyFlowEntry>,
         flowModeOverride: values[7] as AppThemeMode?,
+        isRestDay: values[8]! as bool,
       ),
     );
   }

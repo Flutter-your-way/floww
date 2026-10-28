@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-enum GuideSection { home, nutrition, workout, habits, progress }
+enum GuideSection { intro, home, nutrition, workout, habits, progress }
 
 enum GuideTargetId {
   homeFlowScore,
@@ -17,7 +17,10 @@ enum GuideTargetId {
   workoutDate,
   workoutTabs,
   workoutAgenda,
+  workoutShift,
   workoutOverview,
+  workoutToday,
+  workoutEmpty,
   workoutStart,
   habitsDate,
   habitsScore,
@@ -29,6 +32,9 @@ enum GuideTargetId {
   progressFlowScore,
   progressWeight,
   progressAnalytics,
+  progressVolume,
+  progressHabits,
+  progressRecords,
   progressInsights,
 }
 
@@ -40,6 +46,9 @@ class GuideStep {
     required this.body,
     this.highlights = const [],
     this.targets = const [],
+    this.hero = false,
+    this.optional = false,
+    this.action,
   });
 
   final IconData icon;
@@ -47,6 +56,9 @@ class GuideStep {
   final String body;
   final List<String> highlights;
   final List<GuideTargetId> targets;
+  final bool hero;
+  final bool optional;
+  final String? action;
 }
 
 @immutable
@@ -80,12 +92,16 @@ class GuideFlow {
     required this.label,
     required this.steps,
     required this.finishLabel,
+    this.host,
   });
 
   final GuideSection section;
   final String label;
   final List<GuideStep> steps;
   final String finishLabel;
+  final GuideSection? host;
+
+  GuideSection get hostSection => host ?? section;
 }
 
 @immutable

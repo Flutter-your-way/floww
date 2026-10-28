@@ -91,6 +91,8 @@ class HabitDayLog {
 
   Iterable<HabitLogEntry> get dueEntries => entries.where((e) => e.due);
 
+  bool get isEngaged => dueEntries.any((e) => !e.isLimit && e.progress > 0);
+
   double get completion {
     final due = dueEntries.toList();
     if (due.isEmpty) return 0;

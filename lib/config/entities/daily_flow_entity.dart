@@ -8,6 +8,8 @@ class DailyFlowEntry {
     required this.habitScore,
     required this.nutritionScore,
     this.readinessScore = 0,
+    this.isActive,
+    this.isRestDay = false,
   });
 
   const DailyFlowEntry.empty(this.date)
@@ -15,7 +17,9 @@ class DailyFlowEntry {
       readinessScore = 0,
       workoutScore = 0,
       habitScore = 0,
-      nutritionScore = 0;
+      nutritionScore = 0,
+      isActive = null,
+      isRestDay = false;
 
   factory DailyFlowEntry.fromJson(Map<String, dynamic> json) => DailyFlowEntry(
     date: DateTime.parse(json['date'] as String),
@@ -24,6 +28,8 @@ class DailyFlowEntry {
     habitScore: (json['habitScore'] as num? ?? 0).toInt(),
     nutritionScore: (json['nutritionScore'] as num? ?? 0).toInt(),
     readinessScore: (json['readinessScore'] as num? ?? 0).toInt(),
+    isActive: json['isActive'] as bool?,
+    isRestDay: json['isRestDay'] as bool? ?? false,
   );
 
   final DateTime date;
@@ -32,16 +38,20 @@ class DailyFlowEntry {
   final int habitScore;
   final int nutritionScore;
   final int readinessScore;
+  final bool? isActive;
+  final bool isRestDay;
 
   bool get hasActivity =>
-      workoutScore > 0 || habitScore > 0 || nutritionScore > 0;
+      isActive ?? (workoutScore > 0 || habitScore > 0 || nutritionScore > 0);
 
   bool sameValuesAs(DailyFlowEntry other) =>
       score == other.score &&
       workoutScore == other.workoutScore &&
       habitScore == other.habitScore &&
       nutritionScore == other.nutritionScore &&
-      readinessScore == other.readinessScore;
+      readinessScore == other.readinessScore &&
+      isActive == other.isActive &&
+      isRestDay == other.isRestDay;
 
   Map<String, dynamic> toJson() => {
     'date': AppDateUtils.dateKey(date),
@@ -50,6 +60,8 @@ class DailyFlowEntry {
     'habitScore': habitScore,
     'nutritionScore': nutritionScore,
     'readinessScore': readinessScore,
+    if (isActive != null) 'isActive': isActive,
+    'isRestDay': isRestDay,
     'updatedAt': AppDateUtils.isoKey(DateTime.now()),
   };
 }

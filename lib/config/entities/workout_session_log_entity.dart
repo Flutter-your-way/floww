@@ -19,7 +19,9 @@ class WorkoutSessionLog {
   }) : date = date ?? AppDateUtils.dateOnly(completedAt),
        creditedSets =
            creditedSets ??
-           (plannedSets > 0 && totalSets > plannedSets ? plannedSets : totalSets)
+           (plannedSets > 0 && totalSets > plannedSets
+                   ? plannedSets
+                   : totalSets)
                .toDouble();
 
   factory WorkoutSessionLog.fromJson(Map<String, dynamic> json) {
@@ -69,9 +71,14 @@ class WorkoutSessionLog {
   }
 
   static double? _creditedSetsOf(Map<String, dynamic> json) {
-    final entries = WorkoutPlanEntity.entriesOf(json['exercises']);
-    if (entries.isNotEmpty) return WorkoutPlanEntity.creditedSetsOf(entries);
-    return (json['creditedSets'] as num?)?.toDouble();
+    final stored = (json['creditedSets'] as num?)?.toDouble();
+    try {
+      final entries = WorkoutPlanEntity.entriesOf(json['exercises']);
+      if (entries.isNotEmpty) return WorkoutPlanEntity.creditedSetsOf(entries);
+    } catch (_) {
+      return stored;
+    }
+    return stored;
   }
 
   static WorkoutSessionStatus _statusOf(String? value) =>

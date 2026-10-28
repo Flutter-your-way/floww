@@ -135,18 +135,21 @@ class ProgressView extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: AppSpacing.lg),
-                GuideTarget(
-                  id: GuideTargetId.progressAnalytics,
-                  child: PremiumGate(
-                    capability: PremiumCapability.advancedAnalytics,
-                    placeholder: const SizedBox.shrink(),
-                    locked: const PremiumLockedCard(
+                PremiumGate(
+                  capability: PremiumCapability.advancedAnalytics,
+                  placeholder: const SizedBox.shrink(),
+                  locked: const GuideTarget(
+                    id: GuideTargetId.progressAnalytics,
+                    child: PremiumLockedCard(
                       capability: PremiumCapability.advancedAnalytics,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        WorkoutVolumeCard(
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      GuideTarget(
+                        id: GuideTargetId.progressVolume,
+                        child: WorkoutVolumeCard(
                           title: viewModel.volumeTitle,
                           rangeLabel: viewModel.weeklyRangeLabel,
                           volume: viewModel.volume,
@@ -155,8 +158,11 @@ class ProgressView extends StatelessWidget {
                           emptyMessage: viewModel.volumeEmptyMessage,
                           emptyButtonLabel: viewModel.logWorkoutLabel,
                         ),
-                        SizedBox(height: AppSpacing.lg),
-                        HabitConsistencyCard(
+                      ),
+                      SizedBox(height: AppSpacing.lg),
+                      GuideTarget(
+                        id: GuideTargetId.progressHabits,
+                        child: HabitConsistencyCard(
                           title: viewModel.habitsTitle,
                           items: viewModel.habits,
                           strongestLabel: viewModel.strongestHabitLabel,
@@ -164,15 +170,18 @@ class ProgressView extends StatelessWidget {
                           strongestHabit: viewModel.strongestHabit,
                           weakestHabit: viewModel.weakestHabit,
                         ),
-                        if (viewModel.showRecords) ...[
-                          SizedBox(height: AppSpacing.lg),
-                          PersonalRecordsCard(
+                      ),
+                      if (viewModel.showRecords) ...[
+                        SizedBox(height: AppSpacing.lg),
+                        GuideTarget(
+                          id: GuideTargetId.progressRecords,
+                          child: PersonalRecordsCard(
                             title: viewModel.recordsTitle,
                             records: viewModel.records,
                           ),
-                        ],
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
                 SizedBox(height: AppSpacing.lg),

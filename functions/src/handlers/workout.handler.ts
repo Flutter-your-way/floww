@@ -36,9 +36,11 @@ import {
   DayActivity,
   flowDocOf,
   flowEntryOf,
+  ratioOf,
   readDayActivity,
   sessionCreditedSetsOf,
   sessionPlannedSetsOf,
+  sessionRatioOf,
 } from "../helpers/flow.score.helper";
 import {readDayReadiness} from "../helpers/flow.readiness.helper";
 import {flowDoc} from "../helpers/flow.sync.helper";
@@ -133,6 +135,10 @@ const withoutSession = (
       0,
       activity.workoutCreditedSets - sessionCreditedSetsOf(session),
     ),
+    workoutRatio: Math.max(
+      0,
+      activity.workoutRatio - sessionRatioOf(session),
+    ),
     sessionIds: activity.sessionIds.filter((id) => id !== sessionId),
   };
 };
@@ -175,6 +181,8 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
       workoutSets: before.workoutSets + totals.totalSets,
       workoutPlannedSets: before.workoutPlannedSets + plannedSets,
       workoutCreditedSets: before.workoutCreditedSets + creditedSets,
+      workoutRatio: before.workoutRatio +
+        ratioOf(plannedSets, creditedSets, totals.totalSets),
     }, readiness);
 
     const heartRate = body.heartRate;

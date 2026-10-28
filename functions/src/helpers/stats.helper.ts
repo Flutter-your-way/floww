@@ -29,31 +29,31 @@ export interface FlowStats {
 export const statsDoc = (uid: string) =>
   userCollection(uid, USER_COLLECTIONS.stats).doc(STATS_DOC);
 
-const currentStreakOf = (
-  scores: Map<string, number>,
+export type StreakDay = "active" | "rest";
+
+export const currentStreakOf = (
+  days: Map<string, StreakDay>,
   today: string,
 ): number => {
-  let cursor = (scores.get(today) ?? 0) > 0 ? today : addDaysToKey(today, -1);
+  let cursor = days.get(today) === "active" ?
+    today :
+    addDaysToKey(today, -1);
   let streak = 0;
-  while ((scores.get(cursor) ?? 0) > 0) {
-    streak++;
+  for (let kind = days.get(cursor); kind !== undefined;
+    kind = days.get(cursor)) {
+    if (kind === "active") streak++;
     cursor = addDaysToKey(cursor, -1);
   }
   return streak;
 };
 
-const longestStreakOf = (scores: Map<string, number>): number => {
-  const days = [...scores.entries()]
-    .filter(([, score]) => score > 0)
-    .map(([day]) => day)
-    .sort();
+export const longestStreakOf = (days: Map<string, StreakDay>): number => {
   let longest = 0;
   let running = 0;
   let previous: string | null = null;
-  for (const day of days) {
-    running = previous !== null && daysBetweenKeys(previous, day) === 1 ?
-      running + 1 :
-      1;
+  for (const day of [...days.keys()].sort()) {
+    if (previous === null || daysBetweenKeys(previous, day) !== 1) running = 0;
+    if (days.get(day) === "active") running++;
     longest = Math.max(longest, running);
     previous = day;
   }
@@ -73,15 +73,24 @@ export const refreshFlowStats = async (
   ]);
 
   const scores = new Map<string, number>();
+  const streakDays = new Map<string, StreakDay>();
   let todayScore = 0;
   for (const doc of history.docs) {
     const date = doc.get("date");
     if (typeof date !== "string" || date > clock.today) continue;
     if (date === clock.today) todayScore = numberOf(doc.get("score"));
-    const hasActivity = numberOf(doc.get("workoutScore")) > 0 ||
-      numberOf(doc.get("habitScore")) > 0 ||
-      numberOf(doc.get("nutritionScore")) > 0;
+    const isActive = doc.get("isActive");
+    const hasActivity = typeof isActive === "boolean" ?
+      isActive :
+      numberOf(doc.get("workoutScore")) > 0 ||
+        numberOf(doc.get("habitScore")) > 0 ||
+        numberOf(doc.get("nutritionScore")) > 0;
     if (hasActivity) scores.set(date, numberOf(doc.get("score")));
+    if (hasActivity) {
+      streakDays.set(date, "active");
+    } else if (doc.get("isRestDay") === true) {
+      streakDays.set(date, "rest");
+    }
   }
 
   const weekFrom = addDaysToKey(clock.today, -(WEEK_DAYS - 1));
@@ -103,9 +112,9 @@ export const refreshFlowStats = async (
   }
 
   const stats: FlowStats = {
-    currentStreak: currentStreakOf(scores, clock.today),
+    currentStreak: currentStreakOf(streakDays, clock.today),
     longestStreak: Math.max(
-      longestStreakOf(scores),
+      longestStreakOf(streakDays),
       numberOf(stored.get("longestStreak")),
     ),
     weeklyAverage: weekDays === 0 ? 0 : Math.round(weekTotal / weekDays),

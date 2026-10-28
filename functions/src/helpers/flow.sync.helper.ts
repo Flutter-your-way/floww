@@ -22,6 +22,7 @@ export const flowDoc = (uid: string, day: string) =>
 export const recomputeDailyFlow = async (
   uid: string,
   day: string,
+  restDaysOnly = false,
 ): Promise<{entry: FlowEntry; clock: UserClock} | null> =>
   firestore.runTransaction(async (transaction) => {
     const user = await loadActiveUser(uid, transaction);
@@ -38,7 +39,7 @@ export const recomputeDailyFlow = async (
 
     const shouldWrite = stored.exists ?
       !sameFlowValues(stored.data(), entry) :
-      entry.score > 0;
+      restDaysOnly ? activity.isRestDay : entry.score > 0;
     if (shouldWrite) transaction.set(ref, flowDocOf(entry));
 
     return {entry, clock};
@@ -46,6 +47,7 @@ export const recomputeDailyFlow = async (
 
 export interface SyncOptions {
   autoHabits?: boolean;
+  restDaysOnly?: boolean;
 }
 
 export const syncActivityDays = async (
@@ -57,7 +59,11 @@ export const syncActivityDays = async (
   for (const day of new Set(days)) {
     try {
       if (options.autoHabits) await syncAutoHabits(uid, day);
-      const result = await recomputeDailyFlow(uid, day);
+      const result = await recomputeDailyFlow(
+        uid,
+        day,
+        options.restDaysOnly ?? false,
+      );
       if (result) clock = result.clock;
     } catch (error) {
       logger.error("syncActivityDays: day sync failed", {uid, day, error});

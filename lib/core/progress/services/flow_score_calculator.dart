@@ -7,18 +7,42 @@ class WorkoutCredit {
     required this.creditedSets,
     required this.plannedSets,
     required this.loggedSets,
+    required this.sessionRatio,
+    this.isRestDay = false,
   });
+
+  factory WorkoutCredit.session({
+    required double creditedSets,
+    required int plannedSets,
+    required int loggedSets,
+  }) => WorkoutCredit(
+    creditedSets: creditedSets,
+    plannedSets: plannedSets,
+    loggedSets: loggedSets,
+    sessionRatio: plannedSets > 0
+        ? creditedSets / plannedSets
+        : loggedSets / FlowScoreCalculator.targetSetsPerSession,
+  );
 
   static const WorkoutCredit none = WorkoutCredit(
     creditedSets: 0,
     plannedSets: 0,
     loggedSets: 0,
+    sessionRatio: 0,
+  );
+
+  static const WorkoutCredit restDay = WorkoutCredit(
+    creditedSets: 0,
+    plannedSets: 0,
+    loggedSets: 0,
+    sessionRatio: 0,
+    isRestDay: true,
   );
 
   static WorkoutCredit ofSessions(Iterable<WorkoutSessionEntity> sessions) {
     var credit = none;
     for (final session in sessions) {
-      credit += WorkoutCredit(
+      credit += WorkoutCredit.session(
         creditedSets: session.creditedSets,
         plannedSets: session.plannedSets,
         loggedSets: session.totalSets,
@@ -30,7 +54,7 @@ class WorkoutCredit {
   static WorkoutCredit ofLogs(Iterable<WorkoutSessionLog> sessions) {
     var credit = none;
     for (final session in sessions) {
-      credit += WorkoutCredit(
+      credit += WorkoutCredit.session(
         creditedSets: session.creditedSets,
         plannedSets: session.plannedSets,
         loggedSets: session.totalSets,
@@ -42,22 +66,24 @@ class WorkoutCredit {
   final double creditedSets;
   final int plannedSets;
   final int loggedSets;
+  final double sessionRatio;
+  final bool isRestDay;
 
   bool get hasPlan => plannedSets > 0;
 
   int get target =>
       hasPlan ? plannedSets : FlowScoreCalculator.targetSetsPerSession;
 
-  int get done => hasPlan ? creditedSets.floor() : loggedSets;
+  double get done => hasPlan ? creditedSets : loggedSets.toDouble();
 
-  double get ratio => hasPlan
-      ? creditedSets / plannedSets
-      : loggedSets / FlowScoreCalculator.targetSetsPerSession;
+  double get ratio => sessionRatio + (isRestDay ? 1 : 0);
 
   WorkoutCredit operator +(WorkoutCredit other) => WorkoutCredit(
     creditedSets: creditedSets + other.creditedSets,
     plannedSets: plannedSets + other.plannedSets,
     loggedSets: loggedSets + other.loggedSets,
+    sessionRatio: sessionRatio + other.sessionRatio,
+    isRestDay: isRestDay || other.isRestDay,
   );
 }
 
@@ -69,6 +95,7 @@ class FlowScoreInputs {
     required this.mealCount,
     required this.waterMl,
     this.readinessScore = 0,
+    this.habitEngaged = false,
   });
 
   final DateTime date;
@@ -77,6 +104,7 @@ class FlowScoreInputs {
   final int mealCount;
   final double waterMl;
   final int readinessScore;
+  final bool habitEngaged;
 }
 
 class FlowScoreCalculator {
@@ -97,6 +125,9 @@ class FlowScoreCalculator {
     date: inputs.date,
     readiness: inputs.readinessScore,
     workout: workoutPercentOf(inputs.workout),
+    trained: _percent(inputs.workout.sessionRatio),
+    habitEngaged: inputs.habitEngaged,
+    isRestDay: inputs.workout.isRestDay,
     habit: _percent(inputs.habitCompletion),
     nutrition: _percent(
       (inputs.mealCount / targetMealsPerDay).clamp(0.0, 1.0) *
@@ -111,6 +142,9 @@ class FlowScoreCalculator {
         date: entry.date,
         readiness: entry.readinessScore,
         workout: workoutPercentOf(workout),
+        trained: _percent(workout.sessionRatio),
+        habitEngaged: entry.isActive ?? entry.habitScore > 0,
+        isRestDay: workout.isRestDay,
         habit: entry.habitScore.toDouble(),
         nutrition: entry.nutritionScore.toDouble(),
       );
@@ -125,13 +159,19 @@ class FlowScoreCalculator {
     required DateTime date,
     required int readiness,
     required double workout,
+    required double trained,
+    required bool habitEngaged,
+    required bool isRestDay,
     required double habit,
     required double nutrition,
   }) {
+    final isActive =
+        trained.round() > 0 || nutrition.round() > 0 || habitEngaged;
+    final habitScore = isActive ? habit.round() : 0;
     final score =
         pointsOf(workoutPoints, workout.round()) +
         pointsOf(nutritionPoints, nutrition.round()) +
-        pointsOf(habitPoints, habit.round()) +
+        pointsOf(habitPoints, habitScore) +
         pointsOf(recoveryPoints, readiness);
 
     return DailyFlowEntry(
@@ -139,8 +179,10 @@ class FlowScoreCalculator {
       score: score.clamp(0, 100),
       readinessScore: readiness,
       workoutScore: workout.round(),
-      habitScore: habit.round(),
+      habitScore: habitScore,
       nutritionScore: nutrition.round(),
+      isActive: isActive,
+      isRestDay: isRestDay,
     );
   }
 

@@ -439,24 +439,29 @@ class WorkoutView extends StatelessWidget {
                                         padding: EdgeInsets.only(
                                           bottom: AppSpacing.lg,
                                         ),
-                                        child: PremiumGate(
-                                          capability:
-                                              PremiumCapability.adaptiveEngine,
-                                          placeholder: const SizedBox.shrink(),
-                                          locked: PremiumLockedCard(
+                                        child: GuideTarget(
+                                          id: GuideTargetId.workoutShift,
+                                          child: PremiumGate(
                                             capability: PremiumCapability
                                                 .adaptiveEngine,
-                                            title: shiftOffer.title,
-                                          ),
-                                          child: WorkoutShiftCard(
-                                            title: shiftOffer.title,
-                                            message: shiftOffer.message,
-                                            actionLabel: shiftOffer.actionLabel,
-                                            isLoading: viewModel.isShifting,
-                                            onAction: () {
-                                              HapticManager.medium();
-                                              viewModel.applyShift();
-                                            },
+                                            placeholder:
+                                                const SizedBox.shrink(),
+                                            locked: PremiumLockedCard(
+                                              capability: PremiumCapability
+                                                  .adaptiveEngine,
+                                              title: shiftOffer.title,
+                                            ),
+                                            child: WorkoutShiftCard(
+                                              title: shiftOffer.title,
+                                              message: shiftOffer.message,
+                                              actionLabel:
+                                                  shiftOffer.actionLabel,
+                                              isLoading: viewModel.isShifting,
+                                              onAction: () {
+                                                HapticManager.medium();
+                                                viewModel.applyShift();
+                                              },
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -577,12 +582,15 @@ class WorkoutView extends StatelessWidget {
                                 trigger: revealTrigger,
                                 appearOnMount: true,
                                 child: viewModel.showEmptyState
-                                    ? WorkoutEmptyStateCard(
-                                        icon: viewModel.emptyState.icon,
-                                        iconAsset:
-                                            viewModel.emptyState.iconAsset,
-                                        title: viewModel.emptyState.title,
-                                        message: viewModel.emptyState.message,
+                                    ? GuideTarget(
+                                        id: GuideTargetId.workoutEmpty,
+                                        child: WorkoutEmptyStateCard(
+                                          icon: viewModel.emptyState.icon,
+                                          iconAsset:
+                                              viewModel.emptyState.iconAsset,
+                                          title: viewModel.emptyState.title,
+                                          message: viewModel.emptyState.message,
+                                        ),
                                       )
                                     : null,
                               ),
@@ -596,11 +604,14 @@ class WorkoutView extends StatelessWidget {
                                         padding: EdgeInsets.only(
                                           top: AppSpacing.lg,
                                         ),
-                                        child: SuggestedWorkoutCard(
-                                          title: viewModel.suggestionTitle,
-                                          suggestion: suggestion,
-                                          onStartWorkout: () =>
-                                              _startWorkout(viewModel),
+                                        child: GuideTarget(
+                                          id: GuideTargetId.workoutToday,
+                                          child: SuggestedWorkoutCard(
+                                            title: viewModel.suggestionTitle,
+                                            suggestion: suggestion,
+                                            onStartWorkout: () =>
+                                                _startWorkout(viewModel),
+                                          ),
                                         ),
                                       )
                                     : null,

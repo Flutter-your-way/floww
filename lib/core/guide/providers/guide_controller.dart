@@ -17,6 +17,7 @@ class GuideController extends ChangeNotifier {
   int _session = 0;
   GuideSection _current = GuideSection.home;
   GuideFlow? _flow;
+  List<GuideStep> _steps = const [];
   int _index = 0;
   int _direction = 1;
   Timer? _pending;
@@ -39,18 +40,23 @@ class GuideController extends ChangeNotifier {
   GuideFlow? get flow => _flow;
   bool get isActive => _flow != null;
   int get stepIndex => _index;
-  int get stepCount => _flow?.steps.length ?? 0;
+  int get stepCount => _steps.length;
   int get direction => _direction;
   bool get isFirstStep => _index == 0;
   bool get isLastStep => _index >= stepCount - 1;
 
   GuideStep? get step {
-    final flow = _flow;
-    if (flow == null) return null;
-    return flow.steps[_index];
+    if (_flow == null || _steps.isEmpty) return null;
+    return _steps[_index];
   }
 
-  String get nextLabel => isLastStep ? (_flow?.finishLabel ?? '') : 'Next';
+  String get nextLabel {
+    final action = step?.action;
+    if (action != null) return action;
+    if (!isLastStep) return 'Next';
+    return _flow?.finishLabel ?? '';
+  }
+
   String get skipLabel => 'Skip';
 
   GuideViewState? get view {
@@ -109,6 +115,7 @@ class GuideController extends ChangeNotifier {
 
   void next() {
     if (!isActive) return;
+    _refreshSteps();
     if (isLastStep) {
       _complete(chain: true);
       return;
@@ -118,43 +125,38 @@ class GuideController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void back() {
-    if (!isActive || isFirstStep) return;
-    _index--;
-    _direction = -1;
-    notifyListeners();
-  }
-
-  void passUnavailableStep() {
-    if (!isActive) return;
-    if (_direction < 0 && !isFirstStep) {
-      back();
-      return;
-    }
-    next();
-  }
-
   void skip() {
-    if (!isActive) return;
+    final flow = _flow;
+    if (flow == null) return;
+    _seen = {..._seen, flow.hostSection};
     _complete(chain: false);
   }
 
   GuideSection? get _due {
+    final welcome = GuideContent.intro;
+    if (!_seen.contains(welcome.section) && _current == welcome.hostSection) {
+      return welcome.section;
+    }
     if (!_seen.contains(_current)) return _current;
     return null;
   }
 
   void _queue(Duration delay) {
     _pending?.cancel();
-    if (_due == null) return;
+    final section = _due;
+    if (section == null) return;
+    if (GuideContent.flowFor(section).hostSection != _current) return;
     _pending = Timer(delay, _openDue);
   }
 
   void _openDue() {
     final section = _due;
     if (!_ready || isActive || section == null) return;
+    if (GuideContent.flowFor(section).hostSection != _current) return;
     _flow = GuideContent.flowFor(section);
+    _steps = const [];
     _index = 0;
+    _refreshSteps();
     _direction = 1;
     notifyListeners();
   }
@@ -169,8 +171,29 @@ class GuideController extends ChangeNotifier {
     if (chain) _queue(AppMotion.guideSectionDelay);
   }
 
+  void _refreshSteps() {
+    final flow = _flow;
+    if (flow == null) return;
+    final current = step;
+    final start = current == null ? 0 : flow.steps.indexOf(current) + 1;
+    _steps = [
+      ..._steps.take(current == null ? 0 : _index + 1),
+      for (final next in flow.steps.skip(start))
+        if (!next.optional || next.targets.any(_isAvailable)) next,
+    ];
+  }
+
+  bool _isAvailable(GuideTargetId id) {
+    final entry = targetEntry(id);
+    if (entry == null) return false;
+    final box = entry.context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return true;
+    return !box.size.isEmpty;
+  }
+
   void _closeSilently() {
     _flow = null;
+    _steps = const [];
     _index = 0;
     _direction = 1;
   }

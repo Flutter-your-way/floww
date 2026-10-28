@@ -14,6 +14,7 @@ import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
 import 'package:floww/core/recovery/services/muscle_recovery_service.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
+import 'package:floww/core/progress/services/flow_streak.dart';
 
 class AchievementsRecords {
   const AchievementsRecords({
@@ -219,38 +220,13 @@ class AchievementsService {
   static Map<String, DailyFlowEntry> flowByDay(List<DailyFlowEntry> history) =>
       {for (final entry in history) AppDateUtils.dateKey(entry.date): entry};
 
-  static int currentStreakOf(Map<String, DailyFlowEntry> flow, DateTime today) {
-    var cursor = today;
-    if (!(flow[AppDateUtils.dateKey(cursor)]?.hasActivity ?? false)) {
-      cursor = AppDateUtils.addDays(cursor, -1);
-    }
-    var streak = 0;
-    while (flow[AppDateUtils.dateKey(cursor)]?.hasActivity ?? false) {
-      streak++;
-      cursor = AppDateUtils.addDays(cursor, -1);
-    }
-    return streak;
-  }
+  static int currentStreakOf(
+    Map<String, DailyFlowEntry> flow,
+    DateTime today,
+  ) => FlowStreak.currentOf(flow, today);
 
-  static int longestStreakOf(Map<String, DailyFlowEntry> flow) {
-    final days =
-        flow.values
-            .where((entry) => entry.hasActivity)
-            .map((entry) => entry.date)
-            .toList()
-          ..sort();
-    var longest = 0;
-    var running = 0;
-    DateTime? previous;
-    for (final day in days) {
-      running = previous != null && AppDateUtils.daysBetween(previous, day) == 1
-          ? running + 1
-          : 1;
-      if (running > longest) longest = running;
-      previous = day;
-    }
-    return longest;
-  }
+  static int longestStreakOf(Map<String, DailyFlowEntry> flow) =>
+      FlowStreak.longestOf(flow);
 
   StreakDay _streakDayOf(
     Map<String, DailyFlowEntry> flow,

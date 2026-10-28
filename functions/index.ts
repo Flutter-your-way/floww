@@ -50,6 +50,7 @@ export {
 } from "./src/triggers/wave.trigger";
 export {expireSubscriptions} from "./src/scheduled/subscriptions.schedule";
 export {sendScheduledReminders} from "./src/scheduled/reminders.schedule";
+export {rolloverFlowDays} from "./src/scheduled/flow.schedule";
 
 type HttpMethod = "get" | "post" | "delete";
 

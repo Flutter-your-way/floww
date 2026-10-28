@@ -125,6 +125,9 @@ class HabitSnapshot {
     return total / due.length;
   }
 
+  bool engagedOn(DateTime date) =>
+      _dueHabits(date).any((habit) => !habit.isLimit && habit.progress > 0);
+
   HabitDay dayFor(DateTime date, {String? habitId}) {
     final day = AppDateUtils.dateOnly(date);
     if (day.isAfter(_today)) return _dayOf(day, HabitDayStatus.upcoming);

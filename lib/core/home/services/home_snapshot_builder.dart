@@ -88,7 +88,9 @@ class HomeSnapshotBuilder {
     final nutritionDay = _nutritionDayOf(records, today, goal);
 
     final completedToday = _completedSessionsOn(records.sessions, today);
-    final workout = WorkoutCredit.ofSessions(completedToday);
+    final workout =
+        WorkoutCredit.ofSessions(completedToday) +
+        (records.isRestDay ? WorkoutCredit.restDay : WorkoutCredit.none);
     final workoutSets = workout.loggedSets;
 
     final mealCount = records.nutrition.foods
@@ -106,6 +108,7 @@ class HomeSnapshotBuilder {
         readinessScore: _readinessOf(records, today),
         workout: workout,
         habitCompletion: habitCompletion,
+        habitEngaged: habitSnapshot.engagedOn(today),
         mealCount: mealCount,
         waterMl: waterMl,
       ),
@@ -298,7 +301,9 @@ class HomeSnapshotBuilder {
       _componentOf(
         emoji: '💪',
         title: discipline.titleNoun,
-        detail: '${workout.done} / ${workout.target} $units done',
+        detail: workout.isRestDay && workout.loggedSets == 0
+            ? 'Rest day · full credit'
+            : '${NumberFormatter.trimmed(workout.done)} / ${workout.target} $units done',
         score: entry.workoutScore,
         maxPoints: _workoutPoints,
         hint: workout.loggedSets == 0
