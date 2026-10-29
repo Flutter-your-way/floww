@@ -276,37 +276,42 @@ class WaveChatSheet extends StatelessWidget {
                 children: [
                   Column(
                     children: [
-                      _WaveStaggerIn(
-                        animation: animation,
-                        interval: AppMotion.waveSheetHeaderIn,
-                        child: _WaveSheetDragArea(
-                          child: Selector<WaveChatViewModel, (String, bool)>(
-                            selector: (_, viewModel) => (
-                              viewModel.statusLabel,
-                              viewModel.isReady || !viewModel.isViewingToday,
-                            ),
-                            builder: (context, status, child) => WaveChatHeader(
-                              title: WaveChatViewModel.title,
-                              status: status.$1,
-                              isLive: status.$2,
-                              onClose: _close,
-                              onHistory: () => _openHistory(
-                                context,
-                                context.read<WaveChatViewModel>(),
-                              ),
+                      Expanded(
+                        child: _WaveHeaderOverBody(
+                          header: _WaveStaggerIn(
+                            animation: animation,
+                            interval: AppMotion.waveSheetHeaderIn,
+                            child: _WaveSheetDragArea(
+                              child:
+                                  Selector<WaveChatViewModel, (String, bool)>(
+                                    selector: (_, viewModel) => (
+                                      viewModel.statusLabel,
+                                      viewModel.isReady ||
+                                          !viewModel.isViewingToday,
+                                    ),
+                                    builder: (context, status, child) =>
+                                        WaveChatHeader(
+                                          title: WaveChatViewModel.title,
+                                          status: status.$1,
+                                          isLive: status.$2,
+                                          onClose: _close,
+                                          onHistory: () => _openHistory(
+                                            context,
+                                            context.read<WaveChatViewModel>(),
+                                          ),
+                                        ),
+                                  ),
                             ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: _WaveStaggerIn(
-                          animation: animation,
-                          interval: AppMotion.waveSheetBodyIn,
-                          child: _WaveTranscriptPane(
-                            onPlanAction: _handlePlanAction,
-                            onOpenNutrition: _openNutrition,
-                            onOpenWorkout: _openActiveWorkout,
-                            onOpenMemory: _openMemory,
+                          body: _WaveStaggerIn(
+                            animation: animation,
+                            interval: AppMotion.waveSheetBodyIn,
+                            child: _WaveTranscriptPane(
+                              onPlanAction: _handlePlanAction,
+                              onOpenNutrition: _openNutrition,
+                              onOpenWorkout: _openActiveWorkout,
+                              onOpenMemory: _openMemory,
+                            ),
                           ),
                         ),
                       ),
@@ -324,6 +329,43 @@ class WaveChatSheet extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _WaveHeaderOverBody extends StatefulWidget {
+  const _WaveHeaderOverBody({required this.header, required this.body});
+
+  final Widget header;
+  final Widget body;
+
+  @override
+  State<_WaveHeaderOverBody> createState() => _WaveHeaderOverBodyState();
+}
+
+class _WaveHeaderOverBodyState extends State<_WaveHeaderOverBody> {
+  double _headerHeight = 0;
+
+  void _onHeaderHeight(double height) {
+    if (!mounted || height == _headerHeight) return;
+    setState(() => _headerHeight = height);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(top: _headerHeight, child: widget.body),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: WaveSizeReporter(
+            onHeight: _onHeaderHeight,
+            child: widget.header,
+          ),
+        ),
+      ],
     );
   }
 }

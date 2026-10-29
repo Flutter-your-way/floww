@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:floww/config/constants/app_images.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -21,13 +20,8 @@ class WaveInsightBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SvgPicture.asset(
-            AppImages.waveIcon,
-            width: AppSizes.s36,
-            height: AppSizes.s36,
-            theme: SvgTheme(currentColor: context.colors.primary),
-          ),
-          SizedBox(width: AppSpacing.md),
+          const WaveAvatarBadge(size: AppSizes.s36, contained: true),
+          SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Text.rich(
               TextSpan(

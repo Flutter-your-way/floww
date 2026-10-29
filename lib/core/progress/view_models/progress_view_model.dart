@@ -168,6 +168,11 @@ class ProgressViewModel extends ChangeNotifier {
 
   String get weightUnit => 'kg';
 
+  String get strengthTitle => 'Strength Level';
+
+  String get strengthMessage =>
+      'See how strong each muscle group is and how fast it is improving.';
+
   String get weightValueLabel => weight.currentWeight.toStringAsFixed(2);
 
   String get weightChangeLabel =>

@@ -46,9 +46,7 @@ class OnboardingAnswersService {
   Stream<Map<String, dynamic>> watchAnswers() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return Stream.value(const {});
-    return _doc(uid).snapshots().map(
-      (snapshot) => answersOf(snapshot.data()),
-    );
+    return _doc(uid).snapshots().map((snapshot) => answersOf(snapshot.data()));
   }
 
   Future<void> saveAnswers(Map<String, dynamic> answers) async {

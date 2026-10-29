@@ -83,7 +83,8 @@ class OnboardingAnswerEditViewModel extends ChangeNotifier {
         if (!corePhaseIds.contains(phase.id))
           for (final question in phase.questions) ...[
             question.id,
-            for (final sub in question.subQuestions ?? const <OnboardingQuestion>[])
+            for (final sub
+                in question.subQuestions ?? const <OnboardingQuestion>[])
               sub.id,
           ],
     };

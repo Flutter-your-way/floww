@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 
-import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -48,12 +47,7 @@ class WaveSuggestionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              SvgPicture.asset(
-                AppImages.waveIcon,
-                width: AppSizes.s24,
-                height: AppSizes.s24,
-                theme: SvgTheme(currentColor: context.colors.primary),
-              ),
+              const WaveAvatarBadge(size: AppSizes.s24, contained: true),
               SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(

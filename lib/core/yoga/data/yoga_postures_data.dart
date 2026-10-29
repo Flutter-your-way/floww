@@ -33,7 +33,8 @@ class YogaPosturesData {
           'Sit or lie comfortably and observe natural breathing for 1–3 '
           'minutes. Do not force deep breaths, breath retention or forceful '
           'pranayama in this beginner sequence.',
-      goal: 'Arrive on the mat, notice the natural breath and set an intention.',
+      goal:
+          'Arrive on the mat, notice the natural breath and set an intention.',
       entrySteps: [
         'Sit on a cushion or chair with the spine tall and shoulders soft.',
         'Rest the hands on the thighs and let the eyes close or soften.',
@@ -83,10 +84,7 @@ class YogaPosturesData {
       ],
       exitSteps: ['Return the head to centre and pause for one breath.'],
       breathCues: ['Exhale as you turn, inhale as you return to centre.'],
-      alignmentCues: [
-        'Keep the chin level.',
-        'Move only within comfort.',
-      ],
+      alignmentCues: ['Keep the chin level.', 'Move only within comfort.'],
       avoid: ['Rolling the head backward', 'Pushing into the end of range'],
       modifications: [
         YogaModification(
@@ -188,9 +186,7 @@ class YogaPosturesData {
           'Keep the hands at the chest and move only the spine.',
           caution: YogaCaution.shoulder,
         ),
-        YogaModification(
-          'Hold a chair back for balance throughout.',
-        ),
+        YogaModification('Hold a chair back for balance throughout.'),
       ],
       holdSeconds: 60,
       holdGuidance: 'Repeat slowly for about one minute per round.',
@@ -213,7 +209,10 @@ class YogaPosturesData {
       ],
       exitSteps: ['Return to a neutral, tall spine.'],
       breathCues: ['Inhale to lift the chest, exhale to round.'],
-      alignmentCues: ['Keep the range small.', 'Let the head follow the spine.'],
+      alignmentCues: [
+        'Keep the range small.',
+        'Let the head follow the spine.',
+      ],
       avoid: ['Forcing the arch', 'Dropping the head back'],
       modifications: [
         YogaModification(
@@ -395,7 +394,7 @@ class YogaPosturesData {
       entrySteps: [
         'Stand beside a wall or chair and hold it lightly.',
         'Shift weight to one foot and place the other foot at the ankle, '
-        'calf or with toes on the floor.',
+            'calf or with toes on the floor.',
       ],
       exitSteps: ['Lower the foot slowly and stand evenly on both feet.'],
       breathCues: ['Keep the breath slow; steady breath steadies balance.'],
@@ -432,9 +431,7 @@ class YogaPosturesData {
         'Step the feet a short distance apart, front toes forward.',
         'Bend the front knee a little and extend the arms if comfortable.',
       ],
-      exitSteps: [
-        'Straighten the front leg and step the feet together.',
-      ],
+      exitSteps: ['Straighten the front leg and step the feet together.'],
       breathCues: ['Breathe evenly; soften the face and shoulders.'],
       alignmentCues: [
         'Short stance, shallow knee bend.',
@@ -474,10 +471,7 @@ class YogaPosturesData {
       ],
       exitSteps: ['Press through the feet and rise on an inhale.'],
       breathCues: ['Breathe into the upper side of the ribs.'],
-      alignmentCues: [
-        'Soften both knees.',
-        'Lower hand on a block or thigh.',
-      ],
+      alignmentCues: ['Soften both knees.', 'Lower hand on a block or thigh.'],
       avoid: ['Locking the knees', 'Forcing a deep side bend'],
       modifications: [
         YogaModification('Rest the upper hand on the hip.'),
@@ -648,9 +642,7 @@ class YogaPosturesData {
         'Knees as wide as comfortable.',
       ],
       avoid: ['Forcing the hips to the heels'],
-      modifications: [
-        YogaModification('Rest in tabletop instead.'),
-      ],
+      modifications: [YogaModification('Rest in tabletop instead.')],
       holdSeconds: 45,
       holdGuidance: 'Rest for 5–8 breaths.',
       imageUrl: AppImages.childsPose,
@@ -678,9 +670,7 @@ class YogaPosturesData {
       breathCues: ['Breathe softly into the upper back.'],
       alignmentCues: ['Hips stay over knees.', 'Walk forward only a little.'],
       avoid: ['Sinking the chest toward the floor', 'Straining the shoulders'],
-      modifications: [
-        YogaModification('Use a seated side stretch instead.'),
-      ],
+      modifications: [YogaModification('Use a seated side stretch instead.')],
       holdSeconds: 25,
       holdGuidance: 'Hold for 3–5 breaths.',
       imageUrl: AppImages.yogaAnahatasana,
@@ -709,9 +699,7 @@ class YogaPosturesData {
       breathCues: ['Breathe naturally with a tall spine.'],
       alignmentCues: ['Use a block between hips and heels.'],
       avoid: ['Forcing the hips down'],
-      modifications: [
-        YogaModification('Sit on a chair instead.'),
-      ],
+      modifications: [YogaModification('Sit on a chair instead.')],
       holdSeconds: 45,
       holdGuidance: 'Sit for 5–8 breaths.',
       imageUrl: AppImages.yogaVajrasana,
@@ -737,10 +725,7 @@ class YogaPosturesData {
       ],
       exitSteps: ['Bend the knees and relax.'],
       breathCues: ['Let the breath lengthen the spine on each inhale.'],
-      alignmentCues: [
-        'Lengthen through the spine.',
-        'Relax the shoulders.',
-      ],
+      alignmentCues: ['Lengthen through the spine.', 'Relax the shoulders.'],
       avoid: ['Rounding the lower back', 'Locking the knees'],
       modifications: [
         YogaModification('Bend the knees and sit higher on the blanket.'),
@@ -905,10 +890,7 @@ class YogaPosturesData {
       ],
       exitSteps: ['Return to centre on an inhale and switch sides.'],
       breathCues: ['Inhale to grow tall, exhale to turn a little.'],
-      alignmentCues: [
-        'Sit tall before you turn.',
-        'Keep the twist easy.',
-      ],
+      alignmentCues: ['Sit tall before you turn.', 'Keep the twist easy.'],
       avoid: ['Pulling on the knee', 'Forcing the neck'],
       modifications: [
         YogaModification('Practise seated on a chair.'),
@@ -1054,10 +1036,7 @@ class YogaPosturesData {
       ],
       exitSteps: ['Lower the spine slowly to the mat.'],
       breathCues: ['Inhale to lift, exhale to lower.'],
-      alignmentCues: [
-        'Keep the neck still.',
-        'Lift only a small amount.',
-      ],
+      alignmentCues: ['Keep the neck still.', 'Lift only a small amount.'],
       avoid: ['Turning the head while lifted', 'Lifting high'],
       modifications: [YogaModification('Use pelvic tilts instead.')],
       holdSeconds: 20,
@@ -1139,9 +1118,7 @@ class YogaPosturesData {
       breathCues: ['Breathe easily without compressing the belly.'],
       alignmentCues: ['Move one knee at a time.'],
       avoid: ['Compressing the abdomen', 'Forcing the knee'],
-      modifications: [
-        YogaModification('Hold behind the thigh.'),
-      ],
+      modifications: [YogaModification('Hold behind the thigh.')],
       holdSeconds: 25,
       holdGuidance: 'Hold for 3–5 breaths on each side.',
       imageUrl: AppImages.yogaPavanamuktasana,

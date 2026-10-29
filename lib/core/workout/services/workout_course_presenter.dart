@@ -37,7 +37,10 @@ class WorkoutCoursePresenter {
         ),
         for (final caution in profile.cautions)
           if (YogaModuleData.cautionNotes[caution] case final note?)
-            WorkoutCourseFact(icon: Icons.health_and_safety_outlined, text: note),
+            WorkoutCourseFact(
+              icon: Icons.health_and_safety_outlined,
+              text: note,
+            ),
         if (week >= total)
           const WorkoutCourseFact(
             icon: Icons.schedule_rounded,
@@ -80,7 +83,8 @@ class WorkoutCoursePresenter {
         ),
         WorkoutCourseFact(
           icon: Icons.bar_chart_rounded,
-          text: 'Weekly working sets (${week.percent}% volume): '
+          text:
+              'Weekly working sets (${week.percent}% volume): '
               '${_volumeOf(level, week.setsFor)}',
         ),
         WorkoutCourseFact(icon: Icons.flag_outlined, text: level.goal),
@@ -96,8 +100,7 @@ class WorkoutCoursePresenter {
 
   static String _gateTextOf(CalLevel next, Map<String, double> results) {
     final score = CalisthenicsPlacement.scoreOf(next, results);
-    final needed =
-        (score.counted * CalisthenicsGatesData.passThreshold).ceil();
+    final needed = (score.counted * CalisthenicsGatesData.passThreshold).ceil();
     return '${next.label} gates: ${score.passed} of ${score.counted} cleared '
         '(${(CalisthenicsGatesData.passThreshold * _percent).round()}% = '
         '$needed to move up). Update your tests in retest week.';
@@ -117,12 +120,13 @@ class WorkoutCoursePresenter {
     ].join(' · ');
   }
 
-  static List<WorkoutCourseSegmentState> _segmentsOf(int current, int total) => [
-    for (var week = 1; week <= total; week++)
-      week < current
-          ? WorkoutCourseSegmentState.done
-          : week == current
-          ? WorkoutCourseSegmentState.current
-          : WorkoutCourseSegmentState.upcoming,
-  ];
+  static List<WorkoutCourseSegmentState> _segmentsOf(int current, int total) =>
+      [
+        for (var week = 1; week <= total; week++)
+          week < current
+              ? WorkoutCourseSegmentState.done
+              : week == current
+              ? WorkoutCourseSegmentState.current
+              : WorkoutCourseSegmentState.upcoming,
+      ];
 }

@@ -43,50 +43,50 @@ class CalisthenicsCatalog {
     for (final level in CalLevel.values) programOf(level),
   ];
 
-  static WorkoutProgramEntity programOf(CalLevel level) =>
-      WorkoutProgramEntity(
-        id: level.courseId,
-        goal: ProgramGoal.home,
-        name: 'Calisthenics ${level.fullTitle}',
-        description:
-            '${level.weeks} weeks · ${level.sessions} days/wk · '
-            '${level.minuteRange}. ${level.goal}',
-        level: level.experience,
-        weeks: level.weeks,
-        lengthDays: level.lengthDays,
-        course: level.courseId,
-        days: [
-          for (final session in CalisthenicsProgramData.sessionsOf(level))
-            ProgramDayEntry(
-              weekday: _weekdays[session.day] ?? DateTime.monday,
-              name: session.name,
-              focus: session.focus,
-              goal: session.goal,
-              durationMinutes: level.minutes,
-              exercises: [
-                for (final slot in CalisthenicsProgramData.warmUp.take(1))
-                  ProgramExerciseEntry(
-                    exerciseId: slot.moveId,
-                    section: WorkoutSectionKind.warmUp,
-                  ),
-                for (final slot in session.slots)
-                  ProgramExerciseEntry(
-                    exerciseId: slot.moveId,
-                    section: WorkoutSectionKind.main,
-                    sets: slot.sets,
-                    reps: slot.min,
-                    restSeconds: slot.rest,
-                  ),
-                for (final slot in CalisthenicsProgramData.coolDown.reversed
-                    .take(1))
-                  ProgramExerciseEntry(
-                    exerciseId: slot.moveId,
-                    section: WorkoutSectionKind.coolDown,
-                  ),
-              ],
-            ),
-        ],
-      );
+  static WorkoutProgramEntity programOf(CalLevel level) => WorkoutProgramEntity(
+    id: level.courseId,
+    goal: ProgramGoal.home,
+    name: 'Calisthenics ${level.fullTitle}',
+    description:
+        '${level.weeks} weeks · ${level.sessions} days/wk · '
+        '${level.minuteRange}. ${level.goal}',
+    level: level.experience,
+    weeks: level.weeks,
+    lengthDays: level.lengthDays,
+    course: level.courseId,
+    days: [
+      for (final session in CalisthenicsProgramData.sessionsOf(level))
+        ProgramDayEntry(
+          weekday: _weekdays[session.day] ?? DateTime.monday,
+          name: session.name,
+          focus: session.focus,
+          goal: session.goal,
+          durationMinutes: level.minutes,
+          exercises: [
+            for (final slot in CalisthenicsProgramData.warmUp.take(1))
+              ProgramExerciseEntry(
+                exerciseId: slot.moveId,
+                section: WorkoutSectionKind.warmUp,
+              ),
+            for (final slot in session.slots)
+              ProgramExerciseEntry(
+                exerciseId: slot.moveId,
+                section: WorkoutSectionKind.main,
+                sets: slot.sets,
+                reps: slot.min,
+                restSeconds: slot.rest,
+              ),
+            for (final slot in CalisthenicsProgramData.coolDown.reversed.take(
+              1,
+            ))
+              ProgramExerciseEntry(
+                exerciseId: slot.moveId,
+                section: WorkoutSectionKind.coolDown,
+              ),
+          ],
+        ),
+    ],
+  );
 
   static ExerciseCatalogEntry _entryOf(CalMove move) => ExerciseCatalogEntry(
     id: move.id,

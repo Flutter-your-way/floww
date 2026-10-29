@@ -24,4 +24,6 @@ class AppOpacity {
   static const double guideMoving = 0.72;
   static const double placeholderPulseMin = 0.04;
   static const double placeholderPulseMax = 0.12;
+  static const double orbHaloMin = 0.38;
+  static const double orbHaloMax = 0.62;
 }

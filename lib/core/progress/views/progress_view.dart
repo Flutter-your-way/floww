@@ -25,6 +25,7 @@ import 'package:floww/core/progress/widgets/getting_started_card.dart';
 import 'package:floww/core/progress/widgets/habit_consistency_card.dart';
 import 'package:floww/core/progress/widgets/personal_records_card.dart';
 import 'package:floww/core/progress/widgets/progress_overview_row.dart';
+import 'package:floww/core/progress/widgets/strength_level_entry_card.dart';
 import 'package:floww/core/progress/widgets/wave_insights_card.dart';
 import 'package:floww/core/progress/widgets/weight_tracking_card.dart';
 import 'package:floww/core/progress/widgets/workout_volume_card.dart';
@@ -37,6 +38,11 @@ class ProgressView extends StatelessWidget {
   void _openProfile() {
     HapticManager.light();
     NavigationService.instance.push(AppRouter.profile);
+  }
+
+  void _openStrengthLevel() {
+    HapticManager.light();
+    NavigationService.instance.push(AppRouter.strengthLevel);
   }
 
   void _openStreak(BuildContext context, ProgressViewModel viewModel) {
@@ -133,6 +139,12 @@ class ProgressView extends StatelessWidget {
                       viewModel: viewModel,
                     ),
                   ),
+                ),
+                SizedBox(height: AppSpacing.lg),
+                StrengthLevelEntryCard(
+                  title: viewModel.strengthTitle,
+                  message: viewModel.strengthMessage,
+                  onTap: _openStrengthLevel,
                 ),
                 SizedBox(height: AppSpacing.lg),
                 PremiumGate(

@@ -9,6 +9,7 @@ import 'package:floww/config/theme/theme_controller.dart';
 import 'package:floww/config/widgets/animations/app_collapsible_section.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
 import 'package:floww/core/achievements/views/streak_achievements_sheet.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
 import 'package:floww/core/flow_mode/widgets/flow_mode_debug_trigger.dart';
@@ -23,7 +24,11 @@ import 'package:floww/core/guide/widgets/guide_target.dart';
 import 'package:floww/core/home/providers/home_provider.dart';
 import 'package:floww/core/home/views/flow_mode_sheet.dart';
 import 'package:floww/core/home/views/flow_score_breakdown_sheet.dart';
+import 'package:floww/core/home/views/body_composition_sheet.dart';
 import 'package:floww/core/home/views/recovery_sheet.dart';
+import 'package:floww/core/home/services/daily_metrics_presenter.dart';
+import 'package:floww/core/home/widgets/daily_metrics_card.dart';
+import 'package:floww/core/home/widgets/daily_metrics_prompt_card.dart';
 import 'package:floww/core/home/widgets/health_sync_card.dart';
 import 'package:floww/core/home/widgets/flow_score_boost_card.dart';
 import 'package:floww/core/home/widgets/flow_score_card.dart';
@@ -134,6 +139,38 @@ class HomeView extends StatelessWidget {
     RecoverySheet.show(context, detail: home.recoveryDetail);
   }
 
+  void _openHealthPermissions() {
+    HapticManager.light();
+    NavigationService.instance.push(
+      AppRouter.connectWearables,
+      arguments: true,
+    );
+  }
+
+  void _openMetricsInfo(BuildContext context, HealthProvider health) {
+    HapticManager.light();
+    final metrics = DailyMetricsPresenter.of(
+      health.vitals,
+      source: health.sourceName,
+    );
+    AppInfoSheet.show(
+      context,
+      title: metrics.infoTitle,
+      message: metrics.infoMessage,
+    );
+  }
+
+  void _openBodyComposition(BuildContext context, HealthProvider health) {
+    HapticManager.light();
+    BodyCompositionSheet.show(
+      context,
+      data: DailyMetricsPresenter.bodyCompositionOf(
+        health.vitals,
+        source: health.sourceName,
+      ),
+    );
+  }
+
   void _openStreak(BuildContext context, HomeProvider home) {
     HapticManager.light();
     StreakAchievementsSheet.show(context, summary: home.streakSummary);
@@ -144,6 +181,10 @@ class HomeView extends StatelessWidget {
     return Consumer2<HomeProvider, HealthProvider>(
       builder: (context, home, health, child) {
         final flowMode = home.flowModeDetail;
+        final metrics = DailyMetricsPresenter.of(
+          health.vitals,
+          source: health.sourceName,
+        );
         final activeMode = context.watch<ThemeModeController>().mode;
 
         return AnimatedTheme(
@@ -243,6 +284,19 @@ class HomeView extends StatelessWidget {
                       onDisconnect: health.disconnect,
                     ),
                   ),
+                  SizedBox(height: AppSpacing.xl2),
+                  if (health.hasAllPermissions || metrics.hasData)
+                    DailyMetricsCard(
+                      data: metrics,
+                      onInfoTap: () => _openMetricsInfo(context, health),
+                      onBodyCompositionTap: () =>
+                          _openBodyComposition(context, health),
+                    )
+                  else
+                    DailyMetricsPromptCard(
+                      data: metrics,
+                      onAllow: _openHealthPermissions,
+                    ),
                   SizedBox(height: AppSpacing.xl2),
                   TodayProgressCard(progress: home.todayProgress),
                   SizedBox(height: AppSpacing.xl2),

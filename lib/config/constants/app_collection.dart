@@ -9,6 +9,7 @@ class AppCollection {
   static const String waterLogs = 'water_logs';
   static const String invoices = 'invoices';
   static const String weightLogs = 'weight_logs';
+  static const String strengthBenchmarks = 'strength_benchmarks';
   static const String workoutSessions = 'workout_sessions';
   static const String workoutPlans = 'workout_plans';
   static const String workoutExercises = 'workout_exercises';

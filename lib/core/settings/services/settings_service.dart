@@ -206,9 +206,8 @@ class SettingsService {
   Future<bool> setNotificationEnabled(String id, bool isEnabled) =>
       _setFlag(notificationsField, id, isEnabled);
 
-  Stream<bool> watchWaveMemoryEnabled() => _watchField(
-    waveField,
-  ).map((flags) => flags[waveMemoryFlag] != false);
+  Stream<bool> watchWaveMemoryEnabled() =>
+      _watchField(waveField).map((flags) => flags[waveMemoryFlag] != false);
 
   Future<bool> setWaveMemoryEnabled(bool isEnabled) =>
       _setFlag(waveField, waveMemoryFlag, isEnabled);

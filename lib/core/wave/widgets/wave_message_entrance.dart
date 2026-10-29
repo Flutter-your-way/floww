@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_motion.dart';
@@ -59,9 +61,16 @@ class _WaveMessageEntranceState extends State<WaveMessageEntrance>
 
   @override
   Widget build(BuildContext context) {
-    return SizeTransition(
-      sizeFactor: _size,
-      alignment: Alignment.topCenter,
+    return AnimatedBuilder(
+      animation: _size,
+      builder: (context, child) => ClipRect(
+        clipBehavior: _controller.isCompleted ? Clip.none : Clip.hardEdge,
+        child: Align(
+          alignment: Alignment.topCenter,
+          heightFactor: math.max(_size.value, 0),
+          child: child,
+        ),
+      ),
       child: FadeTransition(
         opacity: _fade,
         child: AnimatedBuilder(

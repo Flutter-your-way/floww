@@ -142,7 +142,8 @@ class WorkoutViewModel extends ChangeNotifier {
     return active == null ? null : _programById(active.id);
   }
 
-  CalLevel? get _courseLevel => CalLevel.fromCourse(_activeProgramEntity?.course);
+  CalLevel? get _courseLevel =>
+      CalLevel.fromCourse(_activeProgramEntity?.course);
 
   bool get _isYogaCourseActive =>
       YogaPlanMapper.isCourse(_activeProgramEntity?.course);
@@ -342,7 +343,8 @@ class WorkoutViewModel extends ChangeNotifier {
       return;
     }
     if (plan.sessionId != null || plan.programId != program.id) return;
-    if (WorkoutDiscipline.ofPlan(plan) == WorkoutDiscipline.ofProgram(program)) {
+    if (WorkoutDiscipline.ofPlan(plan) ==
+        WorkoutDiscipline.ofProgram(program)) {
       return;
     }
     final key = '${program.id}:${program.course}';
@@ -532,8 +534,9 @@ class WorkoutViewModel extends ChangeNotifier {
     return _daySessions.isEmpty ? WorkoutPrimaryAction.start : null;
   }
 
-  String get primaryActionLabel =>
-      _nextPending?.isCatchUp ?? false ? 'Start Catch-up' : _discipline.startLabel;
+  String get primaryActionLabel => _nextPending?.isCatchUp ?? false
+      ? 'Start Catch-up'
+      : _discipline.startLabel;
 
   TodaysWorkoutArgs get startArgs {
     final next = _nextPending;
@@ -1254,7 +1257,9 @@ class WorkoutViewModel extends ChangeNotifier {
       effectLabel: _discipline == WorkoutDiscipline.yoga
           ? session.selfCheckAverage?.toStringAsFixed(1) ?? '—'
           : session.trainingEffect.toStringAsFixed(1),
-      effectCaption: _discipline == WorkoutDiscipline.yoga ? 'comfort' : 'effect',
+      effectCaption: _discipline == WorkoutDiscipline.yoga
+          ? 'comfort'
+          : 'effect',
       metrics: [
         WorkoutMetricItem(
           icon: Icons.schedule,

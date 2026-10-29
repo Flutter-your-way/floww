@@ -101,8 +101,7 @@ class WaveMemoryViewModel extends ChangeNotifier {
 
   bool get isSummaryExpanded => _isSummaryExpanded;
 
-  bool get canToggleSummary =>
-      _visibleSummary.length > collapsedSummaryCount;
+  bool get canToggleSummary => _visibleSummary.length > collapsedSummaryCount;
 
   String get summaryToggleLabel => _isSummaryExpanded
       ? showLessLabel
@@ -137,7 +136,8 @@ class WaveMemoryViewModel extends ChangeNotifier {
 
   bool get canForget => !isEmpty && !_isForgetting;
 
-  String get toggleSubtitle => _isEnabled ? toggleOnSubtitle : toggleOffSubtitle;
+  String get toggleSubtitle =>
+      _isEnabled ? toggleOnSubtitle : toggleOffSubtitle;
 
   String get forgetActionSubtitle =>
       _isForgetting ? forgettingSubtitle : forgetSubtitle;

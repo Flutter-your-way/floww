@@ -52,9 +52,13 @@ class YogaLessonViewModel extends ChangeNotifier {
   }
 
   List<ExerciseInfoSectionItem> get sections => [
-    _section(_goalId, Icons.flag_outlined, 'Lesson goal', ExerciseInfoTone.neutral, [
-      ExerciseInfoItem(text: posture.goal),
-    ]),
+    _section(
+      _goalId,
+      Icons.flag_outlined,
+      'Lesson goal',
+      ExerciseInfoTone.neutral,
+      [ExerciseInfoItem(text: posture.goal)],
+    ),
     _section(
       _safetyId,
       Icons.health_and_safety_outlined,
@@ -95,11 +99,17 @@ class YogaLessonViewModel extends ChangeNotifier {
       ExerciseInfoTone.neutral,
       _modifications,
     ),
-    _section(_holdId, Icons.timer_outlined, 'Hold or repetitions', ExerciseInfoTone.neutral, [
-      ExerciseInfoItem(text: posture.holdGuidance),
-      if (posture.isPerSide)
-        const ExerciseInfoItem(text: 'Practise both sides evenly.'),
-    ]),
+    _section(
+      _holdId,
+      Icons.timer_outlined,
+      'Hold or repetitions',
+      ExerciseInfoTone.neutral,
+      [
+        ExerciseInfoItem(text: posture.holdGuidance),
+        if (posture.isPerSide)
+          const ExerciseInfoItem(text: 'Practise both sides evenly.'),
+      ],
+    ),
     _section(
       _propsId,
       Icons.inventory_2_outlined,
@@ -126,7 +136,10 @@ class YogaLessonViewModel extends ChangeNotifier {
         general.add(ExerciseInfoItem(text: modification.text));
       } else if (_profile.cautions.contains(caution)) {
         personal.add(
-          ExerciseInfoItem(label: 'Your ${caution.label}', text: modification.text),
+          ExerciseInfoItem(
+            label: 'Your ${caution.label}',
+            text: modification.text,
+          ),
         );
       }
     }

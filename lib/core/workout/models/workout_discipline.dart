@@ -69,7 +69,8 @@ enum WorkoutDiscipline {
 
   bool matches(WorkoutProgramEntity program) => switch (this) {
     WorkoutDiscipline.yoga => YogaPlanMapper.isCourse(program.course),
-    WorkoutDiscipline.calisthenics => CalLevel.fromCourse(program.course) != null,
+    WorkoutDiscipline.calisthenics =>
+      CalLevel.fromCourse(program.course) != null,
     WorkoutDiscipline.gym => program.course == null,
   };
 

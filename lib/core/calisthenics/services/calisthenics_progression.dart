@@ -151,7 +151,8 @@ class CalisthenicsProgression {
     Set<String> used,
   ) {
     final last = slotHistory.lastMoveId;
-    final state = last != null &&
+    final state =
+        last != null &&
             CalisthenicsPlanMapper.resolveMove(last, profile.gear) == last
         ? last
         : entry.exerciseId;

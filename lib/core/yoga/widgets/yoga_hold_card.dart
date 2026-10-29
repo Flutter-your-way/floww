@@ -92,7 +92,11 @@ class YogaHoldCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.air_rounded, size: AppSizes.s16, color: colors.primary),
+              Icon(
+                Icons.air_rounded,
+                size: AppSizes.s16,
+                color: colors.primary,
+              ),
               SizedBox(width: AppSpacing.sm),
               Flexible(
                 child: Text(

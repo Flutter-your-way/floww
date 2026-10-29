@@ -21,28 +21,29 @@ class YogaCatalog {
 
   static ExerciseCatalogEntry? entryOf(String id) => _byId[id];
 
-  static ExerciseCatalogEntry _entryOf(YogaPosture posture) =>
-      ExerciseCatalogEntry(
-        id: posture.id,
-        name: posture.name,
-        group: MuscleGroup.other,
-        equipment: Equipment.bodyweight,
-        met: posture.met,
-        muscleShares: posture.muscleShares,
-        defaultSets: posture.isPerSide ? 2 : _defaultSets,
-        defaultReps: posture.holdSeconds,
-        defaultRestSeconds: _transitionSeconds,
-        defaultRepsInReserve: _reserve,
-        trackingMode: TrackingMode.duration,
-        imageUrl: posture.imageUrl,
-        isPool: true,
-        mistakes: [for (final text in posture.avoid) ExerciseCueEntry(text: text)],
-        guidelines: [
-          for (final text in posture.alignmentCues) ExerciseCueEntry(text: text),
-        ],
-        equipmentItems: [
-          for (final prop in posture.props)
-            ExerciseCueEntry(label: prop.label, text: prop.text),
-        ],
-      );
+  static ExerciseCatalogEntry _entryOf(
+    YogaPosture posture,
+  ) => ExerciseCatalogEntry(
+    id: posture.id,
+    name: posture.name,
+    group: MuscleGroup.other,
+    equipment: Equipment.bodyweight,
+    met: posture.met,
+    muscleShares: posture.muscleShares,
+    defaultSets: posture.isPerSide ? 2 : _defaultSets,
+    defaultReps: posture.holdSeconds,
+    defaultRestSeconds: _transitionSeconds,
+    defaultRepsInReserve: _reserve,
+    trackingMode: TrackingMode.duration,
+    imageUrl: posture.imageUrl,
+    isPool: true,
+    mistakes: [for (final text in posture.avoid) ExerciseCueEntry(text: text)],
+    guidelines: [
+      for (final text in posture.alignmentCues) ExerciseCueEntry(text: text),
+    ],
+    equipmentItems: [
+      for (final prop in posture.props)
+        ExerciseCueEntry(label: prop.label, text: prop.text),
+    ],
+  );
 }

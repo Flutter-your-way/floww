@@ -37,7 +37,7 @@ class WaveReplyFrame extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.only(bottom: footer == null ? 0 : footerHeight),
-          child: const WaveAvatarBadge(size: avatarSize),
+          child: const WaveAvatarBadge(size: avatarSize, contained: true),
         ),
         SizedBox(width: AppSpacing.md),
         Expanded(

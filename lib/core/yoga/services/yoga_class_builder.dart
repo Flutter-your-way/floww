@@ -62,7 +62,10 @@ class YogaClassBuilder {
           ? _suryaBlocks(entry.value.first, budget, rounds)
           : _blocksOf(entry.key, entry.value, budget);
       bySection[entry.key] = built;
-      activeSeconds += built.fold(0, (total, block) => total + block.totalSeconds);
+      activeSeconds += built.fold(
+        0,
+        (total, block) => total + block.totalSeconds,
+      );
     }
     final resting = [
       for (final section in sections.keys)
@@ -83,8 +86,7 @@ class YogaClassBuilder {
       bySection[section] = _blocksOf(section, sections[section]!, share);
     }
     final blocks = [
-      for (final section in YogaClassSection.values)
-        ...?bySection[section],
+      for (final section in YogaClassSection.values) ...?bySection[section],
     ];
     return YogaClassPlan(
       week: courseWeek.number,
@@ -100,9 +102,7 @@ class YogaClassBuilder {
     while (posture != null && posture.isCautionedFor(cautions)) {
       if (!visited.add(posture.id)) return null;
       final alternative = posture.alternativeId;
-      posture = alternative == null
-          ? null
-          : YogaPosturesData.byId(alternative);
+      posture = alternative == null ? null : YogaPosturesData.byId(alternative);
     }
     return posture;
   }
@@ -197,7 +197,13 @@ class YogaClassBuilder {
     final cap = isResting ? _maxRestingHold : _maxHold;
     return [
       for (final posture in postures)
-        _blockOf(section, posture, posture.holdSeconds * factor, cap, isResting),
+        _blockOf(
+          section,
+          posture,
+          posture.holdSeconds * factor,
+          cap,
+          isResting,
+        ),
     ];
   }
 

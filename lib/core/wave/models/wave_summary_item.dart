@@ -32,8 +32,7 @@ class WaveSummaryItem {
         for (final item in items)
           if (item is Map)
             if (WaveSummaryItem.fromJson(Map<String, dynamic>.from(item))
-                case final parsed
-                when parsed.text.isNotEmpty)
+                case final parsed when parsed.text.isNotEmpty)
               parsed,
       ];
     }

@@ -184,8 +184,9 @@ class CalisthenicsPlanMapper {
     addAll(CalEntryKind.warmUp, CalisthenicsProgramData.warmUp);
     addAll(CalEntryKind.main, session.slots);
     addAll(CalEntryKind.coolDown, CalisthenicsProgramData.coolDown);
-    if (!entries.any((entry) => CalEntryKey.parse(entry.id)?.kind ==
-        CalEntryKind.main)) {
+    if (!entries.any(
+      (entry) => CalEntryKey.parse(entry.id)?.kind == CalEntryKind.main,
+    )) {
       return null;
     }
 

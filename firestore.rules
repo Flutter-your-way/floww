@@ -94,6 +94,10 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      match /strength_benchmarks/{benchmarkId} {
+        allow read, write: if isOwner(uid);
+      }
+
       match /workout_sessions/{sessionId} {
         allow read, write: if isOwner(uid);
       }

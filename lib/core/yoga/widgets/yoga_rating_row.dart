@@ -30,11 +30,7 @@ class YogaRatingRow extends StatelessWidget {
     final last = scale.length - 1;
     final position = last <= 0 ? 1.0 : index / last;
     return position <= _midpoint
-        ? Color.lerp(
-            colors.destructive,
-            colors.warning,
-            position / _midpoint,
-          )!
+        ? Color.lerp(colors.destructive, colors.warning, position / _midpoint)!
         : Color.lerp(
             colors.warning,
             colors.success,

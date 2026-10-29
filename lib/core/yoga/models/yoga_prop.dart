@@ -2,7 +2,12 @@ enum YogaProp {
   mat('Mat', 'A non-slip mat', 'Yoga Mat', 'A rug or any non-slip surface'),
   blocks('Blocks', 'Yoga blocks', 'Blocks', 'A stack of thick books'),
   strap('Strap', 'A yoga strap', 'Strap', 'A belt, scarf or towel'),
-  bolster('Bolster', 'A bolster', 'Bolster', 'Firm pillows or a rolled blanket'),
+  bolster(
+    'Bolster',
+    'A bolster',
+    'Bolster',
+    'Firm pillows or a rolled blanket',
+  ),
   blanket('Blanket', 'A folded blanket', null, 'A folded towel'),
   cushion('Cushion', 'A cushion', null, 'A folded blanket or pillow'),
   chair('Chair', 'A sturdy chair', null, 'A kitchen counter or table edge'),

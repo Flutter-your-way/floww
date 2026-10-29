@@ -119,6 +119,9 @@ class AppDateUtils {
   static String monthDay(DateTime date) =>
       '${_months[date.month - 1]} ${date.day}';
 
+  static String shortMonthDay(DateTime date) =>
+      '${_shortMonths[date.month - 1]} ${date.day}';
+
   static String dayMonth(DateTime date, {bool withYear = false}) {
     final label = '${date.day} ${_shortMonths[date.month - 1]}';
     return withYear ? '$label ${date.year}' : label;

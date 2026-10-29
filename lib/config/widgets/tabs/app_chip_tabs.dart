@@ -86,9 +86,7 @@ class _Chip extends StatelessWidget {
             label,
             maxLines: 1,
             style: isSelected
-                ? context.textTheme.labelMedium?.copyWith(
-                    color: colors.primary,
-                  )
+                ? context.textTheme.labelMedium?.copyWith(color: colors.primary)
                 : context.textTheme.bodySmall?.copyWith(
                     color: colors.textSecondary,
                   ),

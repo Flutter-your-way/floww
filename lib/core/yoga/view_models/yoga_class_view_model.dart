@@ -191,11 +191,17 @@ class YogaClassViewModel extends ChangeNotifier {
   int _currentSet(WorkoutEntryEntity entry) =>
       math.min(entry.workingSetCount + 1, entry.targetSets);
 
-  String _repeatLabelOf(WorkoutEntryEntity entry, YogaPosture posture, int set) {
+  String _repeatLabelOf(
+    WorkoutEntryEntity entry,
+    YogaPosture posture,
+    int set,
+  ) {
     if (posture.isPerSide) {
       final side = set.isOdd ? 'Right side' : 'Left side';
       final pairs = entry.targetSets ~/ _pairedSides;
-      return pairs > 1 ? '$side · ${(set + 1) ~/ _pairedSides} of $pairs' : side;
+      return pairs > 1
+          ? '$side · ${(set + 1) ~/ _pairedSides} of $pairs'
+          : side;
     }
     if (entry.targetSets > 1) return 'Round $set of ${entry.targetSets}';
     return 'Hold';

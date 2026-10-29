@@ -5,7 +5,10 @@ import 'package:health/health.dart';
 
 import 'package:floww/config/constants/app_integrations.dart';
 
+import '../models/health_metric_reading.dart';
 import '../models/health_snapshot.dart';
+import '../models/health_vitals.dart';
+import 'health_kit_channel.dart';
 
 class HealthServiceException implements Exception {
   HealthServiceException(this.message);
@@ -17,9 +20,17 @@ class HealthServiceException implements Exception {
 }
 
 class HealthService {
-  HealthService({Health? client}) : _health = client ?? Health();
+  HealthService({Health? client, HealthKitChannel? healthKit})
+    : _health = client ?? Health(),
+      _healthKit = healthKit ?? const HealthKitChannel();
+
+  static const int permissionsVersion = 2;
+  static const Duration _vitalsWindow = Duration(days: 30);
+  static const Duration _bodyWindow = Duration(days: 365);
+  static const Duration _readTimeout = Duration(seconds: 8);
 
   final Health _health;
+  final HealthKitChannel _healthKit;
 
   bool _configured = false;
 
@@ -37,7 +48,30 @@ class HealthService {
       ? HealthDataType.HEART_RATE_VARIABILITY_SDNN
       : HealthDataType.HEART_RATE_VARIABILITY_RMSSD;
 
+  static HealthDataType get skinTemperatureType => Platform.isIOS
+      ? HealthDataType.SLEEP_WRIST_TEMPERATURE
+      : HealthDataType.SKIN_TEMPERATURE;
+
   static List<HealthDataType> get readTypes => <HealthDataType>[
+    ..._coreTypes,
+    ..._vitalTypes,
+    ..._bodyTypes,
+  ];
+
+  static List<HealthDataType> get _vitalTypes => <HealthDataType>[
+    HealthDataType.BLOOD_OXYGEN,
+    HealthDataType.RESPIRATORY_RATE,
+    skinTemperatureType,
+  ];
+
+  static List<HealthDataType> get _bodyTypes => <HealthDataType>[
+    HealthDataType.WEIGHT,
+    HealthDataType.BODY_FAT_PERCENTAGE,
+    HealthDataType.LEAN_BODY_MASS,
+    if (Platform.isIOS) HealthDataType.BODY_MASS_INDEX,
+  ];
+
+  static List<HealthDataType> get _coreTypes => <HealthDataType>[
     HealthDataType.STEPS,
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.HEART_RATE,
@@ -53,8 +87,8 @@ class HealthService {
     HealthDataType.WORKOUT,
   ];
 
-  List<HealthDataAccess> get _readAccess =>
-      List<HealthDataAccess>.filled(readTypes.length, HealthDataAccess.READ);
+  List<HealthDataAccess> _readAccessOf(List<HealthDataType> types) =>
+      List<HealthDataAccess>.filled(types.length, HealthDataAccess.READ);
 
   Future<void> configure() async {
     if (_configured) return;
@@ -97,8 +131,8 @@ class HealthService {
     await configure();
     try {
       final granted = await _health.hasPermissions(
-        readTypes,
-        permissions: _readAccess,
+        _coreTypes,
+        permissions: _readAccessOf(_coreTypes),
       );
       return granted ?? false;
     } catch (e, stackTrace) {
@@ -110,10 +144,12 @@ class HealthService {
   Future<bool> requestPermissions() async {
     await configure();
     try {
-      return await _health.requestAuthorization(
+      final granted = await _health.requestAuthorization(
         readTypes,
-        permissions: _readAccess,
+        permissions: _readAccessOf(readTypes),
       );
+      if (granted) await _healthKit.requestAuthorization();
+      return granted;
     } catch (e, stackTrace) {
       debugPrint('requestPermissions failed: $e\n$stackTrace');
       throw HealthServiceException(
@@ -198,6 +234,95 @@ class HealthService {
       throw HealthServiceException('Could not read your $sourceName data.');
     }
   }
+
+  Future<HealthVitals> fetchVitals() async {
+    await configure();
+    final now = DateTime.now();
+    final vitalsStart = now.subtract(_vitalsWindow);
+    final bodyStart = now.subtract(_bodyWindow);
+
+    final results = await Future.wait([
+      _readingOf(hrvType, vitalsStart, now),
+      _readingOf(HealthDataType.RESTING_HEART_RATE, vitalsStart, now),
+      _kitReadingOf(HealthKitMetric.vo2Max, bodyStart, now),
+      _kitReadingOf(HealthKitMetric.heartRateRecovery, vitalsStart, now),
+      _readingOf(
+        HealthDataType.BLOOD_OXYGEN,
+        vitalsStart,
+        now,
+        transform: _asPercent,
+      ),
+      _readingOf(skinTemperatureType, vitalsStart, now),
+      _readingOf(HealthDataType.RESPIRATORY_RATE, vitalsStart, now),
+      _readingOf(HealthDataType.WEIGHT, bodyStart, now),
+      _readingOf(
+        HealthDataType.BODY_FAT_PERCENTAGE,
+        bodyStart,
+        now,
+        transform: _asPercent,
+      ),
+      _readingOf(HealthDataType.LEAN_BODY_MASS, bodyStart, now),
+      if (Platform.isIOS)
+        _readingOf(HealthDataType.BODY_MASS_INDEX, bodyStart, now)
+      else
+        Future<HealthMetricReading?>.value(),
+    ]);
+
+    return HealthVitals(
+      hrv: results[0],
+      restingHeartRate: results[1],
+      vo2Max: results[2],
+      heartRateRecovery: results[3],
+      oxygenSaturation: results[4],
+      skinTemperature: results[5],
+      respiratoryRate: results[6],
+      weight: results[7],
+      bodyFat: results[8],
+      leanMass: results[9],
+      bodyMassIndex: results[10],
+    );
+  }
+
+  static double _asPercent(double value) => value <= 1 ? value * 100 : value;
+
+  Future<HealthMetricReading?> _readingOf(
+    HealthDataType type,
+    DateTime from,
+    DateTime to, {
+    double Function(double value)? transform,
+  }) async {
+    try {
+      final points = await _health
+          .getHealthDataFromTypes(types: [type], startTime: from, endTime: to)
+          .timeout(_readTimeout);
+      final samples = <HealthSample>[];
+      for (final point in points) {
+        final value = point.value;
+        if (value is! NumericHealthValue) continue;
+        final number = value.numericValue.toDouble();
+        samples.add(
+          HealthSample(
+            value: transform == null ? number : transform(number),
+            at: point.dateTo,
+          ),
+        );
+      }
+      return HealthMetricReading.latestOf(samples);
+    } catch (e, stackTrace) {
+      debugPrint('read ${type.name} failed: $e\n$stackTrace');
+      return null;
+    }
+  }
+
+  Future<HealthMetricReading?> _kitReadingOf(
+    HealthKitMetric metric,
+    DateTime from,
+    DateTime to,
+  ) async => HealthMetricReading.latestOf(
+    await _healthKit
+        .samples(metric, from, to)
+        .timeout(_readTimeout, onTimeout: () => const []),
+  );
 
   Future<List<int>> fetchHeartRateSamples(DateTime from, DateTime to) async {
     if (!to.isAfter(from)) return const [];

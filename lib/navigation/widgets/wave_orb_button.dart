@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
-import 'package:floww/config/constants/app_images.dart';
-import 'package:floww/config/constants/app_opacity.dart';
+import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
-import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/effects/animated_orb.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 
 class WaveOrbButton extends StatefulWidget {
   const WaveOrbButton({super.key, this.onTap});
+
+  static const double size = AppSizes.s52;
 
   final VoidCallback? onTap;
 
@@ -16,58 +17,37 @@ class WaveOrbButton extends StatefulWidget {
 }
 
 class _WaveOrbButtonState extends State<WaveOrbButton> {
+  final OrbController _orb = OrbController();
   bool _pressed = false;
 
   void _setPressed(bool value) {
     if (value != _pressed) setState(() => _pressed = value);
   }
 
+  void _handleTap() {
+    _orb.tap();
+    widget.onTap?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: SizedBox(
-        height: AppSizes.s52,
-        width: AppSizes.s52,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => _setPressed(true),
-          onTapUp: (_) => _setPressed(false),
-          onTapCancel: () => _setPressed(false),
-          onTap: widget.onTap,
-          child: AnimatedScale(
-            scale: _pressed ? 0.98 : 1.0,
-            duration: const Duration(milliseconds: 120),
-            curve: Curves.easeOut,
-            child: AnimatedOpacity(
-              opacity: _pressed ? 0.85 : 1.0,
-              duration: const Duration(milliseconds: 120),
-              curve: Curves.easeOut,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: context.colors.primary.withValues(
-                        alpha: AppOpacity.softGlow,
-                      ),
-                      blurRadius: AppSizes.s40,
-                    ),
-                    BoxShadow(
-                      color: context.colors.primary.withValues(
-                        alpha: AppOpacity.buttonGlowStrong,
-                      ),
-                      blurRadius: AppSizes.s20,
-                    ),
-                  ],
-                ),
-                child: SvgPicture.asset(
-                  AppImages.waveIcon,
-                  width: AppSizes.s52,
-                  height: AppSizes.s52,
-                  theme: SvgTheme(currentColor: context.colors.primary),
-                ),
-              ),
-            ),
+    return Semantics(
+      button: true,
+      label: 'Open WAVE',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _setPressed(true),
+        onTapUp: (_) => _setPressed(false),
+        onTapCancel: () => _setPressed(false),
+        onTap: _handleTap,
+        child: AnimatedScale(
+          scale: _pressed ? AppMotion.pressScale : 1,
+          duration: AppMotion.press,
+          curve: Curves.easeOut,
+          child: WaveAvatarBadge(
+            size: WaveOrbButton.size,
+            contained: true,
+            controller: _orb,
           ),
         ),
       ),

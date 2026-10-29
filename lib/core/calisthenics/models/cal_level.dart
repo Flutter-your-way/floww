@@ -39,7 +39,8 @@ enum CalLevel {
     goal:
         'Weighted strength, the muscle-up, handstand push-ups, advanced-tuck '
         'lever and planche.',
-    restGuidance: 'Take one full rest day mid-week; skill days are about '
+    restGuidance:
+        'Take one full rest day mid-week; skill days are about '
         'quality, not fatigue.',
   ),
   four(
@@ -54,7 +55,8 @@ enum CalLevel {
     goal:
         'Straddle and full lever and planche, the human flag, one-arm work '
         'and heavy weighted pulls and dips.',
-    restGuidance: 'Rest day: mobility and walking, sauna or contrast if you '
+    restGuidance:
+        'Rest day: mobility and walking, sauna or contrast if you '
         'like.',
   );
 

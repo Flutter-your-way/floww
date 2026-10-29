@@ -65,6 +65,9 @@ import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/settings/models/onboarding_answers_data.dart';
 import 'package:floww/core/settings/services/onboarding_answers_service.dart';
 import 'package:floww/core/settings/services/settings_service.dart';
+import 'package:floww/core/progress/services/strength_service.dart';
+import 'package:floww/core/progress/view_models/strength_level_view_model.dart';
+import 'package:floww/core/progress/views/strength_level_view.dart';
 import 'package:floww/core/settings/services/wearable_service.dart';
 import 'package:floww/core/settings/view_models/connected_apps_view_model.dart';
 import 'package:floww/core/settings/view_models/notification_settings_view_model.dart';
@@ -139,11 +142,14 @@ class AppRouterConfig {
           ),
         );
       case AppRouter.connectWearables:
+        final fromApp = settings.arguments == true;
         return MaterialPageRoute(
-          builder: (_) => const ForcedThemeMode(
-            mode: AppThemeMode.flow,
-            child: ConnectWearablesView(),
-          ),
+          builder: (_) => fromApp
+              ? const ConnectWearablesView(fromApp: true)
+              : const ForcedThemeMode(
+                  mode: AppThemeMode.flow,
+                  child: ConnectWearablesView(),
+                ),
         );
       case AppRouter.notificationPermission:
         return MaterialPageRoute(
@@ -321,6 +327,13 @@ class AppRouterConfig {
               MuscleMapService(),
             ),
             child: const MuscleRecoveryView(),
+          ),
+        );
+      case AppRouter.strengthLevel:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => StrengthLevelViewModel(StrengthService()),
+            child: const StrengthLevelView(),
           ),
         );
       case AppRouter.achievements:

@@ -14,7 +14,9 @@ import '../services/onboarding_service.dart';
 import '../widgets/health_integration_widget.dart';
 
 class ConnectWearablesView extends StatefulWidget {
-  const ConnectWearablesView({super.key});
+  const ConnectWearablesView({super.key, this.fromApp = false});
+
+  final bool fromApp;
 
   @override
   State<ConnectWearablesView> createState() => _ConnectWearablesViewState();
@@ -25,6 +27,19 @@ class _ConnectWearablesViewState extends State<ConnectWearablesView> {
 
   bool _isSubmitting = false;
   String? _errorMessage;
+
+  Future<void> _requestPermissions() async {
+    setState(() {
+      _errorMessage = null;
+      _isSubmitting = true;
+    });
+    final granted = await context
+        .read<HealthProvider>()
+        .requestAllPermissions();
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+    if (granted) NavigationService.instance.pop();
+  }
 
   Future<void> _handleContinue(bool connected) async {
     setState(() {
@@ -57,7 +72,12 @@ class _ConnectWearablesViewState extends State<ConnectWearablesView> {
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Column(
               children: [
-                const CustomHeader(title: "Connect Wearables"),
+                CustomHeader(
+                  title: "Connect Wearables",
+                  onBackPressed: widget.fromApp
+                      ? () => NavigationService.instance.pop()
+                      : null,
+                ),
                 SizedBox(height: AppSpacing.xl5),
                 Text(
                   "Sync recovery & activity automatically",
@@ -96,9 +116,11 @@ class _ConnectWearablesViewState extends State<ConnectWearablesView> {
                   SizedBox(height: AppSpacing.lg),
                 ],
                 CustomButton(
-                  text: "Continue",
+                  text: widget.fromApp ? "Allow Access" : "Continue",
                   isLoading: _isSubmitting,
-                  onPressed: () => _handleContinue(health.isConnected),
+                  onPressed: widget.fromApp
+                      ? _requestPermissions
+                      : () => _handleContinue(health.isConnected),
                 ),
                 SizedBox(
                   height: MediaQuery.paddingOf(context).bottom + AppSpacing.xl,

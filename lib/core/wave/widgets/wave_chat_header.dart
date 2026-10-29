@@ -38,7 +38,7 @@ class WaveChatHeader extends StatelessWidget {
           SizedBox(height: AppSpacing.md),
           Row(
             children: [
-              const WaveAvatarBadge(),
+              const WaveAvatarBadge(contained: true),
               SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(

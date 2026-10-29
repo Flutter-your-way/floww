@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 
-import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -51,11 +50,10 @@ class _WaveVoiceOrbState extends State<WaveVoiceOrb>
             scale: 1 + AppMotion.waveVoiceOrbBoost * widget.level,
             duration: AppMotion.waveVoiceLevel,
             curve: Curves.easeOut,
-            child: SvgPicture.asset(
-              AppImages.waveIcon,
-              width: AppSizes.s96,
-              height: AppSizes.s96,
-              theme: SvgTheme(currentColor: context.colors.primary),
+            child: WaveAvatarBadge(
+              size: AppSizes.s96,
+              contained: true,
+              speaking: widget.isActive,
             ),
           ),
         ],

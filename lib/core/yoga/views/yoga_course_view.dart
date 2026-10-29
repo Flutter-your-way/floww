@@ -62,12 +62,11 @@ class _CourseContent extends StatelessWidget {
 
   final YogaCourseViewModel viewModel;
 
-  void _openPose(BuildContext context, String id) =>
-      YogaPoseLessonSheet.show(
-        context: context,
-        postureId: id,
-        profile: viewModel.profile,
-      );
+  void _openPose(BuildContext context, String id) => YogaPoseLessonSheet.show(
+    context: context,
+    postureId: id,
+    profile: viewModel.profile,
+  );
 
   @override
   Widget build(BuildContext context) {

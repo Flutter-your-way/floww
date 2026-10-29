@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
-import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 
 class WaveThinkingIndicator extends StatefulWidget {
   const WaveThinkingIndicator({super.key, required this.steps});
@@ -122,11 +121,10 @@ class _WaveBreathingOrbState extends State<_WaveBreathingOrb>
           child: child,
         ),
       ),
-      child: SvgPicture.asset(
-        AppImages.waveIcon,
-        width: AppSizes.s24,
-        height: AppSizes.s24,
-        theme: SvgTheme(currentColor: context.colors.primary),
+      child: const WaveAvatarBadge(
+        size: AppSizes.s24,
+        speaking: true,
+        contained: true,
       ),
     );
   }

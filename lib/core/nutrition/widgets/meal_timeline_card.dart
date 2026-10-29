@@ -42,10 +42,7 @@ class MealTimelineCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            MealTimeIcon(
-                              meal: entry.meal,
-                              size: AppSizes.s20,
-                            ),
+                            MealTimeIcon(meal: entry.meal, size: AppSizes.s20),
                             SizedBox(width: AppSpacing.xs),
                             Flexible(
                               child: Text(

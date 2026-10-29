@@ -132,6 +132,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     return 'Only yesterday\'s $noun can be made up, and only today. Older '
         'sessions stay in your history as missed.';
   }
+
   bool get isLoading => _isLoading;
 
   String? get errorMessage => _errorMessage;
@@ -167,9 +168,8 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   IconData get emptyIcon =>
       _isRestDay ? Icons.self_improvement : Icons.calendar_today;
 
-  String get emptyTitle => _isRestDay
-      ? 'Rest day'
-      : 'No ${_discipline.sessionNoun} scheduled';
+  String get emptyTitle =>
+      _isRestDay ? 'Rest day' : 'No ${_discipline.sessionNoun} scheduled';
 
   String get emptyMessage {
     final noun = _discipline.sessionNoun;
