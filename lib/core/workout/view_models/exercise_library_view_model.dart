@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/entities/exercise_video_entity.dart';
 import 'package:floww/config/entities/workout_exercise_entity.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
+import 'package:floww/config/services/exercise_video_service.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/exercise.dart';
@@ -20,7 +22,11 @@ import 'package:floww/core/workout/services/workout_progression.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 
 class ExerciseLibraryViewModel extends ChangeNotifier {
-  ExerciseLibraryViewModel(this._service, this._sessionService) {
+  ExerciseLibraryViewModel(
+    this._service,
+    this._sessionService, {
+    ExerciseVideoService? videoService,
+  }) : _videoService = videoService ?? ExerciseVideoService() {
     _start();
   }
 
@@ -32,6 +38,7 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
 
   final WorkoutCatalogService _service;
   final WorkoutSessionService _sessionService;
+  final ExerciseVideoService _videoService;
 
   StreamSubscription<List<ExerciseCatalogEntry>>? _subscription;
   StreamSubscription<List<WorkoutSessionEntity>>? _sessionSubscription;
@@ -44,6 +51,7 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
   Equipment? _equipment;
   MuscleGroup? _expandedGroup = MuscleGroup.chest;
   String? _detailId;
+  ExerciseVideo? _detailVideo;
   String? _expandedSectionId = ExerciseInsights.personalBestId;
   bool _isLoading = true;
   bool _disposed = false;
@@ -295,7 +303,21 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
 
   void openDetail(String id) {
     _detailId = id;
+    _detailVideo = null;
     _expandedSectionId = ExerciseInsights.personalBestId;
+    notifyListeners();
+    _loadDetailVideo(id);
+  }
+
+  Future<void> _loadDetailVideo(String id) async {
+    final exercise = _exerciseOf(id);
+    if (exercise == null || exercise.isCustom) return;
+    final video = await _videoService.find(
+      kind: ExerciseVideoKind.gym,
+      queries: [exercise.name],
+    );
+    if (_detailId != id || video == null) return;
+    _detailVideo = video;
     notifyListeners();
   }
 
@@ -330,6 +352,7 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
       name: exercise.name,
       subtitle: '${exercise.group.label} · ${exercise.equipment.label}',
       imageUrl: _imageOf(exercise),
+      video: _detailVideo,
       stats: _statsOf(exercise, best),
       targetLabel: _targetLabelOf(exercise),
       muscles: _musclesOf(exercise),

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
+import 'package:floww/config/services/exercise_video_service.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
-import 'package:floww/config/widgets/images/remote_image.dart';
+import 'package:floww/config/widgets/images/exercise_media_frame.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/core/workout/widgets/exercise_info_section_card.dart';
@@ -17,8 +17,6 @@ import 'package:floww/core/yoga/view_models/yoga_lesson_view_model.dart';
 
 class YogaPoseLessonSheet extends StatelessWidget {
   const YogaPoseLessonSheet({super.key});
-
-  static const double _mediaAspectRatio = 16 / 9;
 
   static Future<void> show({
     required BuildContext context,
@@ -31,7 +29,8 @@ class YogaPoseLessonSheet extends StatelessWidget {
     await showAppFloatingSheet<void>(
       context: context,
       builder: (_) => ChangeNotifierProvider(
-        create: (_) => YogaLessonViewModel(posture, profile),
+        create: (_) =>
+            YogaLessonViewModel(posture, profile, ExerciseVideoService()),
         child: const YogaPoseLessonSheet(),
       ),
     );
@@ -52,16 +51,10 @@ class YogaPoseLessonSheet extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  child: AspectRatio(
-                    aspectRatio: _mediaAspectRatio,
-                    child: RemoteImage(
-                      url: viewModel.imageUrl,
-                      fallbackIcon: Icons.self_improvement,
-                      fallbackIconSize: AppSizes.s40,
-                    ),
-                  ),
+                ExerciseMediaFrame(
+                  imageUrl: viewModel.imageUrl,
+                  video: viewModel.video,
+                  fallbackIcon: Icons.self_improvement,
                 ),
                 SizedBox(height: AppSpacing.lg),
                 Text(

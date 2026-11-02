@@ -62,3 +62,5 @@ export const foodDescribeCacheCollection =
   firestore.collection("food_describe_cache");
 export const foodImageCacheCollection =
   firestore.collection("food_image_cache");
+export const exerciseVideoCacheCollection =
+  firestore.collection("exercise_video_cache");

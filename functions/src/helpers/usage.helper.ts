@@ -16,7 +16,8 @@ export type AiFeature =
   | "waveChat"
   | "waveSummary"
   | "onboardingAnalysis"
-  | "workoutPlan";
+  | "workoutPlan"
+  | "exerciseVideo";
 
 export interface AiDailyLimits {
   premium: number;

@@ -10,6 +10,7 @@ class AppApi {
   static const String foodSearch = '/searchFood';
   static const String foodDescribe = '/describeFood';
   static const String foodImage = '/foodImage';
+  static const String exerciseVideo = '/exerciseVideo';
   static const String waveChat = '/waveChat';
   static const String waveQuota = '/waveQuota';
   static const String account = '/deleteAccount';

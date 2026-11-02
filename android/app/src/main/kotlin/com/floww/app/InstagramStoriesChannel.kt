@@ -1,4 +1,4 @@
-package com.example.floww
+package com.floww.app
 
 import android.app.Activity
 import android.content.Intent

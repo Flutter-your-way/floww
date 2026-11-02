@@ -1,4 +1,4 @@
-package com.example.floww
+package com.floww.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine

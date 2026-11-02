@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
-import 'package:floww/config/widgets/images/remote_image.dart';
+import 'package:floww/config/widgets/images/exercise_media_frame.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/core/workout/models/exercise_view_data.dart';
@@ -18,8 +17,6 @@ import 'package:floww/core/workout/widgets/workout_stat_tile.dart';
 
 class ExerciseDetailSheet extends StatelessWidget {
   const ExerciseDetailSheet({super.key});
-
-  static const double _mediaAspectRatio = 16 / 9;
 
   static Future<void> show({
     required BuildContext context,
@@ -52,16 +49,10 @@ class ExerciseDetailSheet extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  child: AspectRatio(
-                    aspectRatio: _mediaAspectRatio,
-                    child: RemoteImage(
-                      url: detail.imageUrl,
-                      fallbackIcon: Icons.fitness_center,
-                      fallbackIconSize: AppSizes.s40,
-                    ),
-                  ),
+                ExerciseMediaFrame(
+                  imageUrl: detail.imageUrl,
+                  video: detail.video,
+                  fallbackIcon: Icons.fitness_center,
                 ),
                 SizedBox(height: AppSpacing.lg),
                 _ExerciseStatsCard(detail: detail),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/entities/exercise_video_entity.dart';
+import 'package:floww/config/services/exercise_video_service.dart';
+
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/exercise_info.dart';
 import 'package:floww/core/yoga/data/yoga_module_data.dart';
@@ -7,7 +10,9 @@ import 'package:floww/core/yoga/models/yoga_posture.dart';
 import 'package:floww/core/yoga/models/yoga_profile.dart';
 
 class YogaLessonViewModel extends ChangeNotifier {
-  YogaLessonViewModel(this.posture, this._profile);
+  YogaLessonViewModel(this.posture, this._profile, this._videoService) {
+    _loadVideo();
+  }
 
   static const String _goalId = 'goal';
   static const String _safetyId = 'safety';
@@ -20,14 +25,19 @@ class YogaLessonViewModel extends ChangeNotifier {
 
   final YogaPosture posture;
   final YogaProfile _profile;
+  final ExerciseVideoService _videoService;
 
   String? _expandedId = _entryId;
+  ExerciseVideo? _video;
+  bool _disposed = false;
 
   String get title => posture.name;
 
   String get subtitle => posture.sanskritName ?? posture.family.title;
 
   String get imageUrl => posture.imageUrl;
+
+  ExerciseVideo? get video => _video;
 
   String get summary => posture.summary;
 
@@ -45,6 +55,16 @@ class YogaLessonViewModel extends ChangeNotifier {
     for (final caution in posture.cautions)
       if (_profile.cautions.contains(caution)) caution.label,
   ];
+
+  Future<void> _loadVideo() async {
+    final video = await _videoService.find(
+      kind: ExerciseVideoKind.yoga,
+      queries: [posture.name, ?posture.sanskritName],
+    );
+    if (video == null) return;
+    _video = video;
+    notifyListeners();
+  }
 
   void toggle(String id) {
     _expandedId = _expandedId == id ? null : id;
@@ -171,4 +191,15 @@ class YogaLessonViewModel extends ChangeNotifier {
     items: items,
     isExpanded: _expandedId == id,
   );
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 }

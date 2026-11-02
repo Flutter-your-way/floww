@@ -2,8 +2,13 @@ import express, {Application, RequestHandler} from "express";
 import {logger} from "firebase-functions";
 import {onRequest} from "firebase-functions/https";
 import morgan from "morgan";
-import {openAiApiKey, usdaApiKey} from "./src/constants/secrets";
+import {
+  openAiApiKey,
+  usdaApiKey,
+  ymoveApiKey,
+} from "./src/constants/secrets";
 import {handleDeleteAccount} from "./src/handlers/account.handler";
+import {handleExerciseVideo} from "./src/handlers/exercise.video.handler";
 import {
   handleDescribeFood,
   handleScanFood,
@@ -102,6 +107,16 @@ export const searchFood = onRequest(
     timeoutSeconds: 30,
   },
   createApp("post", handleSearchFood),
+);
+
+export const exerciseVideo = onRequest(
+  {
+    cors: true,
+    secrets: [ymoveApiKey],
+    memory: "256MiB",
+    timeoutSeconds: 30,
+  },
+  createApp("post", handleExerciseVideo),
 );
 
 export const describeFood = onRequest(

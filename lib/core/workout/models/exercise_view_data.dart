@@ -1,3 +1,4 @@
+import 'package:floww/config/entities/exercise_video_entity.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/exercise.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
@@ -61,6 +62,7 @@ class ExerciseDetailItem {
     required this.isSaved,
     required this.isCustom,
     this.imageUrl,
+    this.video,
   });
 
   final String id;
@@ -73,4 +75,5 @@ class ExerciseDetailItem {
   final bool isSaved;
   final bool isCustom;
   final String? imageUrl;
+  final ExerciseVideo? video;
 }
