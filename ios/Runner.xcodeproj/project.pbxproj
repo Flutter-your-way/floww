@@ -210,6 +210,7 @@
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				449E9963A72C015E574DEE72 /* [CP] Embed Pods Frameworks */,
+				5F1D0C2A2EC9A1B400F1A001 /* Generate Framework dSYMs */,
 			);
 			buildRules = (
 			);
@@ -308,6 +309,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
+		};
+		5F1D0C2A2EC9A1B400F1A001 /* Generate Framework dSYMs */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Framework dSYMs";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "[ \"$DEBUG_INFORMATION_FORMAT\" = \"dwarf-with-dsym\" ] || exit 0\nmkdir -p \"$DWARF_DSYM_FOLDER_PATH\"\nfor framework in \"$BUILT_PRODUCTS_DIR\"/*.framework \"$BUILT_PRODUCTS_DIR/PackageFrameworks\"/*.framework \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\"/*.framework; do\n  [ -d \"$framework\" ] || continue\n  name=$(basename \"$framework\" .framework)\n  binary=\"$framework/$name\"\n  dsym=\"$DWARF_DSYM_FOLDER_PATH/$name.framework.dSYM\"\n  [ -f \"$binary\" ] || continue\n  [ -d \"$dsym\" ] && continue\n  xcrun dsymutil \"$binary\" -o \"$dsym\" >/dev/null 2>&1 || true\ndone\n";
 		};
 		449E9963A72C015E574DEE72 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
