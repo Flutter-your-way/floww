@@ -443,8 +443,8 @@ class InvoicePdfService {
       pw.SizedBox(height: _gap),
       if (isSimulated)
         pw.Text(
-          'Billing is in test mode. This record was created by a simulated '
-          'checkout and no card was charged.',
+          'App Store sandbox purchase. This record was created with a test '
+          'Apple ID and no real payment was charged.',
           style: const pw.TextStyle(fontSize: _captionSize, color: _inkSubtle),
         ),
       pw.SizedBox(height: 2),

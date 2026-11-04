@@ -21,8 +21,7 @@ class AppApi {
   static const String submitOnboarding = '/submitOnboarding';
   static const String completeOnboarding = '/completeOnboarding';
   static const String dailyQuote = '/dailyQuote';
-  static const String subscribePremium = '/subscribePremium';
-  static const String cancelPremium = '/cancelPremium';
+  static const String syncPremium = '/syncPremium';
   static const String connectWearable = '/connectWearable';
   static const String disconnectWearable = '/disconnectWearable';
   static const String syncWearables = '/syncWearables';

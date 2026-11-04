@@ -23,6 +23,9 @@ class SubscriptionFields {
   static const String trialEndsOn = 'trialEndsOn';
   static const String updatedAt = 'updatedAt';
   static const String isSimulated = 'isSimulated';
+  static const String source = 'source';
+  static const String hasBillingIssue = 'hasBillingIssue';
+  static const String storeSource = 'revenuecat';
 
   static String path(String field) => '$subscription.$field';
 }
@@ -113,6 +116,8 @@ class SubscriptionEntity {
     required this.planId,
     this.currency = AppSubscription.currency,
     this.trialEndsOn,
+    this.isStoreManaged = false,
+    this.hasBillingIssue = false,
   });
 
   final String uid;
@@ -129,6 +134,8 @@ class SubscriptionEntity {
   final String planId;
   final String currency;
   final DateTime? trialEndsOn;
+  final bool isStoreManaged;
+  final bool hasBillingIssue;
 
   bool get isActive => status == SubscriptionStatus.active;
 
@@ -190,6 +197,10 @@ class SubscriptionEntity {
           section[SubscriptionFields.currency] as String? ??
           AppSubscription.currency,
       trialEndsOn: _dateOf(section[SubscriptionFields.trialEndsOn]),
+      isStoreManaged:
+          section[SubscriptionFields.source] == SubscriptionFields.storeSource,
+      hasBillingIssue:
+          section[SubscriptionFields.hasBillingIssue] as bool? ?? false,
     );
   }
 

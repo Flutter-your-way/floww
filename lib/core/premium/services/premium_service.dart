@@ -3,31 +3,40 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:floww/config/constants/app_api.dart';
 import 'package:floww/config/constants/app_collection.dart';
 import 'package:floww/config/constants/app_subscription.dart';
 import 'package:floww/config/services/app_api_client.dart';
 import 'package:floww/core/premium/models/premium_view_data.dart';
+import 'package:floww/core/premium/models/store_offer.dart';
+import 'package:floww/core/premium/services/store_purchase_service.dart';
 
 class PremiumException implements Exception {
-  PremiumException(this.message);
+  PremiumException(this.message, {this.isCancelled = false});
 
   final String message;
+  final bool isCancelled;
 
   @override
   String toString() => message;
 }
 
 class PremiumService {
-  PremiumService({AppApiClient? apiClient})
-    : _apiClient = apiClient ?? AppApiClient();
+  PremiumService({AppApiClient? apiClient, StorePurchaseService? store})
+    : _apiClient = apiClient ?? AppApiClient(),
+      _store = store ?? StorePurchaseService.instance;
 
   final AppApiClient _apiClient;
+  final StorePurchaseService _store;
 
   static const int monthlyPrice = AppSubscription.monthlyPrice;
   static const int yearlyPrice = AppSubscription.yearlyPrice;
   static const String paidAtField = 'paidAt';
+  static const String _confirmingMessage =
+      'Payment received. We are confirming it — tap Restore Purchases '
+      'if Premium does not unlock in a minute.';
 
   static const List<PremiumFeature> features = [
     PremiumFeature(
@@ -149,33 +158,68 @@ class PremiumService {
     );
   }
 
+  Stream<String?> watchUserId() =>
+      _auth.authStateChanges().map((user) => user?.uid);
+
+  Future<void> identify(String? uid) => _store.identify(uid);
+
+  Future<List<StoreOffer>> loadOffers() => _store.loadOffers();
+
   Future<SubscriptionEntity> subscribe(SubscriptionTerm term) async {
     final uid = _requireUserId;
-    final data = await _call(
-      'subscribe',
-      'Could not start your plan. Please try again.',
-      AppApi.subscribePremium,
-      {'term': term.name},
-    );
-    final subscription = subscriptionOf(uid, {
-      SubscriptionFields.planName: planFor(term).planLabel,
-      SubscriptionFields.subscription: data[SubscriptionFields.subscription],
-    });
-    if (subscription == null) {
-      throw PremiumException('Could not start your plan. Please try again.');
+    try {
+      await _store.purchase(term.planId, uid: uid);
+    } on StorePurchaseException catch (e) {
+      throw PremiumException(e.message, isCancelled: e.isCancelled);
+    }
+    final subscription = await sync(failureMessage: _confirmingMessage);
+    if (subscription == null || !subscription.hasAccess(DateTime.now())) {
+      throw PremiumException(_confirmingMessage);
     }
     return subscription;
   }
 
-  Future<void> cancel() async {
-    _requireUserId;
-    await _call(
-      'cancel',
-      'Could not cancel your plan. Please try again.',
-      AppApi.cancelPremium,
-      const {},
+  Future<SubscriptionEntity?> restore() async {
+    final uid = _requireUserId;
+    try {
+      await _store.restore(uid: uid);
+    } on StorePurchaseException catch (e) {
+      throw PremiumException(e.message, isCancelled: e.isCancelled);
+    }
+    return sync(
+      failureMessage: 'Could not restore purchases. Please try again.',
     );
   }
+
+  Future<SubscriptionEntity?> sync({required String failureMessage}) async {
+    final uid = _requireUserId;
+    final data = await _call(
+      'syncPremium',
+      failureMessage,
+      AppApi.syncPremium,
+      const {},
+    );
+    final section = data[SubscriptionFields.subscription];
+    if (section is! Map) return null;
+    return subscriptionOf(uid, {
+      SubscriptionFields.subscription: Map<String, dynamic>.from(section),
+    });
+  }
+
+  Future<bool> openLink(Uri uri) async {
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('open link failed: $e');
+      return false;
+    }
+  }
+
+  Future<bool> openManageSubscription() async =>
+      openLink(await manageSubscriptionUri());
+
+  Future<Uri> manageSubscriptionUri() async =>
+      Uri.parse(await _store.manageUrl());
 
   Future<Map<String, dynamic>> _call(
     String operation,

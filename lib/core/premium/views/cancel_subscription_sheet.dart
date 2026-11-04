@@ -26,7 +26,7 @@ class CancelSubscriptionSheet extends StatelessWidget {
   final PremiumViewModel viewModel;
 
   Future<void> _confirm(BuildContext context) async {
-    HapticManager.warning();
+    HapticManager.light();
     final navigator = Navigator.of(context);
     await viewModel.cancelSubscription();
     await navigator.maybePop();
@@ -58,9 +58,7 @@ class CancelSubscriptionSheet extends StatelessWidget {
                   viewModel.cancelConfirmLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.labelLargeSemiBold.copyWith(
-                    color: colors.destructiveBorder,
-                  ),
+                  style: AppTypography.labelLargeSemiBold,
                 ),
               ),
             ),

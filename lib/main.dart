@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/utils/effects/liquid_glass_shader.dart';
@@ -16,6 +17,7 @@ import 'package:floww/core/nutrition/providers/food_photo_provider.dart';
 import 'package:floww/core/nutrition/services/food_image_service.dart';
 import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/services/premium_service.dart';
+import 'package:floww/core/premium/services/store_purchase_service.dart';
 import 'package:floww/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -32,6 +34,9 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await LiquidGlassShader.preload();
   await OrbShader.preload();
+  await StorePurchaseService.instance.configure(
+    uid: FirebaseAuth.instance.currentUser?.uid,
+  );
   final prefs = await SharedPreferences.getInstance();
   final saved = AppThemeMode.values.firstWhere(
     (e) => e.name == (prefs.getString('app_theme_mode') ?? 'flow'),

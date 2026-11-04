@@ -14,7 +14,9 @@ import 'package:floww/core/premium/view_models/premium_upgrade_view_model.dart';
 import 'package:floww/core/premium/views/premium_success_sheet.dart';
 import 'package:floww/core/premium/widgets/premium_plan_overview_card.dart';
 import 'package:floww/core/premium/widgets/premium_price_card.dart';
+import 'package:floww/core/premium/widgets/premium_saved_notice.dart';
 import 'package:floww/core/premium/widgets/premium_segmented_tabs.dart';
+import 'package:floww/core/premium/widgets/premium_store_links.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 class PremiumUpgradeView extends StatelessWidget {
@@ -39,11 +41,40 @@ class PremiumUpgradeView extends StatelessWidget {
     await PremiumSuccessSheet.show(context: context, viewModel: viewModel);
   }
 
+  Future<void> _restore(
+    BuildContext context,
+    PremiumUpgradeViewModel viewModel,
+  ) async {
+    HapticManager.light();
+    final restored = await viewModel.restore();
+    if (restored == null) return;
+    HapticManager.success();
+    if (!context.mounted) return;
+    await PremiumSuccessSheet.show(context: context, viewModel: viewModel);
+  }
+
+  List<PremiumStoreLink> _links(
+    BuildContext context,
+    PremiumUpgradeViewModel viewModel,
+  ) => [
+    PremiumStoreLink(
+      label: viewModel.restoreLabel,
+      onTap: viewModel.isBusy ? null : () => _restore(context, viewModel),
+    ),
+    PremiumStoreLink(label: viewModel.termsLabel, onTap: viewModel.openTerms),
+    if (viewModel.hasPrivacyLink)
+      PremiumStoreLink(
+        label: viewModel.privacyLabel,
+        onTap: viewModel.openPrivacy,
+      ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Consumer<PremiumUpgradeViewModel>(
       builder: (context, viewModel, child) {
         final errorMessage = viewModel.errorMessage;
+        final noticeMessage = viewModel.noticeMessage;
 
         return InnerPageScaffold(
           title: viewModel.title,
@@ -52,11 +83,21 @@ class PremiumUpgradeView extends StatelessWidget {
             label: viewModel.ctaLabel,
             footnote: viewModel.footnoteLabel,
             isLoading: viewModel.isPurchasing,
-            onPressed: () => _purchase(context, viewModel),
+            onPressed: viewModel.isBusy
+                ? null
+                : () => _purchase(context, viewModel),
+            links: _links(context, viewModel),
           ),
           children: [
             if (errorMessage != null) ...[
               AppErrorCard(message: errorMessage),
+              SizedBox(height: AppSpacing.xl2),
+            ],
+            if (noticeMessage != null) ...[
+              PremiumSavedNotice(
+                message: noticeMessage,
+                onDismiss: viewModel.dismissNotice,
+              ),
               SizedBox(height: AppSpacing.xl2),
             ],
             PremiumSegmentedTabs<SubscriptionTerm>(
@@ -94,12 +135,14 @@ class _PremiumUpgradeFooter extends StatelessWidget {
     required this.footnote,
     required this.isLoading,
     required this.onPressed,
+    required this.links,
   });
 
   final String label;
   final String footnote;
   final bool isLoading;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final List<PremiumStoreLink> links;
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +171,8 @@ class _PremiumUpgradeFooter extends StatelessWidget {
             color: context.colors.textSubtle,
           ),
         ),
+        SizedBox(height: AppSpacing.md),
+        PremiumStoreLinks(links: links),
       ],
     );
   }

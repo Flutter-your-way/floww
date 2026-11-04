@@ -4,6 +4,8 @@ import {onRequest} from "firebase-functions/https";
 import morgan from "morgan";
 import {
   openAiApiKey,
+  revenueCatSecretKey,
+  revenueCatWebhookAuth,
   usdaApiKey,
   ymoveApiKey,
 } from "./src/constants/secrets";
@@ -20,8 +22,8 @@ import {
   handleSubmitOnboarding,
 } from "./src/handlers/onboarding.handler";
 import {
-  handleCancelSubscription,
-  handleSubscribe,
+  handleRevenueCatWebhook,
+  handleSyncPremium,
 } from "./src/handlers/premium.handler";
 import {handleFoodImage} from "./src/handlers/food.image.handler";
 import {handleDailyQuote} from "./src/handlers/quote.handler";
@@ -217,13 +219,17 @@ export const completeOnboarding = onRequest(
   createApp("post", handleCompleteOnboarding),
 );
 
-export const subscribePremium = onRequest(
-  lightOptions,
-  createApp("post", handleSubscribe),
+export const syncPremium = onRequest(
+  {...lightOptions, secrets: [revenueCatSecretKey]},
+  createApp("post", handleSyncPremium),
 );
 
-export const cancelPremium = onRequest(
-  lightOptions,
-  createApp("post", handleCancelSubscription),
+export const revenuecatWebhook = onRequest(
+  {
+    memory: "256MiB",
+    timeoutSeconds: 60,
+    secrets: [revenueCatSecretKey, revenueCatWebhookAuth],
+  },
+  createApp("post", handleRevenueCatWebhook, {requireAuth: false}),
 );
 

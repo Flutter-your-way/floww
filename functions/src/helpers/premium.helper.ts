@@ -2,8 +2,6 @@ import {DocumentData} from "firebase-admin/firestore";
 import {recordOf} from "../common/utils";
 
 export const CURRENCY = "INR";
-export const TRIAL_DAYS = 7;
-const MS_PER_DAY = 86_400_000;
 
 export type SubscriptionTerm = "monthly" | "yearly";
 
@@ -32,6 +30,14 @@ export const PREMIUM_PLANS: Record<SubscriptionTerm, PremiumPlan> = {
   },
 };
 
+export const PREMIUM_ENTITLEMENT = "premium";
+
+export const termForProduct = (productId: string): SubscriptionTerm =>
+  productId === PREMIUM_PLANS.yearly.planId ? "yearly" : "monthly";
+
+export const planForProduct = (productId: string): PremiumPlan =>
+  PREMIUM_PLANS[termForProduct(productId)];
+
 const ACCESS_STATUSES = ["active", "cancelled"];
 
 export const renewsOnOf = (user: DocumentData | undefined): number | null => {
@@ -52,12 +58,3 @@ export const hasPremiumAccess = (
     renewsOn !== null &&
     now.getTime() < renewsOn;
 };
-
-export const periodEndFrom = (start: Date, months: number): Date => {
-  const end = new Date(start);
-  end.setUTCMonth(end.getUTCMonth() + months);
-  return end;
-};
-
-export const trialEndFrom = (start: Date): Date =>
-  new Date(start.getTime() + TRIAL_DAYS * MS_PER_DAY);

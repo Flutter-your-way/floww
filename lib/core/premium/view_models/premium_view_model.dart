@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:floww/config/constants/app_motion.dart';
+import 'package:floww/config/constants/app_subscription.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/currency_formatter.dart';
 import 'package:floww/config/utils/share/share_service.dart';
@@ -31,9 +32,12 @@ class PremiumViewModel extends ChangeNotifier {
         _notify();
       },
     );
+    _lifecycle = AppLifecycleListener(onResume: _refreshFromStore);
+    _refreshFromStore();
   }
 
   final PremiumService _service;
+  late final AppLifecycleListener _lifecycle;
   final InvoicePdfService _pdfService;
   final ShareService _shareService;
 
@@ -44,6 +48,8 @@ class PremiumViewModel extends ChangeNotifier {
   bool _isLoading = true;
   bool _isCancelling = false;
   bool _isExportingAll = false;
+  bool _isSyncing = false;
+  bool _awaitingStoreReturn = false;
   bool _disposed = false;
   String? _errorMessage;
   String? _downloadingInvoiceId;
@@ -73,7 +79,12 @@ class PremiumViewModel extends ChangeNotifier {
 
   SubscriptionEntity? get subscription => _snapshot.subscription;
 
-  bool get isActive => subscription?.isActive ?? false;
+  bool get isActive {
+    final plan = subscription;
+    return plan != null && plan.isActive && plan.hasAccess(DateTime.now());
+  }
+
+  bool get hasBillingIssue => subscription?.hasBillingIssue ?? false;
 
   bool get hasPlan => subscription != null;
 
@@ -84,11 +95,20 @@ class PremiumViewModel extends ChangeNotifier {
       : (hasPlan ? 'Premium Cancelled' : 'No Active Plan');
 
   String get statusMessage {
+    if (isActive && hasBillingIssue) {
+      return 'The App Store could not renew your plan. Update your payment '
+          'method in App Store settings to keep Premium.';
+    }
     if (isActive) {
       return 'All premium features are unlocked and active on your account.';
     }
+    final plan = subscription;
+    if (plan != null && plan.hasAccess(DateTime.now())) {
+      return 'Auto-renew is off. Your plan stays active until the end of the '
+          'current billing period.';
+    }
     if (hasPlan) {
-      return 'Your plan stays active until the end of the current billing period.';
+      return 'Your plan has ended. Resubscribe to unlock Premium again.';
     }
     return 'Upgrade to unlock WAVE coaching, adaptive plans and analytics.';
   }
@@ -106,7 +126,8 @@ class PremiumViewModel extends ChangeNotifier {
   String get subscriptionPriceLabel {
     final plan = subscription;
     if (plan == null) return '';
-    return '${CurrencyFormatter.rupees(plan.price)}${plan.periodLabel}';
+    return '${CurrencyFormatter.forCurrency(plan.price, plan.currency)}'
+        '${plan.periodLabel}';
   }
 
   String get featuresTitle =>
@@ -117,24 +138,30 @@ class PremiumViewModel extends ChangeNotifier {
   String get renewalLabel {
     final plan = subscription;
     if (plan == null) return '';
+    if (!isActive) {
+      return 'Ends on · ${AppDateUtils.monthDayYear(plan.renewsOn)}';
+    }
     return 'Renews on · ${AppDateUtils.monthDayYear(plan.renewsOn)} '
         '· $subscriptionPriceLabel';
   }
 
-  String get cancelLabel => 'Cancel Subscription';
+  bool get showsRenewal => subscription?.hasAccess(DateTime.now()) ?? false;
 
-  String get cancelTitle => 'Cancel Subscription?';
+  String get cancelLabel => 'Manage Subscription';
+
+  String get cancelTitle => 'Manage Subscription';
 
   String get cancelMessage {
     final plan = subscription;
     final until = plan == null
         ? 'the end of your billing period'
         : AppDateUtils.monthDayYear(plan.renewsOn);
-    return 'You keep every premium feature until $until. After that WAVE '
-        'coaching, adaptive plans and analytics switch off.';
+    return 'Your plan is billed by the App Store, so you can switch plans or '
+        'cancel from your App Store subscriptions. If you cancel, you keep '
+        'every premium feature until $until.';
   }
 
-  String get cancelConfirmLabel => 'Cancel Plan';
+  String get cancelConfirmLabel => 'Open App Store';
 
   String get cancelDismissLabel => 'Keep Premium';
 
@@ -142,8 +169,13 @@ class PremiumViewModel extends ChangeNotifier {
 
   bool get hasPayments => paymentsSummary != null;
 
-  String get totalPaidLabel =>
-      CurrencyFormatter.rupees(paymentsSummary?.totalPaid ?? 0);
+  String get _paymentsCurrency =>
+      _snapshot.invoices.firstOrNull?.currency ?? AppSubscription.currency;
+
+  String get totalPaidLabel => CurrencyFormatter.forCurrency(
+    paymentsSummary?.totalPaid ?? 0,
+    _paymentsCurrency,
+  );
 
   String get totalPaidCaption => 'Total paid to date';
 
@@ -170,11 +202,16 @@ class PremiumViewModel extends ChangeNotifier {
     for (final invoice in _snapshot.invoices)
       PremiumInvoiceItem(
         id: invoice.id,
-        amountLabel: CurrencyFormatter.rupees(invoice.amount),
+        amountLabel: CurrencyFormatter.forCurrency(
+          invoice.amount,
+          invoice.currency,
+        ),
         subtitle:
             '${invoice.planLabel} · '
             '${AppDateUtils.monthDayYear(invoice.paidAt)}',
-        statusLabel: invoice.isPaid ? 'Paid' : 'Due',
+        statusLabel: invoice.isSimulated
+            ? 'Sandbox'
+            : (invoice.isPaid ? 'Paid' : 'Due'),
         actionLabel: 'PDF',
         isDownloading: _downloadingInvoiceId == invoice.id,
       ),
@@ -300,12 +337,43 @@ class PremiumViewModel extends ChangeNotifier {
 
   String get paymentMethodTitle => 'Payment Method';
 
-  String get paymentMethodLabel => 'Simulated checkout';
+  bool get _isSandbox => subscription?.isSimulated ?? false;
 
-  String get paymentMethodExpiryLabel =>
-      'No card is charged while billing is in test mode';
+  String get paymentMethodLabel =>
+      _isSandbox ? 'App Store Sandbox' : 'App Store';
 
-  String get paymentMethodActionLabel => 'Add Card';
+  String get paymentMethodExpiryLabel => _isSandbox
+      ? 'Test purchase with a sandbox Apple ID · no real charge'
+      : 'Billed securely to your Apple ID';
+
+  String get paymentMethodActionLabel => 'Manage';
+
+  Future<void> openManageSubscription() async {
+    _awaitingStoreReturn = true;
+    final opened = await _service.openManageSubscription();
+    if (opened) return;
+    _awaitingStoreReturn = false;
+    _errorMessage = 'Could not open App Store subscriptions.';
+    _notify();
+  }
+
+  Future<void> _refreshFromStore() async {
+    if (_isSyncing || _service.userId == null) return;
+    _isSyncing = true;
+    try {
+      await _service.sync(
+        failureMessage: 'Could not refresh your subscription.',
+      );
+    } on PremiumException catch (e) {
+      if (_awaitingStoreReturn) {
+        _errorMessage = e.message;
+        _notify();
+      }
+    } finally {
+      _isSyncing = false;
+      _awaitingStoreReturn = false;
+    }
+  }
 
   void selectTab(PremiumTab tab) {
     if (_tab == tab) return;
@@ -315,17 +383,13 @@ class PremiumViewModel extends ChangeNotifier {
   }
 
   Future<bool> cancelSubscription() async {
-    if (!isActive || _isCancelling) return false;
+    if (!hasPlan || _isCancelling) return false;
     _isCancelling = true;
     _errorMessage = null;
     _notify();
-
     try {
-      await _service.cancel();
+      await openManageSubscription();
       return true;
-    } on PremiumException catch (e) {
-      _errorMessage = e.message;
-      return false;
     } finally {
       _isCancelling = false;
       _notify();
@@ -342,6 +406,7 @@ class PremiumViewModel extends ChangeNotifier {
     _disposed = true;
     _savedNoticeTimer?.cancel();
     _subscription?.cancel();
+    _lifecycle.dispose();
     super.dispose();
   }
 }

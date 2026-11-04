@@ -14,6 +14,7 @@ class PremiumAccessProvider extends ChangeNotifier {
   final PremiumService _service;
 
   StreamSubscription<SubscriptionEntity?>? _watch;
+  StreamSubscription<String?>? _userWatch;
   SubscriptionEntity? _subscription;
   bool _isLoading = true;
   bool _disposed = false;
@@ -60,6 +61,8 @@ class PremiumAccessProvider extends ChangeNotifier {
   }
 
   void start() {
+    _userWatch?.cancel();
+    _userWatch = _service.watchUserId().listen(_service.identify);
     _watch?.cancel();
     _watch = _service.watchSubscription().listen(
       (subscription) {
@@ -93,6 +96,7 @@ class PremiumAccessProvider extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _watch?.cancel();
+    _userWatch?.cancel();
     super.dispose();
   }
 }

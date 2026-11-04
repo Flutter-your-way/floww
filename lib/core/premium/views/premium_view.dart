@@ -110,7 +110,7 @@ class _PremiumPlanTab extends StatelessWidget {
           title: viewModel.featuresTitle,
           features: viewModel.features,
         ),
-        if (viewModel.isActive) ...[
+        if (viewModel.showsRenewal) ...[
           SizedBox(height: AppSpacing.xl2),
           PremiumRenewalCard(
             renewalLabel: viewModel.renewalLabel,
@@ -177,7 +177,10 @@ class _PremiumPaymentsTab extends StatelessWidget {
           methodLabel: viewModel.paymentMethodLabel,
           expiryLabel: viewModel.paymentMethodExpiryLabel,
           actionLabel: viewModel.paymentMethodActionLabel,
-          onUpdate: HapticManager.light,
+          onUpdate: () {
+            HapticManager.light();
+            viewModel.openManageSubscription();
+          },
         ),
       ],
     );
