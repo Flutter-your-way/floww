@@ -29,12 +29,14 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.328901179784-6bni7ofqfcqf9r2ugbr3jdd356ql6879</string>
+				<string>com.googleusercontent.apps.328901179784-skhkmr1m1mlqdm2ihhis7hu0a47gd0ji</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>instagram-stories</string>
@@ -55,6 +57,10 @@
 	<string>Floww reads your steps, workouts, sleep, heart rate, HRV, VO2 max, blood oxygen, respiratory rate, wrist temperature and body measurements from Apple Health to personalise your recovery and training plan.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Floww writes your logged workouts back to Apple Health so all your activity stays in one place.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

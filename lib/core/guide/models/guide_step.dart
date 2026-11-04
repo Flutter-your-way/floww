@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 
 enum GuideSection { intro, home, nutrition, workout, habits, progress }
 
+enum GuideAudience { everyone, premium, free }
+
 enum GuideTargetId {
   homeFlowScore,
   homeMode,
@@ -48,6 +50,7 @@ class GuideStep {
     this.targets = const [],
     this.hero = false,
     this.optional = false,
+    this.audience = GuideAudience.everyone,
     this.action,
   });
 
@@ -58,6 +61,7 @@ class GuideStep {
   final List<GuideTargetId> targets;
   final bool hero;
   final bool optional;
+  final GuideAudience audience;
   final String? action;
 }
 

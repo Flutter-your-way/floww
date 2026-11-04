@@ -1,4 +1,4 @@
-package com.floww.app
+package com.flowwfitness.app
 
 import android.app.Activity
 import android.content.Intent

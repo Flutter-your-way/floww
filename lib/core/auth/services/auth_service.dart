@@ -162,6 +162,8 @@ class AuthService {
     final user = _auth.currentUser;
     if (user == null) throw AuthException('Please sign in again.');
 
+    if (_isAppleUser(user)) await _revokeAppleToken();
+
     await _removeFcmToken(user.uid);
     await _requestAccountDeletion(user);
 
@@ -175,6 +177,32 @@ class AuthService {
       await _auth.signOut();
     } catch (e, stackTrace) {
       debugPrint('deleteAccount local sign out skipped: $e\n$stackTrace');
+    }
+  }
+
+  bool _isAppleUser(User user) => user.providerData.any(
+    (info) => info.providerId == AppleAuthProvider.PROVIDER_ID,
+  );
+
+  Future<void> _revokeAppleToken() async {
+    final AuthorizationCredentialAppleID appleCredential;
+    try {
+      appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [],
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw AuthCancelledException('Account deletion was cancelled.');
+      }
+      throw AuthException('Could not verify your Apple ID. Please try again.');
+    }
+
+    try {
+      await _auth.revokeTokenWithAuthorizationCode(
+        appleCredential.authorizationCode,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('deleteAccount apple revoke skipped: $e\n$stackTrace');
     }
   }
 

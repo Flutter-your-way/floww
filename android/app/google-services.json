@@ -7,17 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:328901179784:android:6e39d87ff9d1b2f691a23d",
+        "mobilesdk_app_id": "1:328901179784:android:9298b2d46026fd1191a23d",
         "android_client_info": {
-          "package_name": "com.example.floww"
+          "package_name": "com.flowwfitness.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "328901179784-tfgjlrcg1tkrdqdmp5p5fkg7j429ckvb.apps.googleusercontent.com",
+          "client_id": "328901179784-2q65qqupjcjea6pd2fhro3331c2o29s5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.floww",
+            "package_name": "com.flowwfitness.app",
             "certificate_hash": "96ececb527330ce8a44255592e96e8fec3bdd45d"
           }
         },

@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>328901179784-6bni7ofqfcqf9r2ugbr3jdd356ql6879.apps.googleusercontent.com</string>
+	<string>328901179784-skhkmr1m1mlqdm2ihhis7hu0a47gd0ji.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.328901179784-6bni7ofqfcqf9r2ugbr3jdd356ql6879</string>
+	<string>com.googleusercontent.apps.328901179784-skhkmr1m1mlqdm2ihhis7hu0a47gd0ji</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>328901179784-hkj3hlsnj3ma2jo6f1uanu3thnv3mnl1.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCI2CWa3X2BixYQU5l1NO20G3rZ7lBVdxc</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.floww</string>
+	<string>com.flowwfitness.app</string>
 	<key>PROJECT_ID</key>
 	<string>floww-fitness</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:328901179784:ios:1f3e0d4128fd440e91a23d</string>
+	<string>1:328901179784:ios:cc7e2e59d60aedf691a23d</string>
 </dict>
 </plist>

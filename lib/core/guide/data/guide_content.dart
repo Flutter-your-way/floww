@@ -122,11 +122,21 @@ class GuideContent {
       ),
       GuideStep(
         icon: Icons.add_circle_outline_rounded,
+        audience: GuideAudience.premium,
         targets: [GuideTargetId.nutritionMeals],
         title: 'Log a meal',
         body:
             'Add food to breakfast, lunch, dinner or snacks with a photo scan, '
             'a search or your recent foods.',
+      ),
+      GuideStep(
+        icon: Icons.add_circle_outline_rounded,
+        audience: GuideAudience.free,
+        targets: [GuideTargetId.nutritionMeals],
+        title: 'Log a meal',
+        body:
+            'Add food to breakfast, lunch, dinner or snacks with a search, a '
+            'quick description or your recent foods.',
       ),
     ],
   );
@@ -153,6 +163,7 @@ class GuideContent {
       GuideStep(
         icon: Icons.event_note_rounded,
         optional: true,
+        audience: GuideAudience.premium,
         targets: [GuideTargetId.workoutAgenda, GuideTargetId.workoutShift],
         title: "Today's plan",
         body:
@@ -160,7 +171,18 @@ class GuideContent {
             'as a catch-up.',
       ),
       GuideStep(
+        icon: Icons.auto_awesome_rounded,
+        optional: true,
+        audience: GuideAudience.free,
+        targets: [GuideTargetId.workoutShift],
+        title: 'Adaptive Engine',
+        body:
+            'Missed a session? With Premium, WAVE moves it and reshapes your '
+            'week around your sleep and recovery.',
+      ),
+      GuideStep(
         icon: Icons.today_rounded,
+        audience: GuideAudience.premium,
         targets: [
           GuideTargetId.workoutToday,
           GuideTargetId.workoutOverview,
@@ -171,6 +193,20 @@ class GuideContent {
         body:
             'What WAVE lined up for today and why it picked it. Once you '
             'train, your summary and training effect show up here.',
+      ),
+      GuideStep(
+        icon: Icons.today_rounded,
+        audience: GuideAudience.free,
+        targets: [
+          GuideTargetId.workoutToday,
+          GuideTargetId.workoutOverview,
+          GuideTargetId.workoutEmpty,
+          GuideTargetId.workoutAgenda,
+        ],
+        title: "Today's session",
+        body:
+            'What WAVE lined up for today and why it picked it. Once you '
+            'train, your session summary shows up here.',
       ),
       GuideStep(
         icon: Icons.play_arrow_rounded,
@@ -250,21 +286,17 @@ class GuideContent {
       ),
       GuideStep(
         icon: Icons.fitness_center_rounded,
-        targets: [
-          GuideTargetId.progressVolume,
-          GuideTargetId.progressAnalytics,
-        ],
+        audience: GuideAudience.premium,
+        targets: [GuideTargetId.progressVolume],
         title: 'Workout volume',
         body:
             'How much you lifted each day this week. Every session you finish '
-            'adds a bar. Part of Premium.',
+            'adds a bar.',
       ),
       GuideStep(
         icon: Icons.checklist_rounded,
-        targets: [
-          GuideTargetId.progressHabits,
-          GuideTargetId.progressAnalytics,
-        ],
+        audience: GuideAudience.premium,
+        targets: [GuideTargetId.progressHabits],
         title: 'Habit consistency',
         body:
             'How many days this week you hit each habit, with your strongest '
@@ -272,20 +304,40 @@ class GuideContent {
       ),
       GuideStep(
         icon: Icons.emoji_events_outlined,
-        targets: [
-          GuideTargetId.progressRecords,
-          GuideTargetId.progressAnalytics,
-        ],
+        optional: true,
+        audience: GuideAudience.premium,
+        targets: [GuideTargetId.progressRecords],
         title: 'Personal records',
         body: 'Your longest streak, highest Flow Score and best week so far.',
       ),
       GuideStep(
+        icon: Icons.insights_rounded,
+        audience: GuideAudience.free,
+        targets: [GuideTargetId.progressAnalytics],
+        title: 'Advanced Analytics',
+        body:
+            'Workout volume, habit consistency and personal records live here. '
+            'Unlock them with Premium.',
+      ),
+      GuideStep(
         icon: Icons.lightbulb_outline_rounded,
+        optional: true,
+        audience: GuideAudience.premium,
         targets: [GuideTargetId.progressInsights],
         title: 'WAVE Insights',
         body:
             'Where you are improving, where you are slipping and what to focus '
             'on next.',
+      ),
+      GuideStep(
+        icon: Icons.lightbulb_outline_rounded,
+        optional: true,
+        audience: GuideAudience.free,
+        targets: [GuideTargetId.progressInsights],
+        title: 'WAVE Insights',
+        body:
+            'With Premium, WAVE reads your month and tells you where you are '
+            'improving, where you are slipping and what to focus on next.',
       ),
     ],
   );

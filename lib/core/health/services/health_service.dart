@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -28,6 +29,7 @@ class HealthService {
   static const Duration _vitalsWindow = Duration(days: 30);
   static const Duration _bodyWindow = Duration(days: 365);
   static const Duration _readTimeout = Duration(seconds: 8);
+  static const Duration _authorizationTimeout = Duration(seconds: 90);
 
   final Health _health;
   final HealthKitChannel _healthKit;
@@ -144,12 +146,24 @@ class HealthService {
   Future<bool> requestPermissions() async {
     await configure();
     try {
-      final granted = await _health.requestAuthorization(
-        readTypes,
-        permissions: _readAccessOf(readTypes),
-      );
-      if (granted) await _healthKit.requestAuthorization();
+      final granted = await _health
+          .requestAuthorization(
+            readTypes,
+            permissions: _readAccessOf(readTypes),
+          )
+          .timeout(_authorizationTimeout);
+      if (granted) {
+        await _healthKit.requestAuthorization().timeout(
+          _authorizationTimeout,
+          onTimeout: () => false,
+        );
+      }
       return granted;
+    } on TimeoutException catch (e, stackTrace) {
+      debugPrint('requestPermissions timed out: $e\n$stackTrace');
+      throw HealthServiceException(
+        '$sourceName did not respond. Please try again.',
+      );
     } catch (e, stackTrace) {
       debugPrint('requestPermissions failed: $e\n$stackTrace');
       throw HealthServiceException(

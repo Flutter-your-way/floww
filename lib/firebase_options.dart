@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD9SPGQAl-lCpkK8rlxkd73fbMktUfmLgo',
-    appId: '1:328901179784:android:6e39d87ff9d1b2f691a23d',
+    appId: '1:328901179784:android:9298b2d46026fd1191a23d',
     messagingSenderId: '328901179784',
     projectId: 'floww-fitness',
     storageBucket: 'floww-fitness.firebasestorage.app',
@@ -59,10 +59,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCI2CWa3X2BixYQU5l1NO20G3rZ7lBVdxc',
-    appId: '1:328901179784:ios:1f3e0d4128fd440e91a23d',
+    appId: '1:328901179784:ios:cc7e2e59d60aedf691a23d',
     messagingSenderId: '328901179784',
     projectId: 'floww-fitness',
     storageBucket: 'floww-fitness.firebasestorage.app',
-    iosBundleId: 'com.example.floww',
+    iosBundleId: 'com.flowwfitness.app',
   );
 }

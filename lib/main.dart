@@ -65,7 +65,12 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => FoodPhotoProvider(FoodImageService())..start(),
         ),
-        ChangeNotifierProvider(create: (_) => GuideController(GuideService())),
+        ChangeNotifierProvider(
+          create: (context) => GuideController(
+            GuideService(),
+            context.read<PremiumAccessProvider>(),
+          ),
+        ),
         Provider(
           create: (_) => HabitReminderProvider()..start(),
           dispose: (_, provider) => provider.dispose(),

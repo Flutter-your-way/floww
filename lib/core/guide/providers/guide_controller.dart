@@ -6,11 +6,13 @@ import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/core/guide/data/guide_content.dart';
 import 'package:floww/core/guide/models/guide_step.dart';
 import 'package:floww/core/guide/services/guide_service.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
 
 class GuideController extends ChangeNotifier {
-  GuideController(this._service);
+  GuideController(this._service, this._access);
 
   final GuideService _service;
+  final PremiumAccessProvider _access;
 
   Set<GuideSection> _seen = {};
   bool _ready = false;
@@ -179,9 +181,17 @@ class GuideController extends ChangeNotifier {
     _steps = [
       ..._steps.take(current == null ? 0 : _index + 1),
       for (final next in flow.steps.skip(start))
-        if (!next.optional || next.targets.any(_isAvailable)) next,
+        if (_isForUser(next) &&
+            (!next.optional || next.targets.any(_isAvailable)))
+          next,
     ];
   }
+
+  bool _isForUser(GuideStep step) => switch (step.audience) {
+    GuideAudience.everyone => true,
+    GuideAudience.premium => _access.hasAccess,
+    GuideAudience.free => !_access.hasAccess,
+  };
 
   bool _isAvailable(GuideTargetId id) {
     final entry = targetEntry(id);
