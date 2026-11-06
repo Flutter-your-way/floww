@@ -9,6 +9,7 @@ import 'package:floww/core/nutrition/models/food_model.dart';
 import 'package:floww/core/nutrition/models/food_portion_result.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
+import 'package:floww/core/nutrition/services/meal_schedule_service.dart';
 import 'package:floww/core/nutrition/services/custom_food_service.dart';
 import 'package:floww/core/nutrition/services/food_scan_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
@@ -82,7 +83,8 @@ class LogFoodViewModel extends ChangeNotifier {
 
   String get searchingLabel => 'Searching the USDA food database...';
 
-  List<MealType> get meals => MealType.values;
+  List<MealType> get meals =>
+      MealScheduleService.instance.current.mealsWith([_meal]);
 
   String? get errorMessage => _errorMessage;
 

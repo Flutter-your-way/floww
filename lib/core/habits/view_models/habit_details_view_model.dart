@@ -69,9 +69,60 @@ class HabitDetailsViewModel extends ChangeNotifier {
 
   String get habitTitle => _detail?.title ?? '';
 
+  HabitQuitProgress? get _quit => _detail?.quit;
+
+  bool get isQuit => _quit != null;
+
+  bool get isQuitAchieved => _quit?.isAchieved ?? false;
+
+  String get quitTitle => 'Quit Goal';
+
+  String get quitDayLabel {
+    final quit = _quit;
+    return quit == null
+        ? ''
+        : HabitLabels.quitDay(quit.dayCount, quit.targetDays);
+  }
+
+  double get quitProgress => _quit?.progress ?? 0;
+
+  String get quitSlipLabel {
+    final quit = _quit;
+    if (quit == null) return '';
+    final last = quit.lastSlip;
+    if (last == null) return 'No slips so far. Keep going.';
+    return '${HabitLabels.slips(quit.slipCount)} noted · last on '
+        '${AppDateUtils.shortMonthDay(last)}';
+  }
+
+  String get quitAchievedTitle =>
+      'You\'ve achieved your goal to quit $habitTitle';
+
+  String get quitAchievedMessage {
+    final quit = _quit;
+    if (quit == null) return '';
+    final slips = quit.slipCount == 0
+        ? 'without a single slip'
+        : 'with ${HabitLabels.slips(quit.slipCount)} along the way';
+    return '${HabitLabels.days(quit.targetDays)} done $slips.';
+  }
+
+  bool get slippedToday => (_todayHabit?.value ?? 0) > 0;
+
+  String get slipActionLabel =>
+      slippedToday ? 'Undo Today\'s Slip' : 'I Slipped Today';
+
+  Future<void> toggleSlip() => logProgress(slippedToday ? 0 : 1);
+
   String get habitDescription {
     final detail = _detail;
     if (detail == null) return '';
+    final quit = detail.quit;
+    if (quit != null) {
+      final goal = 'Quit · ${HabitLabels.days(quit.targetDays)} goal';
+      if (detail.description.isEmpty) return goal;
+      return '${detail.description}\n$goal';
+    }
     final amount = HabitLabels.amount(detail.target, detail.metric);
     final goal = detail.goalType == HabitGoalType.limit
         ? 'Max $amount'
@@ -267,6 +318,8 @@ class HabitDetailsViewModel extends ChangeNotifier {
   HabitSource get initialSource => _detail?.source ?? HabitSource.manual;
 
   int? get initialReminderMinutes => _detail?.reminderMinutes;
+
+  int? get initialQuitDays => _detail?.quit?.targetDays;
 
   void selectPeriod(HabitPeriod period) {
     if (period == _period) return;

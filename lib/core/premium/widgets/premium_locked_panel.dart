@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/constants/app_subscription.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
@@ -14,14 +13,15 @@ class PremiumLockedPanel extends StatelessWidget {
   const PremiumLockedPanel({super.key, required this.capability});
 
   static const String ctaLabel = 'Unlock with Premium';
-  static const String footnote =
-      '${AppSubscription.trialDays}-day free trial · Cancel anytime';
 
   final PremiumCapability capability;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final footnote = context.select<PremiumAccessProvider, String>(
+      (access) => access.trialFootnote,
+    );
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl3),

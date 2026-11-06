@@ -92,29 +92,9 @@ class ActiveExerciseHeroCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: AppSpacing.lg),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: ActiveMetricPill(
-                            value: exercise.setsValue,
-                            label: exercise.setsLabel,
-                          ),
-                        ),
-                        SizedBox(width: AppSpacing.md),
-                        Text(
-                          '•',
-                          style: AppTypography.bodyMediumMedium.copyWith(
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                        SizedBox(width: AppSpacing.md),
-                        Flexible(
-                          child: ActiveMetricPill(
-                            value: exercise.repsValue,
-                            label: exercise.repsLabel,
-                          ),
-                        ),
-                      ],
+                    ActiveMetricPill(
+                      value: exercise.targetValue,
+                      label: exercise.targetLabel,
                     ),
                   ],
                 ),

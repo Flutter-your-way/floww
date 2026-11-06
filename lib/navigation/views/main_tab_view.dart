@@ -35,6 +35,8 @@ import 'package:floww/core/habits/services/habit_source_sync.dart';
 import 'package:floww/core/habits/view_models/habits_view_model.dart';
 import 'package:floww/core/habits/views/habits_view.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
+import 'package:floww/core/progress/services/strength_service.dart';
+import 'package:floww/core/progress/view_models/strength_level_view_model.dart';
 import 'package:floww/core/progress/view_models/progress_view_model.dart';
 import 'package:floww/core/progress/views/progress_view.dart';
 import 'package:floww/navigation/view_models/main_tab_controller.dart';
@@ -86,8 +88,15 @@ class _MainTabViewState extends State<MainTabView> {
       create: (context) => HabitsViewModel(HabitService()),
       child: HabitsView(),
     ),
-    ChangeNotifierProvider(
-      create: (context) => ProgressViewModel(ProgressService()),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => ProgressViewModel(ProgressService()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => StrengthLevelViewModel(StrengthService()),
+        ),
+      ],
       child: ProgressView(),
     ),
   ];
@@ -197,6 +206,11 @@ class _MainTabViewState extends State<MainTabView> {
     );
   }
 
+  void _openWave(BuildContext context) {
+    HapticManager.light();
+    showWaveChatSheet(context);
+  }
+
   Widget _buildScaffold(BuildContext context, MainTabController controller) {
     return Scaffold(
       backgroundColor: context.colors.backgroundPrimary,
@@ -207,26 +221,15 @@ class _MainTabViewState extends State<MainTabView> {
           ),
           const Positioned.fill(child: FlowModeAmbientLayer()),
           Positioned(
-            left: AppSpacing.xl,
-            right: AppSpacing.xl,
+            left: AppBottomNavBar.sideInset,
+            right: AppBottomNavBar.sideInset,
             bottom: AppBottomNavBar.bottomInsetOf(context),
-            child: Row(
-              children: [
-                Expanded(
-                  child: AppBottomNavBar(
-                    items: _tabs,
-                    selectedIndex: controller.index,
-                    onTabSelected: controller.select,
-                  ),
-                ),
-                SizedBox(width: AppSpacing.lg),
-                WaveOrbButton(
-                  onTap: () {
-                    HapticManager.light();
-                    showWaveChatSheet(context);
-                  },
-                ),
-              ],
+            child: AppBottomNavBar(
+              items: _tabs,
+              selectedIndex: controller.index,
+              onTabSelected: controller.select,
+              trailing: WaveOrbButton(onTap: () => _openWave(context)),
+              onTrailingSelected: () => _openWave(context),
             ),
           ),
           Positioned.fill(child: const GuideOverlay()),

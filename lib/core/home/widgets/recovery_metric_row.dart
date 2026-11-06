@@ -7,22 +7,13 @@ import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
 
 class RecoveryMetricRow extends StatelessWidget {
-  const RecoveryMetricRow({super.key, required this.metric});
+  const RecoveryMetricRow({super.key, required this.metric, this.onInfoTap});
 
   final RecoveryMetric metric;
-
-  Color _accentColor(BuildContext context) {
-    return switch (metric.accent) {
-      RecoveryMetricAccent.sleep => context.colors.accentViolet,
-      RecoveryMetricAccent.hrv => context.colors.success,
-      RecoveryMetricAccent.energy => context.colors.accentOrange,
-    };
-  }
+  final VoidCallback? onInfoTap;
 
   @override
   Widget build(BuildContext context) {
-    final accent = _accentColor(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -32,7 +23,7 @@ class RecoveryMetricRow extends StatelessWidget {
             Text(metric.emoji, style: context.textTheme.bodyLarge),
             SizedBox(width: AppSpacing.md),
             Expanded(
-              child: Text(metric.label, style: context.textTheme.titleLarge),
+              child: _MetricLabel(label: metric.label, onInfoTap: onInfoTap),
             ),
             Text(
               metric.valueLabel,
@@ -55,10 +46,43 @@ class RecoveryMetricRow extends StatelessWidget {
         AppProgressBar(
           progress: metric.percent / 100,
           height: AppSizes.s8,
-          color: accent,
           trackColor: context.colors.backgroundElevated,
         ),
       ],
+    );
+  }
+}
+
+class _MetricLabel extends StatelessWidget {
+  const _MetricLabel({required this.label, this.onInfoTap});
+
+  final String label;
+  final VoidCallback? onInfoTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(label, style: context.textTheme.titleLarge);
+    final onInfoTap = this.onInfoTap;
+    if (onInfoTap == null) return text;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: GestureDetector(
+        onTap: onInfoTap,
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            text,
+            SizedBox(width: AppSpacing.sm),
+            Icon(
+              Icons.info_outline_rounded,
+              size: AppSizes.s16,
+              color: context.colors.textSecondary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

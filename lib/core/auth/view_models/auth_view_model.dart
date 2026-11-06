@@ -17,9 +17,63 @@ class AuthViewModel extends ChangeNotifier {
   StreamSubscription<String?>? _avatarSubscription;
   bool _disposed = false;
 
+  bool isEmailLoading = false;
   bool isSigningOut = false;
+  String _email = '';
+  String _password = '';
 
-  bool get isBusy => isGoogleLoading || isAppleLoading || isSigningOut;
+  bool get isBusy =>
+      isGoogleLoading || isAppleLoading || isEmailLoading || isSigningOut;
+
+  String get emailTitle => 'Continue with Email';
+
+  String get emailSubtitle =>
+      'Sign in with your email, or enter a new one to create an account.';
+
+  String get emailHint => 'Email address';
+
+  String get passwordHint => 'Password';
+
+  bool get canSubmitEmail =>
+      _email.trim().contains('@') && _password.length >= 6 && !isBusy;
+
+  void updateEmail(String value) {
+    _email = value;
+    notifyListeners();
+  }
+
+  void updatePassword(String value) {
+    _password = value;
+    notifyListeners();
+  }
+
+  void clearError() {
+    if (errorMessage == null) return;
+    errorMessage = null;
+    notifyListeners();
+  }
+
+  Future<bool> signInWithEmail() async {
+    if (!canSubmitEmail) return false;
+    errorMessage = null;
+    isEmailLoading = true;
+    notifyListeners();
+
+    try {
+      currentUser = await _authService.signInWithEmail(_email, _password);
+      await _authService.registerFcmToken(currentUser!.uid);
+      unawaited(_authService.syncDeviceClock(currentUser!.uid));
+      _watchAvatar();
+      _password = '';
+      return true;
+    } on AuthException catch (e) {
+      errorMessage = e.message;
+      return false;
+    } finally {
+      isEmailLoading = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
 
   String get logOutTitle => 'Log out?';
 

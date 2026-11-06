@@ -46,7 +46,7 @@ class MealTimelineCard extends StatelessWidget {
                             SizedBox(width: AppSpacing.xs),
                             Flexible(
                               child: Text(
-                                entry.meal.label,
+                                entry.meal.shortLabel,
                                 overflow: TextOverflow.ellipsis,
                                 style: context.textTheme.labelSmall?.copyWith(
                                   color: colors.textSecondary,

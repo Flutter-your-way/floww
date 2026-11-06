@@ -12,7 +12,7 @@ import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/progress/view_models/progress_view_model.dart';
 import 'package:floww/core/progress/widgets/progress_card_empty_state.dart';
-import 'package:floww/core/progress/widgets/weight_line_chart.dart';
+import 'package:floww/config/widgets/charts/app_line_chart.dart';
 
 class WeightTrackingCard extends StatelessWidget {
   const WeightTrackingCard({
@@ -83,7 +83,7 @@ class WeightTrackingCard extends StatelessWidget {
             SizedBox(height: AppSpacing.lg),
             _WeightPaceBanner(label: viewModel.weightPaceLabel),
             SizedBox(height: AppSpacing.xl),
-            WeightLineChart(
+            AppLineChart(
               samples: viewModel.weightSamples,
               axisLabels: viewModel.weightAxisLabels,
               dateLabels: viewModel.weightDateLabels,
@@ -263,7 +263,6 @@ class _WeightGoalRow extends StatelessWidget {
             child: AppProgressBar(
               progress: viewModel.weightGoalProgress,
               height: AppSizes.s6,
-              color: colors.primaryAlt,
               trackColor: colors.borderSubtle,
             ),
           ),

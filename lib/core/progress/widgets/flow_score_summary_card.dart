@@ -7,7 +7,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/progress/models/progress_view_data.dart';
-import 'package:floww/core/progress/widgets/flow_score_bar_chart.dart';
+import 'package:floww/core/progress/widgets/progress_bar_chart.dart';
 import 'package:floww/core/progress/widgets/progress_card_empty_state.dart';
 import 'package:floww/core/progress/widgets/progress_metric_tile.dart';
 
@@ -71,7 +71,7 @@ class FlowScoreSummaryCard extends StatelessWidget {
             SizedBox(height: AppSpacing.xl),
             _FlowScoreTiles(summary: summary),
             SizedBox(height: AppSpacing.xl),
-            FlowScoreBarChart(days: summary.days),
+            ProgressBarChart(bars: summary.bars),
           ],
         ],
       ),

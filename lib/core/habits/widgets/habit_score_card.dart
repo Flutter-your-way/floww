@@ -205,7 +205,6 @@ class _ScoreRing extends StatelessWidget {
       size: AppSizes.s100,
       strokeWidth: AppSizes.s10,
       glowColor: colors.textPrimary,
-      endColor: colors.textPrimary,
       trackColor: colors.textTertiary,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -227,10 +226,17 @@ class _ScoreRing extends StatelessWidget {
               ),
             ],
           ),
-          Text(
-            flowPointsLabel,
-            style: AppTypography.captionSemiBold.copyWith(
-              color: colors.primaryAlt,
+          SizedBox(
+            width: AppSizes.s56,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                flowPointsLabel,
+                maxLines: 1,
+                style: AppTypography.captionSemiBold.copyWith(
+                  color: colors.primaryAlt,
+                ),
+              ),
             ),
           ),
         ],

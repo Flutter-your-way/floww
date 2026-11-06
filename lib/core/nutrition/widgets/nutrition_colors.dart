@@ -24,6 +24,7 @@ extension MacroNutrientStyle on MacroNutrient {
 extension MealTypeStyle on MealType {
   IconData get icon => switch (this) {
     MealType.breakfast => Icons.wb_twilight_rounded,
+    MealType.morningSnack => Icons.coffee_rounded,
     MealType.lunch => Icons.wb_sunny_rounded,
     MealType.dinner => Icons.nightlight_round,
     MealType.snacks => Icons.cookie_outlined,
@@ -31,6 +32,7 @@ extension MealTypeStyle on MealType {
 
   String get iconAsset => switch (this) {
     MealType.breakfast => AppImages.breakfastIcon,
+    MealType.morningSnack => AppImages.snacksIcon,
     MealType.lunch => AppImages.lunchIcon,
     MealType.dinner => AppImages.dinnerIcon,
     MealType.snacks => AppImages.snacksIcon,
@@ -38,13 +40,16 @@ extension MealTypeStyle on MealType {
 
   String get photo => switch (this) {
     MealType.breakfast => AppImages.breakfastPhoto,
+    MealType.morningSnack => AppImages.snacksPhoto,
     MealType.lunch => AppImages.lunchPhoto,
     MealType.dinner => AppImages.dinnerPhoto,
     MealType.snacks => AppImages.snacksPhoto,
   };
 
   Color colorOf(BuildContext context) => switch (this) {
-    MealType.breakfast || MealType.lunch => context.colors.accentOrange,
+    MealType.breakfast ||
+    MealType.morningSnack ||
+    MealType.lunch => context.colors.accentOrange,
     MealType.dinner || MealType.snacks => context.colors.textPrimary,
   };
 }

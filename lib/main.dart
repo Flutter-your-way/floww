@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:floww/config/utils/notifications/notification_tones.dart';
 import 'package:floww/config/theme/app_mode.dart';
+import 'package:floww/config/utils/effects/glass_lens_shader.dart';
 import 'package:floww/config/utils/effects/liquid_glass_shader.dart';
+import 'package:floww/config/utils/effects/liquid_glass_lens_shader.dart';
 import 'package:floww/config/utils/effects/orb_shader.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/core/auth/services/auth_service.dart';
@@ -13,6 +16,7 @@ import 'package:floww/core/guide/services/guide_service.dart';
 import 'package:floww/core/habits/providers/habit_reminder_provider.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
 import 'package:floww/core/health/services/health_service.dart';
+import 'package:floww/core/home/providers/daily_metrics_selection_provider.dart';
 import 'package:floww/core/nutrition/providers/food_photo_provider.dart';
 import 'package:floww/core/nutrition/services/food_image_service.dart';
 import 'package:floww/core/premium/providers/premium_access_provider.dart';
@@ -33,6 +37,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await LiquidGlassShader.preload();
+  await GlassLensShader.preload();
+  await LiquidGlassLensShader.preload();
+  await NotificationTones.load();
   await OrbShader.preload();
   await StorePurchaseService.instance.configure(
     uid: FirebaseAuth.instance.currentUser?.uid,
@@ -63,6 +70,9 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel(AuthService())),
         ChangeNotifierProvider(
           create: (_) => HealthProvider(HealthService())..restore(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => DailyMetricsSelectionProvider()..restore(),
         ),
         ChangeNotifierProvider(
           create: (_) => PremiumAccessProvider(PremiumService())..start(),

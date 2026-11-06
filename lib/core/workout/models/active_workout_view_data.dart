@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/core/workout/models/add_exercise_view_data.dart';
 import 'package:floww/core/workout/models/exercise_info.dart';
+import 'package:floww/core/workout/models/muscle_targets_item.dart';
 import 'package:floww/core/workout/models/set_type.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 
@@ -49,7 +50,8 @@ class TodayWorkoutItem {
     required this.goal,
     required this.insight,
     required this.exerciseCountLabel,
-    required this.exercises,
+    required this.sections,
+    required this.muscles,
     this.statusLabel,
     this.statusIcon,
   });
@@ -64,7 +66,8 @@ class TodayWorkoutItem {
   final String goal;
   final String insight;
   final String exerciseCountLabel;
-  final List<WorkoutExerciseItem> exercises;
+  final List<WorkoutSectionItem> sections;
+  final MuscleTargetsItem muscles;
 }
 
 class ExerciseInfoSectionItem {
@@ -90,11 +93,13 @@ class ExerciseInfoSectionItem {
 class ActiveSetDotItem {
   const ActiveSetDotItem({
     required this.status,
+    required this.label,
     this.badge = '',
     this.loggedIndex,
   });
 
   final ActiveSetStatus status;
+  final String label;
   final String badge;
   final int? loggedIndex;
 }
@@ -115,41 +120,35 @@ class ActiveSetInputItem {
   const ActiveSetInputItem({
     required this.primary,
     required this.reserve,
-    required this.typeOptions,
     this.weight,
   });
 
   final AddExerciseTargetItem primary;
   final AddExerciseTargetItem? weight;
   final AddExerciseTargetItem reserve;
-  final List<SetTypeOption> typeOptions;
 }
 
 class ActiveExerciseItem {
   const ActiveExerciseItem({
     required this.name,
-    required this.setsValue,
-    required this.setsLabel,
-    required this.repsValue,
-    required this.repsLabel,
+    required this.targetValue,
+    required this.targetLabel,
     required this.setDots,
     required this.input,
     required this.infoSections,
+    required this.muscles,
     this.imageUrl,
-    this.lastTimeLabel,
     this.supersetLabel,
   });
 
   final String name;
-  final String setsValue;
-  final String setsLabel;
-  final String repsValue;
-  final String repsLabel;
+  final String targetValue;
+  final String targetLabel;
   final List<ActiveSetDotItem> setDots;
   final ActiveSetInputItem input;
   final List<ExerciseInfoSectionItem> infoSections;
+  final MuscleTargetsItem muscles;
   final String? imageUrl;
-  final String? lastTimeLabel;
   final String? supersetLabel;
 }
 
@@ -188,6 +187,7 @@ class ActiveOptionItem {
 }
 
 enum ActiveOptionAction {
+  technique,
   undoLastSet,
   addSet,
   removeSet,
@@ -220,6 +220,7 @@ class ActiveWorkoutItem {
     required this.setLabel,
     required this.exercise,
     required this.isResting,
+    required this.isSetActive,
     required this.isPaused,
     required this.restSecondsLabel,
     required this.primaryActionLabel,
@@ -232,6 +233,7 @@ class ActiveWorkoutItem {
   final String setLabel;
   final ActiveExerciseItem exercise;
   final bool isResting;
+  final bool isSetActive;
   final bool isPaused;
   final String restSecondsLabel;
   final String primaryActionLabel;

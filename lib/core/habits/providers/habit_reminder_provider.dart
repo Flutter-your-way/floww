@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:floww/config/utils/notifications/notification_tones.dart';
 import 'package:floww/config/entities/habit_day_log_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/streams/combine_latest.dart';
@@ -28,6 +29,8 @@ class HabitReminderProvider {
   static const String _buildBody = 'Time to work on this habit today.';
   static const String _limitBody =
       'A quick check-in to stay within your limit.';
+  static const String _quitBody =
+      'Stay strong. Every clean day counts toward your goal.';
 
   final HabitService _habitService;
   final SettingsService _settingsService;
@@ -37,8 +40,10 @@ class HabitReminderProvider {
   StreamSubscription<List<Object?>>? _dataWatch;
   Future<void> _queue = Future.value();
   String? _lastSignature;
+  List<HabitReminder> _lastReminders = const [];
 
   void start() {
+    NotificationTones.selected.addListener(_onToneChanged);
     _userWatch ??= _habitService.watchUserId().listen(
       _onUser,
       onError: (Object error) =>
@@ -46,7 +51,13 @@ class HabitReminderProvider {
     );
   }
 
+  void _onToneChanged() {
+    _lastSignature = null;
+    _apply(_lastReminders);
+  }
+
   void dispose() {
+    NotificationTones.selected.removeListener(_onToneChanged);
     _userWatch?.cancel();
     _dataWatch?.cancel();
   }
@@ -89,6 +100,7 @@ class HabitReminderProvider {
         '${reminder.habitId}|${reminder.title}|${reminder.body}|'
             '${reminder.at.millisecondsSinceEpoch}',
     ].join(',');
+    _lastReminders = reminders;
     if (signature == _lastSignature) return;
     _lastSignature = signature;
     _queue = _queue.then((_) => _reminderService.replaceAll(reminders));
@@ -138,6 +150,7 @@ class HabitReminderProvider {
   static String _bodyOf(HabitDefinition habit) {
     final description = habit.description?.trim();
     if (description != null && description.isNotEmpty) return description;
+    if (habit.isQuit) return _quitBody;
     return habit.goalType == HabitGoalType.limit ? _limitBody : _buildBody;
   }
 }

@@ -13,17 +13,17 @@ import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/view_models/active_workout_view_model.dart';
 import 'package:floww/core/workout/views/active_exercise_options_sheet.dart';
 import 'package:floww/core/workout/views/edit_set_sheet.dart';
+import 'package:floww/core/workout/views/exercise_technique_sheet.dart';
 import 'package:floww/core/workout/views/swap_exercise_sheet.dart';
 import 'package:floww/core/workout/views/workout_completion_flow.dart';
 import 'package:floww/core/workout/views/workout_queue_sheet.dart';
 import 'package:floww/core/workout/widgets/active_exercise_hero_card.dart';
-import 'package:floww/core/workout/widgets/active_metric_pill.dart';
 import 'package:floww/core/workout/widgets/active_workout_action_bar.dart';
 import 'package:floww/core/workout/widgets/active_workout_shell.dart';
-import 'package:floww/core/workout/widgets/exercise_info_section_card.dart';
+import 'package:floww/core/workout/widgets/muscle_targets_card.dart';
 import 'package:floww/core/workout/widgets/rest_timer_card.dart';
 import 'package:floww/core/workout/widgets/set_input_card.dart';
-import 'package:floww/core/workout/widgets/set_progress_dots.dart';
+import 'package:floww/core/workout/widgets/set_tracker.dart';
 import 'package:floww/core/yoga/views/yoga_class_view.dart';
 import 'package:floww/core/yoga/views/yoga_self_check_sheet.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
@@ -65,6 +65,8 @@ class ActiveWorkoutView extends StatelessWidget {
     final action = await ActiveExerciseOptionsSheet.show(context, viewModel);
     if (action == null || !context.mounted) return;
     switch (action) {
+      case ActiveOptionAction.technique:
+        await ExerciseTechniqueSheet.show(context, viewModel);
       case ActiveOptionAction.undoLastSet:
         viewModel.undoLastSet();
       case ActiveOptionAction.addSet:
@@ -153,7 +155,7 @@ class ActiveWorkoutView extends StatelessWidget {
             isPaused: session.isPaused,
             onPrimary: () {
               HapticManager.medium();
-              viewModel.completeSet();
+              viewModel.primaryAction();
             },
             onTogglePause: () {
               HapticManager.light();
@@ -165,7 +167,9 @@ class ActiveWorkoutView extends StatelessWidget {
             },
           ),
           children: [
-            if (session.isResting)
+            if (session.isResting) ...[
+              SetTracker(sets: session.exercise.setDots),
+              SizedBox(height: AppSpacing.xl2),
               RestTimerCard(
                 secondsLabel: session.restSecondsLabel,
                 nextUpLabel: session.nextUpLabel,
@@ -175,8 +179,8 @@ class ActiveWorkoutView extends StatelessWidget {
                   HapticManager.selection();
                   viewModel.adjustRest(steps);
                 },
-              )
-            else
+              ),
+            ] else
               _ExerciseContent(
                 exercise: session.exercise,
                 viewModel: viewModel,
@@ -209,42 +213,27 @@ class _ExerciseContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final input = exercise.input;
-    final lastTimeLabel = exercise.lastTimeLabel;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ActiveExerciseHeroCard(exercise: exercise, onOptions: onOptions),
         SizedBox(height: AppSpacing.xl2),
-        SetProgressDots(dots: exercise.setDots, onTapLogged: onEditSet),
-        if (lastTimeLabel != null) ...[
-          SizedBox(height: AppSpacing.lg),
-          Align(
-            child: ActiveMetricPill(
-              icon: Icons.history_rounded,
-              value: 'Last',
-              label: lastTimeLabel,
-            ),
-          ),
-        ],
+        SetTracker(sets: exercise.setDots, onTapLogged: onEditSet),
         SizedBox(height: AppSpacing.xl2),
         SetInputCard(
           primary: input.primary,
           weight: input.weight,
           reserve: input.reserve,
-          typeOptions: input.typeOptions,
           onAdjustPrimary: viewModel.adjustPrimary,
           onAdjustWeight: viewModel.adjustWeight,
           onAdjustReserve: viewModel.adjustReserve,
-          onSelectType: viewModel.selectSetType,
         ),
-        SizedBox(height: AppSpacing.xl3),
-        for (var i = 0; i < exercise.infoSections.length; i++) ...[
-          if (i > 0) SizedBox(height: AppSpacing.lg),
-          ExerciseInfoSectionCard(
-            section: exercise.infoSections[i],
-            onToggle: () =>
-                viewModel.toggleSection(exercise.infoSections[i].id),
+        if (!exercise.muscles.targets.isEmpty) ...[
+          SizedBox(height: AppSpacing.lg),
+          MuscleTargetsCard(
+            item: exercise.muscles,
+            templateOf: viewModel.muscleMapOf,
           ),
         ],
       ],

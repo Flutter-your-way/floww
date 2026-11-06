@@ -261,7 +261,7 @@ const scoreTrend = (
     `; the 7 days before averaged ${Math.round(average(before))} ` +
       `over ${before.length} active` :
     "";
-  return `Flow Score: avg ${Math.round(average(current))} over ` +
+  return `FLOWW Score: avg ${Math.round(average(current))} over ` +
     `${current.length} of 7 active days${comparison}`;
 };
 

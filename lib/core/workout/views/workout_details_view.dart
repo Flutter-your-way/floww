@@ -102,10 +102,9 @@ class WorkoutDetailsView extends StatelessWidget {
                 onAddExercise: () => _openAddExercise(context, viewModel),
               ),
               SizedBox(height: AppSpacing.lg),
-              TipCard(
+              TipCard.wave(
                 title: detail.insightTitle,
                 message: detail.insightMessage,
-                icon: Icons.graphic_eq_rounded,
               ),
               SizedBox(height: AppSpacing.lg),
               WorkoutNotesCard(

@@ -49,6 +49,7 @@ class WaveActionService {
   }
 
   static const int maxRescheduleDays = 14;
+  static const String planUpdatedTitle = 'Your plan is updated';
   static const double _lighterLoad = 0.9;
   static const double _weightStepKg = 2.5;
   static const int _minSets = 1;
@@ -142,20 +143,25 @@ class WaveActionService {
       'Every set logged in today\'s session will be lost.',
     ),
     WaveActionKind.shiftPlan => const WaveActionOutcome(
-      'Shift your plan by a day?',
+      'Plan change ready',
       'Today\'s session moves to tomorrow and every later session slides '
-          'back one day.',
+          'back one day. Nothing changes in Workouts until you approve.',
     ),
     WaveActionKind.regeneratePlan => const WaveActionOutcome(
-      'Build a new plan?',
-      'WAVE builds a fresh program from your onboarding answers and '
-          'replaces your upcoming sessions. Logged workouts stay.',
+      'New plan ready',
+      'WAVE built a fresh program from your onboarding answers to replace '
+          'your upcoming sessions. Logged workouts stay. Nothing changes in '
+          'Workouts until you approve.',
     ),
     _ => const WaveActionOutcome('Confirm this change?', ''),
   };
 
-  WaveActionOutcome dismissed(WaveAction action) =>
-      const WaveActionOutcome('Left As Is', 'Nothing was changed');
+  WaveActionOutcome dismissed(WaveAction action) => action.changesPlan
+      ? const WaveActionOutcome(
+          'Plan Not Changed',
+          'Your current plan stays in Workouts',
+        )
+      : const WaveActionOutcome('Left As Is', 'Nothing was changed');
 
   Future<WaveActionOutcome> _completeHabits(String? title) async {
     final ids = await _chatService.completeHabits(title: title);
@@ -538,8 +544,9 @@ class WaveActionService {
       active,
     );
     return WaveActionOutcome(
-      'Plan Shifted',
+      planUpdatedTitle,
       '${plan.name} moved to tomorrow · later sessions slid back a day',
+      link: WaveConfirmationAction.openPlan,
       undo: WaveUndo(WaveUndoKind.unshiftPlan, {
         _activeKey: active.toJson(),
         _planKey: plan.toJson(),
@@ -558,8 +565,9 @@ class WaveActionService {
       saveActive: true,
     );
     return WaveActionOutcome(
-      'New Plan Ready',
+      planUpdatedTitle,
       '${program.name} starts today',
+      link: WaveConfirmationAction.openPlan,
       undo: WaveUndo(WaveUndoKind.restoreProgram, {
         _activeKey: previous?.toJson(),
       }),
@@ -610,7 +618,7 @@ class WaveActionService {
     return WaveActionOutcome(
       mode == null ? 'Mode On Auto' : 'Mode Set',
       mode == null
-          ? 'Your Flow Score picks today\'s mode again'
+          ? 'Your FLOWW Score picks today\'s mode again'
           : '${mode.name.toUpperCase()} for the rest of today',
       undo: WaveUndo(WaveUndoKind.restoreFlowMode, {_modeKey: previous?.name}),
     );

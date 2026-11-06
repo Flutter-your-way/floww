@@ -602,6 +602,10 @@ class OnboardingData {
     subtitle: 'Which skills can you currently hold for 3+ seconds?',
     inputType: InputType.multiSelect,
     options: [
+      QuestionOption(
+        title: 'None',
+        description: 'Just starting out, no skills yet',
+      ),
       QuestionOption(title: 'L-Sit'),
       QuestionOption(title: 'Handstand'),
       QuestionOption(title: 'Muscle-Up'),

@@ -44,7 +44,6 @@ class YogaHoldCard extends StatelessWidget {
             progress: progress,
             size: _ringSize,
             strokeWidth: _ringStroke,
-            gradient: context.gradients.primary,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

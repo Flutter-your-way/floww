@@ -14,6 +14,8 @@ class OnboardingProvider extends ChangeNotifier {
     if (initialAnswers != null) _answers.addAll(initialAnswers);
   }
 
+  static const String _noneOption = 'None';
+
   final OnboardingService _onboardingService;
 
   int _currentPhaseIndex = 0;
@@ -160,8 +162,12 @@ class OnboardingProvider extends ChangeNotifier {
 
     if (currentList.contains(option)) {
       currentList.remove(option);
+    } else if (option == _noneOption) {
+      currentList = [option];
     } else {
-      currentList.add(option);
+      currentList
+        ..remove(_noneOption)
+        ..add(option);
     }
 
     _answers[questionId] = currentList;

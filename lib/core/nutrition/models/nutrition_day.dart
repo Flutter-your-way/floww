@@ -3,6 +3,7 @@ import 'package:floww/core/nutrition/models/food_log.dart';
 import 'package:floww/core/nutrition/models/food_model.dart';
 import 'package:floww/core/nutrition/models/macro_nutrient.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
+import 'package:floww/core/nutrition/models/micronutrient.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/water_log.dart';
 
@@ -54,6 +55,14 @@ class NutritionDay {
     0,
     (total, log) => total + log.food.nutrition.minerals.sodiumMg,
   );
+
+  double micronutrientTotal(Micronutrient nutrient) => foodLogs.fold(
+    0,
+    (total, log) => total + nutrient.amountIn(log.food.nutrition),
+  );
+
+  int get foodsWithoutMicronutrients =>
+      foodLogs.where((log) => log.food.source == FoodSource.manual).length;
 
   double get drinkWaterMl =>
       waterLogs.fold(0, (total, log) => total + log.amountMl);

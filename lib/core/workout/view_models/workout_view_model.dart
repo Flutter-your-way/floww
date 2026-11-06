@@ -13,7 +13,13 @@ import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/calisthenics/models/cal_level.dart';
 import 'package:floww/core/calisthenics/models/cal_library_view_data.dart';
 import 'package:floww/core/calisthenics/services/calisthenics_library_presenter.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_principles_service.dart';
+import 'package:floww/core/recovery/models/muscle_body_side.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
+import 'package:floww/core/recovery/services/muscle_targeting.dart';
 import 'package:floww/core/settings/services/onboarding_answers_service.dart';
+import 'package:floww/core/wave/models/wave_pending_plan.dart';
+import 'package:floww/core/wave/services/wave_plan_approval_service.dart';
 import 'package:floww/core/workout/models/active_workout_args.dart';
 import 'package:floww/core/workout/models/program_artwork.dart';
 import 'package:floww/core/workout/models/program_goal.dart';
@@ -55,11 +61,48 @@ class WorkoutViewModel extends ChangeNotifier {
     this._catalogService,
     this._generatorService, {
     OnboardingAnswersService? answersService,
+    CalisthenicsPrinciplesService? principlesService,
+    MuscleMapService? muscleMapService,
+    WavePlanApprovalService? approvalService,
   }) : _selectedDate = AppDateUtils.dateOnly(DateTime.now()),
+       _approvalService = approvalService ?? WavePlanApprovalService(),
+       _muscleMapService = muscleMapService ?? MuscleMapService(),
        _answersService = answersService ?? OnboardingAnswersService(),
+       _principlesService =
+           principlesService ?? CalisthenicsPrinciplesService(),
        _shiftService = WorkoutShiftService(_planService) {
     _dayRollover = DayRolloverTimer(_onNewDay);
+    unawaited(_loadCalPrinciplesRead());
+    unawaited(_loadMuscleMap());
+    _watchPendingPlan();
     _start();
+  }
+
+  static const String _pendingPlanTitle = 'New plan waiting for approval';
+  static const String _pendingPlanMessage =
+      'WAVE has a plan change ready for you. Nothing in Workouts changes '
+      'until you approve it in the chat.';
+  static const String _pendingPlanAction = 'Review in WAVE';
+
+  final WavePlanApprovalService _approvalService;
+  StreamSubscription<WavePendingPlan?>? _pendingPlanSubscription;
+  WavePendingPlan? _pendingPlan;
+
+  DateTime? get pendingPlanDay => _pendingPlan?.day;
+
+  WorkoutPlanBuilderItem? get pendingPlanBanner => _pendingPlan == null
+      ? null
+      : const WorkoutPlanBuilderItem(
+          title: _pendingPlanTitle,
+          message: _pendingPlanMessage,
+          actionLabel: _pendingPlanAction,
+        );
+
+  void _watchPendingPlan() {
+    _pendingPlanSubscription = _approvalService.watch().listen((pending) {
+      _pendingPlan = pending;
+      notifyListeners();
+    }, onError: (Object error) => debugPrint('pending plan failed: $error'));
   }
 
   static const int _selectableRangeDays = 365;
@@ -83,6 +126,9 @@ class WorkoutViewModel extends ChangeNotifier {
   final WorkoutPlanGeneratorService _generatorService;
   final WorkoutShiftService _shiftService;
   final OnboardingAnswersService _answersService;
+  final CalisthenicsPrinciplesService _principlesService;
+  final MuscleMapService _muscleMapService;
+  bool? _calPrinciplesRead;
 
   StreamSubscription<Map<String, dynamic>>? _answersSubscription;
   StreamSubscription<List<WorkoutSessionEntity>>? _sessionSubscription;
@@ -193,6 +239,39 @@ class WorkoutViewModel extends ChangeNotifier {
   List<CalRoutineItem> get calCoolDown => CalisthenicsLibraryPresenter.coolDown;
 
   List<String> get calPrinciples => CalisthenicsLibraryPresenter.principles;
+
+  List<String> get calSafety => CalisthenicsLibraryPresenter.safety;
+
+  String get calPrinciplesTitle => 'Principles & safety';
+
+  String get calPrinciplesSummary {
+    final count = calPrinciples.length + calSafety.length;
+    return '$count rules to train strong and safe';
+  }
+
+  bool get showCalPrinciplesBadge => _calPrinciplesRead == false;
+
+  void markCalPrinciplesRead() {
+    if (_calPrinciplesRead == true) return;
+    _calPrinciplesRead = true;
+    notifyListeners();
+    unawaited(_principlesService.markRead());
+  }
+
+  Future<void> _loadCalPrinciplesRead() async {
+    final read = await _principlesService.hasRead();
+    if (_calPrinciplesRead == true) return;
+    _calPrinciplesRead = read;
+    notifyListeners();
+  }
+
+  String get currentProgramName =>
+      _state.activeProgram?.name ?? 'No program yet';
+
+  String get changeProgramLabel =>
+      _state.activeProgram == null ? 'Choose program' : 'Change program';
+
+  void openProgramSwitcher() => selectTab(WorkoutTab.programs);
 
   bool get canCreateProgram => _discipline == WorkoutDiscipline.gym;
 
@@ -452,7 +531,7 @@ class WorkoutViewModel extends ChangeNotifier {
   WorkoutSessionEntity? _sessionFor(DateTime planDate) {
     WorkoutSessionEntity? completed;
     for (final session in _daySessions) {
-      if (!AppDateUtils.isSameDay(session.scheduledDate, planDate)) continue;
+      if (!session.fulfillsPlanOn(planDate)) continue;
       if (session.isInProgress) return session;
       if (session.isCompleted) completed ??= session;
     }
@@ -532,6 +611,20 @@ class WorkoutViewModel extends ChangeNotifier {
     if (_activeSession != null) return WorkoutPrimaryAction.resume;
     if (_nextPending != null) return WorkoutPrimaryAction.start;
     return _daySessions.isEmpty ? WorkoutPrimaryAction.start : null;
+  }
+
+  bool get canLogWorkout =>
+      dayStatus == WorkoutDayStatus.today && _activeSession == null;
+
+  String get logWorkoutLabel => 'Log Workout';
+
+  void focusSession(String id) {
+    _focusedSessionId = id;
+    if (_selectedTab != WorkoutTab.overview) {
+      selectTab(WorkoutTab.overview);
+      return;
+    }
+    notifyListeners();
   }
 
   String get primaryActionLabel => _nextPending?.isCatchUp ?? false
@@ -1585,6 +1678,7 @@ class WorkoutViewModel extends ChangeNotifier {
       summary: _summaryOf(session),
       trainingEffect: isYoga ? null : _trainingEffectOf(session),
       muscles: isYoga ? const [] : _musclesOf(session),
+      targets: isYoga ? MuscleTargets.empty : _targetsOf(session),
       heartRate: _heartRateOf(session),
       performance: isYoga
           ? _yogaPerformanceOf(session)
@@ -1596,7 +1690,7 @@ class WorkoutViewModel extends ChangeNotifier {
     return WorkoutSummaryItem(
       name: session.name,
       exercisesLabel: _exercisesLabelOf(session),
-      flowPointsLabel: '+ ${session.flowPoints} Flow points',
+      flowPointsLabel: '+ ${session.flowPoints} FLOWW points',
       statusLabel: session.isCompleted
           ? 'Completed'
           : session.isTimerPaused
@@ -1734,6 +1828,22 @@ class WorkoutViewModel extends ChangeNotifier {
     );
   }
 
+  MuscleTargets _targetsOf(WorkoutSessionEntity session) =>
+      MuscleTargeting.ofShares({
+        for (final muscle in session.muscleActivation)
+          muscle.name: muscle.share,
+      });
+
+  MuscleMapTemplate? muscleMapOf(MuscleBodySide side) =>
+      _muscleMapService.templateOf(side);
+
+  Future<void> _loadMuscleMap() async {
+    try {
+      await _muscleMapService.load();
+      notifyListeners();
+    } catch (_) {}
+  }
+
   List<MuscleFocusEntry> _musclesOf(WorkoutSessionEntity session) => [
     for (final muscle in session.muscleActivation)
       MuscleFocusEntry(
@@ -1775,6 +1885,7 @@ class WorkoutViewModel extends ChangeNotifier {
     final activation = session.muscleActivation;
     return MuscleAnatomyItem(
       subtitle: '$titlePrefix activation map',
+      targets: _targetsOf(session),
       muscles: [
         for (var i = 0; i < activation.length; i++)
           MuscleFocusEntry(
@@ -2339,6 +2450,7 @@ class WorkoutViewModel extends ChangeNotifier {
     _programSubscription?.cancel();
     _planSubscription?.cancel();
     _catchUpSubscription?.cancel();
+    _pendingPlanSubscription?.cancel();
     super.dispose();
   }
 }

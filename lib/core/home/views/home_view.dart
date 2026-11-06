@@ -25,6 +25,10 @@ import 'package:floww/core/home/providers/home_provider.dart';
 import 'package:floww/core/home/views/flow_mode_sheet.dart';
 import 'package:floww/core/home/views/flow_score_breakdown_sheet.dart';
 import 'package:floww/core/home/views/body_composition_sheet.dart';
+import 'package:floww/core/home/views/daily_metrics_picker_sheet.dart';
+import 'package:floww/core/home/models/daily_metrics_view_data.dart';
+import 'package:floww/core/home/providers/daily_metrics_selection_provider.dart';
+import 'package:floww/core/health/models/health_metric_kind.dart';
 import 'package:floww/core/home/views/recovery_sheet.dart';
 import 'package:floww/core/home/services/daily_metrics_presenter.dart';
 import 'package:floww/core/home/widgets/daily_metrics_card.dart';
@@ -108,9 +112,9 @@ class HomeView extends StatelessWidget {
     controller.openHabitCreation();
   }
 
-  void _openNutrition() {
+  void _openNutrition(BuildContext context) {
     HapticManager.light();
-    NavigationService.instance.push(AppRouter.weeklyNutritionReport);
+    context.read<MainTabController?>()?.select(MainTabController.nutritionTab);
   }
 
   void _openBreakdown(BuildContext context, HomeProvider home) {
@@ -147,17 +151,31 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  void _openMetricsInfo(BuildContext context, HealthProvider health) {
+  void _openMetricsInfo(BuildContext context, DailyMetricsViewData metrics) {
     HapticManager.light();
-    final metrics = DailyMetricsPresenter.of(
-      health.vitals,
-      source: health.sourceName,
-    );
     AppInfoSheet.show(
       context,
       title: metrics.infoTitle,
       message: metrics.infoMessage,
     );
+  }
+
+  void _openMetricsPicker(BuildContext context) {
+    HapticManager.light();
+    DailyMetricsPickerSheet.show(context);
+  }
+
+  void _openMetric(HealthMetricKind kind) {
+    HapticManager.light();
+    NavigationService.instance.push(
+      AppRouter.healthMetricDetail,
+      arguments: kind,
+    );
+  }
+
+  void _openHealthApp(HealthProvider health) {
+    HapticManager.light();
+    health.openSource();
   }
 
   void _openBodyComposition(BuildContext context, HealthProvider health) {
@@ -168,6 +186,10 @@ class HomeView extends StatelessWidget {
         health.vitals,
         source: health.sourceName,
       ),
+      onMetricTap: (kind) {
+        NavigationService.instance.pop();
+        _openMetric(kind);
+      },
     );
   }
 
@@ -184,6 +206,7 @@ class HomeView extends StatelessWidget {
         final metrics = DailyMetricsPresenter.of(
           health.vitals,
           source: health.sourceName,
+          selection: context.watch<DailyMetricsSelectionProvider>(),
         );
         final activeMode = context.watch<ThemeModeController>().mode;
 
@@ -269,26 +292,32 @@ class HomeView extends StatelessWidget {
                     id: GuideTargetId.homeNutrition,
                     child: NutritionSummaryCard(
                       nutrition: home.nutrition,
-                      onTap: _openNutrition,
+                      onTap: () => _openNutrition(context),
                     ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
                   GuideTarget(
                     id: GuideTargetId.homeHealth,
                     child: HealthSyncCard(
-                      sourceName: health.sourceName,
                       iconAsset: health.sourceIcon,
                       connected: health.isConnected,
-                      syncDetail: health.statusLabel,
+                      title: health.cardTitle,
+                      subtitle: health.cardSubtitle,
+                      connectLabel: health.connectLabel,
+                      viewMoreLabel: health.canOpenSource
+                          ? health.viewMoreLabel
+                          : null,
                       onConnect: health.connect,
-                      onDisconnect: health.disconnect,
+                      onViewMore: () => _openHealthApp(health),
                     ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
                   if (health.hasAllPermissions || metrics.hasData)
                     DailyMetricsCard(
                       data: metrics,
-                      onInfoTap: () => _openMetricsInfo(context, health),
+                      onInfoTap: () => _openMetricsInfo(context, metrics),
+                      onCustomizeTap: () => _openMetricsPicker(context),
+                      onMetricTap: _openMetric,
                       onBodyCompositionTap: () =>
                           _openBodyComposition(context, health),
                     )

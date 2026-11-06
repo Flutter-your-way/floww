@@ -247,13 +247,17 @@ class _PillButtonLabel extends StatelessWidget {
           SizedBox(width: labelStyle == null ? AppSpacing.md : AppSpacing.xs),
         if (label != null)
           Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style:
-                  (labelStyle ?? defaultStyle ?? context.textTheme.titleMedium)
-                      ?.copyWith(color: color),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style:
+                    (labelStyle ??
+                            defaultStyle ??
+                            context.textTheme.titleMedium)
+                        ?.copyWith(color: color),
+              ),
             ),
           ),
       ],

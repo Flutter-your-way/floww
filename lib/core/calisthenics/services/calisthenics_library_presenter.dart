@@ -5,6 +5,7 @@ import 'package:floww/core/calisthenics/models/cal_level.dart';
 import 'package:floww/core/calisthenics/models/cal_library_view_data.dart';
 import 'package:floww/core/calisthenics/models/cal_slot.dart';
 import 'package:floww/core/calisthenics/services/calisthenics_plan_mapper.dart';
+import 'package:floww/core/workout/services/workout_catalog_data.dart';
 
 class CalisthenicsLibraryPresenter {
   CalisthenicsLibraryPresenter._();
@@ -26,6 +27,7 @@ class CalisthenicsLibraryPresenter {
               levelLabel: 'L${step.level}',
               standard: step.standard,
               isYourLevel: step.level == level.number,
+              imageUrl: WorkoutCatalogData.imageFor(step.moveId),
             ),
         ],
       ),
@@ -50,6 +52,7 @@ class CalisthenicsLibraryPresenter {
     CalisthenicsProgramData.freshNote,
     CalisthenicsProgramData.ramp,
     CalisthenicsProgramData.skillPrimer,
-    ...CalisthenicsProgramData.safety,
   ];
+
+  static List<String> get safety => CalisthenicsProgramData.safety;
 }

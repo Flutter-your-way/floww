@@ -135,8 +135,8 @@ class AchievementsData {
     Achievement(
       id: 'peak_flow',
       emoji: '🌊',
-      title: 'Peak Flow',
-      description: 'Reach a 100 Flow Score',
+      title: 'Peak FLOWW',
+      description: 'Reach a 100 FLOWW Score',
       xp: 300,
       category: AchievementCategory.performance,
       isUnlocked: false,

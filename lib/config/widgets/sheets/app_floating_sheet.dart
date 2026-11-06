@@ -14,6 +14,7 @@ Future<T?> showAppFloatingSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   bool centered = false,
+  bool flip = false,
 }) {
   final forcedMode = SheetTheme.forcedModeOf(context);
 
@@ -22,7 +23,9 @@ Future<T?> showAppFloatingSheet<T>({
     barrierDismissible: true,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: Colors.transparent,
-    transitionDuration: AppFloatingSheet.transitionDuration,
+    transitionDuration: flip
+        ? AppMotion.sheetFlip
+        : AppFloatingSheet.transitionDuration,
     pageBuilder: (context, animation, secondaryAnimation) => SheetTheme(
       forcedMode: forcedMode,
       child: Builder(builder: builder),
@@ -30,7 +33,7 @@ Future<T?> showAppFloatingSheet<T>({
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       final curved = CurvedAnimation(
         parent: animation,
-        curve: Curves.easeOutCubic,
+        curve: flip ? AppMotion.sheetFlipCurve : Curves.easeOutCubic,
         reverseCurve: Curves.easeInCubic,
       );
       return SheetTheme(
@@ -44,7 +47,12 @@ Future<T?> showAppFloatingSheet<T>({
                 child: const _SheetBackdrop(),
               ),
             ),
-            if (centered)
+            if (flip)
+              FadeTransition(
+                opacity: curved,
+                child: _FlipOpenTransition(animation: curved, child: child),
+              )
+            else if (centered)
               FadeTransition(
                 opacity: curved,
                 child: ScaleTransition(
@@ -150,6 +158,32 @@ class AppFloatingSheet extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FlipOpenTransition extends AnimatedWidget {
+  const _FlipOpenTransition({
+    required Animation<double> animation,
+    required this.child,
+  }) : super(listenable: animation);
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (listenable as Animation<double>).value;
+    final closed = 1 - progress;
+    final scale =
+        AppMotion.sheetFlipScale + (1 - AppMotion.sheetFlipScale) * progress;
+
+    return Transform(
+      alignment: Alignment.bottomCenter,
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, AppMotion.sheetFlipPerspective)
+        ..rotateX(AppMotion.sheetFlipAngle * closed)
+        ..scaleByDouble(scale, scale, 1, 1),
+      child: child,
     );
   }
 }

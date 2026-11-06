@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -13,6 +14,8 @@ import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/effects/inner_glow.dart';
 import 'package:floww/config/widgets/effects/liquid_glass.dart';
 import 'package:floww/navigation/views/main_tab_view.dart';
+import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/navigation/widgets/liquid_glass_tab_bar.dart';
 
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({
@@ -20,9 +23,17 @@ class AppBottomNavBar extends StatelessWidget {
     required this.items,
     required this.selectedIndex,
     required this.onTabSelected,
+    this.trailing,
+    this.onTrailingSelected,
   });
 
-  static const double height = AppSizes.s64;
+  static double get height => defaultTargetPlatform == TargetPlatform.iOS
+      ? AppGlass.tabBarHeight
+      : AppSizes.s64;
+
+  static double get sideInset => defaultTargetPlatform == TargetPlatform.iOS
+      ? AppGlass.tabSideInset
+      : AppSpacing.xl;
 
   static double bottomInsetOf(BuildContext context) =>
       math.max(MediaQuery.viewPaddingOf(context).bottom, AppSpacing.lg);
@@ -30,6 +41,47 @@ class AppBottomNavBar extends StatelessWidget {
   final List<NavTabItem> items;
   final int selectedIndex;
   final ValueChanged<int> onTabSelected;
+  final Widget? trailing;
+  final VoidCallback? onTrailingSelected;
+
+  static LiquidGlassStyle iosGlassStyle(BuildContext context) {
+    final colors = context.colors;
+    final ink = colors.textPrimary;
+    return LiquidGlassStyle(
+      barColor: ink.withValues(alpha: AppGlass.tabVeilOpacity),
+      barPressedColor: ink.withValues(alpha: AppGlass.tabVeilPressedOpacity),
+      borderColor: ink.withValues(alpha: AppGlass.tabBorderOpacity),
+      borderPressedColor: ink.withValues(
+        alpha: AppGlass.tabBorderPressedOpacity,
+      ),
+      pillColor: ink.withValues(alpha: AppGlass.tabPillOpacity),
+      glassTint: ink.withValues(alpha: AppGlass.tabGlassTintOpacity),
+      selectedColor: colors.primary,
+      unselectedColor: ink,
+      rimColor: ink,
+      rimStrength: AppGlass.tabRimStrength,
+      iridescence: AppGlass.tabIridescence,
+      iconSize: AppGlass.tabIconSize,
+      labelStyle: AppTypography.captionSemiBold,
+      iconLabelGap: AppGlass.tabIconLabelGap,
+      inset: AppGlass.tabInset,
+      pillExtraWidth: AppGlass.tabPillExtraWidth,
+      pressedZoom: AppGlass.tabPressedZoom,
+      refraction: AppGlass.tabRefraction,
+      refractionBlur: AppGlass.tabRefractionBlur,
+      dispersion: AppGlass.tabDispersion,
+      lensGrowHeight: AppGlass.tabLensGrowHeight,
+      lensExtraWidth: AppGlass.tabLensExtraWidth,
+      barSwell: AppGlass.tabBarSwell,
+      frost: AppGlass.tabFrost,
+      saturation: AppGlass.tabSaturation,
+      barRefraction: AppGlass.tabBarRefraction,
+      dragGrowWidth: AppGlass.tabDragGrowWidth,
+      dragGrowHeight: AppGlass.tabDragGrowHeight,
+      lensOverhang: AppGlass.tabLensOverhang,
+      showLabels: false,
+    );
+  }
 
   void _handleTap(int index) {
     if (index == selectedIndex) {
@@ -42,19 +94,39 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final trailing = this.trailing;
+    final shadows = [
+      BoxShadow(
+        color: context.colors.backgroundPrimary.withValues(
+          alpha: AppGlass.shadowOpacity,
+        ),
+        blurRadius: AppGlass.shadowBlur,
+        offset: const Offset(0, AppGlass.shadowOffset),
+      ),
+    ];
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return LiquidGlassTabBar(
+        height: height,
+        currentIndex: selectedIndex,
+        onChanged: onTabSelected,
+        style: iosGlassStyle(context),
+        trailing: trailing,
+        onTrailingSelected: onTrailingSelected,
+        trailingExtent: trailing == null ? 0 : AppGlass.tabTrailingExtent,
+        items: [
+          for (final item in items)
+            LiquidGlassTabItem(
+              iconAsset: item.iconAsset,
+              label: item.semanticLabel,
+            ),
+        ],
+      );
+    }
+    final bar = SizedBox(
       height: height,
       child: LiquidGlass(
         borderRadius: BorderRadius.circular(AppRadius.full),
-        shadows: [
-          BoxShadow(
-            color: context.colors.backgroundPrimary.withValues(
-              alpha: AppGlass.shadowOpacity,
-            ),
-            blurRadius: AppGlass.shadowBlur,
-            offset: const Offset(0, AppGlass.shadowOffset),
-          ),
-        ],
+        shadows: shadows,
         child: SizedBox.expand(
           child: Row(
             children: List.generate(
@@ -70,6 +142,14 @@ class AppBottomNavBar extends StatelessWidget {
           ),
         ),
       ),
+    );
+    if (trailing == null) return bar;
+    return Row(
+      children: [
+        Expanded(child: bar),
+        SizedBox(width: AppSpacing.lg),
+        trailing,
+      ],
     );
   }
 }

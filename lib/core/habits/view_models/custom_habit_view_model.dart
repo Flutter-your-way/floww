@@ -16,11 +16,13 @@ class CustomHabitViewModel extends ChangeNotifier {
 
   String get title => 'Custom Habit';
 
-  String get subtitle => 'Build something uniquely yours';
+  String get subtitle => 'Build, limit or quit something on your terms';
 
   String get nameLabel => 'Habit Name';
 
-  String get nameHint => 'e.g. Morning Run, Cold Shower...';
+  String get nameHint => _rules.isQuit
+      ? 'e.g. Drinking, Smoking, Junk Food...'
+      : 'e.g. Morning Run, Cold Shower...';
 
   String get descriptionLabel => 'Description (optional)';
 
@@ -63,18 +65,18 @@ class CustomHabitViewModel extends ChangeNotifier {
   void selectMetric(HabitMetric metric) => _rules.selectMetric(metric);
 
   HabitDraft? buildDraft() {
-    final target = _targetValue;
-    if (!canSubmit || target == null) return null;
+    if (!canSubmit) return null;
     final description = _description.trim();
     return HabitDraft(
       title: _name.trim(),
-      target: target,
+      target: _rules.resolveTarget(_targetValue),
       metric: _rules.metric,
       schedule: _rules.schedule,
       goalType: _rules.goalType,
       source: _rules.source,
       reminder: _rules.reminder,
       description: description.isEmpty ? null : description,
+      quitDays: _rules.quitDays,
     );
   }
 }

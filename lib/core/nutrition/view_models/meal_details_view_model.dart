@@ -9,6 +9,7 @@ import 'package:floww/core/nutrition/models/meal_type.dart';
 import 'package:floww/core/nutrition/models/nutrition_day.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
+import 'package:floww/core/nutrition/services/meal_schedule_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
@@ -131,7 +132,10 @@ class MealDetailsViewModel extends ChangeNotifier {
   ];
 
   List<MealTimelineEntry> get timeline => [
-    for (final meal in MealType.values)
+    for (final meal in MealScheduleService.instance.current.mealsWith({
+      ..._day.loggedMeals,
+      _meal,
+    }))
       MealTimelineEntry(
         meal: meal,
         caloriesLabel: NutritionLabels.number(_day.caloriesFor(meal)),

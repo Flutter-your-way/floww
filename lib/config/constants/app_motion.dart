@@ -239,6 +239,12 @@ class AppMotion {
   static const Duration guideLocatePoll = Duration(milliseconds: 120);
   static const int guideLocateAttempts = 10;
 
+  static const Duration sheetFlip = Duration(milliseconds: 560);
+  static const Curve sheetFlipCurve = Cubic(0.16, 1, 0.3, 1);
+  static const double sheetFlipAngle = 1.2;
+  static const double sheetFlipPerspective = 0.0016;
+  static const double sheetFlipScale = 0.92;
+
   static const Duration tabReveal = Duration(milliseconds: 260);
   static const Curve tabRevealCurve = Curves.easeOutCubic;
 

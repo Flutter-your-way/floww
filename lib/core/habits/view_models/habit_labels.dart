@@ -28,9 +28,10 @@ class HabitLabels {
 
   static String percent(double ratio) => '${(ratio * 100).round()}%';
 
-  static String points(int value) => '+$value Flow pts';
+  static String points(int value) => '+$value FLOWW pts';
 
   static String progress(Habit habit) {
+    if (habit.isQuit) return habit.value > 0 ? 'Slipped today' : 'Clean today';
     if (habit.isLimit) {
       return '${_valueOf(habit.value, habit.metric)} / max '
           '${amount(habit.target, habit.metric)}';
@@ -83,6 +84,19 @@ class HabitLabels {
     HabitGoalType.build => 'Build up',
     HabitGoalType.limit => 'Keep under',
   };
+
+  static String goalChoice(HabitGoalChoice choice) => switch (choice) {
+    HabitGoalChoice.build => 'Build up',
+    HabitGoalChoice.limit => 'Keep under',
+    HabitGoalChoice.quit => 'Quit',
+  };
+
+  static String days(int days) => days == 1 ? '1 day' : '$days days';
+
+  static String slips(int count) => count == 1 ? '1 slip' : '$count slips';
+
+  static String quitDay(int dayCount, int targetDays) =>
+      'Day ${dayCount.clamp(0, targetDays)} of $targetDays';
 
   static String weekdayInitial(int weekday) => _weekdayInitials[weekday - 1];
 

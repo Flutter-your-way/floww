@@ -8,13 +8,15 @@ import 'package:floww/config/utils/dates/day_rollover_timer.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/nutrition/models/diet_plan.dart';
 import 'package:floww/core/nutrition/models/flow_category.dart';
-import 'package:floww/core/nutrition/models/food_log.dart';
 import 'package:floww/core/nutrition/models/macro_nutrient.dart';
+import 'package:floww/core/nutrition/models/meal_schedule.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
+import 'package:floww/core/nutrition/models/micronutrient.dart';
 import 'package:floww/core/nutrition/models/nutrition_day.dart';
 import 'package:floww/core/nutrition/models/nutrition_goal.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/services/diet_plan_service.dart';
+import 'package:floww/core/nutrition/services/meal_schedule_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_labels.dart';
@@ -26,13 +28,8 @@ class NutritionViewModel extends ChangeNotifier {
     : _selectedDate = AppDateUtils.dateOnly(DateTime.now()) {
     _watchGoal();
     _watchSelectedDay();
-    _recentSubscription = _logService.watchRecentFoodLogs().listen(
-      (logs) {
-        _recentLogs = logs;
-        notifyListeners();
-      },
-      onError: (Object error) => debugPrint('recent food logs failed: $error'),
-    );
+    _scheduleService.schedule.addListener(notifyListeners);
+    _scheduleService.restore();
     _dayRollover = DayRolloverTimer(_onNewDay);
     _dietPlan = _dietPlanService.cachedProgress;
     _dietPlanLoaded = _dietPlan != null;
@@ -41,13 +38,13 @@ class NutritionViewModel extends ChangeNotifier {
 
   static const int _selectableRangeDays = 365;
   static const int _weekdayReferenceDays = 6;
-  static const int _recentFoodLimit = 10;
   static const int _excellentPoints = 20;
   static const int _greatPoints = 12;
 
   final NutritionLogService _logService;
   final DietPlanService _dietPlanService;
   final NutritionGoalService _goalService;
+  final MealScheduleService _scheduleService = MealScheduleService.instance;
 
   NutritionGoal _goal = NutritionGoal.defaults;
 
@@ -56,14 +53,13 @@ class NutritionViewModel extends ChangeNotifier {
   late NutritionDay _day;
   bool _isLoading = true;
   String? _errorMessage;
-  List<FoodLog> _recentLogs = const [];
   DietPlanProgress? _dietPlan;
   bool _dietPlanLoaded = false;
   StreamSubscription<NutritionLogs>? _daySubscription;
-  StreamSubscription<List<FoodLog>>? _recentSubscription;
   StreamSubscription<NutritionGoal>? _goalSubscription;
   late final DayRolloverTimer _dayRollover;
   bool _disposed = false;
+  bool _showAllMicronutrients = false;
 
   NutritionGoal get goal => _goal;
 
@@ -113,8 +109,6 @@ class NutritionViewModel extends ChangeNotifier {
   bool get showDietPlan =>
       dayStatus == NutritionDayStatus.today && _day.hasFood && _dietPlanLoaded;
 
-  bool get showRecentFoods => canLog && _recentLogs.isNotEmpty;
-
   String get titlePrefix => dayStatus == NutritionDayStatus.today
       ? 'Today\'s'
       : '${AppDateUtils.weekdayName(_selectedDate)}\'s';
@@ -159,7 +153,7 @@ class NutritionViewModel extends ChangeNotifier {
       'Scan your meal or tap Log Food to start tracking today\'s nutrition.',
     NutritionDayStatus.past =>
       'No meals were logged on $_dayReference. Past days are read-only so '
-          'your Flow Points stay fair.',
+          'your FLOWW Points stay fair.',
   };
 
   String get tipTitle => switch (dayStatus) {
@@ -212,61 +206,126 @@ class NutritionViewModel extends ChangeNotifier {
   double _macroProgress(MacroNutrient macro) =>
       _day.macroSplit.gramsOf(macro) / _day.goalGramsOf(macro);
 
-  List<MicronutrientTileItem> get micronutrients => [
-    MicronutrientTileItem(
-      kind: MicronutrientKind.water,
-      label: 'Water',
-      valueLabel: NutritionLabels.liters(_day.waterMl),
-      goalLabel: '/${NutritionLabels.liters(goal.waterMl.toDouble())}L',
-      percentLabel: NutritionLabels.percent(_day.waterMl / goal.waterMl),
-      progress: _day.waterMl / goal.waterMl,
-    ),
-    MicronutrientTileItem(
+  MicronutrientTileItem get water => MicronutrientTileItem(
+    kind: MicronutrientKind.water,
+    label: 'Water',
+    valueLabel: NutritionLabels.liters(_day.waterMl),
+    goalLabel: '/${NutritionLabels.liters(goal.waterMl.toDouble())}L',
+    percentLabel: NutritionLabels.percent(_day.waterMl / goal.waterMl),
+    progress: _day.waterMl / goal.waterMl,
+  );
+
+  List<MicronutrientRowItem> get limitNutrients => [
+    MicronutrientRowItem(
       kind: MicronutrientKind.fiber,
       label: 'Fiber',
-      valueLabel: NutritionLabels.number(_day.fiberG),
-      goalLabel: '/${goal.fiberG}g',
-      percentLabel: NutritionLabels.percent(_day.fiberG / goal.fiberG),
+      amountLabel: NutritionLabels.preciseGrams(_day.fiberG),
+      goalLabel: '${goal.fiberG}g',
       progress: _day.fiberG / goal.fiberG,
     ),
-    MicronutrientTileItem(
+    MicronutrientRowItem(
       kind: MicronutrientKind.sugar,
       label: 'Sugar',
-      valueLabel: NutritionLabels.number(_day.sugarG),
-      goalLabel: '/${goal.sugarG}g',
-      percentLabel: NutritionLabels.percent(_day.sugarG / goal.sugarG),
+      amountLabel: NutritionLabels.preciseGrams(_day.sugarG),
+      goalLabel: '${goal.sugarG}g max',
       progress: _day.sugarG / goal.sugarG,
       isOverLimit: _day.sugarG > goal.sugarG,
     ),
-    MicronutrientTileItem(
+    MicronutrientRowItem(
       kind: MicronutrientKind.sodium,
       label: 'Sodium',
-      valueLabel: NutritionLabels.number(_day.sodiumMg),
-      goalLabel: '/${NumberFormatter.grouped(goal.sodiumMg)}mg',
-      percentLabel: NutritionLabels.percent(_day.sodiumMg / goal.sodiumMg),
+      amountLabel: NutritionLabels.milligrams(_day.sodiumMg),
+      goalLabel: '${NumberFormatter.grouped(goal.sodiumMg)}mg max',
       progress: _day.sodiumMg / goal.sodiumMg,
       isOverLimit: _day.sodiumMg > goal.sodiumMg,
     ),
   ];
 
-  List<MealBreakdownItem> get meals => [
-    for (final meal in MealType.values) _mealItem(meal),
+  bool get showAllMicronutrients => _showAllMicronutrients;
+
+  List<MicronutrientRowItem> get micronutrients => [
+    for (final nutrient in Micronutrient.featured) _micronutrientRow(nutrient),
   ];
 
-  MealBreakdownItem _mealItem(MealType meal) {
+  List<MicronutrientRowItem> get extendedMicronutrients => [
+    for (final nutrient in Micronutrient.extended) _micronutrientRow(nutrient),
+  ];
+
+  String get micronutrientsToggleLabel => _showAllMicronutrients
+      ? 'Show fewer'
+      : 'Show all ${Micronutrient.values.length} vitamins & minerals';
+
+  String? get micronutrientsNote {
+    final missing = _day.foodsWithoutMicronutrients;
+    if (missing == 0) return null;
+    return '${NutritionLabels.count(missing, 'food', 'foods')} from the food '
+        'database only include fiber, sugar and sodium. Scan or describe a '
+        'meal to track its vitamins and minerals.';
+  }
+
+  MicronutrientRowItem _micronutrientRow(Micronutrient nutrient) {
+    final amount = _day.micronutrientTotal(nutrient);
+    final unit = nutrient.unit.label;
+    return MicronutrientRowItem(
+      label: nutrient.label,
+      amountLabel: '${NutritionLabels.micro(amount)}$unit',
+      goalLabel: '${NutritionLabels.micro(nutrient.dailyValue)}$unit',
+      progress: amount / nutrient.dailyValue,
+    );
+  }
+
+  void toggleMicronutrients() {
+    _showAllMicronutrients = !_showAllMicronutrients;
+    notifyListeners();
+  }
+
+  MealSchedule get _schedule => _scheduleService.current;
+
+  int get mealsPerDay => _schedule.mealsPerDay;
+
+  String get mealsPerDayLabel => '$mealsPerDay meals';
+
+  List<MealCountOption> get mealCountOptions => [
+    for (final count in MealSchedule.options)
+      MealCountOption(
+        count: count,
+        label: count == MealSchedule.defaultMeals
+            ? '$count meals a day (default)'
+            : '$count meals a day',
+        isSelected: count == mealsPerDay,
+      ),
+  ];
+
+  Future<void> setMealsPerDay(int count) =>
+      _scheduleService.setMealsPerDay(count);
+
+  List<MealBreakdownItem> get meals {
+    final targets = _schedule.calorieTargets(goal.calories);
+    return [
+      for (final meal in _schedule.mealsWith(_day.loggedMeals))
+        _mealItem(meal, targets[meal]),
+    ];
+  }
+
+  MealBreakdownItem _mealItem(MealType meal, int? target) {
     final count = _day.logsFor(meal).length;
     final calories = _day.caloriesFor(meal);
-    final share = _day.calories == 0 ? 0.0 : calories / _day.calories;
-    final emptySubtitle = canLog
-        ? '0 items · Tap to add food'
-        : 'Nothing logged';
+    final targetLabel = target == null
+        ? null
+        : 'Target ${NutritionLabels.kcal(target.toDouble())}';
+    final emptyHint = canLog ? 'Tap to add food' : 'Nothing logged';
+    final share = target == null || target == 0
+        ? (_day.calories == 0 ? 0.0 : calories / _day.calories)
+        : calories / target;
     return MealBreakdownItem(
       meal: meal,
       subtitle: count == 0
-          ? emptySubtitle
+          ? [?targetLabel, emptyHint].join(' · ')
           : NutritionLabels.count(count, 'item', 'items'),
       caloriesLabel: NutritionLabels.kcal(calories),
-      shareLabel: NutritionLabels.percent(share),
+      shareLabel: target == null
+          ? 'Extra meal'
+          : 'of ${NutritionLabels.kcal(target.toDouble())}',
       share: share,
       hasItems: count > 0,
     );
@@ -288,8 +347,8 @@ class NutritionViewModel extends ChangeNotifier {
         : 'that day';
     if (flowPoints == 0) {
       return canLog
-          ? 'Log your first meal to start building your nutrition flow points.'
-          : 'No nutrition flow points were earned that day.';
+          ? 'Log your first meal to start building your nutrition FLOWW points.'
+          : 'No nutrition FLOWW points were earned that day.';
     }
     if (flowPoints >= _excellentPoints) {
       return 'You\'re making excellent nutritional choices $dayWord.';
@@ -297,14 +356,14 @@ class NutritionViewModel extends ChangeNotifier {
     if (flowPoints >= _greatPoints) {
       return 'You\'re on track — keep your macros balanced $dayWord.';
     }
-    return 'Every meal you log adds more flow points.';
+    return 'Every meal you log adds more FLOWW points.';
   }
 
-  String get flowImpactMaxLabel => '+${FlowCategory.dailyMax} Flow';
+  String get flowImpactMaxLabel => '+${FlowCategory.dailyMax} FLOWW';
 
   String get flowPointsInfoMessage =>
-      'Your nutrition log earns Flow Points ($flowPoints/$flowPointsMax). '
-      'Every meal you log brings you closer to your daily Flow Score goal.\n'
+      'Your nutrition log earns FLOWW Points ($flowPoints/$flowPointsMax). '
+      'Every meal you log brings you closer to your daily FLOWW Score goal.\n'
       'Above $_excellentPoints is excellent — keep it up!';
 
   String get flowPointsTotalLabel => NutritionLabels.points(flowPoints);
@@ -349,34 +408,13 @@ class NutritionViewModel extends ChangeNotifier {
     FlowCategory.fiber =>
       '${NutritionLabels.grams(_day.fiberG)} / ${goal.fiberG}g',
     FlowCategory.mealTiming =>
-      '${_day.loggedMeals.length} of ${MealType.values.length} meals logged',
+      '${_day.loggedMeals.length} of $mealsPerDay meals logged',
     FlowCategory.sugar =>
       '${NutritionLabels.grams(_day.sugarG)} / ${goal.sugarG}g limit',
     FlowCategory.sodium =>
       '${NutritionLabels.milligrams(_day.sodiumMg)} / '
           '${NumberFormatter.grouped(goal.sodiumMg)}mg limit',
   };
-
-  List<RecentFoodItem> get recentFoods {
-    final seen = <String>{};
-    final items = <RecentFoodItem>[];
-    for (final log in _recentLogs) {
-      final key = '${log.food.name}|${log.food.servingDescription}';
-      if (!seen.add(key)) continue;
-      items.add(
-        RecentFoodItem(
-          log: log,
-          name: log.food.name,
-          caloriesLabel: NutritionLabels.kcal(log.macros.calories),
-        ),
-      );
-      if (items.length == _recentFoodLimit) break;
-    }
-    return items;
-  }
-
-  String relogMessage(RecentFoodItem item) =>
-      'Added ${item.name} to ${item.meal.label}';
 
   String get dietPlanNextLabel {
     final plan = _dietPlan;
@@ -419,36 +457,6 @@ class NutritionViewModel extends ChangeNotifier {
     }
     _dietPlanLoaded = true;
     notifyListeners();
-  }
-
-  Future<String?> relog(FoodLog source) async {
-    if (!canLog) return null;
-    _errorMessage = null;
-    try {
-      final now = DateTime.now();
-      final id = _logService.newFoodLogId();
-      await _logService.addFoodLog(
-        FoodLog(
-          food: source.food.copyWith(id: id, createdAt: now.toUtc()),
-          mealType: source.mealType,
-          loggedAt: AppDateUtils.atTimeOf(_selectedDate, now),
-        ),
-      );
-      return id;
-    } on NutritionLogException catch (e) {
-      _errorMessage = e.message;
-      notifyListeners();
-      return null;
-    }
-  }
-
-  Future<void> removeFoodLog(String id) async {
-    try {
-      await _logService.deleteFoodLog(id);
-    } on NutritionLogException catch (e) {
-      _errorMessage = e.message;
-      notifyListeners();
-    }
   }
 
   void _onNewDay() {
@@ -522,7 +530,7 @@ class NutritionViewModel extends ChangeNotifier {
     _disposed = true;
     _dayRollover.cancel();
     _daySubscription?.cancel();
-    _recentSubscription?.cancel();
+    _scheduleService.schedule.removeListener(notifyListeners);
     _goalSubscription?.cancel();
     super.dispose();
   }

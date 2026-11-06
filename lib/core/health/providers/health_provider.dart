@@ -47,6 +47,26 @@ class HealthProvider extends ChangeNotifier {
   String get sourceIcon =>
       usesAppleHealth ? AppImages.appleHealth : AppImages.healthConnectIcon;
 
+  bool get canOpenSource => HealthService.canOpenSourceApp;
+
+  String get connectTitle => 'Connect $sourceName';
+
+  String get connectLabel => 'Connect';
+
+  String get cardTitle => isConnected ? sourceName : connectTitle;
+
+  String get cardSubtitle {
+    if (isConnected) return _isSyncing ? 'Syncing…' : 'Connected';
+    if (isConnecting || isUnavailable) return statusLabel ?? connectSubtitle;
+    return connectSubtitle;
+  }
+
+  String get connectSubtitle => 'Better recovery predictions';
+
+  String get viewMoreLabel => 'View more in $sourceName';
+
+  Future<void> openSource() => _service.openSourceApp();
+
   String get syncSubtitle =>
       'WAVE reads your sleep, steps, heart rate, HRV, VO2 max, blood oxygen '
       'and body measurements from your wearables to adapt each day to you.';

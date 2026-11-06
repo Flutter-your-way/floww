@@ -7,7 +7,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:floww/config/constants/app_api.dart';
 import 'package:floww/config/constants/app_collection.dart';
-import 'package:floww/config/constants/app_subscription.dart';
 import 'package:floww/config/services/app_api_client.dart';
 import 'package:floww/core/premium/models/premium_view_data.dart';
 import 'package:floww/core/premium/models/store_offer.dart';
@@ -31,8 +30,6 @@ class PremiumService {
   final AppApiClient _apiClient;
   final StorePurchaseService _store;
 
-  static const int monthlyPrice = AppSubscription.monthlyPrice;
-  static const int yearlyPrice = AppSubscription.yearlyPrice;
   static const String paidAtField = 'paidAt';
   static const String _confirmingMessage =
       'Payment received. We are confirming it — tap Restore Purchases '
@@ -66,7 +63,7 @@ class PremiumService {
     PremiumFeature(
       icon: Icons.insights_rounded,
       title: 'Advanced Analytics',
-      description: 'Flow Score breakdown, trends, records and reports',
+      description: 'FLOWW Score breakdown, trends, records and reports',
       tone: PremiumFeatureTone.violet,
     ),
     PremiumFeature(
@@ -81,7 +78,6 @@ class PremiumService {
     PremiumPlan(
       term: SubscriptionTerm.monthly,
       tabLabel: 'Monthly',
-      price: monthlyPrice,
       periodLabel: '/month',
       planLabel: 'Monthly Plan',
       ctaLabel: 'Start Monthly Plan',
@@ -89,14 +85,10 @@ class PremiumService {
     PremiumPlan(
       term: SubscriptionTerm.yearly,
       tabLabel: 'Yearly',
-      price: yearlyPrice,
       periodLabel: '/year',
       planLabel: 'Yearly Plan',
       ctaLabel: 'Start Yearly Plan',
-      tabBadgeLabel: 'Save 33%',
       highlightLabel: 'BEST VALUE',
-      monthlyEquivalent: yearlyPrice ~/ 12,
-      savings: monthlyPrice * 12 - yearlyPrice,
     ),
   ];
 
@@ -168,7 +160,7 @@ class PremiumService {
   Future<SubscriptionEntity> subscribe(SubscriptionTerm term) async {
     final uid = _requireUserId;
     try {
-      await _store.purchase(term.planId, uid: uid);
+      await _store.purchase(term, uid: uid);
     } on StorePurchaseException catch (e) {
       throw PremiumException(e.message, isCancelled: e.isCancelled);
     }

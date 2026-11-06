@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/typewriter_text.dart';
 
 class ModeDetailReveal extends StatefulWidget {
@@ -93,13 +94,7 @@ class _ModeDetailRevealState extends State<ModeDetailReveal> {
             start: _titleVisible,
             speed: _typingSpeed,
             onFinished: () => setState(() => _titleTyped = true),
-            style: context.textTheme.displayLarge?.copyWith(
-              color: widget.color,
-              fontSize: 56,
-              fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.15,
-            ),
+            style: AppTypography.modeHeroTitle.copyWith(color: widget.color),
           ),
         ),
         const SizedBox(height: AppSpacing.xl3),

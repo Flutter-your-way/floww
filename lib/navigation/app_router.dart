@@ -6,6 +6,7 @@ class AppRouter {
   static const String splash = '/';
   static const String meetWaves = '/meet_waves';
   static const String accountSetup = '/account_setup';
+  static const String emailSignIn = '/email_sign_in';
   static const String onboardingQuestion = '/onboardingQuestion';
   static const String connectWearables = '/connect_wearables';
   static const String notificationPermission = '/notification_permission';
@@ -14,6 +15,7 @@ class AppRouter {
   static const String mealDetails = '/meal_details';
   static const String weeklyNutritionReport = '/weekly_nutrition_report';
   static const String dietPlan = '/diet_plan';
+  static const String foodLogHistory = '/food_log_history';
   static const String habitCalendar = '/habit_calendar';
   static const String habitDetails = '/habit_details';
   static const String workoutDetails = '/workout_details';
@@ -22,6 +24,8 @@ class AppRouter {
   static const String programEditor = '/program_editor';
   static const String muscleRecovery = '/muscle_recovery';
   static const String strengthLevel = '/strength_level';
+  static const String workoutVolume = '/workout_volume';
+  static const String healthMetricDetail = '/health_metric_detail';
   static const String yogaCourse = '/yoga_course';
   static const String achievements = '/achievements';
   static const String profile = '/profile';

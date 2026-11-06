@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/constants/app_sizes.dart';
@@ -361,11 +362,19 @@ class _WorkoutNoteBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: context.colors.textSecondary,
-            ),
+          Row(
+            children: [
+              const WaveAvatarBadge(size: AppSizes.s20, contained: true),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  title,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: AppSpacing.md),
           for (final line in lines)

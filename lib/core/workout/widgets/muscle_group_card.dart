@@ -139,8 +139,8 @@ class _ExerciseRow extends StatelessWidget {
           AppPhotoTile(
             url: exercise.imageUrl,
             fallbackIcon: Icons.fitness_center,
-            size: AppSizes.s40,
-            radius: AppRadius.sm,
+            size: AppSizes.s64,
+            radius: AppRadius.md,
           ),
           SizedBox(width: AppSpacing.lg),
           Expanded(

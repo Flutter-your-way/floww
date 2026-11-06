@@ -14,6 +14,7 @@ class AddExerciseViewModel extends ChangeNotifier {
     required List<AddExerciseSectionOption> sections,
     String? initialSectionId,
     this.submitLabel = 'Add to Workout',
+    this.isLogging = false,
   }) : _sections = sections {
     _sectionId =
         initialSectionId ?? (sections.isEmpty ? '' : sections.first.id);
@@ -36,6 +37,7 @@ class AddExerciseViewModel extends ChangeNotifier {
   final WorkoutCatalogService _service;
   final List<AddExerciseSectionOption> _sections;
   final String submitLabel;
+  final bool isLogging;
 
   List<ExerciseCatalogEntry> _catalog = const [];
   bool _isLoading = true;
@@ -69,9 +71,11 @@ class AddExerciseViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  String get title => 'Add Exercise';
+  String get title => isLogging ? 'Log Exercise' : 'Add Exercise';
 
-  String get subtitle => 'Pick a movement and set your targets';
+  String get subtitle => isLogging
+      ? 'Pick what you did and enter your sets, reps and weight'
+      : 'Pick a movement and set your targets';
 
   String get searchHint => 'Search exercises...';
 
@@ -79,7 +83,11 @@ class AddExerciseViewModel extends ChangeNotifier {
 
   String get exerciseLabel => 'Exercise';
 
-  String get targetsLabel => 'Targets';
+  String get targetsLabel => isLogging ? 'What you did' : 'Targets';
+
+  bool get showSections => !isLogging;
+
+  bool get showRest => !isLogging;
 
   String get weightLabel => 'Weight';
 
@@ -158,7 +166,9 @@ class AddExerciseViewModel extends ChangeNotifier {
     final volume = _isBodyweight
         ? 'bodyweight'
         : '${_weightValueLabel(_weightKg)} kg';
-    return '$_sets x $_reps · $volume · ${_durationLabel(_restSeconds)} rest';
+    final summary = '$_sets x $_reps · $volume';
+    if (!showRest) return summary;
+    return '$summary · ${_durationLabel(_restSeconds)} rest';
   }
 
   void search(String value) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
@@ -37,9 +38,7 @@ class WaveInsightsCard extends StatelessWidget {
         children: [
           CardHeader(
             title: title,
-            icon: Icons.bolt,
-            iconColor: colors.primary,
-            iconSize: AppSizes.s16,
+            leading: const WaveAvatarBadge(size: AppSizes.s28, contained: true),
             titleStyle: AppTypography.heading4SemiBold,
             trailing: Text(
               rangeLabel,

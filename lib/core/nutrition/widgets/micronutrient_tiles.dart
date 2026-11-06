@@ -10,62 +10,13 @@ import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
 
-class MicronutrientTiles extends StatelessWidget {
-  const MicronutrientTiles({
+class MicronutrientTile extends StatelessWidget {
+  const MicronutrientTile({
     super.key,
-    required this.items,
-    this.onOpenWater,
-    this.onAddWater,
-    this.onOpenNutrient,
+    required this.item,
+    this.onTap,
+    this.onAdd,
   });
-
-  final List<MicronutrientTileItem> items;
-  final VoidCallback? onOpenWater;
-  final VoidCallback? onAddWater;
-  final ValueChanged<MicronutrientKind>? onOpenNutrient;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var i = 0; i < items.length; i += 2) ...[
-          if (i > 0) SizedBox(height: AppSpacing.lg),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _tile(items[i])),
-                SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  child: i + 1 < items.length
-                      ? _tile(items[i + 1])
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _tile(MicronutrientTileItem item) {
-    final isWater = item.kind == MicronutrientKind.water;
-    final onOpenNutrient = this.onOpenNutrient;
-    return _MicronutrientTile(
-      item: item,
-      onTap: isWater
-          ? onOpenWater
-          : onOpenNutrient == null
-          ? null
-          : () => onOpenNutrient(item.kind),
-      onAdd: isWater ? onAddWater : null,
-    );
-  }
-}
-
-class _MicronutrientTile extends StatelessWidget {
-  const _MicronutrientTile({required this.item, this.onTap, this.onAdd});
 
   final MicronutrientTileItem item;
   final VoidCallback? onTap;
@@ -110,7 +61,6 @@ class _MicronutrientTile extends StatelessWidget {
                 Expanded(
                   child: AppProgressBar(
                     progress: item.progress,
-                    color: barColor,
                     height: AppSizes.s8,
                   ),
                 ),

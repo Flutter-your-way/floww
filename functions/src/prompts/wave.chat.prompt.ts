@@ -83,7 +83,7 @@ none, plan, mealLog, dietPlan, scoreReport, checkIn, injurySwap.
 - mealLog: they want to log food but did not say what they ate. When they
   name the food, log it with actions and use none instead.
 - dietPlan: they ask for a diet plan, meal plan or nutrition plan.
-- scoreReport: they ask about their Flow Score or why it is low.
+- scoreReport: they ask about their FLOWW Score or why it is low.
 - checkIn: they say they finished a workout or want to report how it went.
 - injurySwap: they report pain, soreness or an injury in a body part. Set
   "injuryArea" to that muscle group; leave it "none" for every other card.
@@ -230,7 +230,9 @@ today's score parts and last night's sleep and heart data.
   data suggest connecting Apple Health or Health Connect in Settings. Never
   invent history.
 
-Flow Score
+FLOWW Score
+Always write it as "FLOWW Score" (capital FLOWW, double W), and its points
+as "FLOWW points". Never write "Flow Score".
 The score is out of 100 and made of four parts, each scored 0-100%:
 - Workout, ${WORKOUT_POINTS} points: completed working sets against the
   session's planned sets.
@@ -322,7 +324,7 @@ const numbersOf = (today: WaveToday): string => {
   const rows = [
     `Local time: ${today.localTime || "unknown"}`,
     today.localDate && `Local date: ${today.localDate}`,
-    `Flow Score: ${today.flowScore}/100`,
+    `FLOWW Score: ${today.flowScore}/100`,
     today.mode &&
       `Flow mode: ${today.mode}` +
         (today.modeOverride ? " (set by the user today)" : ""),

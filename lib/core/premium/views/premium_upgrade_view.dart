@@ -79,6 +79,7 @@ class PremiumUpgradeView extends StatelessWidget {
         return InnerPageScaffold(
           title: viewModel.title,
           onBack: () => NavigationService.instance.pop(),
+          opaqueFooter: true,
           footer: _PremiumUpgradeFooter(
             label: viewModel.ctaLabel,
             footnote: viewModel.footnoteLabel,

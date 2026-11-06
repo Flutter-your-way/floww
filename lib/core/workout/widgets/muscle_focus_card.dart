@@ -5,15 +5,26 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
+import 'package:floww/core/recovery/models/muscle_body_side.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
+import 'package:floww/core/recovery/services/muscle_targeting.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/widgets/muscle_activation_row.dart';
 import 'package:floww/core/workout/widgets/muscle_figures.dart';
 import 'package:floww/core/workout/widgets/workout_chip.dart';
 
 class MuscleFocusCard extends StatelessWidget {
-  const MuscleFocusCard({super.key, required this.muscles, this.onViewAnatomy});
+  const MuscleFocusCard({
+    super.key,
+    required this.muscles,
+    required this.targets,
+    required this.templateOf,
+    this.onViewAnatomy,
+  });
 
   final List<MuscleFocusEntry> muscles;
+  final MuscleTargets targets;
+  final MuscleMapTemplate? Function(MuscleBodySide side) templateOf;
   final VoidCallback? onViewAnatomy;
 
   @override
@@ -39,7 +50,7 @@ class MuscleFocusCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const MuscleFigures(),
+              MuscleFigures(targets: targets, templateOf: templateOf),
               SizedBox(width: AppSpacing.xl),
               Expanded(
                 child: Column(

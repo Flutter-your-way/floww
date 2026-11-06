@@ -615,7 +615,7 @@ class WaveChatService {
     MealType.breakfast => WaveMealSlot.breakfast,
     MealType.lunch => WaveMealSlot.lunch,
     MealType.dinner => WaveMealSlot.dinner,
-    MealType.snacks => WaveMealSlot.snack,
+    MealType.morningSnack || MealType.snacks => WaveMealSlot.snack,
   };
 
   static MealType _mealTypeOf(WaveMealSlot slot) => switch (slot) {

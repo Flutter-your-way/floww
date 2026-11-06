@@ -89,7 +89,7 @@ class FlowScoreCard extends StatelessWidget {
                         size: AppSizes.s20,
                       ),
                       SizedBox(width: AppSpacing.sm),
-                      Text('Flow Score', style: context.textTheme.titleLarge),
+                      Text('FLOWW Score', style: context.textTheme.titleLarge),
                     ],
                   ),
                   SizedBox(height: AppSpacing.lg),
@@ -192,7 +192,7 @@ class FlowScoreCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Complete your first workout to unlock your Flow Score.',
+                    'Complete your first workout to unlock your FLOWW Score.',
                     style: context.textTheme.bodySmall?.copyWith(
                       color: context.colors.textSecondary,
                     ),

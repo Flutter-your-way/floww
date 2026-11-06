@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:floww/config/utils/notifications/notification_tones.dart';
 import 'package:floww/core/settings/models/settings_view_data.dart';
 import 'package:floww/core/settings/services/settings_service.dart';
 
@@ -9,6 +10,7 @@ class NotificationSettingsViewModel extends ChangeNotifier {
   NotificationSettingsViewModel(this._service)
     : _settings = _service.defaultNotifications() {
     _watch();
+    NotificationTones.selected.addListener(notifyListeners);
   }
 
   final SettingsService _service;
@@ -24,6 +26,21 @@ class NotificationSettingsViewModel extends ChangeNotifier {
   List<NotificationSection> get sections => _settings.sections;
 
   bool get areTogglesEnabled => _settings.master.isEnabled;
+
+  String get toneTitle => 'Reminder Tone';
+
+  String get toneSubtitle => 'The sound your habit and workout reminders play';
+
+  String get toneSheetTitle => 'Choose a reminder tone';
+
+  NotificationTone get tone => NotificationTones.selected.value;
+
+  String get toneValueLabel => tone.label;
+
+  List<NotificationTone> get tones => NotificationTone.values;
+
+  Future<void> selectTone(NotificationTone tone) =>
+      NotificationTones.select(tone);
 
   Future<void> setMasterEnabled(bool value) async {
     if (_settings.master.isEnabled == value) return;
@@ -70,6 +87,7 @@ class NotificationSettingsViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    NotificationTones.selected.removeListener(notifyListeners);
     _subscription?.cancel();
     super.dispose();
   }

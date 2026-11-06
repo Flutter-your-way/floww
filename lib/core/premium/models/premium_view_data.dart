@@ -27,14 +27,10 @@ class PremiumPlan {
   const PremiumPlan({
     required this.term,
     required this.tabLabel,
-    required this.price,
     required this.periodLabel,
     required this.planLabel,
     required this.ctaLabel,
-    this.tabBadgeLabel,
     this.highlightLabel,
-    this.monthlyEquivalent,
-    this.savings,
   });
 
   final SubscriptionTerm term;
@@ -42,14 +38,10 @@ class PremiumPlan {
   String get planId => term.planId;
 
   final String tabLabel;
-  final int price;
   final String periodLabel;
   final String planLabel;
   final String ctaLabel;
-  final String? tabBadgeLabel;
   final String? highlightLabel;
-  final int? monthlyEquivalent;
-  final int? savings;
 }
 
 class PremiumInvoiceItem {
@@ -77,7 +69,7 @@ class PremiumPaymentsSummary {
     required this.since,
   });
 
-  final int totalPaid;
+  final double totalPaid;
   final int paymentCount;
   final DateTime since;
 }
@@ -104,7 +96,7 @@ class PremiumSnapshot {
     if (paid.isEmpty) return null;
 
     return PremiumPaymentsSummary(
-      totalPaid: paid.fold(0, (total, invoice) => total + invoice.amount),
+      totalPaid: paid.fold(0.0, (total, invoice) => total + invoice.amount),
       paymentCount: paid.length,
       since: paid
           .map((invoice) => invoice.paidAt)

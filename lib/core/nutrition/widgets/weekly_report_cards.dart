@@ -53,7 +53,7 @@ class FlowContributionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'FLOW Contribution',
+                      'FLOWW Contribution',
                       style: context.textTheme.titleLarge,
                     ),
                     SizedBox(height: AppSpacing.xxs),
@@ -77,7 +77,7 @@ class FlowContributionCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Text('Flow Points', style: captionStyle),
+                  Text('FLOWW Points', style: captionStyle),
                 ],
               ),
             ],
@@ -188,7 +188,7 @@ class ConsistencyCard extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      _StatusDot(status: item.status),
+                      DayStatusDot(status: item.status),
                       SizedBox(height: AppSpacing.md),
                       Text(
                         item.label,
@@ -212,7 +212,7 @@ class ConsistencyCard extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _StatusDot(status: status, size: AppSizes.s10),
+                      DayStatusDot(status: status, size: AppSizes.s10),
                       SizedBox(width: AppSpacing.sm),
                       Text(
                         status.label,
@@ -279,8 +279,12 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class _StatusDot extends StatelessWidget {
-  const _StatusDot({required this.status, this.size = AppSizes.s16});
+class DayStatusDot extends StatelessWidget {
+  const DayStatusDot({
+    super.key,
+    required this.status,
+    this.size = AppSizes.s16,
+  });
 
   final DayLogStatus status;
   final double size;
@@ -385,7 +389,7 @@ class WeeklyMetricCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppSpacing.md),
-          AppProgressBar(progress: progress, color: color, height: AppSizes.s8),
+          AppProgressBar(progress: progress, height: AppSizes.s8),
         ],
       ),
     );
@@ -421,7 +425,7 @@ class FlowPointsBreakdownCard extends StatelessWidget {
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Nutrition FLOW Points',
+                  'Nutrition FLOWW Points',
                   style: context.textTheme.titleLarge,
                 ),
               ),

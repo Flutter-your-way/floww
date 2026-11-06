@@ -8,6 +8,10 @@ import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/recovery/models/muscle_body_side.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
+import 'package:floww/core/recovery/services/muscle_targeting.dart';
+import 'package:floww/core/workout/models/muscle_targets_item.dart';
 import 'package:floww/core/workout/services/workout_catalog_data.dart';
 import 'package:floww/core/workout/models/active_workout_args.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
@@ -67,9 +71,11 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     this._readinessService,
     this._alertService,
     this._access,
-    ActiveWorkoutArgs launch,
-  ) : _date = AppDateUtils.dateOnly(launch.date),
-      _launch = launch;
+    ActiveWorkoutArgs launch, {
+    MuscleMapService? muscleMapService,
+  }) : _date = AppDateUtils.dateOnly(launch.date),
+       _launch = launch,
+       _muscleMapService = muscleMapService ?? MuscleMapService();
 
   static const Duration _tick = Duration(seconds: 1);
   static const int _minReps = 0;
@@ -97,6 +103,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   final WorkoutReadinessService _readinessService;
   final PremiumAccessProvider _access;
   final WorkoutAlertService _alertService;
+  final MuscleMapService _muscleMapService;
   final DateTime _date;
   final ActiveWorkoutArgs _launch;
   final StreamController<void> _restEnded = StreamController<void>.broadcast();
@@ -121,6 +128,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   int _restRemaining = 0;
+  bool _isSetActive = false;
   String? _expandedSectionId;
   String? _draftKey;
   _SetDraft? _draft;
@@ -164,6 +172,31 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   WorkoutEntryEntity? get currentEntry => _exercise;
 
   String? get sessionId => _session?.id;
+
+  MuscleMapTemplate? muscleMapOf(MuscleBodySide side) =>
+      _muscleMapService.templateOf(side);
+
+  Future<void> _loadMuscleMap() async {
+    try {
+      await _muscleMapService.load();
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  void primaryAction() {
+    if (_isLocked || _exercise == null) return;
+    if (isResting) {
+      _isSetActive = true;
+      skipRest();
+      return;
+    }
+    if (!_isSetActive) {
+      _isSetActive = true;
+      notifyListeners();
+      return;
+    }
+    completeSet();
+  }
 
   void completeTimedSet(int seconds) {
     _updateDraft((draft) => draft.copyWith(seconds: seconds));
@@ -223,6 +256,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       _watchSession(session.id);
       _startTicker();
       unawaited(_alertService.keepAwake(true));
+      unawaited(_loadMuscleMap());
       _scheduleRestAlert();
     } on WorkoutException catch (error) {
       _errorMessage = error.message;
@@ -457,9 +491,6 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     ),
   );
 
-  void selectSetType(SetType type) =>
-      _updateDraft((draft) => draft.copyWith(type: type));
-
   LoggedSetEntry _setOf(WorkoutEntryEntity exercise, _SetDraft draft) =>
       LoggedSetEntry(
         reps: exercise.isTimed ? 0 : draft.reps,
@@ -495,6 +526,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     updated = updated.restingFor(_isDoneIn(exercises) ? 0 : next.$2, now);
     _session = updated;
     _restRemaining = updated.restSecondsAt(now);
+    _isSetActive = false;
     _expandedSectionId = null;
     _scheduleRestAlert();
     notifyListeners();
@@ -563,6 +595,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     final session = _session;
     if (exercise == null || session == null) return;
     _expandedSectionId = null;
+    _isSetActive = false;
     _session = session.copyWith(
       exercises: _replaced(
         session.exercises,
@@ -604,6 +637,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       clearRest: true,
     );
     _restRemaining = 0;
+    _isSetActive = false;
     _draft = null;
     _scheduleRestAlert();
     notifyListeners();
@@ -666,6 +700,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       currentEntryId: id,
     );
     _expandedSectionId = null;
+    _isSetActive = false;
     _scheduleRestAlert();
     notifyListeners();
     unawaited(_persist());
@@ -806,12 +841,18 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       currentEntryId: swapped.id,
     );
     _draft = null;
+    _isSetActive = false;
     _expandedSectionId = null;
     notifyListeners();
     unawaited(_persist());
   }
 
   List<ActiveOptionItem> get options => [
+    const ActiveOptionItem(
+      action: ActiveOptionAction.technique,
+      icon: Icons.menu_book_rounded,
+      label: 'Technique & records',
+    ),
     ActiveOptionItem(
       action: ActiveOptionAction.undoLastSet,
       icon: Icons.undo_rounded,
@@ -860,6 +901,8 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   ];
 
   String get optionsTitle => _exercise?.name ?? 'Exercise';
+
+  String get techniqueSubtitle => 'Personal bests, form cues and equipment';
 
   String get queueTitle => 'Workout Order';
 
@@ -1135,7 +1178,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         if (volume > 0)
           WorkoutFinishStat(label: 'Volume', value: volume, unit: 'kg'),
       ],
-      flowLabel: 'Flow Score',
+      flowLabel: 'FLOWW Score',
       flowValue: completion == null
           ? null
           : '${completion.flowScoreBefore} → ${completion.flowScoreAfter}',
@@ -1152,9 +1195,12 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       setLabel: 'Set ${_setIndex + 1}/${exercise.targetSets}',
       exercise: _itemOf(exercise),
       isResting: isResting,
+      isSetActive: _isSetActive && !isResting,
       isPaused: _isPaused,
       restSecondsLabel: '$_restRemaining',
-      primaryActionLabel: isResting ? 'Complete Set' : 'Start Set',
+      primaryActionLabel: _isSetActive && !isResting
+          ? 'Complete Set ${_setIndex + 1}'
+          : 'Start Set ${_setIndex + 1}',
       canShortenRest: _restRemaining > _restStepSeconds,
       nextUpLabel:
           'Up next: ${exercise.name} · Set ${_setIndex + 1}/'
@@ -1173,18 +1219,18 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       name: exercise.name,
       imageUrl:
           exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
-      setsValue: '${_setIndex + 1}',
-      setsLabel: '/ ${exercise.targetSets} sets',
-      repsValue: '${exercise.targetReps}',
-      repsLabel: '$unit · $weightLabel',
+      targetValue: '${exercise.targetReps}',
+      targetLabel: '$unit · $weightLabel',
       setDots: _dotsOf(exercise),
       input: ActiveSetInputItem(
         primary: _primaryTarget(exercise, draft),
         weight: exercise.isBodyweight ? null : _weightTarget(draft),
         reserve: _reserveTarget(draft),
-        typeOptions: _typeOptions(draft.type),
       ),
-      lastTimeLabel: _lastTimeLabelOf(exercise),
+      muscles: MuscleTargetsItem.of(
+        MuscleTargeting.ofShares(exercise.muscleShares),
+        title: 'Muscles Targeted',
+      ),
       supersetLabel: _supersetLabelOf(exercise),
       infoSections: [
         for (final section in _sectionsOf(exercise)) _sectionOf(section),
@@ -1241,17 +1287,20 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   ];
 
   List<ActiveSetDotItem> _dotsOf(WorkoutEntryEntity exercise) {
+    final logged = exercise.sets.length;
     final remaining = exercise.targetSets - exercise.workingSetCount;
     return [
-      for (var i = 0; i < exercise.sets.length; i++)
+      for (var i = 0; i < logged; i++)
         ActiveSetDotItem(
           status: ActiveSetStatus.completed,
+          label: '${i + 1}',
           badge: exercise.sets[i].type.badge,
           loggedIndex: i,
         ),
       for (var i = 0; i < remaining; i++)
         ActiveSetDotItem(
           status: i == 0 ? ActiveSetStatus.current : ActiveSetStatus.pending,
+          label: '${logged + i + 1}',
         ),
     ];
   }
@@ -1262,12 +1311,6 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         exercise.exerciseId,
         excludeSessionId: _session?.id,
       );
-
-  String? _lastTimeLabelOf(WorkoutEntryEntity exercise) {
-    final history = _historyOf(exercise);
-    if (history.isEmpty) return null;
-    return ExerciseInsights.setsSummaryOf(history.first);
-  }
 
   String? _supersetLabelOf(WorkoutEntryEntity exercise) {
     final groupId = exercise.groupId;

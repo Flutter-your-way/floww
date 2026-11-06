@@ -47,7 +47,7 @@ const weeklySummaryOf = ({stats, today}: ReminderContext): ReminderMessage => {
   if (average <= 0 || !isRecent) return null;
   return {
     title: "Your week in flow",
-    body: `Average Flow Score ${average}. Current streak ` +
+    body: `Average FLOWW Score ${average}. Current streak ` +
       `${numberOf(stats.currentStreak)} days. See your full report.`,
   };
 };

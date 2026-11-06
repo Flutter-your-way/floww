@@ -7,6 +7,12 @@ import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
+import 'package:floww/core/recovery/models/muscle_body_side.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
+import 'package:floww/core/recovery/services/muscle_targeting.dart';
+import 'package:floww/core/workout/models/muscle_targets_item.dart';
+import 'package:floww/core/workout/models/workout_section_kind.dart';
+import 'package:floww/core/workout/services/workout_metrics.dart';
 import 'package:floww/core/settings/services/onboarding_answers_service.dart';
 import 'package:floww/core/workout/services/workout_catalog_data.dart';
 import 'package:floww/core/workout/models/active_workout_args.dart';
@@ -38,9 +44,11 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     DateTime? catchUpFrom,
     YogaCourseService? yogaService,
     OnboardingAnswersService? answersService,
+    MuscleMapService? muscleMapService,
   }) : _date = AppDateUtils.dateOnly(date),
        _yogaService = yogaService ?? YogaCourseService(),
        _answersService = answersService ?? OnboardingAnswersService(),
+       _muscleMapService = muscleMapService ?? MuscleMapService(),
        _catchUpFrom = catchUpFrom == null
            ? null
            : AppDateUtils.dateOnly(catchUpFrom),
@@ -81,7 +89,9 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   final WorkoutShiftService _shiftService;
   final YogaCourseService _yogaService;
   final OnboardingAnswersService _answersService;
+  final MuscleMapService _muscleMapService;
   final DateTime _date;
+  final Set<String> _expandedSectionIds = {};
   DateTime? _catchUpFrom;
 
   WorkoutPlanEntity? _plan;
@@ -263,17 +273,33 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
   WorkoutSessionEntity? _primarySessionOf(List<WorkoutSessionEntity> sessions) {
     WorkoutSessionEntity? inProgress;
     for (final session in sessions) {
-      if (!AppDateUtils.isSameDay(session.scheduledDate, _planDate)) continue;
+      if (!session.fulfillsPlanOn(_planDate)) continue;
       if (session.isCompleted) return session;
       if (session.isInProgress) inProgress ??= session;
     }
     return inProgress;
   }
 
+  MuscleMapTemplate? muscleMapOf(MuscleBodySide side) =>
+      _muscleMapService.templateOf(side);
+
+  Future<void> _loadMuscleMap() async {
+    try {
+      await _muscleMapService.load();
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  void toggleSection(String id) {
+    if (!_expandedSectionIds.remove(id)) _expandedSectionIds.add(id);
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+    unawaited(_loadMuscleMap());
     try {
       final state = await _programService.loadState();
       _activeProgram = state.activeProgram;
@@ -338,9 +364,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
     if (!_isToday || activeProgram == null) return null;
     final yesterday = _yesterday;
     final isDone = history.any(
-      (session) =>
-          AppDateUtils.isSameDay(session.scheduledDate, yesterday) &&
-          session.isCompleted,
+      (session) => session.fulfillsPlanOn(yesterday) && session.isCompleted,
     );
     if (isDone) return null;
     final plans = await _planService.watchCatchUps(_date).first;
@@ -449,8 +473,65 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
       goal: plan.goal,
       insight: plan.insight,
       exerciseCountLabel: _discipline.countLabel(plan.exercises.length),
-      exercises: [for (final entry in plan.exercises) _exerciseOf(entry)],
+      sections: _sectionsOf(plan),
+      muscles: MuscleTargetsItem.of(
+        MuscleTargeting.ofEntries(plan.exercises),
+        title: 'Muscles Targeted',
+      ),
     );
+  }
+
+  List<WorkoutSectionItem> _sectionsOf(WorkoutPlanEntity plan) {
+    final progress = {
+      for (final entry in _session?.exercises ?? const <WorkoutEntryEntity>[])
+        entry.id: entry,
+    };
+    final grouped = {
+      for (final kind in WorkoutSectionKind.values)
+        kind: [
+          for (final entry in plan.exercises)
+            if (entry.section == kind) progress[entry.id] ?? entry,
+        ],
+    }..removeWhere((kind, entries) => entries.isEmpty);
+    final estimates = {
+      for (final group in grouped.entries)
+        group.key: group.value.fold<int>(
+          0,
+          (total, entry) => total + WorkoutMetrics.estimatedSecondsOf(entry),
+        ),
+    };
+    final estimatedTotal = estimates.values.fold<int>(0, (a, b) => a + b);
+    return [
+      for (final group in grouped.entries)
+        WorkoutSectionItem(
+          id: group.key.id,
+          glyph: group.key.glyph,
+          title: group.key.title,
+          countLabel:
+              '${_discipline.countLabel(group.value.length)} · '
+              '${_sectionMinutesOf(estimates[group.key]!, estimatedTotal, plan)}'
+              ' min',
+          status: _sectionStatusOf(group.value),
+          isExpanded: _expandedSectionIds.contains(group.key.id),
+          exercises: [for (final entry in group.value) _exerciseOf(entry)],
+        ),
+    ];
+  }
+
+  int _sectionMinutesOf(int seconds, int totalSeconds, WorkoutPlanEntity plan) {
+    if (totalSeconds == 0) return 1;
+    final minutes = (plan.durationMinutes * seconds / totalSeconds).round();
+    return minutes < 1 ? 1 : minutes;
+  }
+
+  WorkoutSectionStatus _sectionStatusOf(List<WorkoutEntryEntity> entries) {
+    if (entries.every((entry) => entry.isDone)) {
+      return WorkoutSectionStatus.completed;
+    }
+    if (entries.any((entry) => entry.sets.isNotEmpty || entry.isDone)) {
+      return WorkoutSectionStatus.active;
+    }
+    return WorkoutSectionStatus.pending;
   }
 
   WorkoutExerciseItem _exerciseOf(WorkoutEntryEntity exercise) {

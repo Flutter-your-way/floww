@@ -4,6 +4,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 
 enum _TipLayout { glow, inline, stacked, note }
 
@@ -14,6 +15,10 @@ class TipCard extends StatelessWidget {
     this.message,
     this.icon = Icons.lightbulb,
   }) : _layout = _TipLayout.glow;
+
+  const TipCard.wave({super.key, required this.title, this.message})
+    : icon = null,
+      _layout = _TipLayout.glow;
 
   const TipCard.inline({
     super.key,
@@ -29,20 +34,18 @@ class TipCard extends StatelessWidget {
     this.icon = Icons.lightbulb,
   }) : _layout = _TipLayout.stacked;
 
-  const TipCard.note({
-    super.key,
-    required this.title,
-    this.icon = Icons.graphic_eq_rounded,
-  }) : message = null,
-       _layout = _TipLayout.note;
+  const TipCard.note({super.key, required this.title, this.icon})
+    : message = null,
+      _layout = _TipLayout.note;
 
   final String title;
   final String? message;
-  final IconData icon;
+  final IconData? icon;
   final _TipLayout _layout;
 
   @override
   Widget build(BuildContext context) {
+    final icon = this.icon;
     if (_layout == _TipLayout.stacked) {
       return AppCard(
         variant: AppCardVariant.tinted,
@@ -81,25 +84,13 @@ class TipCard extends StatelessWidget {
       return AppCard(
         variant: AppCardVariant.innerGlow,
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: icon == null
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
           children: [
-            Container(
-              width: AppSizes.s40,
-              height: AppSizes.s40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: context.gradients.primary,
-                border: Border.all(
-                  color: context.colors.surfaceTranslucent,
-                  width: AppSizes.hairline,
-                ),
-              ),
-              child: Icon(
-                icon,
-                color: context.colors.backgroundSecondary,
-                size: AppSizes.s20,
-              ),
-            ),
+            icon == null
+                ? const WaveAvatarBadge(size: AppSizes.s40, contained: true)
+                : _TipIconBadge(icon: icon, size: AppSizes.s40),
             SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Text(
@@ -160,25 +151,13 @@ class TipCard extends StatelessWidget {
     return AppCard(
       variant: AppCardVariant.innerGlow,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: icon == null
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
         children: [
-          Container(
-            width: AppSizes.s32,
-            height: AppSizes.s32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: context.gradients.primary,
-              border: Border.all(
-                color: context.colors.surfaceTranslucent,
-                width: AppSizes.hairline,
-              ),
-            ),
-            child: Icon(
-              icon,
-              color: context.colors.backgroundSecondary,
-              size: AppSizes.s20,
-            ),
-          ),
+          icon == null
+              ? const WaveAvatarBadge(size: AppSizes.s36, contained: true)
+              : _TipIconBadge(icon: icon, size: AppSizes.s32),
           SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
@@ -203,6 +182,34 @@ class TipCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TipIconBadge extends StatelessWidget {
+  const _TipIconBadge({required this.icon, required this.size});
+
+  final IconData icon;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: context.gradients.primary,
+        border: Border.all(
+          color: context.colors.surfaceTranslucent,
+          width: AppSizes.hairline,
+        ),
+      ),
+      child: Icon(
+        icon,
+        color: context.colors.backgroundSecondary,
+        size: AppSizes.s20,
       ),
     );
   }

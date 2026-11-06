@@ -269,7 +269,11 @@ class _GuideStepBadge extends StatelessWidget {
           duration: AppMotion.guideCardGrow,
           curve: AppMotion.guideEnterCurve,
           builder: (context, progress, child) => CustomPaint(
-            painter: _GuideRingPainter(progress: progress, color: accent),
+            painter: _GuideRingPainter(
+              progress: progress,
+              color: accent,
+              gradients: context.gradients,
+            ),
             child: child,
           ),
           child: Center(
@@ -299,12 +303,17 @@ class _GuideStepBadge extends StatelessWidget {
 }
 
 class _GuideRingPainter extends CustomPainter {
-  const _GuideRingPainter({required this.progress, required this.color});
+  const _GuideRingPainter({
+    required this.progress,
+    required this.color,
+    required this.gradients,
+  });
 
   static const double _stroke = AppSizes.s3;
 
   final double progress;
   final Color color;
+  final AppGradientTokens gradients;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -328,13 +337,20 @@ class _GuideRingPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = _stroke
         ..strokeCap = StrokeCap.round
-        ..color = color,
+        ..shader = gradients
+            .progressSweep(
+              progress,
+              tipHold: (_stroke / rect.width) / (2 * math.pi),
+            )
+            .createShader(rect),
     );
   }
 
   @override
   bool shouldRepaint(_GuideRingPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.gradients != gradients;
 }
 
 class _GuideCardFooter extends StatelessWidget {

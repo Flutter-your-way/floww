@@ -60,7 +60,6 @@ class TodayProgressCard extends StatelessWidget {
           SizedBox(height: AppSpacing.xl2),
           AppProgressBar(
             progress: progress.percent / 100,
-            gradient: context.gradients.full,
             glowColor: context.colors.primary,
           ),
           SizedBox(height: AppSpacing.xl),

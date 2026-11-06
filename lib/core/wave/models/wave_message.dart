@@ -81,10 +81,12 @@ class WaveActionPromptMessage extends WaveMessage {
     required super.timestamp,
     required this.title,
     required this.detail,
+    this.isPlanApproval = false,
   });
 
   final String title;
   final String detail;
+  final bool isPlanApproval;
 }
 
 class WaveCheckInMessage extends WaveMessage {

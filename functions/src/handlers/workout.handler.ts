@@ -73,6 +73,8 @@ const sessionsOf = (uid: string) =>
 const planDoc = (uid: string, day: string) =>
   userCollection(uid, USER_COLLECTIONS.workoutPlans).doc(day);
 
+const MANUAL_SOURCE = "manual";
+
 const planDayOf = (session: DocumentData): string =>
   typeof session.planDate === "string" ? session.planDate : session.date;
 
@@ -217,7 +219,7 @@ export const handleCompleteWorkout = async (req: Request, res: Response) => {
     transaction.set(sessionsOf(uid).doc(body.sessionId), payload,
       {merge: true});
     transaction.set(flowDoc(uid, day), flowDocOf(afterEntry));
-    if (plan.exists) {
+    if (plan.exists && session.source !== MANUAL_SOURCE) {
       transaction.update(plan.ref, {sessionId: body.sessionId});
     }
 

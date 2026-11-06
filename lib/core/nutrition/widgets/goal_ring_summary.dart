@@ -76,7 +76,6 @@ class GoalRingSummary extends StatelessWidget {
         AppProgressRing(
           progress: progress,
           glowColor: colors.textPrimary,
-          endColor: colors.textPrimary,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

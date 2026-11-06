@@ -29,7 +29,14 @@ class WaveDailyBrief {
 
 enum WavePlanAction { startWorkout, resumeWorkout, logMeal, logWater }
 
-enum WaveConfirmationAction { openWorkout, openMemory, undo, navigate, upgrade }
+enum WaveConfirmationAction {
+  openWorkout,
+  openMemory,
+  openPlan,
+  undo,
+  navigate,
+  upgrade,
+}
 
 enum WaveConfirmationTone { success, water, memory, warning, premium }
 

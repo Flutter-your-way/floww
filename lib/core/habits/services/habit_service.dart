@@ -123,6 +123,7 @@ class HabitService {
         reminder: draft.reminder,
         description: draft.description,
         about: about,
+        quitDays: draft.quitDays,
       );
       await document.set(habit.toJson());
       return document.id;
@@ -159,6 +160,7 @@ class HabitService {
       'source': draft.source.name,
       'reminderTime': draft.reminder.toJson(),
       'description': draft.description,
+      'quitDays': draft.quitDays,
     }),
   );
 

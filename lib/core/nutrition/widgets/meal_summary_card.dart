@@ -118,11 +118,7 @@ class _MacroColumn extends StatelessWidget {
           ),
         ),
         SizedBox(height: AppSpacing.sm),
-        AppProgressBar(
-          progress: share.share,
-          height: AppSizes.s10,
-          color: share.macro.colorOf(context),
-        ),
+        AppProgressBar(progress: share.share, height: AppSizes.s10),
         SizedBox(height: AppSpacing.sm),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,

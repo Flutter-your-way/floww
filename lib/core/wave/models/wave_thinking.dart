@@ -8,7 +8,7 @@ class WaveThinking {
   static const int maxTopics = 2;
 
   static const List<(String, List<String>)> _topics = [
-    ('Checking your Flow Score', ['score', 'flow', 'points']),
+    ('Checking your FLOWW Score', ['score', 'flow', 'points']),
     (
       'Reading your last 7 days',
       ['week', 'improv', 'progress', 'trend', 'lately', 'behind'],

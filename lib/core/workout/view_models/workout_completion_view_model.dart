@@ -102,8 +102,8 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
   WorkoutCompleteItem get summary => WorkoutCompleteItem(
     glyph: '🎉',
     title: 'Workout Complete!',
-    message: 'Outstanding effort. Your Flow Score has been updated.',
-    scoreLabel: 'Flow Score',
+    message: 'Outstanding effort. Your FLOWW Score has been updated.',
+    scoreLabel: 'FLOWW Score',
     previousScoreLabel: '${_result.flowScoreBefore}',
     newScoreLabel: '${_result.flowScoreAfter}',
     gainLabel: '+$_flowScoreGain pts',

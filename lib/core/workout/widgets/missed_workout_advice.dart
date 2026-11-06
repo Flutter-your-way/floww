@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
@@ -52,7 +53,7 @@ class _MissedWorkoutAdviceContent extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.graphic_eq_rounded, size: AppSizes.s18, color: toneColor),
+          const WaveAvatarBadge(size: AppSizes.s24, contained: true),
           SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(

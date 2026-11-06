@@ -36,11 +36,6 @@ extension SubscriptionTermFields on SubscriptionTerm {
     SubscriptionTerm.yearly => AppSubscription.yearlyPlanId,
   };
 
-  int get price => switch (this) {
-    SubscriptionTerm.monthly => AppSubscription.monthlyPrice,
-    SubscriptionTerm.yearly => AppSubscription.yearlyPrice,
-  };
-
   int get durationMonths => switch (this) {
     SubscriptionTerm.monthly => AppSubscription.monthlyDurationMonths,
     SubscriptionTerm.yearly => AppSubscription.yearlyDurationMonths,
@@ -50,9 +45,15 @@ extension SubscriptionTermFields on SubscriptionTerm {
       DateTime(start.year, start.month + durationMonths, start.day);
 
   static SubscriptionTerm fromPlanId(String planId) =>
-      planId == AppSubscription.yearlyPlanId
+      planId.split(':').first == AppSubscription.yearlyPlanId ||
+          _yearlyPattern.hasMatch(planId)
       ? SubscriptionTerm.yearly
       : SubscriptionTerm.monthly;
+
+  static final RegExp _yearlyPattern = RegExp(
+    'year|annual|12m|p1y',
+    caseSensitive: false,
+  );
 }
 
 class SubscriptionInvoiceEntity {
@@ -64,11 +65,11 @@ class SubscriptionInvoiceEntity {
     required this.isPaid,
     required this.isSimulated,
     this.planId = AppSubscription.monthlyPlanId,
-    this.currency = AppSubscription.currency,
+    this.currency = '',
   });
 
   final String id;
-  final int amount;
+  final double amount;
   final String planLabel;
   final DateTime paidAt;
   final bool isPaid;
@@ -79,13 +80,13 @@ class SubscriptionInvoiceEntity {
   factory SubscriptionInvoiceEntity.fromJson(Map<String, dynamic> json) =>
       SubscriptionInvoiceEntity(
         id: json['id'] as String,
-        amount: (json['amount'] as num).toInt(),
+        amount: (json['amount'] as num).toDouble(),
         planLabel: json['planLabel'] as String,
         paidAt: DateTime.parse(json['paidAt'] as String),
         isPaid: json['isPaid'] as bool? ?? true,
         isSimulated: json['isSimulated'] as bool? ?? false,
         planId: json['planId'] as String? ?? AppSubscription.monthlyPlanId,
-        currency: json['currency'] as String? ?? AppSubscription.currency,
+        currency: json['currency'] as String? ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -114,7 +115,7 @@ class SubscriptionEntity {
     required this.isSimulated,
     required this.updatedAt,
     required this.planId,
-    this.currency = AppSubscription.currency,
+    this.currency = '',
     this.trialEndsOn,
     this.isStoreManaged = false,
     this.hasBillingIssue = false,
@@ -123,7 +124,7 @@ class SubscriptionEntity {
   final String uid;
   final SubscriptionStatus status;
   final SubscriptionTerm term;
-  final int price;
+  final double price;
   final String periodLabel;
   final String planLabel;
   final DateTime startedAt;
@@ -178,7 +179,7 @@ class SubscriptionEntity {
         section[SubscriptionFields.status] as String,
       ),
       term: term,
-      price: (section[SubscriptionFields.price] as num).toInt(),
+      price: (section[SubscriptionFields.price] as num? ?? 0).toDouble(),
       periodLabel: section[SubscriptionFields.periodLabel] as String,
       planLabel:
           section[SubscriptionFields.planName] as String? ??
@@ -193,9 +194,7 @@ class SubscriptionEntity {
         section[SubscriptionFields.updatedAt] as String,
       ),
       planId: section[SubscriptionFields.planId] as String? ?? term.planId,
-      currency:
-          section[SubscriptionFields.currency] as String? ??
-          AppSubscription.currency,
+      currency: section[SubscriptionFields.currency] as String? ?? '',
       trialEndsOn: _dateOf(section[SubscriptionFields.trialEndsOn]),
       isStoreManaged:
           section[SubscriptionFields.source] == SubscriptionFields.storeSource,

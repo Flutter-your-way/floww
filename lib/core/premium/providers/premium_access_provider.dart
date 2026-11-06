@@ -11,17 +11,28 @@ import 'package:floww/navigation/services/navigation_service.dart';
 class PremiumAccessProvider extends ChangeNotifier {
   PremiumAccessProvider(this._service);
 
+  static const String _cancelNote = 'Cancel anytime';
+
   final PremiumService _service;
 
   StreamSubscription<SubscriptionEntity?>? _watch;
   StreamSubscription<String?>? _userWatch;
   SubscriptionEntity? _subscription;
+  String? _freeTrialLabel;
   bool _isLoading = true;
   bool _disposed = false;
 
   SubscriptionEntity? get subscription => _subscription;
 
   bool get isLoading => _isLoading;
+
+  String? get freeTrialLabel => _freeTrialLabel;
+
+  String get trialFootnote {
+    final trial = _freeTrialLabel;
+    if (trial == null || trial.isEmpty) return _cancelNote;
+    return '${trial[0].toUpperCase()}${trial.substring(1)} · $_cancelNote';
+  }
 
   bool get hasAccess => _subscription?.hasAccess(DateTime.now()) ?? false;
 
@@ -55,12 +66,22 @@ class PremiumAccessProvider extends ChangeNotifier {
     openUpgrade();
   }
 
+  Future<void> _loadFreeTrial() async {
+    final offers = await _service.loadOffers();
+    _freeTrialLabel = offers
+        .map((offer) => offer.freeTrialLabel)
+        .nonNulls
+        .firstOrNull;
+    _notify();
+  }
+
   void openUpgrade() {
     HapticManager.medium();
     NavigationService.instance.push(AppRouter.premiumUpgrade);
   }
 
   void start() {
+    _loadFreeTrial();
     _userWatch?.cancel();
     _userWatch = _service.watchUserId().listen(_service.identify);
     _watch?.cancel();

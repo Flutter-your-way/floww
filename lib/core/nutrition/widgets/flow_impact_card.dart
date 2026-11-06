@@ -17,7 +17,7 @@ class FlowImpactCard extends StatelessWidget {
   });
 
   static const String _title =
-      'How this day\'s nutrition contributed to Flow Score Impact';
+      'How this day\'s nutrition contributed to FLOWW Score Impact';
   static const String _bolt = '⚡';
 
   final String totalPointsLabel;
@@ -69,7 +69,7 @@ class _FlowImpactSummary extends StatelessWidget {
 
   static const String _maxPrefix = 'Max possible from nutrition:\n';
   static const String _maxSuffix = ' per day';
-  static const String _pointsLabel = 'Flow Points';
+  static const String _pointsLabel = 'FLOWW Points';
 
   final String maxLabel;
   final String totalPointsLabel;

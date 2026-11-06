@@ -26,4 +26,5 @@ class AppOpacity {
   static const double placeholderPulseMax = 0.12;
   static const double orbHaloMin = 0.38;
   static const double orbHaloMax = 0.62;
+  static const double muscleSecondary = 0.45;
 }

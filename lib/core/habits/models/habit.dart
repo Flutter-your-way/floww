@@ -4,6 +4,8 @@ enum HabitMetric { minutes, hours, steps, liters, sessions }
 
 enum HabitGoalType { build, limit }
 
+enum HabitGoalChoice { build, limit, quit }
+
 enum HabitSource { manual, water, workout, steps, sleep }
 
 extension HabitSourceMetrics on HabitSource {
@@ -52,6 +54,7 @@ class Habit {
     this.source = HabitSource.manual,
     this.isDue = true,
     this.description,
+    this.quitDays,
   });
 
   final String id;
@@ -63,6 +66,9 @@ class Habit {
   final HabitSource source;
   final bool isDue;
   final String? description;
+  final int? quitDays;
+
+  bool get isQuit => quitDays != null;
 
   bool get isLimit => goalType == HabitGoalType.limit;
 
@@ -93,5 +99,6 @@ class Habit {
     source: source,
     isDue: isDue ?? this.isDue,
     description: description,
+    quitDays: quitDays,
   );
 }

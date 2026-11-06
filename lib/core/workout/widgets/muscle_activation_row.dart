@@ -58,7 +58,6 @@ class MuscleActivationRow extends StatelessWidget {
         SizedBox(height: AppSpacing.sm),
         AppProgressBar(
           progress: muscle.share,
-          color: colors.primaryAlt,
           trackColor: colors.borderSubtle,
           height: barHeight,
         ),

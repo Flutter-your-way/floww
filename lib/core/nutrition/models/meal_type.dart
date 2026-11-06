@@ -1,5 +1,6 @@
 enum MealType {
   breakfast('Breakfast'),
+  morningSnack('Morning Snack'),
   lunch('Lunch'),
   dinner('Dinner'),
   snacks('Snacks');
@@ -7,6 +8,8 @@ enum MealType {
   const MealType(this.label);
 
   final String label;
+
+  String get shortLabel => this == MealType.morningSnack ? 'AM Snack' : label;
 
   static MealType forTime(DateTime time) {
     final hour = time.hour;

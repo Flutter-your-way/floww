@@ -19,7 +19,9 @@ class WaveActionOutcome {
   final WaveUndo? undo;
   final WaveDestination? destination;
 
-  WaveConfirmationAction? get action => undo != null
+  WaveConfirmationAction? get action => link == WaveConfirmationAction.openPlan
+      ? link
+      : undo != null
       ? WaveConfirmationAction.undo
       : destination != null
       ? WaveConfirmationAction.navigate

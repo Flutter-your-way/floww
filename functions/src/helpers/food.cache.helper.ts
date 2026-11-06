@@ -15,9 +15,12 @@ import {
   catalogFoodSchema,
   foodAnalysisSchema,
 } from "../models/food.model";
+import {activeFoodProvider} from "./food.provider.helper";
 
 const searchDoc = (query: string) => foodSearchCacheCollection.doc(
-  hashKey(`${FOOD_SEARCH_VERSION}:${normalizeText(query)}`));
+  hashKey(
+    `${activeFoodProvider()}:${FOOD_SEARCH_VERSION}:${normalizeText(query)}`,
+  ));
 
 const describeDoc = (text: string) => foodDescribeCacheCollection.doc(
   hashKey(`${FOOD_DESCRIBE_PROMPT_VERSION}:${normalizeText(text)}`));

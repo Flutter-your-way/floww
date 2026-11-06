@@ -162,6 +162,13 @@ class _OverlayGradients {
     end: Alignment.bottomCenter,
   );
 
+  static const glassLens = LinearGradient(
+    colors: [Color(0x4DFFFFFF), Color(0x0FFFFFFF), Color(0x33FFFFFF)],
+    stops: [0.0, 0.55, 1.0],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static const waveShimmer = LinearGradient(
     colors: [_AppPalette.textDim, _AppPalette.textPrimary, _AppPalette.textDim],
     stops: [0.3, 0.5, 0.7],
@@ -591,6 +598,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     this.glassFill = _OverlayGradients.glassFill,
     this.glassRim = _OverlayGradients.glassRim,
     this.glassIndicator = _OverlayGradients.glassIndicator,
+    this.glassLens = _OverlayGradients.glassLens,
     this.waveShimmer = _OverlayGradients.waveShimmer,
   });
 
@@ -623,7 +631,28 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient glassFill;
   final Gradient glassRim;
   final Gradient glassIndicator;
+  final Gradient glassLens;
   final Gradient waveShimmer;
+
+  List<Color> get progressColors => barFill.colors.reversed.toList();
+
+  Gradient get progressFill => LinearGradient(colors: progressColors);
+
+  Gradient progressSweep(double progress, {double tipHold = 0}) {
+    final colors = progressColors;
+    final end = progress.clamp(0.0, 1.0);
+    return SweepGradient(
+      colors: [
+        colors.first,
+        colors[colors.length ~/ 2],
+        colors.last,
+        colors.last,
+        colors.first,
+      ],
+      stops: [0.0, end / 2, end, math.min(end + tipHold, 1.0), 1.0],
+      transform: const GradientRotation(-math.pi / 2),
+    );
+  }
 
   static const defaultBackground = LinearGradient(
     colors: [Color(0xFF14110B), _AppPalette.backgroundPrimary],
@@ -895,6 +924,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? glassFill,
     Gradient? glassRim,
     Gradient? glassIndicator,
+    Gradient? glassLens,
     Gradient? waveShimmer,
   }) {
     return AppGradientTokens(
@@ -927,6 +957,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       glassFill: glassFill ?? this.glassFill,
       glassRim: glassRim ?? this.glassRim,
       glassIndicator: glassIndicator ?? this.glassIndicator,
+      glassLens: glassLens ?? this.glassLens,
       waveShimmer: waveShimmer ?? this.waveShimmer,
     );
   }
@@ -968,6 +999,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       glassFill: Gradient.lerp(glassFill, other.glassFill, t)!,
       glassRim: Gradient.lerp(glassRim, other.glassRim, t)!,
       glassIndicator: Gradient.lerp(glassIndicator, other.glassIndicator, t)!,
+      glassLens: Gradient.lerp(glassLens, other.glassLens, t)!,
       waveShimmer: Gradient.lerp(waveShimmer, other.waveShimmer, t)!,
     );
   }

@@ -57,10 +57,9 @@ class MealDetailsView extends StatelessWidget {
               ),
             ],
             SizedBox(height: AppSpacing.lg),
-            TipCard(
+            TipCard.wave(
               title: 'Nutrition Insight',
               message: viewModel.insightMessage,
-              icon: Icons.graphic_eq_rounded,
             ),
             SizedBox(height: AppSpacing.lg),
             MealTimelineCard(

@@ -27,6 +27,8 @@ import 'package:floww/core/nutrition/view_models/diet_plan_view_model.dart';
 import 'package:floww/core/nutrition/view_models/food_scan_view_model.dart';
 import 'package:floww/core/nutrition/view_models/meal_details_view_model.dart';
 import 'package:floww/core/nutrition/view_models/weekly_report_view_model.dart';
+import 'package:floww/core/nutrition/view_models/food_log_history_view_model.dart';
+import 'package:floww/core/nutrition/views/food_log_history_view.dart';
 import 'package:floww/core/nutrition/views/diet_plan_view.dart';
 import 'package:floww/core/nutrition/views/food_scan_view.dart';
 import 'package:floww/core/nutrition/views/meal_details_view.dart';
@@ -61,13 +63,18 @@ import 'package:floww/core/recovery/view_models/muscle_recovery_view_model.dart'
 import 'package:floww/core/recovery/views/muscle_recovery_view.dart';
 import 'package:floww/core/profile/view_models/profile_view_model.dart';
 import 'package:floww/core/profile/views/profile_view.dart';
+import 'package:floww/core/health/models/health_metric_kind.dart';
 import 'package:floww/core/health/providers/health_provider.dart';
+import 'package:floww/core/health/view_models/health_metric_detail_view_model.dart';
+import 'package:floww/core/health/views/health_metric_detail_view.dart';
 import 'package:floww/core/settings/models/onboarding_answers_data.dart';
 import 'package:floww/core/settings/services/onboarding_answers_service.dart';
 import 'package:floww/core/settings/services/settings_service.dart';
 import 'package:floww/core/progress/services/strength_service.dart';
 import 'package:floww/core/progress/view_models/strength_level_view_model.dart';
 import 'package:floww/core/progress/views/strength_level_view.dart';
+import 'package:floww/core/progress/view_models/workout_volume_view_model.dart';
+import 'package:floww/core/progress/views/workout_volume_view.dart';
 import 'package:floww/core/settings/services/wearable_service.dart';
 import 'package:floww/core/settings/view_models/connected_apps_view_model.dart';
 import 'package:floww/core/settings/view_models/notification_settings_view_model.dart';
@@ -106,6 +113,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/auth/views/auth_view.dart';
+import '../core/auth/views/email_sign_in_view.dart';
 import '../core/auth/views/meet_waves_view.dart';
 import 'app_router.dart';
 import 'views/main_tab_view.dart';
@@ -127,6 +135,13 @@ class AppRouterConfig {
           builder: (_) => const ForcedThemeMode(
             mode: AppThemeMode.flow,
             child: MeetWavesView(),
+          ),
+        );
+      case AppRouter.emailSignIn:
+        return MaterialPageRoute(
+          builder: (_) => const ForcedThemeMode(
+            mode: AppThemeMode.flow,
+            child: EmailSignInView(),
           ),
         );
       case AppRouter.accountSetup:
@@ -213,6 +228,13 @@ class AppRouterConfig {
               ),
               child: const WeeklyReportView(),
             ),
+          ),
+        );
+      case AppRouter.foodLogHistory:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => FoodLogHistoryViewModel(NutritionLogService()),
+            child: const FoodLogHistoryView(),
           ),
         );
       case AppRouter.dietPlan:
@@ -334,6 +356,34 @@ class AppRouterConfig {
           builder: (_) => ChangeNotifierProvider(
             create: (_) => StrengthLevelViewModel(StrengthService()),
             child: const StrengthLevelView(),
+          ),
+        );
+      case AppRouter.healthMetricDetail:
+        final kind = settings.arguments! as HealthMetricKind;
+        return MaterialPageRoute(
+          builder: (_) =>
+              ChangeNotifierProxyProvider<
+                HealthProvider,
+                HealthMetricDetailViewModel
+              >(
+                create: (context) {
+                  final health = context.read<HealthProvider>();
+                  return HealthMetricDetailViewModel(
+                    kind: kind,
+                    vitals: health.vitals,
+                    sourceName: health.sourceName,
+                  );
+                },
+                update: (_, health, viewModel) =>
+                    viewModel!..updateVitals(health.vitals),
+                child: const HealthMetricDetailView(),
+              ),
+        );
+      case AppRouter.workoutVolume:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => WorkoutVolumeViewModel(WorkoutSessionService()),
+            child: const WorkoutVolumeView(),
           ),
         );
       case AppRouter.achievements:

@@ -5,6 +5,7 @@ import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/widgets/effects/bottom_action_scrim.dart';
 import 'package:floww/config/widgets/effects/header_blur_band.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
+import 'package:floww/config/widgets/layout/measure_size.dart';
 import 'package:flutter/material.dart';
 
 class InnerPageScaffold extends StatefulWidget {
@@ -15,6 +16,7 @@ class InnerPageScaffold extends StatefulWidget {
     required this.children,
     this.onMore,
     this.footer,
+    this.opaqueFooter = false,
   });
 
   final String title;
@@ -22,6 +24,7 @@ class InnerPageScaffold extends StatefulWidget {
   final List<Widget> children;
   final VoidCallback? onMore;
   final Widget? footer;
+  final bool opaqueFooter;
 
   @override
   State<InnerPageScaffold> createState() => _InnerPageScaffoldState();
@@ -32,6 +35,7 @@ class _InnerPageScaffoldState extends State<InnerPageScaffold> {
 
   final ScrollController _controller = ScrollController();
   final ValueNotifier<bool> _isScrolled = ValueNotifier<bool>(false);
+  double _footerHeight = AppSizes.s72;
 
   @override
   void initState() {
@@ -51,6 +55,12 @@ class _InnerPageScaffoldState extends State<InnerPageScaffold> {
     super.dispose();
   }
 
+  void _onFooterSize(Size size) {
+    final height = size.height < AppSizes.s72 ? AppSizes.s72 : size.height;
+    if (!mounted || height == _footerHeight) return;
+    setState(() => _footerHeight = height);
+  }
+
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = context.sizes.screenHorizontalPadding;
@@ -58,7 +68,10 @@ class _InnerPageScaffoldState extends State<InnerPageScaffold> {
     final footer = widget.footer;
     final footerExtent = footer == null
         ? AppSpacing.xl3
-        : AppSizes.s72 + AppSpacing.xl3;
+        : _footerHeight + AppSpacing.xl3;
+    final scrimExtra = widget.opaqueFooter
+        ? context.sizes.bottomScrimExtra + AppSpacing.xl3
+        : context.sizes.bottomScrimExtra;
 
     return Scaffold(
       backgroundColor: context.colors.backgroundPrimary,
@@ -129,17 +142,17 @@ class _InnerPageScaffoldState extends State<InnerPageScaffold> {
                 right: 0,
                 bottom: 0,
                 child: BottomActionScrim(
-                  height:
-                      viewPadding.bottom +
-                      AppSizes.s72 +
-                      context.sizes.bottomScrimExtra,
+                  height: viewPadding.bottom + _footerHeight + scrimExtra,
+                  gradient: widget.opaqueFooter
+                      ? context.gradients.bottomFade
+                      : null,
                 ),
               ),
               Positioned(
                 left: horizontalPadding,
                 right: horizontalPadding,
                 bottom: viewPadding.bottom + AppSpacing.xl,
-                child: footer,
+                child: MeasureSize(onChange: _onFooterSize, child: footer),
               ),
             ],
           ],

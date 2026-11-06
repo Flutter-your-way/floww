@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_shapes.dart';
+import 'package:floww/config/theme/app_typography.dart';
 
 class CustomModeCard extends StatefulWidget {
   final String iconPath;
@@ -96,13 +97,8 @@ class _CustomModeCardState extends State<CustomModeCard> {
                   Expanded(
                     child: Text(
                       widget.title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        height: 22 / 16,
-                        letterSpacing: -0.18,
+                      style: AppTypography.modeCardTitle.copyWith(
                         color: widget.color,
-                        fontFamily: 'plusJakartaSans',
                       ),
                     ),
                   ),
@@ -111,12 +107,7 @@ class _CustomModeCardState extends State<CustomModeCard> {
               const SizedBox(height: AppSpacing.md),
               Text(
                 widget.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'plusJakartaSans',
-                  fontWeight: FontWeight.w400,
-                  height: 20 / 14,
-                  letterSpacing: 0,
+                style: AppTypography.modeCardBody.copyWith(
                   color: Colors.white.withValues(alpha: 0.55),
                 ),
               ),

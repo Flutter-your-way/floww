@@ -12,6 +12,7 @@ class HabitDraft {
     this.source = HabitSource.manual,
     this.reminder = const HabitReminderSetting.auto(),
     this.description,
+    this.quitDays,
   });
 
   final String title;
@@ -22,4 +23,5 @@ class HabitDraft {
   final HabitSource source;
   final HabitReminderSetting reminder;
   final String? description;
+  final int? quitDays;
 }

@@ -7,31 +7,36 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/core/progress/models/progress_view_data.dart';
 
-class FlowScoreBarChart extends StatelessWidget {
-  const FlowScoreBarChart({super.key, required this.days});
+class ProgressBarChart extends StatelessWidget {
+  const ProgressBarChart({
+    super.key,
+    required this.bars,
+    this.trackHeight = defaultTrackHeight,
+  });
 
-  static const double _trackHeight = 203;
+  static const double defaultTrackHeight = 203;
 
-  final List<FlowScoreDay> days;
+  final List<ProgressBarPoint> bars;
+  final double trackHeight;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        for (final day in days) ...[
+        for (var i = 0; i < bars.length; i++) ...[
+          if (i > 0) SizedBox(width: AppSpacing.md),
           Expanded(
-            child: _FlowScoreBar(day: day, trackHeight: _trackHeight),
+            child: _ProgressBar(bar: bars[i], trackHeight: trackHeight),
           ),
-          if (day != days.last) SizedBox(width: AppSpacing.md),
         ],
       ],
     );
   }
 }
 
-class _FlowScoreBar extends StatelessWidget {
-  const _FlowScoreBar({required this.day, required this.trackHeight});
+class _ProgressBar extends StatelessWidget {
+  const _ProgressBar({required this.bar, required this.trackHeight});
 
   static const double _badgeHeight = AppSizes.s16;
   static const double _badgeOverlap = AppSizes.s4;
@@ -40,13 +45,14 @@ class _FlowScoreBar extends StatelessWidget {
   static const double _badgeShadowOpacity = 0.25;
   static const double _trackPadding = AppSizes.s2;
 
-  final FlowScoreDay day;
+  final ProgressBarPoint bar;
   final double trackHeight;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final fillHeight = trackHeight * (day.percent / 100).clamp(0.0, 1.0);
+    final fillHeight = trackHeight * bar.fraction.clamp(0.0, 1.0);
+    final badgeLabel = bar.badgeLabel;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -59,11 +65,11 @@ class _FlowScoreBar extends StatelessWidget {
             color: colors.borderSubtle,
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          child: day.hasScore
-              ? _FlowScoreBarFill(
+          child: badgeLabel != null
+              ? _ProgressBarFill(
                   height: fillHeight,
-                  badge: _FlowScoreBadge(
-                    label: '${day.percent}%',
+                  badge: _ProgressBarBadge(
+                    label: badgeLabel,
                     height: _badgeHeight,
                     borderWidth: _badgeBorderWidth,
                     shadowBlur: _badgeShadowBlur,
@@ -75,7 +81,9 @@ class _FlowScoreBar extends StatelessWidget {
         ),
         SizedBox(height: AppSpacing.xs),
         Text(
-          day.label,
+          bar.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppTypography.captionMediumSmall.copyWith(
             color: colors.textFaint,
           ),
@@ -85,8 +93,8 @@ class _FlowScoreBar extends StatelessWidget {
   }
 }
 
-class _FlowScoreBarFill extends StatelessWidget {
-  const _FlowScoreBarFill({
+class _ProgressBarFill extends StatelessWidget {
+  const _ProgressBarFill({
     required this.height,
     required this.badge,
     required this.badgeOverlap,
@@ -119,8 +127,8 @@ class _FlowScoreBarFill extends StatelessWidget {
   }
 }
 
-class _FlowScoreBadge extends StatelessWidget {
-  const _FlowScoreBadge({
+class _ProgressBarBadge extends StatelessWidget {
+  const _ProgressBarBadge({
     required this.label,
     required this.height,
     required this.borderWidth,

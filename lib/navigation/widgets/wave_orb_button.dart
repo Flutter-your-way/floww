@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/constants/app_glass.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/widgets/effects/animated_orb.dart';
@@ -8,7 +10,9 @@ import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 class WaveOrbButton extends StatefulWidget {
   const WaveOrbButton({super.key, this.onTap});
 
-  static const double size = AppSizes.s52;
+  static double get size => defaultTargetPlatform == TargetPlatform.iOS
+      ? AppGlass.tabOrbSize
+      : AppSizes.s52;
 
   final VoidCallback? onTap;
 

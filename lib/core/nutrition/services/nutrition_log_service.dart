@@ -80,12 +80,12 @@ class NutritionLogService {
     );
   }
 
-  Stream<List<FoodLog>> watchRecentFoodLogs() {
+  Stream<List<FoodLog>> watchRecentFoodLogs({int limit = _recentLimit}) {
     final uid = userId;
     if (uid == null) return Stream.value(const []);
     return _foodLogs(uid)
         .orderBy(_loggedAtField, descending: true)
-        .limit(_recentLimit)
+        .limit(limit)
         .snapshots()
         .map(_foodLogsOf);
   }

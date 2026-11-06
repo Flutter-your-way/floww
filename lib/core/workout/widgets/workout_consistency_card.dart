@@ -61,7 +61,6 @@ class WorkoutConsistencyCard extends StatelessWidget {
                 SizedBox(height: AppSpacing.md),
                 AppProgressBar(
                   progress: progress,
-                  color: colors.primaryAlt,
                   trackColor: colors.backgroundSurface,
                   animated: true,
                   animationDelay: AppMotion.tabSwitch,

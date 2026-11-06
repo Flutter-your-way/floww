@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
@@ -16,11 +18,15 @@ class MealBreakdownCard extends StatelessWidget {
     super.key,
     required this.items,
     required this.onOpenMeal,
+    required this.mealsPerDayLabel,
+    this.onEditMeals,
     this.onAddToMeal,
     this.onAddMeal,
   });
 
   final List<MealBreakdownItem> items;
+  final String mealsPerDayLabel;
+  final VoidCallback? onEditMeals;
   final ValueChanged<MealType> onOpenMeal;
   final ValueChanged<MealType>? onAddToMeal;
   final VoidCallback? onAddMeal;
@@ -34,7 +40,13 @@ class MealBreakdownCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const CardHeader(title: 'Meal Breakdown'),
+          CardHeader(
+            title: 'Meal Breakdown',
+            trailing: _MealsPerDayChip(
+              label: mealsPerDayLabel,
+              onTap: onEditMeals,
+            ),
+          ),
           SizedBox(height: AppSpacing.md),
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0)
@@ -124,6 +136,45 @@ class _MealRow extends StatelessWidget {
                 backgroundColor: colors.tint,
                 onPressed: onAdd,
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MealsPerDayChip extends StatelessWidget {
+  const _MealsPerDayChip({required this.label, this.onTap});
+
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return PressScale(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: AppShapes.decoration(
+          color: colors.tint,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.tune_rounded, size: AppSizes.s14, color: colors.primary),
+            SizedBox(width: AppSpacing.xs),
+            Text(
+              label,
+              style: context.textTheme.labelSmall?.copyWith(
+                color: colors.primary,
+              ),
+            ),
           ],
         ),
       ),

@@ -152,7 +152,6 @@ class _HabitConsistencyRow extends StatelessWidget {
           child: AppProgressBar(
             progress: item.progress,
             height: AppSizes.s8,
-            color: colors.primaryAlt,
             trackColor: colors.borderSubtle,
           ),
         ),

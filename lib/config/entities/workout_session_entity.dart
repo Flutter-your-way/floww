@@ -89,7 +89,10 @@ class WorkoutSessionEntity {
     this.restRemainingSeconds = 0,
     this.currentEntryId,
     this.planDate,
+    this.isManual = false,
   });
+
+  static const String manualSource = 'manual';
 
   factory WorkoutSessionEntity.fromJson(Map<String, dynamic> json) =>
       WorkoutSessionEntity(
@@ -133,6 +136,7 @@ class WorkoutSessionEntity {
         planDate: json['planDate'] is String
             ? DateTime.tryParse(json['planDate'] as String)
             : null,
+        isManual: json['source'] == manualSource,
       );
 
   final String id;
@@ -176,8 +180,12 @@ class WorkoutSessionEntity {
   final int restRemainingSeconds;
   final String? currentEntryId;
   final DateTime? planDate;
+  final bool isManual;
 
   DateTime get scheduledDate => planDate ?? date;
+
+  bool fulfillsPlanOn(DateTime day) =>
+      !isManual && AppDateUtils.isSameDay(scheduledDate, day);
 
   bool get isCatchUp =>
       planDate != null && !AppDateUtils.isSameDay(planDate!, date);
@@ -313,6 +321,7 @@ class WorkoutSessionEntity {
         ? null
         : currentEntryId ?? this.currentEntryId,
     planDate: planDate,
+    isManual: isManual,
   );
 
   Map<String, dynamic> toJson() => {
@@ -350,6 +359,7 @@ class WorkoutSessionEntity {
     if (metricsVersion > 0) 'metricsVersion': metricsVersion,
     'durationSeconds': durationSeconds,
     if (planDate != null) 'planDate': AppDateUtils.dateKey(planDate!),
+    if (isManual) 'source': manualSource,
     ...timerJson,
   };
 

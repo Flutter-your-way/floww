@@ -6,7 +6,6 @@ import {
   usersCollection,
 } from "../constants/collections";
 import {
-  CURRENCY,
   PREMIUM_ENTITLEMENT,
   PremiumPlan,
   SubscriptionTerm,
@@ -110,7 +109,7 @@ export const subscriptionFromSubscriber = (
 
   const cancelledAt = refundedAt ?? isoOf(product.unsubscribe_detected_at);
   const price = recordOf(product.price);
-  const amount = typeof price.amount === "number" ? price.amount : plan.price;
+  const amount = typeof price.amount === "number" ? price.amount : 0;
 
   const isExpired = Date.parse(expiresAt) <= now.getTime();
 
@@ -120,7 +119,7 @@ export const subscriptionFromSubscriber = (
     planId: productId,
     planName: plan.planLabel,
     price: amount,
-    currency: stringOf(price.currency) ?? CURRENCY,
+    currency: stringOf(price.currency) ?? "",
     periodLabel: plan.periodLabel,
     startedAt: isoOf(product.original_purchase_date) ??
       isoOf(entitlement.purchase_date) ??
@@ -199,7 +198,7 @@ export const recordInvoice = async (event: RevenueCatEvent) => {
     isPaid: true,
     isSimulated: event.environment === SANDBOX_ENVIRONMENT,
     planId: productId || plan.planId,
-    currency: event.currency ?? CURRENCY,
+    currency: event.currency ?? "",
     source: STORE_SOURCE,
   });
 };

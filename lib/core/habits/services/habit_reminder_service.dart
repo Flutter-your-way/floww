@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import 'package:floww/config/utils/notifications/notification_tones.dart';
 import 'package:floww/config/utils/notifications/local_notifications.dart';
 import 'package:floww/core/habits/models/habit_reminder.dart';
 
@@ -16,15 +17,10 @@ class HabitReminderService {
   static const String _channelDescription =
       'Reminds you to complete your habits at the time you chose';
 
-  static const NotificationDetails _details = NotificationDetails(
-    android: AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDescription,
-      importance: Importance.high,
-      priority: Priority.high,
-    ),
-    iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+  NotificationDetails get _details => NotificationTones.details(
+    channelId: _channelId,
+    channelName: _channelName,
+    channelDescription: _channelDescription,
   );
 
   final FlutterLocalNotificationsPlugin _plugin;

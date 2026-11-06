@@ -134,7 +134,7 @@ class MacroDetailCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppSpacing.md),
-          AppProgressBar(progress: progress, color: color),
+          AppProgressBar(progress: progress),
           SizedBox(height: AppSpacing.sm),
           Row(
             children: [

@@ -8,6 +8,7 @@ import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
+import 'package:floww/config/widgets/progress/app_progress_ring.dart';
 
 class WaveQuotaMeter extends StatelessWidget {
   const WaveQuotaMeter({
@@ -51,22 +52,13 @@ class WaveQuotaMeter extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox.square(
-              dimension: AppSizes.s14,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(end: share),
-                duration: AppMotion.expandSoft,
-                curve: AppMotion.expandCurve,
-                builder: (context, value, child) => CircularProgressIndicator(
-                  value: value,
-                  strokeWidth: AppSizes.s2,
-                  strokeCap: StrokeCap.round,
-                  color: accent,
-                  backgroundColor: accent.withValues(
-                    alpha: AppOpacity.tintBorder,
-                  ),
-                ),
-              ),
+            AppProgressRing(
+              progress: share,
+              size: AppSizes.s14,
+              strokeWidth: AppSizes.s2,
+              duration: AppMotion.expandSoft,
+              trackColor: accent.withValues(alpha: AppOpacity.tintBorder),
+              child: const SizedBox.shrink(),
             ),
             SizedBox(width: AppSpacing.sm),
             ClipRect(

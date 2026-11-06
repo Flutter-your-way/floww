@@ -78,7 +78,6 @@ class GettingStartedCard extends StatelessWidget {
           AppProgressBar(
             progress: progress,
             height: AppSizes.s6,
-            color: colors.primaryAlt,
             trackColor: colors.borderSubtle,
           ),
           SizedBox(height: AppSpacing.md),

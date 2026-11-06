@@ -9,6 +9,7 @@ import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
 import 'package:floww/config/widgets/effects/bottom_action_scrim.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
+import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/config/widgets/sheets/app_confirm_sheet.dart';
 import 'package:floww/core/auth/view_models/auth_view_model.dart';
 import 'package:floww/navigation/app_router.dart';
@@ -109,11 +110,10 @@ class _OnboardingQuestionViewState extends State<OnboardingQuestionView> {
                             onBackPressed: () => _handleBack(provider),
                           ),
                           SizedBox(height: AppSpacing.xl),
-                          LinearProgressIndicator(
-                            value: provider.globalProgress,
-                            color: context.colors.primary,
-                            backgroundColor: context.colors.backgroundSurface,
-                            borderRadius: BorderRadius.circular(AppRadius.full),
+                          AppProgressBar(
+                            progress: provider.globalProgress,
+                            height: AppSizes.s4,
+                            trackColor: context.colors.backgroundSurface,
                           ),
                           SizedBox(height: AppSpacing.xl5),
 

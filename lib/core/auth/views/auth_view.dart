@@ -27,7 +27,7 @@ class AuthView extends StatefulWidget {
 class _AuthViewState extends State<AuthView>
     with SingleTickerProviderStateMixin, StaggeredRevealMixin {
   @override
-  int get revealCount => 5;
+  int get revealCount => 6;
 
   @override
   void initState() {
@@ -150,9 +150,25 @@ class _AuthViewState extends State<AuthView>
                             ),
                           ),
                         ],
-                        SizedBox(height: AppSpacing.xl3),
+                        SizedBox(height: AppSpacing.lg),
                         StepRevealItem(
                           presence: presence(4),
+                          child: CustomOutlinedButton(
+                            text: "Continue with Email",
+                            leading: Icon(
+                              Icons.mail_outline_rounded,
+                              color: context.colors.textPrimary,
+                              size: AppSizes.s20,
+                            ),
+                            isDisabled: viewModel.isBusy,
+                            onPressed: () => NavigationService.instance.push(
+                              AppRouter.emailSignIn,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: AppSpacing.xl3),
+                        StepRevealItem(
+                          presence: presence(5),
                           child: Text.rich(
                             TextSpan(
                               style: context.textTheme.bodySmall?.copyWith(

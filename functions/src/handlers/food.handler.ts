@@ -27,7 +27,7 @@ import {
   releaseAiQuota,
   reserveAiQuota,
 } from "../helpers/usage.helper";
-import {searchUsdaFoods} from "../helpers/usda.helper";
+import {searchProviderFoods} from "../helpers/food.provider.helper";
 import {
   FoodAnalysis,
   FoodModel,
@@ -87,7 +87,7 @@ export const handleSearchFood = async (req: Request, res: Response) => {
 
   let foods;
   try {
-    foods = await searchUsdaFoods(query);
+    foods = await searchProviderFoods(query);
   } catch (error) {
     await releaseAiQuota(uid, "foodSearch").catch((releaseError) =>
       logger.error("handleSearchFood: quota release failed", {releaseError}));

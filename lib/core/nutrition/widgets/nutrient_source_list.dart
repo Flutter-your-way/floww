@@ -68,7 +68,6 @@ class _NutrientSourceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final barColor = isOverLimit ? colors.destructiveBorder : null;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -124,7 +123,6 @@ class _NutrientSourceRow extends StatelessWidget {
                 SizedBox(height: AppSpacing.sm),
                 AppProgressBar(
                   progress: item.share,
-                  color: barColor,
                   height: AppSizes.s4,
                   animated: true,
                 ),

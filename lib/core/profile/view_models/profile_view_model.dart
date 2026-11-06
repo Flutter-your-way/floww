@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:floww/config/constants/app_subscription.dart';
 import 'package:floww/config/entities/measurement_system.dart';
+import 'package:floww/config/entities/subscription_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/measurement_converter.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
@@ -122,11 +122,14 @@ class ProfileViewModel extends ChangeNotifier {
     final plan = _account.subscription;
 
     if (plan != null && plan.isActive) {
+      final trialDaysLeft = _trialDaysLeft(plan);
       return ProfileSubscription(
         title: 'FLOWW PREMIUM',
-        message:
-            'All features unlocked · Renews '
-            '${AppDateUtils.shortMonthYear(plan.renewsOn)}',
+        message: trialDaysLeft > 0
+            ? 'Free trial active · $trialDaysLeft '
+                  '${trialDaysLeft == 1 ? 'day' : 'days'} remaining'
+            : 'All features unlocked · Renews '
+                  '${AppDateUtils.shortMonthYear(plan.renewsOn)}',
         actionLabel: 'Manage',
         isActive: true,
         hasPlan: true,
@@ -146,14 +149,9 @@ class ProfileViewModel extends ChangeNotifier {
       );
     }
 
-    final trialDaysLeft = _trialDaysLeft;
-
     return ProfileSubscription(
       title: 'FLOWW PREMIUM',
-      message: trialDaysLeft > 0
-          ? 'Free trial active · $trialDaysLeft '
-                '${trialDaysLeft == 1 ? 'day' : 'days'} remaining'
-          : 'Free plan · Unlock the full WAVE experience',
+      message: 'Free plan · Unlock the full WAVE experience',
       actionLabel: 'Upgrade to Premium',
       isActive: false,
       hasPlan: false,
@@ -282,10 +280,9 @@ class ProfileViewModel extends ChangeNotifier {
     );
   }
 
-  int get _trialDaysLeft {
-    final memberSince = _account.memberSince;
-    if (memberSince == null) return 0;
-    final endsOn = AppDateUtils.addDays(memberSince, AppSubscription.trialDays);
+  int _trialDaysLeft(SubscriptionEntity plan) {
+    final endsOn = plan.trialEndsOn;
+    if (endsOn == null) return 0;
     final daysLeft = AppDateUtils.daysBetween(DateTime.now(), endsOn);
     return daysLeft < 0 ? 0 : daysLeft;
   }

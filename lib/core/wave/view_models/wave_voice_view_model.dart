@@ -17,7 +17,7 @@ class WaveVoiceViewModel extends ChangeNotifier {
   static const String finishingLabel = 'Got it';
   static const String errorLabel = 'Mic unavailable';
   static const String hint =
-      'Ask about your workout, meals, sleep or Flow Score';
+      'Ask about your workout, meals, sleep or FLOWW Score';
   static const String permissionMessage =
       'Allow microphone and speech recognition for Floww in Settings to '
       'talk to WAVE.';

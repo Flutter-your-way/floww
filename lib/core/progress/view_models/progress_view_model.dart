@@ -80,7 +80,7 @@ class ProgressViewModel extends ChangeNotifier {
   List<ProgressOverviewStat> get overviewStats => [
     ProgressOverviewStat(
       icon: Icons.bolt,
-      label: 'AVERAGE FLOW',
+      label: 'AVERAGE FLOWW',
       value: '${_snapshot.averageFlow}',
       tone: ProgressTone.primary,
     ),
@@ -127,7 +127,7 @@ class ProgressViewModel extends ChangeNotifier {
 
   FlowScoreSummary get flowScore => _snapshot.flowScore;
 
-  String get flowScoreTitle => 'Flow Score';
+  String get flowScoreTitle => 'FLOWW Score';
 
   String get weeklyRangeLabel => 'This Week';
 
@@ -145,7 +145,7 @@ class ProgressViewModel extends ChangeNotifier {
   String get flowScoreEmptyTitle => 'No scores yet';
 
   String get flowScoreEmptyMessage =>
-      'Complete workouts and habits daily to earn your Flow Score. It updates '
+      'Complete workouts and habits daily to earn your FLOWW Score. It updates '
       'every day.';
 
   String get startWorkoutLabel => 'START A WORKOUT';
@@ -167,11 +167,6 @@ class ProgressViewModel extends ChangeNotifier {
   String get unlogWeightLabel => 'Unlog';
 
   String get weightUnit => 'kg';
-
-  String get strengthTitle => 'Strength Level';
-
-  String get strengthMessage =>
-      'See how strong each muscle group is and how fast it is improving.';
 
   String get weightValueLabel => weight.currentWeight.toStringAsFixed(2);
 
@@ -253,7 +248,7 @@ class ProgressViewModel extends ChangeNotifier {
     final step = math.max(1, (entries.length / _weightAxisLabelCount).round());
     return [
       for (var index = 0; index < entries.length; index += step)
-        AppDateUtils.monthDay(entries[index].date),
+        AppDateUtils.shortMonthDay(entries[index].date),
     ];
   }
 

@@ -35,6 +35,7 @@ class AddExerciseSheet extends StatelessWidget {
     required AddExerciseCallback onAdd,
     String? initialSectionId,
     String? submitLabel,
+    bool isLogging = false,
   }) {
     return showAppFloatingSheet<void>(
       context: context,
@@ -44,6 +45,7 @@ class AddExerciseSheet extends StatelessWidget {
           sections: sections,
           initialSectionId: initialSectionId,
           submitLabel: submitLabel ?? 'Add to Workout',
+          isLogging: isLogging,
         )..load(),
         child: AddExerciseSheet(onAdd: onAdd),
       ),
@@ -73,21 +75,23 @@ class AddExerciseSheet extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SectionLabel(label: viewModel.sectionLabel),
-                SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.md,
-                  runSpacing: AppSpacing.md,
-                  children: [
-                    for (final section in viewModel.sections)
-                      SelectableChip(
-                        label: section.label,
-                        isSelected: section.id == viewModel.selectedSectionId,
-                        onTap: () => viewModel.selectSection(section.id),
-                      ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.xl),
+                if (viewModel.showSections) ...[
+                  SectionLabel(label: viewModel.sectionLabel),
+                  SizedBox(height: AppSpacing.md),
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    children: [
+                      for (final section in viewModel.sections)
+                        SelectableChip(
+                          label: section.label,
+                          isSelected: section.id == viewModel.selectedSectionId,
+                          onTap: () => viewModel.selectSection(section.id),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: AppSpacing.xl),
+                ],
                 SectionLabel(label: viewModel.exerciseLabel),
                 SizedBox(height: AppSpacing.md),
                 CompactTextField(
@@ -141,13 +145,15 @@ class AddExerciseSheet extends StatelessWidget {
                           onAdjust: viewModel.adjustReps,
                         ),
                       ),
-                      SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: ValueStepper(
-                          target: viewModel.restTarget,
-                          onAdjust: viewModel.adjustRest,
+                      if (viewModel.showRest) ...[
+                        SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: ValueStepper(
+                            target: viewModel.restTarget,
+                            onAdjust: viewModel.adjustRest,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

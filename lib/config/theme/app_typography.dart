@@ -15,6 +15,31 @@ import 'package:flutter/material.dart';
 class AppTypography {
   static const String _fontHeading = 'PlusJakartaSans';
   static const String _fontBody = 'HankenGrotesk';
+  static const String _fontDisplay = 'Unbounded';
+
+  static const TextStyle modeHeroTitle = TextStyle(
+    fontFamily: _fontDisplay,
+    fontSize: 40,
+    fontWeight: FontWeight.w800,
+    height: 1.1,
+    letterSpacing: 1,
+  );
+
+  static const TextStyle modeCardTitle = TextStyle(
+    fontFamily: _fontDisplay,
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    height: 22 / 16,
+    letterSpacing: 1.2,
+  );
+
+  static const TextStyle modeCardBody = TextStyle(
+    fontFamily: _fontHeading,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    height: 20 / 14,
+    letterSpacing: 0,
+  );
 
   static const TextStyle displayNumeric = TextStyle(
     fontFamily: _fontHeading,

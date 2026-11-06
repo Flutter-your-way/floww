@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:floww/config/constants/app_integrations.dart';
 
@@ -337,6 +338,21 @@ class HealthService {
         .samples(metric, from, to)
         .timeout(_readTimeout, onTimeout: () => const []),
   );
+
+  static bool get canOpenSourceApp => Platform.isIOS;
+
+  Future<bool> openSourceApp() async {
+    if (!canOpenSourceApp) return false;
+    try {
+      return await launchUrl(
+        Uri.parse(AppIntegrations.appleHealthAppUrl),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('openSourceApp failed: $e\n$stackTrace');
+      return false;
+    }
+  }
 
   Future<List<int>> fetchHeartRateSamples(DateTime from, DateTime to) async {
     if (!to.isAfter(from)) return const [];

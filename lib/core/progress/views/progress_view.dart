@@ -18,6 +18,7 @@ import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/widgets/premium_gate.dart';
 import 'package:floww/core/premium/widgets/premium_locked_card.dart';
 import 'package:floww/core/progress/view_models/progress_view_model.dart';
+import 'package:floww/core/progress/view_models/strength_level_view_model.dart';
 import 'package:floww/core/progress/views/log_weight_sheet.dart';
 import 'package:floww/core/progress/views/unlog_weight_sheet.dart';
 import 'package:floww/core/progress/widgets/flow_score_summary_card.dart';
@@ -43,6 +44,11 @@ class ProgressView extends StatelessWidget {
   void _openStrengthLevel() {
     HapticManager.light();
     NavigationService.instance.push(AppRouter.strengthLevel);
+  }
+
+  void _openWorkoutVolume() {
+    HapticManager.light();
+    NavigationService.instance.push(AppRouter.workoutVolume);
   }
 
   void _openStreak(BuildContext context, ProgressViewModel viewModel) {
@@ -126,25 +132,13 @@ class ProgressView extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: AppSpacing.lg),
-                GuideTarget(
-                  id: GuideTargetId.progressWeight,
-                  child: WeightTrackingCard(
-                    viewModel: viewModel,
-                    onAddWeight: () => LogWeightSheet.show(
-                      context: context,
-                      viewModel: viewModel,
-                    ),
-                    onUnlogWeight: () => UnlogWeightSheet.show(
-                      context: context,
-                      viewModel: viewModel,
-                    ),
+                Consumer<StrengthLevelViewModel>(
+                  builder: (context, strength, child) => StrengthLevelEntryCard(
+                    title: strength.title,
+                    message: strength.assessmentMessage,
+                    axes: strength.radarAxes,
+                    onTap: _openStrengthLevel,
                   ),
-                ),
-                SizedBox(height: AppSpacing.lg),
-                StrengthLevelEntryCard(
-                  title: viewModel.strengthTitle,
-                  message: viewModel.strengthMessage,
-                  onTap: _openStrengthLevel,
                 ),
                 SizedBox(height: AppSpacing.lg),
                 PremiumGate(
@@ -169,6 +163,7 @@ class ProgressView extends StatelessWidget {
                           emptyTitle: viewModel.volumeEmptyTitle,
                           emptyMessage: viewModel.volumeEmptyMessage,
                           emptyButtonLabel: viewModel.logWorkoutLabel,
+                          onTap: _openWorkoutVolume,
                         ),
                       ),
                       SizedBox(height: AppSpacing.lg),
@@ -218,12 +213,28 @@ class ProgressView extends StatelessWidget {
                   ),
                   SizedBox(height: AppSpacing.lg),
                 ],
-                if (!viewModel.showRecords)
+                if (!viewModel.showRecords) ...[
                   TipCard(
                     title: viewModel.encouragementTitle,
                     message: viewModel.encouragementMessage,
                     icon: Icons.local_fire_department_rounded,
                   ),
+                  SizedBox(height: AppSpacing.lg),
+                ],
+                GuideTarget(
+                  id: GuideTargetId.progressWeight,
+                  child: WeightTrackingCard(
+                    viewModel: viewModel,
+                    onAddWeight: () => LogWeightSheet.show(
+                      context: context,
+                      viewModel: viewModel,
+                    ),
+                    onUnlogWeight: () => UnlogWeightSheet.show(
+                      context: context,
+                      viewModel: viewModel,
+                    ),
+                  ),
+                ),
               ],
               SizedBox(height: bottomInset + AppSizes.s64 + AppSpacing.xl4),
             ],

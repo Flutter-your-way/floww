@@ -18,6 +18,7 @@ import 'package:floww/core/habits/views/habit_option_sheet.dart';
 import 'package:floww/core/habits/views/log_habit_sheet.dart';
 import 'package:floww/core/habits/widgets/habit_detail_header_card.dart';
 import 'package:floww/core/habits/widgets/habit_progress_calendar_card.dart';
+import 'package:floww/core/habits/widgets/habit_quit_card.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
 class HabitDetailsView extends StatelessWidget {
@@ -107,11 +108,27 @@ class HabitDetailsView extends StatelessWidget {
                 onEdit: () => _openEdit(context, viewModel),
               ),
               SizedBox(height: AppSpacing.lg),
-              PillButton(
-                label: viewModel.logLabel,
-                icon: Icons.add_rounded,
-                onPressed: () => _openLog(context, viewModel),
-              ),
+              if (viewModel.isQuit)
+                HabitQuitCard(
+                  title: viewModel.quitTitle,
+                  dayLabel: viewModel.quitDayLabel,
+                  progress: viewModel.quitProgress,
+                  slipLabel: viewModel.quitSlipLabel,
+                  actionLabel: viewModel.slipActionLabel,
+                  onAction: () {
+                    HapticManager.light();
+                    viewModel.toggleSlip();
+                  },
+                  isAchieved: viewModel.isQuitAchieved,
+                  achievedTitle: viewModel.quitAchievedTitle,
+                  achievedMessage: viewModel.quitAchievedMessage,
+                )
+              else
+                PillButton(
+                  label: viewModel.logLabel,
+                  icon: Icons.add_rounded,
+                  onPressed: () => _openLog(context, viewModel),
+                ),
               SizedBox(height: AppSpacing.lg),
               HabitProgressCalendarCard(
                 title: viewModel.progressTitle,
@@ -122,10 +139,9 @@ class HabitDetailsView extends StatelessWidget {
                 onSelectPeriod: () => _openPeriods(context, viewModel),
               ),
               SizedBox(height: AppSpacing.lg),
-              TipCard(
+              TipCard.wave(
                 title: viewModel.aboutTitle,
                 message: viewModel.aboutMessage,
-                icon: Icons.graphic_eq_rounded,
               ),
               SizedBox(height: AppSpacing.lg),
               DestructivePillButton(

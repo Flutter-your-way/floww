@@ -6,17 +6,21 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
+import 'package:floww/core/progress/models/strength_view_data.dart';
+import 'package:floww/core/progress/widgets/strength_radar_chart.dart';
 
 class StrengthLevelEntryCard extends StatelessWidget {
   const StrengthLevelEntryCard({
     super.key,
     required this.title,
     required this.message,
+    required this.axes,
     required this.onTap,
   });
 
   final String title;
   final String message;
+  final List<StrengthRadarAxis> axes;
   final VoidCallback onTap;
 
   @override
@@ -33,7 +37,9 @@ class StrengthLevelEntryCard extends StatelessWidget {
               titleStyle: AppTypography.heading4SemiBold,
               showChevron: true,
             ),
-            SizedBox(height: AppSpacing.md),
+            SizedBox(height: AppSpacing.xl),
+            StrengthRadarChart(axes: axes),
+            SizedBox(height: AppSpacing.xl),
             Text(
               message,
               style: AppTypography.bodySmallMedium.copyWith(

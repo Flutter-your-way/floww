@@ -9,6 +9,7 @@ class CardHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.icon,
+    this.leading,
     this.iconColor,
     this.iconSize,
     this.titleStyle,
@@ -21,6 +22,7 @@ class CardHeader extends StatelessWidget {
 
   final String title;
   final IconData? icon;
+  final Widget? leading;
   final Color? iconColor;
   final double? iconSize;
   final TextStyle? titleStyle;
@@ -33,6 +35,7 @@ class CardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = this.icon;
+    final leading = this.leading;
     final titleTrailing = this.titleTrailing;
     final trailingText = this.trailingText;
     final trailing = this.trailing;
@@ -71,7 +74,10 @@ class CardHeader extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
-          if (icon != null) ...[
+          if (leading != null) ...[
+            leading,
+            SizedBox(width: AppSpacing.md),
+          ] else if (icon != null) ...[
             Icon(
               icon,
               color: iconColor ?? context.colors.primary,

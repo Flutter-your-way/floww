@@ -16,6 +16,18 @@ class ProgressOverviewStat {
   final ProgressTone tone;
 }
 
+class ProgressBarPoint {
+  const ProgressBarPoint({
+    required this.label,
+    required this.fraction,
+    this.badgeLabel,
+  });
+
+  final String label;
+  final double fraction;
+  final String? badgeLabel;
+}
+
 class FlowScoreDay {
   const FlowScoreDay({required this.label, required this.percent});
 
@@ -23,6 +35,12 @@ class FlowScoreDay {
   final int percent;
 
   bool get hasScore => percent > 0;
+
+  ProgressBarPoint get bar => ProgressBarPoint(
+    label: label,
+    fraction: (percent / 100).clamp(0.0, 1.0),
+    badgeLabel: hasScore ? '$percent%' : null,
+  );
 }
 
 class FlowScoreSummary {
@@ -58,6 +76,8 @@ class FlowScoreSummary {
 
   bool get hasScores =>
       score > 0 || averageScore > 0 || days.any((day) => day.hasScore);
+
+  List<ProgressBarPoint> get bars => [for (final day in days) day.bar];
 }
 
 class WaveInsights {
@@ -145,6 +165,37 @@ class WorkoutVolume {
   int get sessionCount => days.where((day) => day.sets > 0).length;
 
   int get totalSets => days.fold<int>(0, (total, day) => total + day.sets);
+
+  List<ProgressBarPoint> get bars {
+    final peak = days.fold<int>(
+      0,
+      (top, day) => top > day.sets ? top : day.sets,
+    );
+    return [
+      for (final day in days)
+        ProgressBarPoint(
+          label: day.label,
+          fraction: peak == 0 ? 0 : day.sets / peak,
+          badgeLabel: day.sets > 0 ? '${day.sets}' : null,
+        ),
+    ];
+  }
+}
+
+class VolumeSessionItem {
+  const VolumeSessionItem({
+    required this.id,
+    required this.title,
+    required this.dateLabel,
+    required this.setsLabel,
+    required this.volumeLabel,
+  });
+
+  final String id;
+  final String title;
+  final String dateLabel;
+  final String setsLabel;
+  final String volumeLabel;
 }
 
 class HabitConsistencyItem {

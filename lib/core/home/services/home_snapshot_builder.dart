@@ -391,7 +391,7 @@ class HomeSnapshotBuilder {
     final mode = override ?? AppThemeMode.fromFlowScore(score);
     final reasons = <String>[
       if (override != null) _overrideReason,
-      'Flow Score is $score%',
+      'FLOWW Score is $score%',
       if (readiness > 0) 'Recovery readiness is $readiness%',
     ];
 
@@ -509,7 +509,7 @@ class HomeSnapshotBuilder {
           ),
       ],
       highlights: [
-        if (flowPoints > 0) '+$flowPoints Flow points earned',
+        if (flowPoints > 0) '+$flowPoints FLOWW points earned',
         if (records > 0) '$records personal record${records == 1 ? '' : 's'}',
         if (latest.programLabel.isNotEmpty) latest.programLabel,
       ],
@@ -649,13 +649,13 @@ class HomeSnapshotBuilder {
 
     if (workoutSets == 0 && plan != null) {
       return '${plan.name} is queued for today. Logging it is worth up to '
-          '$_workoutPoints Flow points.';
+          '$_workoutPoints FLOWW points.';
     }
 
     final pending = habits.where((habit) => !habit.isCompleted).length;
     if (pending > 0) {
       return '$pending habit${pending == 1 ? '' : 's'} left today — worth up '
-          'to $_habitPoints Flow points.';
+          'to $_habitPoints FLOWW points.';
     }
 
     return null;

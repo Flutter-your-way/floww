@@ -8,7 +8,7 @@ import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/core/calisthenics/models/cal_library_view_data.dart';
 import 'package:floww/core/calisthenics/widgets/cal_ladder_card.dart';
-import 'package:floww/config/widgets/cards/app_bullet_card.dart';
+import 'package:floww/core/calisthenics/widgets/cal_principles_hero_card.dart';
 
 class CalisthenicsLibrarySection extends StatelessWidget {
   const CalisthenicsLibrarySection({
@@ -17,7 +17,10 @@ class CalisthenicsLibrarySection extends StatelessWidget {
     required this.ladders,
     required this.warmUp,
     required this.coolDown,
-    required this.principles,
+    required this.principlesTitle,
+    required this.principlesSummary,
+    required this.showPrinciplesBadge,
+    required this.onOpenPrinciples,
     required this.onOpenMove,
   });
 
@@ -25,7 +28,10 @@ class CalisthenicsLibrarySection extends StatelessWidget {
   final List<CalLadderItem> ladders;
   final List<CalRoutineItem> warmUp;
   final List<CalRoutineItem> coolDown;
-  final List<String> principles;
+  final String principlesTitle;
+  final String principlesSummary;
+  final bool showPrinciplesBadge;
+  final VoidCallback onOpenPrinciples;
   final ValueChanged<String> onOpenMove;
 
   @override
@@ -33,12 +39,13 @@ class CalisthenicsLibrarySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppBulletCard(
-          title: 'Principles & safety',
-          icon: Icons.health_and_safety_outlined,
-          items: principles,
+        CalPrinciplesHeroCard(
+          title: principlesTitle,
+          summary: principlesSummary,
+          showBadge: showPrinciplesBadge,
+          onOpen: onOpenPrinciples,
         ),
-        SizedBox(height: AppSpacing.xl3),
+        SizedBox(height: AppSpacing.xl),
         const SectionLabel(label: 'Progressions'),
         SizedBox(height: AppSpacing.md),
         Text(

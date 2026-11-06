@@ -22,6 +22,14 @@ class NutritionLabels {
     return text.endsWith('0') ? text.substring(0, text.length - 1) : text;
   }
 
+  static String micro(double value) {
+    if (value >= 100) return number(value);
+    final rounded = (value * 10).round() / 10;
+    return rounded == rounded.roundToDouble()
+        ? rounded.toInt().toString()
+        : rounded.toStringAsFixed(1);
+  }
+
   static String kcal(double value) => '${number(value)} kcal';
 
   static String milligrams(double value) => '${number(value)}mg';

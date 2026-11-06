@@ -3,7 +3,6 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
 
 class MacroSplitBar extends StatelessWidget {
   const MacroSplitBar({
@@ -33,11 +32,7 @@ class MacroSplitBar extends StatelessWidget {
                 1,
                 _flexResolution,
               ),
-              child: AppProgressBar(
-                progress: 1,
-                height: height,
-                color: visible[i].macro.colorOf(context),
-              ),
+              child: AppProgressBar(progress: 1, height: height),
             ),
           ],
         ],

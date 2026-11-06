@@ -54,6 +54,16 @@ class WorkoutMetrics {
   static const int _targetMinutes = 60;
   static const double _targetMet = 8;
   static const double _weightPrThresholdKg = 0.5;
+  static const int _secondsPerRep = 3;
+  static const int _transitionSeconds = 30;
+
+  static int estimatedSecondsOf(WorkoutEntryEntity exercise) {
+    final sets = exercise.targetSets < 1 ? 1 : exercise.targetSets;
+    final work = exercise.isTimed
+        ? exercise.targetReps
+        : exercise.targetReps * _secondsPerRep;
+    return sets * work + (sets - 1) * exercise.restSeconds + _transitionSeconds;
+  }
 
   static List<WorkoutEntryEntity> effortExercisesOf(
     List<WorkoutEntryEntity> exercises,

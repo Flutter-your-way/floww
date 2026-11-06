@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import 'package:floww/core/recovery/services/muscle_targeting.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 
 class WorkoutEmptyState {
@@ -172,11 +173,13 @@ class MuscleAnatomyItem {
   const MuscleAnatomyItem({
     required this.subtitle,
     required this.muscles,
+    required this.targets,
     required this.recoveryTip,
   });
 
   final String subtitle;
   final List<MuscleFocusEntry> muscles;
+  final MuscleTargets targets;
   final String recoveryTip;
 }
 
@@ -386,6 +389,7 @@ class WorkoutOverviewItem {
     required this.summary,
     required this.trainingEffect,
     required this.muscles,
+    required this.targets,
     required this.heartRate,
     required this.performance,
   });
@@ -393,6 +397,7 @@ class WorkoutOverviewItem {
   final WorkoutSummaryItem summary;
   final TrainingEffectItem? trainingEffect;
   final List<MuscleFocusEntry> muscles;
+  final MuscleTargets targets;
   final HeartRateItem? heartRate;
   final PerformanceItem performance;
 }

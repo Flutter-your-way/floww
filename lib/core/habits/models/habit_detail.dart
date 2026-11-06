@@ -1,4 +1,5 @@
 import 'package:floww/core/habits/models/habit.dart';
+import 'package:floww/core/habits/models/habit_day.dart';
 import 'package:floww/core/habits/models/habit_schedule.dart';
 
 class HabitDetail {
@@ -18,6 +19,7 @@ class HabitDetail {
     required this.longestStreakDays,
     required this.weeklyAveragePercent,
     required this.totalCompletions,
+    this.quit,
   });
 
   final String id;
@@ -35,4 +37,5 @@ class HabitDetail {
   final int longestStreakDays;
   final int weeklyAveragePercent;
   final int totalCompletions;
+  final HabitQuitProgress? quit;
 }

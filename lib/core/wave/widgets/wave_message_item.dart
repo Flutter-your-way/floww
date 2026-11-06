@@ -107,8 +107,13 @@ class WaveMessageItem extends StatelessWidget {
       WaveActionPromptMessage() => WaveActionPromptCard(
         title: message.title,
         detail: message.detail,
-        confirmLabel: WaveChatViewModel.confirmLabel,
-        cancelLabel: WaveChatViewModel.cancelLabel,
+        isDestructive: !message.isPlanApproval,
+        confirmLabel: message.isPlanApproval
+            ? WaveChatViewModel.approvePlanLabel
+            : WaveChatViewModel.confirmLabel,
+        cancelLabel: message.isPlanApproval
+            ? WaveChatViewModel.notNowLabel
+            : WaveChatViewModel.cancelLabel,
         isResolved: viewModel.isResolved(message.id),
         onConfirm: () => viewModel.confirmPending(message.id),
         onCancel: () => viewModel.dismissPending(message.id),
@@ -148,6 +153,8 @@ class WaveMessageItem extends StatelessWidget {
       detail: message.detail,
       tone: message.tone,
       actionLabel: viewModel.confirmationActionLabel(message),
+      undoLabel: viewModel.confirmationUndoLabel(message),
+      onUndo: () => viewModel.undo(message.id),
       actionIcon: switch (message.action) {
         WaveConfirmationAction.undo => Icons.undo_rounded,
         WaveConfirmationAction.upgrade => Icons.auto_awesome_rounded,
@@ -157,6 +164,7 @@ class WaveMessageItem extends StatelessWidget {
       onAction: switch (message.action) {
         WaveConfirmationAction.openWorkout => onOpenWorkout,
         WaveConfirmationAction.openMemory => onOpenMemory,
+        WaveConfirmationAction.openPlan => viewModel.openPlan,
         WaveConfirmationAction.undo => () => viewModel.undo(message.id),
         WaveConfirmationAction.upgrade => onUpgrade,
         WaveConfirmationAction.navigate => () => viewModel.openDestination(

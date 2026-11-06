@@ -120,6 +120,17 @@ class WeeklyReportViewModel extends ChangeNotifier {
     return streak;
   }
 
+  String get summaryLabel =>
+      '$totalPointsLabel pts · $daysLoggedLabel days logged';
+
+  List<DayStatusItem> get compactDayStatuses => [
+    for (final day in _days)
+      DayStatusItem(
+        label: AppDateUtils.shortWeekday(day.date).substring(0, 1),
+        status: day.logStatus,
+      ),
+  ];
+
   List<DayStatusItem> get dayStatuses => [
     for (final day in _days)
       DayStatusItem(
@@ -203,10 +214,10 @@ class WeeklyReportViewModel extends ChangeNotifier {
       }
     }
     if (weakest == null) {
-      return 'A perfect week — every nutrition Flow Point earned. Keep it up!';
+      return 'A perfect week — every nutrition FLOWW Point earned. Keep it up!';
     }
     return '${weakest.habit} every day is the fastest way to grow your '
-        'nutrition Flow contribution — worth up to '
+        'nutrition FLOWW contribution — worth up to '
         '+${weakest.maxPerDay * _daysInWeek} pts/week.';
   }
 

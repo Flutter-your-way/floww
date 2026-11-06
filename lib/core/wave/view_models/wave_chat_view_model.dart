@@ -13,6 +13,7 @@ import 'package:floww/core/wave/models/wave_card_data.dart';
 import 'package:floww/core/wave/models/wave_chat_day.dart';
 import 'package:floww/core/wave/models/wave_context.dart';
 import 'package:floww/core/wave/models/wave_message.dart';
+import 'package:floww/core/wave/models/wave_pending_plan.dart';
 import 'package:floww/core/wave/models/wave_premium_feature.dart';
 import 'package:floww/core/wave/models/wave_quota.dart';
 import 'package:floww/core/wave/models/wave_rating.dart';
@@ -27,6 +28,7 @@ import 'package:floww/core/wave/services/wave_action_service.dart';
 import 'package:floww/core/wave/services/wave_ai_service.dart';
 import 'package:floww/core/wave/services/wave_chat_service.dart';
 import 'package:floww/core/wave/services/wave_context_service.dart';
+import 'package:floww/core/wave/services/wave_plan_approval_service.dart';
 import 'package:floww/core/wave/services/wave_transcript_service.dart';
 
 class WaveChatViewModel extends ChangeNotifier {
@@ -36,12 +38,18 @@ class WaveChatViewModel extends ChangeNotifier {
     this._transcriptService, {
     WaveAiService? aiService,
     WaveActionService? actionService,
+    WavePlanApprovalService? approvalService,
+    DateTime? initialDay,
     this.onNavigate,
     this.onUpgrade,
   }) : _aiService = aiService ?? WaveAiService(),
        _actionService = actionService ?? WaveActionService(_service),
+       _approvalService = approvalService ?? WavePlanApprovalService(),
+       _restoresOffset = initialDay == null,
        _welcomeTimestamp = DateTime.now(),
-       _selectedDay = _lastDay ?? AppDateUtils.dateOnly(DateTime.now()) {
+       _selectedDay = initialDay == null
+           ? _lastDay ?? AppDateUtils.dateOnly(DateTime.now())
+           : AppDateUtils.dateOnly(initialDay) {
     composer.addListener(_onComposerChanged);
     _context = _contextService.cached ?? WaveContext.empty;
     _days.addAll(_transcriptService.cachedDays ?? const []);
@@ -64,6 +72,8 @@ class WaveChatViewModel extends ChangeNotifier {
   final WaveTranscriptService _transcriptService;
   final WaveAiService _aiService;
   final WaveActionService _actionService;
+  final WavePlanApprovalService _approvalService;
+  final bool _restoresOffset;
   final ValueChanged<WaveDestination>? onNavigate;
   final Future<void> Function()? onUpgrade;
 
@@ -71,8 +81,8 @@ class WaveChatViewModel extends ChangeNotifier {
   static DateTime? _lastDay;
   static double _lastOffset = 0;
 
-  final ScrollController scrollController = ScrollController(
-    initialScrollOffset: _lastOffset,
+  late final ScrollController scrollController = ScrollController(
+    initialScrollOffset: _restoresOffset ? _lastOffset : 0,
   );
   final DateTime _welcomeTimestamp;
 
@@ -169,6 +179,9 @@ class WaveChatViewModel extends ChangeNotifier {
   static const String openLabel = 'Open';
   static const String confirmLabel = 'Confirm';
   static const String cancelLabel = 'Cancel';
+  static const String approvePlanLabel = 'Approve plan';
+  static const String notNowLabel = 'Not now';
+  static const String viewPlanLabel = 'View plan';
   static const String actionFailedMessage =
       'I could not save that change. Please try again.';
   static const String undoFailedMessage =
@@ -179,12 +192,24 @@ class WaveChatViewModel extends ChangeNotifier {
         WaveConfirmationAction.openWorkout =>
           isViewingToday && _context.hasActiveWorkout ? openWorkoutLabel : null,
         WaveConfirmationAction.openMemory => manageMemoryLabel,
+        WaveConfirmationAction.openPlan => isViewingToday ? viewPlanLabel : null,
         WaveConfirmationAction.undo =>
           isViewingToday && !isResolved(message.id) ? undoLabel : null,
         WaveConfirmationAction.navigate => isViewingToday ? openLabel : null,
         WaveConfirmationAction.upgrade => upgradeLabel,
         null => null,
       };
+
+  String? confirmationUndoLabel(WaveConfirmationMessage message) {
+    if (message.action != WaveConfirmationAction.openPlan) return null;
+    final entry = _entryOf(message.id);
+    if (entry?.undo == null || entry!.isResolved || !isViewingToday) {
+      return null;
+    }
+    return undoLabel;
+  }
+
+  void openPlan() => _navigate(WaveDestination.workout);
 
   static const String premiumTitle = 'Part of Premium';
   static const String notFoundTitle = 'Not Found';
@@ -562,14 +587,21 @@ class WaveChatViewModel extends ChangeNotifier {
     return destination;
   }
 
-  Future<void> _askToConfirm(WaveAction action) {
+  Future<void> _askToConfirm(WaveAction action) async {
     final prompt = _actionService.promptFor(action);
-    return _append(
-      _entry(
-        WaveMessageKind.actionPrompt,
+    final entry = _entry(
+      WaveMessageKind.actionPrompt,
+      title: prompt.title,
+      detail: prompt.detail,
+      pendingAction: action,
+    );
+    await _append(entry);
+    if (!action.changesPlan) return;
+    await _approvalService.propose(
+      WavePendingPlan(
+        messageId: entry.id,
+        day: entry.createdAt,
         title: prompt.title,
-        detail: prompt.detail,
-        pendingAction: action,
       ),
     );
   }
@@ -594,6 +626,7 @@ class WaveChatViewModel extends ChangeNotifier {
     final action = entry?.pendingAction;
     if (entry == null || action == null || entry.isResolved || _isBusy) return;
     await _update(entry.copyWith(isResolved: true));
+    if (action.changesPlan) await _approvalService.clear(entry.id);
     final outcome = await _perform(action);
     final destination = outcome?.destination;
     if (destination != null) _navigate(destination);
@@ -604,6 +637,7 @@ class WaveChatViewModel extends ChangeNotifier {
     final action = entry?.pendingAction;
     if (entry == null || action == null || entry.isResolved) return;
     await _update(entry.copyWith(isResolved: true));
+    if (action.changesPlan) await _approvalService.clear(entry.id);
     await _confirmOutcome(_actionService.dismissed(action));
   }
 
@@ -772,7 +806,7 @@ class WaveChatViewModel extends ChangeNotifier {
 
   String get _fallbackReply =>
       "I'm on it. Ask me about today's plan, an injury swap, your meals or "
-      'your Flow Score and I will adjust everything for you.';
+      'your FLOWW Score and I will adjust everything for you.';
 
   WaveTranscriptEntry _entry(
     WaveMessageKind kind, {
@@ -901,6 +935,7 @@ class WaveChatViewModel extends ChangeNotifier {
       timestamp: entry.createdAt,
       title: entry.title ?? '',
       detail: entry.detail ?? '',
+      isPlanApproval: entry.pendingAction?.changesPlan ?? false,
     ),
     WaveMessageKind.dietPlan => WaveDietPlanMessage(
       id: entry.id,

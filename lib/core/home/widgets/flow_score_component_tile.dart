@@ -54,7 +54,6 @@ class FlowScoreComponentTile extends StatelessWidget {
         AppProgressBar(
           progress: component.fraction,
           height: AppSizes.s8,
-          color: context.colors.primary,
           trackColor: context.colors.backgroundElevated,
         ),
         SizedBox(height: AppSpacing.md),

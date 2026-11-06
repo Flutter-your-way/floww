@@ -12,7 +12,15 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
   }
 
   static const int _monthsPerYear = 12;
+  static const String _offersErrorMessage =
+      'Plans could not be loaded from the store. Check your connection '
+      'and try again.';
   static const int _percent = 100;
+  static const String _pricePlaceholder = '—';
+
+  String get _termUnavailableMessage =>
+      'The ${tabLabel(_term).toLowerCase()} plan is not available in the '
+      'store right now. Try another plan or check back shortly.';
 
   final PremiumService _service;
 
@@ -45,8 +53,7 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
   String? tabBadgeLabel(SubscriptionTerm term) {
     if (term != SubscriptionTerm.yearly) return null;
     final percent = _yearlySavingsPercent;
-    if (percent == null) return _service.planFor(term).tabBadgeLabel;
-    return percent > 0 ? 'Save $percent%' : null;
+    return percent != null && percent > 0 ? 'Save $percent%' : null;
   }
 
   int? get _yearlySavingsPercent {
@@ -57,8 +64,7 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
     return ((fullYear - yearly) / fullYear * _percent).round();
   }
 
-  String get priceLabel =>
-      _offer?.priceLabel ?? CurrencyFormatter.rupees(plan.price);
+  String get priceLabel => _offer?.priceLabel ?? _pricePlaceholder;
 
   String get periodLabel => plan.periodLabel;
 
@@ -68,22 +74,15 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
     if (_term != SubscriptionTerm.yearly) return null;
     final monthly = _offers[SubscriptionTerm.monthly];
     final yearly = _offers[SubscriptionTerm.yearly];
-    if (monthly == null || yearly == null) return _catalogSavingsLabel;
+    if (monthly == null || yearly == null) return null;
+    if (monthly.currencyCode != yearly.currencyCode) return null;
 
     final savings = monthly.price * _monthsPerYear - yearly.price;
     if (savings <= 0) return null;
     final currency = yearly.currencyCode;
-    final monthlyEquivalent = (yearly.price / _monthsPerYear).round();
+    final monthlyEquivalent = yearly.price / _monthsPerYear;
     return '~${CurrencyFormatter.forCurrency(monthlyEquivalent, currency)}'
-        '/month · Save ${CurrencyFormatter.forCurrency(savings.round(), currency)}';
-  }
-
-  String? get _catalogSavingsLabel {
-    final monthlyEquivalent = plan.monthlyEquivalent;
-    final savings = plan.savings;
-    if (monthlyEquivalent == null || savings == null) return null;
-    return '~${CurrencyFormatter.rupees(monthlyEquivalent)}/month '
-        '· Save ${CurrencyFormatter.rupees(savings)}';
+        '/month · Save ${CurrencyFormatter.forCurrency(savings, currency)}';
   }
 
   String get planTitle => 'Floww Premium';
@@ -99,10 +98,7 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
 
   String get footnoteLabel {
     final offer = _offer;
-    if (offer == null) {
-      return '${AppSubscription.trialDays}-day free trial · Cancel anytime '
-          '· No commitment';
-    }
+    if (offer == null) return 'Cancel anytime · No commitment';
     final renewal = 'Then ${offer.priceLabel}${plan.periodLabel}';
     final trial = offer.freeTrialLabel;
     return [
@@ -162,16 +158,28 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
     _isLoadingOffers = true;
     _notify();
     final offers = await _service.loadOffers();
-    _offers = {
-      for (final offer in offers)
-        SubscriptionTermFields.fromPlanId(offer.productId): offer,
-    };
+    _offers = {for (final offer in offers) offer.term: offer};
     _isLoadingOffers = false;
+    if (_offers.isEmpty) {
+      _errorMessage = _offersErrorMessage;
+    } else if (_errorMessage == _offersErrorMessage) {
+      _errorMessage = null;
+    }
     _notify();
   }
 
   Future<SubscriptionEntity?> purchase() async {
     if (isBusy) return null;
+    if (_offer == null) {
+      await loadOffers();
+      if (_offer == null) {
+        if (hasStoreOffers) {
+          _errorMessage = _termUnavailableMessage;
+          _notify();
+        }
+        return null;
+      }
+    }
     _isPurchasing = true;
     _errorMessage = null;
     _noticeMessage = null;
@@ -204,7 +212,7 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
       }
       _noticeMessage =
           'No active Floww Premium purchase was found for this '
-          'Apple ID.';
+          'store account.';
       return null;
     } on PremiumException catch (e) {
       if (!e.isCancelled) _errorMessage = e.message;

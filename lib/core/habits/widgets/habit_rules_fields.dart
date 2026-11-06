@@ -39,6 +39,18 @@ class HabitRulesFields extends StatelessWidget {
     );
   }
 
+  void _openQuitDays(BuildContext context, HabitRulesViewModel rules) {
+    HapticManager.light();
+    HabitOptionSheet.show(
+      context: context,
+      title: rules.quitDaysLabel,
+      subtitle: rules.quitDaysSheetSubtitle,
+      items: rules.quitDayItems,
+      selectedId: '${rules.selectedQuitDays}',
+      onSelect: rules.selectQuitDaysId,
+    );
+  }
+
   void _openReminder(BuildContext context, HabitRulesViewModel rules) {
     HapticManager.light();
     HabitReminderSheet.show(context: context, rules: rules);
@@ -54,25 +66,39 @@ class HabitRulesFields extends StatelessWidget {
           children: [
             AppSheetFieldLabel(label: rules.goalLabel),
             SizedBox(height: AppSpacing.md),
-            AppChipTabs<HabitGoalType>(
-              items: rules.goalTypes,
-              selected: rules.goalType,
-              labelOf: rules.labelOfGoal,
-              onSelected: (goalType) {
+            AppChipTabs<HabitGoalChoice>(
+              items: rules.goalChoices,
+              selected: rules.goalChoice,
+              labelOf: rules.labelOfGoalChoice,
+              onSelected: (choice) {
                 HapticManager.selection();
-                rules.selectGoal(goalType);
+                rules.selectGoalChoice(choice);
               },
             ),
-            SizedBox(height: AppSpacing.xl),
-            AppSheetFieldLabel(label: rules.scheduleLabel),
-            SizedBox(height: AppSpacing.md),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: HabitChevronButton(
-                label: rules.scheduleValueLabel,
-                onPressed: () => _openSchedule(context, rules),
+            if (rules.isQuit) ...[
+              SizedBox(height: AppSpacing.xl),
+              AppSheetFieldLabel(label: rules.quitDaysLabel),
+              SizedBox(height: AppSpacing.md),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: HabitChevronButton(
+                  label: rules.quitDaysValueLabel,
+                  onPressed: () => _openQuitDays(context, rules),
+                ),
               ),
-            ),
+            ],
+            if (rules.showsSchedule) ...[
+              SizedBox(height: AppSpacing.xl),
+              AppSheetFieldLabel(label: rules.scheduleLabel),
+              SizedBox(height: AppSpacing.md),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: HabitChevronButton(
+                  label: rules.scheduleValueLabel,
+                  onPressed: () => _openSchedule(context, rules),
+                ),
+              ),
+            ],
             if (rules.showsWeekdays) ...[
               SizedBox(height: AppSpacing.lg),
               WeekdayPicker(

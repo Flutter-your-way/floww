@@ -14,26 +14,27 @@ class SetInputCard extends StatelessWidget {
     super.key,
     required this.primary,
     required this.reserve,
-    required this.typeOptions,
     required this.onAdjustPrimary,
     required this.onAdjustReserve,
-    required this.onSelectType,
     this.weight,
     this.onAdjustWeight,
+    this.typeOptions = const [],
+    this.onSelectType,
   });
 
   final AddExerciseTargetItem primary;
   final AddExerciseTargetItem? weight;
   final AddExerciseTargetItem reserve;
-  final List<SetTypeOption> typeOptions;
   final ValueChanged<int> onAdjustPrimary;
   final ValueChanged<int>? onAdjustWeight;
   final ValueChanged<int> onAdjustReserve;
-  final ValueChanged<SetType> onSelectType;
+  final List<SetTypeOption> typeOptions;
+  final ValueChanged<SetType>? onSelectType;
 
   @override
   Widget build(BuildContext context) {
     final weight = this.weight;
+    final onSelectType = this.onSelectType;
 
     return AppCard(
       variant: AppCardVariant.sunken,
@@ -73,23 +74,25 @@ class SetInputCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: AppSpacing.lg),
-          Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
-            alignment: WrapAlignment.center,
-            children: [
-              for (final option in typeOptions)
-                SelectableChip(
-                  label: option.label,
-                  isSelected: option.isSelected,
-                  onTap: () {
-                    HapticManager.selection();
-                    onSelectType(option.type);
-                  },
-                ),
-            ],
-          ),
+          if (typeOptions.isNotEmpty && onSelectType != null) ...[
+            SizedBox(height: AppSpacing.lg),
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.md,
+              alignment: WrapAlignment.center,
+              children: [
+                for (final option in typeOptions)
+                  SelectableChip(
+                    label: option.label,
+                    isSelected: option.isSelected,
+                    onTap: () {
+                      HapticManager.selection();
+                      onSelectType(option.type);
+                    },
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/bright_action_button.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
@@ -136,11 +137,19 @@ class _SuggestionReasons extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Recommended by WAVE because:',
-            style: AppTypography.bodySmallRegularTight.copyWith(
-              color: context.colors.textSecondary,
-            ),
+          Row(
+            children: [
+              const WaveAvatarBadge(size: AppSizes.s20, contained: true),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Recommended by WAVE because:',
+                  style: AppTypography.bodySmallRegularTight.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: AppSpacing.md),
           for (final reason in reasons)

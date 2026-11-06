@@ -14,6 +14,7 @@ class CatalogFood {
     this.sodiumMg = 0,
     this.waterMl = 0,
     this.healthScore = 7,
+    this.nutrition,
   });
 
   factory CatalogFood.fromJson(Map<String, dynamic> json) => CatalogFood(
@@ -28,9 +29,19 @@ class CatalogFood {
     sugarG: _amount(json['sugarG']),
     sodiumMg: _amount(json['sodiumMg']),
     waterMl: _amount(json['waterMl']),
+    nutrition: _nutritionOf(json['nutrition']),
   );
 
   static double _amount(Object? value) => value is num ? value.toDouble() : 0;
+
+  static FoodNutrition? _nutritionOf(Object? value) {
+    if (value is! Map) return null;
+    try {
+      return FoodNutrition.fromJson(Map<String, dynamic>.from(value));
+    } catch (_) {
+      return null;
+    }
+  }
 
   final String name;
   final String serving;
@@ -44,6 +55,7 @@ class CatalogFood {
   final double sodiumMg;
   final double waterMl;
   final int healthScore;
+  final FoodNutrition? nutrition;
 
   String get displayName => '$name ($serving)';
 
@@ -74,6 +86,7 @@ class CatalogFood {
     sodiumMg: sodiumMg * factor,
     waterMl: waterMl * factor,
     healthScore: healthScore,
+    nutrition: nutrition?.scaled(factor),
   );
 
   FoodModel toFoodModel({
@@ -100,25 +113,27 @@ class CatalogFood {
         fatG: fatG,
       ),
     ],
-    nutrition: FoodNutrition(
-      macros: MacroNutrients(
-        calories: calories,
-        proteinG: proteinG,
-        carbsG: carbsG,
-        fatG: fatG,
-        fiberG: fiberG,
-        sugarG: sugarG,
-        addedSugarG: 0,
-        saturatedFatG: 0,
-        transFatG: 0,
-        monounsaturatedFatG: 0,
-        polyunsaturatedFatG: 0,
-        cholesterolMg: 0,
-        waterMl: waterMl,
-      ),
-      vitamins: Vitamins.zero,
-      minerals: Minerals.zero.copyWith(sodiumMg: sodiumMg),
-    ),
+    nutrition:
+        nutrition ??
+        FoodNutrition(
+          macros: MacroNutrients(
+            calories: calories,
+            proteinG: proteinG,
+            carbsG: carbsG,
+            fatG: fatG,
+            fiberG: fiberG,
+            sugarG: sugarG,
+            addedSugarG: 0,
+            saturatedFatG: 0,
+            transFatG: 0,
+            monounsaturatedFatG: 0,
+            polyunsaturatedFatG: 0,
+            cholesterolMg: 0,
+            waterMl: waterMl,
+          ),
+          vitamins: Vitamins.zero,
+          minerals: Minerals.zero.copyWith(sodiumMg: sodiumMg),
+        ),
     source: FoodSource.manual,
     createdAt: createdAt.toUtc(),
   );

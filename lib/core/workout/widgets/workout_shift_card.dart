@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/images/wave_avatar_badge.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
@@ -16,6 +17,7 @@ class WorkoutShiftCard extends StatelessWidget {
     required this.onAction,
     this.isLoading = false,
     this.icon = Icons.event_repeat_rounded,
+    this.byWave = false,
     this.errorMessage,
   });
 
@@ -25,6 +27,7 @@ class WorkoutShiftCard extends StatelessWidget {
   final VoidCallback onAction;
   final bool isLoading;
   final IconData icon;
+  final bool byWave;
   final String? errorMessage;
 
   @override
@@ -42,7 +45,9 @@ class WorkoutShiftCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: AppSizes.s20, color: colors.primary),
+              byWave
+                  ? const WaveAvatarBadge(size: AppSizes.s28, contained: true)
+                  : Icon(icon, size: AppSizes.s20, color: colors.primary),
               SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(

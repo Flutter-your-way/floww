@@ -31,7 +31,7 @@ class FlowScoreBreakdownSheet extends StatelessWidget {
 
     return AppFloatingSheet(
       child: AppSheetPanel(
-        title: 'Flow Score Breakdown',
+        title: 'FLOWW Score Breakdown',
         titleStyle: context.textTheme.titleLarge,
         closeButtonSize: AppSizes.s32,
         closeIconSize: AppSizes.s16,

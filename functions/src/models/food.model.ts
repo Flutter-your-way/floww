@@ -108,6 +108,8 @@ export const catalogFoodSchema = z.object({
   sugarG: z.number(),
   sodiumMg: z.number(),
   waterMl: z.number(),
+  source: z.string().optional(),
+  nutrition: foodNutritionSchema.optional(),
 });
 
 export type CatalogFood = z.infer<typeof catalogFoodSchema>;

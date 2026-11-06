@@ -21,6 +21,8 @@ class WaveConfirmationCard extends StatelessWidget {
     this.actionLabel,
     this.actionIcon,
     this.onAction,
+    this.undoLabel,
+    this.onUndo,
   });
 
   final String title;
@@ -29,10 +31,13 @@ class WaveConfirmationCard extends StatelessWidget {
   final String? actionLabel;
   final IconData? actionIcon;
   final VoidCallback? onAction;
+  final String? undoLabel;
+  final VoidCallback? onUndo;
 
   @override
   Widget build(BuildContext context) {
     final actionLabel = this.actionLabel;
+    final undoLabel = this.undoLabel;
     final colors = context.colors;
     final accent = switch (tone) {
       WaveConfirmationTone.success => colors.success,
@@ -41,6 +46,23 @@ class WaveConfirmationCard extends StatelessWidget {
       WaveConfirmationTone.warning => colors.warning,
       WaveConfirmationTone.premium => colors.accentViolet,
     };
+    final action = actionLabel == null
+        ? null
+        : _WaveConfirmationButton(
+            label: actionLabel,
+            icon: actionIcon,
+            accent: accent,
+            onPressed: onAction,
+          );
+    final undo = undoLabel == null
+        ? null
+        : _WaveConfirmationButton(
+            label: undoLabel,
+            icon: Icons.undo_rounded,
+            accent: accent,
+            onPressed: onUndo,
+          );
+    final stacked = action != null && undo != null;
 
     return AppCardPop(
       child: Container(
@@ -60,10 +82,14 @@ class WaveConfirmationCard extends StatelessWidget {
           ),
         ),
         child: Row(
+          crossAxisAlignment: stacked
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
           children: [
             _WaveConfirmationBadge(tone: tone, accent: accent),
             SizedBox(width: AppSpacing.lg),
-            Expanded(
+            Flexible(
+              fit: stacked ? FlexFit.loose : FlexFit.tight,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -81,26 +107,52 @@ class WaveConfirmationCard extends StatelessWidget {
                       color: colors.textSubtle,
                     ),
                   ),
+                  if (stacked) ...[
+                    SizedBox(height: AppSpacing.lg),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [action, SizedBox(width: AppSpacing.md), undo],
+                    ),
+                  ],
                 ],
               ),
             ),
-            if (actionLabel != null) ...[
+            if (!stacked && (action ?? undo) != null) ...[
               SizedBox(width: AppSpacing.md),
-              PillButton(
-                variant: PillButtonVariant.glass,
-                label: actionLabel,
-                icon: actionIcon,
-                iconColor: accent,
-                height: AppSizes.s32,
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                labelStyle: AppTypography.bodySmallSemiBold,
-                labelColor: colors.textPrimary,
-                onPressed: onAction,
-              ),
+              (action ?? undo)!,
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _WaveConfirmationButton extends StatelessWidget {
+  const _WaveConfirmationButton({
+    required this.label,
+    required this.icon,
+    required this.accent,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData? icon;
+  final Color accent;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return PillButton(
+      variant: PillButtonVariant.glass,
+      label: label,
+      icon: icon,
+      iconColor: accent,
+      height: AppSizes.s32,
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      labelStyle: AppTypography.bodySmallSemiBold,
+      labelColor: context.colors.textPrimary,
+      onPressed: onPressed,
     );
   }
 }

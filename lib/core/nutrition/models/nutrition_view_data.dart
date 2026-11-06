@@ -55,6 +55,24 @@ class MicronutrientTileItem {
   final bool isOverLimit;
 }
 
+class MicronutrientRowItem {
+  const MicronutrientRowItem({
+    required this.label,
+    required this.amountLabel,
+    required this.goalLabel,
+    required this.progress,
+    this.kind,
+    this.isOverLimit = false,
+  });
+
+  final String label;
+  final String amountLabel;
+  final String goalLabel;
+  final double progress;
+  final MicronutrientKind? kind;
+  final bool isOverLimit;
+}
+
 class NutrientSourceItem {
   const NutrientSourceItem({
     required this.name,
@@ -91,6 +109,18 @@ class MealBreakdownItem {
   final bool hasItems;
 }
 
+class MealCountOption {
+  const MealCountOption({
+    required this.count,
+    required this.label,
+    required this.isSelected,
+  });
+
+  final int count;
+  final String label;
+  final bool isSelected;
+}
+
 class FlowPointRow {
   const FlowPointRow({
     required this.label,
@@ -105,18 +135,36 @@ class FlowPointRow {
   final double progress;
 }
 
-class RecentFoodItem {
-  const RecentFoodItem({
+class FoodLogHistoryItem {
+  const FoodLogHistoryItem({
     required this.log,
     required this.name,
+    required this.detail,
     required this.caloriesLabel,
+    required this.timeLabel,
   });
 
   final FoodLog log;
   final String name;
+  final String detail;
   final String caloriesLabel;
+  final String timeLabel;
+
+  String get id => log.id;
 
   MealType get meal => log.mealType;
+}
+
+class FoodLogHistoryGroup {
+  const FoodLogHistoryGroup({
+    required this.dateLabel,
+    required this.totalLabel,
+    required this.items,
+  });
+
+  final String dateLabel;
+  final String totalLabel;
+  final List<FoodLogHistoryItem> items;
 }
 
 class ChartBar {

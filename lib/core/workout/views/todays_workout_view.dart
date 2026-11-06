@@ -13,8 +13,9 @@ import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/widgets/premium_gate.dart';
 import 'package:floww/core/premium/widgets/premium_locked_card.dart';
 import 'package:floww/core/workout/view_models/todays_workout_view_model.dart';
-import 'package:floww/core/workout/widgets/todays_workout_exercises_card.dart';
+import 'package:floww/core/workout/widgets/muscle_targets_card.dart';
 import 'package:floww/core/workout/widgets/todays_workout_summary_card.dart';
+import 'package:floww/core/workout/widgets/workout_exercises_card.dart';
 import 'package:floww/core/workout/widgets/workout_empty_state_card.dart';
 import 'package:floww/core/workout/widgets/workout_shift_card.dart';
 import 'package:floww/core/yoga/views/yoga_safety_sheet.dart';
@@ -138,9 +139,20 @@ class TodaysWorkoutView extends StatelessWidget {
                 else ...[
                   TodaysWorkoutSummaryCard(workout: workout),
                   SizedBox(height: AppSpacing.lg),
-                  TodaysWorkoutExercisesCard(
-                    exercises: workout.exercises,
+                  if (!workout.muscles.targets.isEmpty) ...[
+                    MuscleTargetsCard(
+                      item: workout.muscles,
+                      templateOf: viewModel.muscleMapOf,
+                    ),
+                    SizedBox(height: AppSpacing.lg),
+                  ],
+                  WorkoutExercisesCard(
+                    sections: workout.sections,
                     countLabel: workout.exerciseCountLabel,
+                    onToggleSection: (id) {
+                      HapticManager.selection();
+                      viewModel.toggleSection(id);
+                    },
                   ),
                   SizedBox(height: AppSpacing.lg),
                   TipCard.note(title: workout.insight),

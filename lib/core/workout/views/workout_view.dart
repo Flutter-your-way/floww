@@ -23,7 +23,9 @@ import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
 import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/widgets/premium_gate.dart';
 import 'package:floww/core/premium/widgets/premium_locked_card.dart';
+import 'package:floww/core/calisthenics/views/cal_principles_sheet.dart';
 import 'package:floww/core/calisthenics/widgets/calisthenics_library_section.dart';
+import 'package:floww/core/workout/widgets/change_program_card.dart';
 import 'package:floww/core/workout/models/program_start_config.dart';
 import 'package:floww/core/workout/models/workout_course_view_data.dart';
 import 'package:floww/core/workout/models/workout_discipline.dart';
@@ -35,6 +37,7 @@ import 'package:floww/core/yoga/views/yoga_pose_lesson_sheet.dart';
 import 'package:floww/core/yoga/widgets/yoga_library_section.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/view_models/workout_view_model.dart';
+import 'package:floww/core/workout/views/log_workout_sheet.dart';
 import 'package:floww/core/workout/views/missed_workout_sheet.dart';
 import 'package:floww/core/workout/views/muscle_anatomy_sheet.dart';
 import 'package:floww/core/workout/views/program_detail_sheet.dart';
@@ -50,6 +53,7 @@ import 'package:floww/core/workout/widgets/suggested_workout_card.dart';
 import 'package:floww/core/workout/widgets/workout_history_section.dart';
 import 'package:floww/core/workout/widgets/workout_overview_section.dart';
 import 'package:floww/core/workout/widgets/workout_shift_card.dart';
+import 'package:floww/core/wave/views/wave_chat_sheet.dart';
 import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
@@ -75,6 +79,15 @@ class WorkoutView extends StatelessWidget {
       AppRouter.todaysWorkout,
       arguments: viewModel.startArgs,
     );
+  }
+
+  Future<void> _logWorkout(
+    BuildContext context,
+    WorkoutViewModel viewModel,
+  ) async {
+    HapticManager.light();
+    final sessionId = await LogWorkoutSheet.show(context: context);
+    if (sessionId != null) viewModel.focusSession(sessionId);
   }
 
   void _onAgendaAction(
@@ -114,6 +127,11 @@ class WorkoutView extends StatelessWidget {
     viewModel.removeCatchUp(entry.id);
   }
 
+  void _reviewPendingPlan(BuildContext context, WorkoutViewModel viewModel) {
+    HapticManager.light();
+    showWaveChatSheet(context, day: viewModel.pendingPlanDay);
+  }
+
   void _buildPlan(WorkoutViewModel viewModel) {
     HapticManager.medium();
     viewModel.buildPlan();
@@ -145,7 +163,11 @@ class WorkoutView extends StatelessWidget {
     final anatomy = viewModel.anatomy;
     if (anatomy == null) return;
     HapticManager.light();
-    MuscleAnatomySheet.show(context: context, anatomy: anatomy);
+    MuscleAnatomySheet.show(
+      context: context,
+      anatomy: anatomy,
+      templateOf: viewModel.muscleMapOf,
+    );
   }
 
   void _openWorkoutDetails(String workoutId) {
@@ -268,6 +290,23 @@ class WorkoutView extends StatelessWidget {
     );
   }
 
+  void _openPrinciples(BuildContext context, WorkoutViewModel viewModel) {
+    HapticManager.light();
+    viewModel.markCalPrinciplesRead();
+    CalPrinciplesSheet.show(
+      context: context,
+      title: viewModel.calPrinciplesTitle,
+      subtitle: viewModel.calPrinciplesSummary,
+      principles: viewModel.calPrinciples,
+      safety: viewModel.calSafety,
+    );
+  }
+
+  void _openProgramSwitcher(WorkoutViewModel viewModel) {
+    HapticManager.selection();
+    viewModel.openProgramSwitcher();
+  }
+
   Future<void> _openEditor(
     WorkoutViewModel viewModel,
     ProgramEditorArgs args,
@@ -340,6 +379,7 @@ class WorkoutView extends StatelessWidget {
           final shiftOffer = viewModel.shiftOffer;
           final agenda = viewModel.agenda;
           final planBuilder = viewModel.planBuilder;
+          final pendingPlan = viewModel.pendingPlanBanner;
           final course = viewModel.course;
           final history = viewModel.showHistory ? viewModel.history : null;
           final revealTrigger = viewModel.selectedDate;
@@ -412,6 +452,27 @@ class WorkoutView extends StatelessWidget {
                               AppPopReveal(
                                 trigger: revealTrigger,
                                 appearOnMount: true,
+                                child: pendingPlan == null
+                                    ? null
+                                    : Padding(
+                                        padding: EdgeInsets.only(
+                                          bottom: AppSpacing.lg,
+                                        ),
+                                        child: WorkoutShiftCard(
+                                          icon: Icons.pending_actions_rounded,
+                                          title: pendingPlan.title,
+                                          message: pendingPlan.message,
+                                          actionLabel: pendingPlan.actionLabel,
+                                          onAction: () => _reviewPendingPlan(
+                                            context,
+                                            viewModel,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                              AppPopReveal(
+                                trigger: revealTrigger,
+                                appearOnMount: true,
                                 child: planBuilder == null
                                     ? null
                                     : Padding(
@@ -419,7 +480,7 @@ class WorkoutView extends StatelessWidget {
                                           bottom: AppSpacing.lg,
                                         ),
                                         child: WorkoutShiftCard(
-                                          icon: Icons.auto_awesome_rounded,
+                                          byWave: true,
                                           title: planBuilder.title,
                                           message: planBuilder.message,
                                           actionLabel: planBuilder.actionLabel,
@@ -522,6 +583,7 @@ class WorkoutView extends StatelessWidget {
                                         id: GuideTargetId.workoutOverview,
                                         child: WorkoutOverviewSection(
                                           overview: overview,
+                                          muscleMapOf: viewModel.muscleMapOf,
                                           revealTrigger: revealTrigger,
                                           showSummary: !viewModel.isReadOnly,
                                           onViewAnatomy: () =>
@@ -634,7 +696,14 @@ class WorkoutView extends StatelessWidget {
                                         ),
                                       ),
                               ),
-                              if (viewModel.showExercises)
+                              if (viewModel.showExercises) ...[
+                                ChangeProgramCard(
+                                  icon: viewModel.discipline.icon,
+                                  programName: viewModel.currentProgramName,
+                                  actionLabel: viewModel.changeProgramLabel,
+                                  onTap: () => _openProgramSwitcher(viewModel),
+                                ),
+                                SizedBox(height: AppSpacing.xl),
                                 switch (viewModel.discipline) {
                                   WorkoutDiscipline.gym =>
                                     const ExerciseLibrarySection(),
@@ -656,11 +725,19 @@ class WorkoutView extends StatelessWidget {
                                       ladders: viewModel.calLadders,
                                       warmUp: viewModel.calWarmUp,
                                       coolDown: viewModel.calCoolDown,
-                                      principles: viewModel.calPrinciples,
+                                      principlesTitle:
+                                          viewModel.calPrinciplesTitle,
+                                      principlesSummary:
+                                          viewModel.calPrinciplesSummary,
+                                      showPrinciplesBadge:
+                                          viewModel.showCalPrinciplesBadge,
+                                      onOpenPrinciples: () =>
+                                          _openPrinciples(context, viewModel),
                                       onOpenMove: (id) =>
                                           _openMove(context, id),
                                     ),
                                 },
+                              ],
                               if (viewModel.showPrograms) ...[
                                 if (activeProgram != null &&
                                     activeProgramId != null) ...[
@@ -713,22 +790,51 @@ class WorkoutView extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (viewModel.primaryAction == WorkoutPrimaryAction.start)
+                if (viewModel.canLogWorkout ||
+                    viewModel.primaryAction == WorkoutPrimaryAction.start)
                   Positioned(
+                    left: context.sizes.screenHorizontalPadding,
                     right: context.sizes.screenHorizontalPadding,
                     bottom: actionsBottom,
-                    child: GuideTarget(
-                      id: GuideTargetId.workoutStart,
-                      radius: AppRadius.full,
-                      padding: AppSpacing.xs,
-                      child: PillButton(
-                        label: viewModel.primaryActionLabel,
-                        icon: Icons.play_arrow_rounded,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl3,
-                        ),
-                        onPressed: () => _startWorkout(viewModel),
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (viewModel.canLogWorkout)
+                          Flexible(
+                            flex: 5,
+                            child: PillButton(
+                              variant: PillButtonVariant.neutral,
+                              label: viewModel.logWorkoutLabel,
+                              icon: Icons.edit_note_rounded,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSpacing.xl,
+                              ),
+                              onPressed: () => _logWorkout(context, viewModel),
+                            ),
+                          ),
+                        if (viewModel.canLogWorkout &&
+                            viewModel.primaryAction ==
+                                WorkoutPrimaryAction.start)
+                          SizedBox(width: AppSpacing.md),
+                        if (viewModel.primaryAction ==
+                            WorkoutPrimaryAction.start)
+                          Flexible(
+                            flex: 6,
+                            child: GuideTarget(
+                              id: GuideTargetId.workoutStart,
+                              radius: AppRadius.full,
+                              padding: AppSpacing.xs,
+                              child: PillButton(
+                                label: viewModel.primaryActionLabel,
+                                icon: Icons.play_arrow_rounded,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.xl,
+                                ),
+                                onPressed: () => _startWorkout(viewModel),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 if (viewModel.primaryAction == WorkoutPrimaryAction.resume)

@@ -55,7 +55,7 @@ class ProgressSnapshotBuilder {
     ),
     ProgressChecklistItem(
       id: 'explore_flow',
-      label: 'Explore your Flow Score',
+      label: 'Explore your FLOWW Score',
       isCompleted: false,
     ),
   ];
@@ -437,7 +437,7 @@ class ProgressSnapshotBuilder {
         tone: ProgressTone.accent,
       ),
       PersonalRecord(
-        label: 'Highest FLOW',
+        label: 'Highest FLOWW',
         value: '${highest.score}',
         caption: 'Score',
         tone: ProgressTone.primary,

@@ -5,10 +5,18 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 
-class WeeklyReportCard extends StatelessWidget {
-  const WeeklyReportCard({super.key, required this.rangeLabel, this.onTap});
+class NutritionLinkCard extends StatelessWidget {
+  const NutritionLinkCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.onTap,
+  });
 
-  final String rangeLabel;
+  final String title;
+  final String subtitle;
+  final IconData icon;
   final VoidCallback? onTap;
 
   @override
@@ -25,7 +33,7 @@ class WeeklyReportCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Weekly Nutrition Report',
+                    title,
                     style: AppTypography.heading4SemiBold.copyWith(
                       color: context.colors.textPrimary,
                     ),
@@ -33,15 +41,19 @@ class WeeklyReportCard extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.calendar_today_rounded,
+                        icon,
                         color: context.colors.textSecondary,
                         size: AppSizes.s12,
                       ),
                       SizedBox(width: AppSpacing.xs),
-                      Text(
-                        rangeLabel,
-                        style: AppTypography.bodySmallMediumTight.copyWith(
-                          color: context.colors.textSubtle,
+                      Expanded(
+                        child: Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodySmallMediumTight.copyWith(
+                            color: context.colors.textSubtle,
+                          ),
                         ),
                       ),
                     ],

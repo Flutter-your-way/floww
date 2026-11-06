@@ -14,6 +14,7 @@ class HealthMetricReading {
     required this.value,
     required this.at,
     this.previous,
+    this.history = const [],
   });
 
   static const double _flatThreshold = 0.005;
@@ -21,6 +22,7 @@ class HealthMetricReading {
   final double value;
   final DateTime at;
   final double? previous;
+  final List<HealthSample> history;
 
   HealthTrend get trend {
     final previous = this.previous;
@@ -29,6 +31,11 @@ class HealthMetricReading {
     if (change.abs() < _flatThreshold) return HealthTrend.flat;
     return change > 0 ? HealthTrend.up : HealthTrend.down;
   }
+
+  List<HealthSample> historySince(DateTime from) => [
+    for (final sample in history)
+      if (!sample.at.isBefore(from)) sample,
+  ];
 
   static HealthMetricReading? latestOf(List<HealthSample> samples) {
     if (samples.isEmpty) return null;
@@ -49,6 +56,10 @@ class HealthMetricReading {
       value: totals[latest]! / counts[latest]!,
       at: lastAt[latest]!,
       previous: previous == null ? null : totals[previous]! / counts[previous]!,
+      history: [
+        for (final day in days)
+          HealthSample(value: totals[day]! / counts[day]!, at: day),
+      ],
     );
   }
 }

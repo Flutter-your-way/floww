@@ -14,7 +14,12 @@ class HabitRulesViewModel extends ChangeNotifier {
     this._schedule = const HabitSchedule.daily(),
     this._source = HabitSource.manual,
     this._reminderMinutes = HabitReminderSetting.fallbackMinutes,
-  });
+    int? quitDays,
+  }) : _quitDays = quitDays ?? defaultQuitDays,
+       _isQuit = quitDays != null;
+
+  static const int defaultQuitDays = 90;
+  static const List<int> quitDayOptions = [30, 60, 90, 180, 365];
 
   static const List<int> _defaultWeekdays = [
     DateTime.monday,
@@ -43,12 +48,57 @@ class HabitRulesViewModel extends ChangeNotifier {
   HabitSchedule _schedule;
   HabitSource _source;
   int? _reminderMinutes;
+  int _quitDays;
+  bool _isQuit;
 
-  HabitMetric get metric => _metric;
+  HabitMetric get metric => _isQuit ? HabitMetric.sessions : _metric;
 
-  HabitGoalType get goalType => _goalType;
+  HabitGoalType get goalType => _isQuit ? HabitGoalType.limit : _goalType;
 
-  HabitSchedule get schedule => _schedule;
+  HabitSchedule get schedule =>
+      _isQuit ? const HabitSchedule.daily() : _schedule;
+
+  bool get isQuit => _isQuit;
+
+  int? get quitDays => _isQuit ? _quitDays : null;
+
+  int get selectedQuitDays => _quitDays;
+
+  String get quitDaysLabel => 'Quit for';
+
+  String labelOfQuitDays(int days) => HabitLabels.days(days);
+
+  String get quitDaysValueLabel => HabitLabels.days(_quitDays);
+
+  String get quitDaysSheetSubtitle =>
+      'How many days do you want to stay off this habit?';
+
+  List<HabitOptionItem> get quitDayItems => [
+    for (final days in quitDayOptions)
+      HabitOptionItem(id: '$days', label: HabitLabels.days(days)),
+  ];
+
+  void selectQuitDaysId(String id) {
+    final days = int.tryParse(id);
+    if (days != null) selectQuitDays(days);
+  }
+
+  List<HabitGoalChoice> get goalChoices => HabitGoalChoice.values;
+
+  HabitGoalChoice get goalChoice => _isQuit
+      ? HabitGoalChoice.quit
+      : (_goalType == HabitGoalType.limit
+            ? HabitGoalChoice.limit
+            : HabitGoalChoice.build);
+
+  String labelOfGoalChoice(HabitGoalChoice choice) =>
+      HabitLabels.goalChoice(choice);
+
+  bool get showsTarget => !_isQuit;
+
+  bool get showsSchedule => !_isQuit;
+
+  double resolveTarget(double? target) => _isQuit ? 0 : target ?? 0;
 
   HabitSource get source => _source;
 
@@ -89,7 +139,8 @@ class HabitRulesViewModel extends ChangeNotifier {
       ),
   ];
 
-  bool get showsWeekdays => _schedule.type == HabitScheduleType.weekdays;
+  bool get showsWeekdays =>
+      !_isQuit && _schedule.type == HabitScheduleType.weekdays;
 
   List<WeekdayPickerItem> get weekdayItems => [
     for (final weekday in HabitSchedule.allWeekdays)
@@ -106,7 +157,7 @@ class HabitRulesViewModel extends ChangeNotifier {
   ];
 
   bool get showsSource =>
-      _goalType == HabitGoalType.build && _sources.length > 1;
+      !_isQuit && _goalType == HabitGoalType.build && _sources.length > 1;
 
   String get sourceValueLabel => HabitLabels.source(_source);
 
@@ -175,6 +226,7 @@ class HabitRulesViewModel extends ChangeNotifier {
   }
 
   bool isValidTarget(double? target) {
+    if (_isQuit) return true;
     if (target == null) return false;
     return _goalType == HabitGoalType.limit ? target >= 0 : target > 0;
   }
@@ -187,9 +239,30 @@ class HabitRulesViewModel extends ChangeNotifier {
   }
 
   void selectGoal(HabitGoalType goalType) {
-    if (goalType == _goalType) return;
+    if (goalType == _goalType && !_isQuit) return;
     _goalType = goalType;
+    _isQuit = false;
     if (goalType == HabitGoalType.limit) _source = HabitSource.manual;
+    notifyListeners();
+  }
+
+  void selectGoalChoice(HabitGoalChoice choice) {
+    switch (choice) {
+      case HabitGoalChoice.build:
+        selectGoal(HabitGoalType.build);
+      case HabitGoalChoice.limit:
+        selectGoal(HabitGoalType.limit);
+      case HabitGoalChoice.quit:
+        if (_isQuit) return;
+        _isQuit = true;
+        _source = HabitSource.manual;
+        notifyListeners();
+    }
+  }
+
+  void selectQuitDays(int days) {
+    if (days == _quitDays) return;
+    _quitDays = days;
     notifyListeners();
   }
 

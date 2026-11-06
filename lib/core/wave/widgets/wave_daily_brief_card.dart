@@ -79,7 +79,7 @@ class _BriefStatGrid extends StatelessWidget {
             children: [
               Expanded(
                 child: _BriefStatCell(
-                  label: 'FLOW SCORE',
+                  label: 'FLOWW SCORE',
                   value: Text(
                     '${brief.flowScore}',
                     style: AppTypography.bodyXXLargeBold.copyWith(

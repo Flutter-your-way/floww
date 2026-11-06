@@ -74,6 +74,7 @@ class HabitSnapshot {
             source: definitionOf(entry.id)?.source ?? HabitSource.manual,
             isDue: entry.due,
             description: definitionOf(entry.id)?.description,
+            quitDays: definitionOf(entry.id)?.quitDays,
           ),
       ];
     }
@@ -263,6 +264,33 @@ class HabitSnapshot {
       ),
   ];
 
+  HabitQuitProgress? quitProgressOf(String id) {
+    final definition = definitionOf(id);
+    final targetDays = definition?.quitDays;
+    if (definition == null || targetDays == null) return null;
+    final archived = definition.archivedAt;
+    final end = archived != null && archived.isBefore(_today)
+        ? archived
+        : _today;
+    final start = definition.createdAt;
+    final slips = <DateTime>[];
+    var dayCount = 0;
+    for (
+      var day = start;
+      !day.isAfter(end);
+      day = AppDateUtils.addDays(day, 1)
+    ) {
+      dayCount++;
+      final habit = _habitOn(day, id);
+      if (habit != null && habit.value > 0) slips.add(day);
+    }
+    return HabitQuitProgress(
+      dayCount: dayCount,
+      targetDays: targetDays,
+      slipDates: slips,
+    );
+  }
+
   HabitDetail? detailFor(String id) =>
       _details.putIfAbsent(id, () => _buildDetail(id));
 
@@ -285,6 +313,7 @@ class HabitSnapshot {
       longestStreakDays: longestStreak(habitId: id),
       weeklyAveragePercent: weeklyAveragePercent(habitId: id),
       totalCompletions: totalCompletions(habitId: id),
+      quit: quitProgressOf(id),
     );
   }
 

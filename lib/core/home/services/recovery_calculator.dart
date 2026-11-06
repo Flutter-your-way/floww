@@ -10,9 +10,9 @@ class RecoveryCalculator {
   static const int minimumBaselineDays = 3;
   static const int baselineWindowDays = 14;
 
-  static const double _sleepWeight = 0.45;
-  static const double _hrvWeight = 0.35;
-  static const double _energyWeight = 0.2;
+  static const double sleepWeight = 0.45;
+  static const double hrvWeight = 0.35;
+  static const double energyWeight = 0.2;
 
   static const double _hrvFloorRatio = 0.5;
   static const double _hrvCeilingRatio = 1.25;
@@ -21,8 +21,8 @@ class RecoveryCalculator {
   static const double _restingHeartRateTolerance = 0.1;
   static const double _restingHeartRateRange = 0.2;
 
-  static const int _highFloor = 75;
-  static const int _moderateFloor = 50;
+  static const int highFloor = 75;
+  static const int moderateFloor = 50;
 
   RecoveryDetail build({
     required List<HealthDayLog> history,
@@ -45,11 +45,11 @@ class RecoveryCalculator {
       total += weight * metric.percent;
     }
 
-    add(_sleepMetric(today, sleepTargetHours), _sleepWeight);
-    add(_hrvMetric(today, baseline.hrvMs), _hrvWeight);
+    add(_sleepMetric(today, sleepTargetHours), sleepWeight);
+    add(_hrvMetric(today, baseline.hrvMs), hrvWeight);
     add(
       _energyMetric(today, baseline.restingHeartRate, stepsTarget),
-      _energyWeight,
+      energyWeight,
     );
 
     if (metrics.isEmpty) return RecoveryDetail.empty;
@@ -64,8 +64,8 @@ class RecoveryCalculator {
   }
 
   static String levelOf(int percent) {
-    if (percent >= _highFloor) return 'High';
-    if (percent >= _moderateFloor) return 'Moderate';
+    if (percent >= highFloor) return 'High';
+    if (percent >= moderateFloor) return 'Moderate';
     return 'Low';
   }
 

@@ -243,11 +243,14 @@ class HabitsViewModel extends ChangeNotifier {
   HabitRowItem _rowOf(Habit habit) {
     final isRest = !habit.isDue && !habit.isCompleted;
     final schedule = _snapshot.definitionOf(habit.id)?.schedule;
+    final quit = habit.isQuit ? _snapshot.quitProgressOf(habit.id) : null;
     return HabitRowItem(
       id: habit.id,
       title: habit.title,
-      progressLabel: HabitLabels.progress(habit),
-      progress: habit.progress,
+      progressLabel: quit == null
+          ? HabitLabels.progress(habit)
+          : HabitLabels.quitDay(quit.dayCount, quit.targetDays),
+      progress: quit?.progress ?? habit.progress,
       isCompleted: habit.isCompleted,
       tagLabel: isRest && schedule != null
           ? HabitLabels.restTag(schedule)

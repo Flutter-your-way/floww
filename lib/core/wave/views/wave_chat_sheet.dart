@@ -37,7 +37,7 @@ import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 import 'package:floww/navigation/view_models/main_tab_controller.dart';
 
-Future<void> showWaveChatSheet(BuildContext context) {
+Future<void> showWaveChatSheet(BuildContext context, {DateTime? day}) {
   final forcedMode = SheetTheme.forcedModeOf(context);
   final tabs = context.read<MainTabController?>();
 
@@ -45,7 +45,7 @@ Future<void> showWaveChatSheet(BuildContext context) {
     _WaveSheetRoute(
       forcedMode: forcedMode,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      child: WaveChatSheet(tabs: tabs),
+      child: WaveChatSheet(tabs: tabs, initialDay: day),
     ),
   );
 }
@@ -127,9 +127,10 @@ class _WaveSheetRoute extends PopupRoute<void> {
 }
 
 class WaveChatSheet extends StatelessWidget {
-  const WaveChatSheet({super.key, this.tabs});
+  const WaveChatSheet({super.key, this.tabs, this.initialDay});
 
   final MainTabController? tabs;
+  final DateTime? initialDay;
 
   void _close() => NavigationService.instance.pop();
 
@@ -269,6 +270,7 @@ class WaveChatSheet extends StatelessWidget {
                 WaveChatService(),
                 WaveContextService(),
                 WaveTranscriptService(),
+                initialDay: initialDay,
                 onNavigate: _navigateTo,
                 onUpgrade: _upgrade,
               ),

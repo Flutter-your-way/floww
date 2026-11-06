@@ -42,7 +42,7 @@ class GuideContent {
       GuideStep(
         icon: Icons.bolt_rounded,
         targets: [GuideTargetId.homeFlowScore],
-        title: 'Flow Score',
+        title: 'FLOWW Score',
         body:
             'Your day in one number. Training, food, habits and recovery all '
             'feed it. Tap the card for the full breakdown.',
@@ -113,12 +113,12 @@ class GuideContent {
         body: 'Protein, carbs and fats for the day, split by share.',
       ),
       GuideStep(
-        icon: Icons.water_drop_outlined,
+        icon: Icons.eco_outlined,
         targets: [GuideTargetId.nutritionMicros],
-        title: 'Water and more',
+        title: 'Micronutrients',
         body:
-            'Add water in a tap. Tap fibre, sugar or sodium to see which foods '
-            'they came from.',
+            'Fibre, sugar, sodium plus vitamins and minerals. Tap fibre, sugar '
+            'or sodium to see which foods they came from.',
       ),
       GuideStep(
         icon: Icons.add_circle_outline_rounded,
@@ -126,8 +126,8 @@ class GuideContent {
         targets: [GuideTargetId.nutritionMeals],
         title: 'Log a meal',
         body:
-            'Add food to breakfast, lunch, dinner or snacks with a photo scan, '
-            'a search or your recent foods.',
+            'Add food to each meal with a photo scan or a search. Tap the '
+            'meals chip to set 3, 4 or 5 meals a day.',
       ),
       GuideStep(
         icon: Icons.add_circle_outline_rounded,
@@ -135,8 +135,8 @@ class GuideContent {
         targets: [GuideTargetId.nutritionMeals],
         title: 'Log a meal',
         body:
-            'Add food to breakfast, lunch, dinner or snacks with a search, a '
-            'quick description or your recent foods.',
+            'Add food to each meal with a search, a quick description or your '
+            'Food Log History.',
       ),
     ],
   );
@@ -234,7 +234,7 @@ class GuideContent {
         icon: Icons.speed_rounded,
         targets: [GuideTargetId.habitsScore],
         title: 'Daily score',
-        body: "How much of today's habits are done. It feeds your Flow Score.",
+        body: "How much of today's habits are done. It feeds your FLOWW Score.",
       ),
       GuideStep(
         icon: Icons.touch_app_outlined,
@@ -273,7 +273,7 @@ class GuideContent {
       GuideStep(
         icon: Icons.show_chart_rounded,
         targets: [GuideTargetId.progressFlowScore],
-        title: 'Flow Score trend',
+        title: 'FLOWW Score trend',
         body:
             'The quickest answer to "am I improving?". Your week, and how it '
             'compares to the last.',
@@ -308,7 +308,7 @@ class GuideContent {
         audience: GuideAudience.premium,
         targets: [GuideTargetId.progressRecords],
         title: 'Personal records',
-        body: 'Your longest streak, highest Flow Score and best week so far.',
+        body: 'Your longest streak, highest FLOWW Score and best week so far.',
       ),
       GuideStep(
         icon: Icons.insights_rounded,

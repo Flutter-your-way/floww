@@ -7,7 +7,6 @@ import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/widgets/macro_emoji.dart';
-import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
 
 class MacronutrientsCard extends StatelessWidget {
   const MacronutrientsCard({super.key, required this.items, this.onLearnMore});
@@ -58,7 +57,6 @@ class _MacroColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = item.macro.colorOf(context);
     final captionStyle = context.textTheme.bodySmall?.copyWith(
       color: context.colors.textSecondary,
     );
@@ -95,7 +93,7 @@ class _MacroColumn extends StatelessWidget {
           ],
         ),
         SizedBox(height: AppSpacing.sm),
-        AppProgressBar(progress: item.progress, color: color),
+        AppProgressBar(progress: item.progress),
       ],
     );
   }

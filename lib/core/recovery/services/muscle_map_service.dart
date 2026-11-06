@@ -64,6 +64,7 @@ class MuscleMapTemplate {
 class MuscleMapService {
   static const String highlightFill = 'currentColor';
   static const String baseFill = '#BDBDBD';
+  static const Color baseColor = Color(0xFFBDBDBD);
   static final RegExp fillPattern = RegExp(
     'fill="(#[0-9A-Fa-f]{6}|currentColor)"',
   );
@@ -71,7 +72,7 @@ class MuscleMapService {
   static final RegExp _headerPattern = RegExp('<svg[^>]*>');
   static final RegExp _shapePattern = RegExp('<path[^>]*>');
 
-  final Map<MuscleBodySide, MuscleMapTemplate> _templates = {};
+  static final Map<MuscleBodySide, MuscleMapTemplate> _templates = {};
 
   MuscleMapTemplate? templateOf(MuscleBodySide side) => _templates[side];
 

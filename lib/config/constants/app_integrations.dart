@@ -12,4 +12,6 @@ class AppIntegrations {
 
   static const String appleHealthName = 'Apple Health';
   static const String healthConnectName = 'Health Connect';
+
+  static const String appleHealthAppUrl = 'x-apple-health://';
 }

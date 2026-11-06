@@ -1,42 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:floww/config/constants/app_motion.dart';
+
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
-import 'package:floww/config/theme/app_shapes.dart';
 
 class HealthSyncCard extends StatelessWidget {
   const HealthSyncCard({
     super.key,
-    required this.sourceName,
     required this.iconAsset,
     required this.connected,
-    this.syncDetail,
+    required this.title,
+    required this.subtitle,
+    required this.connectLabel,
+    this.viewMoreLabel,
     this.onConnect,
-    this.onDisconnect,
+    this.onViewMore,
   });
 
-  final String sourceName;
   final String iconAsset;
   final bool connected;
-  final String? syncDetail;
+  final String title;
+  final String subtitle;
+  final String connectLabel;
+  final String? viewMoreLabel;
   final VoidCallback? onConnect;
-  final VoidCallback? onDisconnect;
+  final VoidCallback? onViewMore;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final viewMoreLabel = this.viewMoreLabel;
+
     return AppCard(
       variant: AppCardVariant.tinted,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.lg,
+      ),
       child: Row(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             child: SvgPicture.asset(
               iconAsset,
-              height: AppSizes.s40,
-              width: AppSizes.s40,
+              height: AppSizes.s32,
+              width: AppSizes.s32,
             ),
           ),
           SizedBox(width: AppSpacing.lg),
@@ -45,113 +57,106 @@ class HealthSyncCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$sourceName Sync',
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.titleLarge,
-                ),
-                SizedBox(height: AppSpacing.xs),
-                Text(
-                  connected
-                      ? (syncDetail ?? 'Syncing steps, sleep & heart rate')
-                      : 'Better recovery predictions',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colors.textSecondary,
+                  style: AppTypography.bodyLargeSemiBold.copyWith(
+                    color: colors.textPrimary,
                   ),
                 ),
+                SizedBox(height: AppSpacing.xxs),
+                if (connected && viewMoreLabel != null)
+                  _ViewMoreLink(label: viewMoreLabel, onTap: onViewMore)
+                else
+                  _StatusLine(label: subtitle, connected: connected),
               ],
             ),
           ),
           SizedBox(width: AppSpacing.lg),
-          _SyncStatusPill(
-            connected: connected,
-            onTap: connected ? onDisconnect : onConnect,
-          ),
+          if (connected)
+            _ConnectedDot(color: colors.success)
+          else
+            IntrinsicWidth(
+              child: PillButton(
+                variant: PillButtonVariant.glass,
+                height: AppSizes.s32,
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                label: connectLabel,
+                labelStyle: AppTypography.bodySmallSemiBold,
+                labelColor: colors.primary,
+                onPressed: onConnect,
+              ),
+            ),
         ],
       ),
     );
   }
 }
 
-class _SyncStatusPill extends StatelessWidget {
-  const _SyncStatusPill({required this.connected, this.onTap});
+class _StatusLine extends StatelessWidget {
+  const _StatusLine({required this.label, required this.connected});
 
+  final String label;
   final bool connected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: context.textTheme.bodySmall?.copyWith(
+        color: connected
+            ? context.colors.success
+            : context.colors.textSecondary,
+      ),
+    );
+  }
+}
+
+class _ViewMoreLink extends StatelessWidget {
+  const _ViewMoreLink({required this.label, this.onTap});
+
+  final String label;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final color = connected ? context.colors.success : context.colors.primary;
+    final color = context.colors.primary;
+
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: AppMotion.tabSwitch,
-        curve: AppMotion.tabSwitchSizeCurve,
-        height: AppSizes.s32,
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        decoration: AppShapes.decoration(
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          side: BorderSide(color: color, width: 1),
-        ),
-        child: AnimatedSize(
-          duration: AppMotion.tabSwitch,
-          curve: AppMotion.tabSwitchSizeCurve,
-          child: AnimatedSwitcher(
-            duration: AppMotion.tabSwitch,
-            switchInCurve: AppMotion.tabSwitchCurve,
-            switchOutCurve: AppMotion.tabSwitchExitCurve,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: ScaleTransition(
-                scale: Tween<double>(
-                  begin: AppMotion.tabSwitchScale,
-                  end: 1,
-                ).animate(animation),
-                child: child,
-              ),
-            ),
-            child: _SyncStatusLabel(
-              key: ValueKey(connected),
-              connected: connected,
-              color: color,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.bodySmallSemiBold.copyWith(color: color),
             ),
           ),
-        ),
+          SizedBox(width: AppSpacing.xs),
+          Icon(Icons.north_east_rounded, size: AppSizes.s14, color: color),
+        ],
       ),
     );
   }
 }
 
-class _SyncStatusLabel extends StatelessWidget {
-  const _SyncStatusLabel({
-    super.key,
-    required this.connected,
-    required this.color,
-  });
+class _ConnectedDot extends StatelessWidget {
+  const _ConnectedDot({required this.color});
 
-  final bool connected;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (connected) ...[
-          Container(
-            width: AppSizes.s6,
-            height: AppSizes.s6,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          SizedBox(width: AppSpacing.sm),
-        ],
-        Text(
-          connected ? 'Connected' : 'Connect',
-          style: context.textTheme.bodySmall?.copyWith(color: color),
-        ),
-      ],
+    return Container(
+      width: AppSizes.s8,
+      height: AppSizes.s8,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

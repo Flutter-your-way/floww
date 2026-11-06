@@ -48,7 +48,6 @@ class WorkoutAgendaCard extends StatelessWidget {
             SizedBox(height: AppSpacing.md),
             AppProgressBar(
               progress: planProgress,
-              color: colors.primaryAlt,
               trackColor: colors.borderSubtle,
               height: AppSizes.s6,
             ),

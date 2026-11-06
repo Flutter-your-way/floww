@@ -123,7 +123,7 @@ class InvoicePdfService {
     final issuedOn = generatedOn ?? DateTime.now();
     final ordered = [...invoices]..sort((a, b) => b.paidAt.compareTo(a.paidAt));
     final paid = ordered.where((invoice) => invoice.isPaid).toList();
-    final total = paid.fold(0, (sum, invoice) => sum + invoice.amount);
+    final total = paid.fold(0.0, (sum, invoice) => sum + invoice.amount);
     final currency = ordered.first.currency;
     final since = ordered.last.paidAt;
 

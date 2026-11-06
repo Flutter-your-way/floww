@@ -19,7 +19,7 @@ Blueprint ("blueprint")
   baseline and move it only when the answers, read together, justify it.
 - "flowScoreReason": one sentence, at most 20 words, second person, naming
   the answers that raised or lowered their readiness. Call it
-  "readiness", never "Flow Score".
+  "readiness", never "FLOWW Score".
 - "workoutSplit": 1 to 3 words, e.g. "Full Body", "Upper Lower",
   "Push Pull Legs", "Vinyasa Flow". Fit it to their training type, days,
   session length, experience, equipment and injuries. When a locked split is

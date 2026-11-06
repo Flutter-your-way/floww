@@ -118,6 +118,47 @@ class AuthService {
     }
   }
 
+  Future<UserModel> signInWithEmail(String email, String password) async {
+    try {
+      final userCredential = await _emailCredential(email.trim(), password);
+      return await _findOrCreateUser(
+        userCredential.user!,
+        provider: AuthProvider.email,
+        displayName: userCredential.user!.displayName ?? '',
+      );
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseAuthError(e));
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw AuthException('Could not sign in with email. Please try again.');
+    }
+  }
+
+  Future<UserCredential> _emailCredential(String email, String password) async {
+    try {
+      return await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code != 'user-not-found' && e.code != 'invalid-credential') {
+        rethrow;
+      }
+      try {
+        return await _auth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } on FirebaseAuthException catch (createError) {
+        if (createError.code == 'email-already-in-use') {
+          throw AuthException('Incorrect email or password.');
+        }
+        rethrow;
+      }
+    }
+  }
+
   DateTime? get accountCreatedAt {
     try {
       return _auth.currentUser?.metadata.creationTime;
@@ -417,6 +458,15 @@ class AuthService {
         return 'Too many attempts. Please try again later.';
       case 'user-disabled':
         return 'This account has been disabled.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Incorrect email or password.';
+      case 'weak-password':
+        return 'Password must be at least 6 characters.';
+      case 'operation-not-allowed':
+        return 'Email sign in is not enabled yet.';
       case 'requires-recent-login':
         return 'Please sign in again before deleting your account.';
       default:

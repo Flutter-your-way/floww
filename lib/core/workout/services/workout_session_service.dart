@@ -170,6 +170,37 @@ class WorkoutSessionService extends WorkoutFirestore {
     return session;
   }
 
+  Future<WorkoutCompletionResult> logManualSession({
+    required String name,
+    required List<WorkoutEntryEntity> exercises,
+    required int durationSeconds,
+  }) async {
+    final uid = requireUserId;
+    final now = DateTime.now();
+    final document = _sessions(uid).doc();
+    final session = WorkoutSessionEntity(
+      id: document.id,
+      workoutId: document.id,
+      name: name,
+      date: AppDateUtils.dateOnly(now),
+      status: WorkoutSessionStatus.inProgress,
+      startedAt: now.subtract(Duration(seconds: durationSeconds)),
+      completedAt: now,
+      durationSeconds: durationSeconds,
+      exercises: [
+        for (final entry in exercises) entry.withPlannedSetsLogged(now),
+      ],
+      isTimerPaused: true,
+      isManual: true,
+    );
+    await guard(
+      'logManualSession',
+      _saveFailure,
+      () => document.set(session.toJson()),
+    );
+    return completeSession(session, includeHeartRate: false);
+  }
+
   Future<void> saveProgress(WorkoutSessionEntity session) async {
     final uid = requireUserId;
     final totals = WorkoutMetrics.totalsOf(session.exercises);
@@ -211,12 +242,12 @@ class WorkoutSessionService extends WorkoutFirestore {
   }
 
   Future<WorkoutCompletionResult> completeSession(
-    WorkoutSessionEntity session,
-  ) async {
-    final heartRate = await _heartRateSamples(
-      session.startedAt,
-      DateTime.now(),
-    );
+    WorkoutSessionEntity session, {
+    bool includeHeartRate = true,
+  }) async {
+    final heartRate = includeHeartRate
+        ? await _heartRateSamples(session.startedAt, DateTime.now())
+        : const _HeartRateSummary.empty();
     try {
       final data = await _apiClient.post(
         AppApi.completeWorkout,

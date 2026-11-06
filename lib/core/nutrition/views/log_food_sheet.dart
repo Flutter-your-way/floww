@@ -104,7 +104,7 @@ class LogFoodSheet extends StatelessWidget {
                 AppChipTabs<MealType>(
                   items: viewModel.meals,
                   selected: viewModel.meal,
-                  labelOf: (meal) => meal.label,
+                  labelOf: (meal) => meal.shortLabel,
                   onSelected: viewModel.selectMeal,
                 ),
                 if (errorMessage != null) ...[

@@ -102,7 +102,6 @@ class ActiveProgramCard extends StatelessWidget {
               SizedBox(height: AppSpacing.xl),
               AppProgressBar(
                 progress: program.progress,
-                color: colors.primaryAlt,
                 trackColor: colors.borderSubtle,
                 height: AppSizes.s8,
               ),

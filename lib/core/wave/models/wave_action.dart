@@ -41,7 +41,11 @@ enum WaveActionKind {
     regeneratePlan,
   };
 
+  static const Set<WaveActionKind> planChanges = {shiftPlan, regeneratePlan};
+
   bool get needsConfirmation => confirmed.contains(this);
+
+  bool get changesPlan => planChanges.contains(this);
 
   bool get logsFood => this == logFood || this == createFood;
 }
@@ -170,6 +174,8 @@ class WaveAction {
   final HabitDraft? habitDraft;
 
   bool get needsConfirmation => kind.needsConfirmation;
+
+  bool get changesPlan => kind.changesPlan;
 
   Map<String, dynamic> toJson() => {
     'action': kind.name,

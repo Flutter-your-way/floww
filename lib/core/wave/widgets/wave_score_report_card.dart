@@ -33,7 +33,7 @@ class WaveScoreReportCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const WaveSectionLabel(label: 'YOUR FLOW SCORE'),
+                const WaveSectionLabel(label: 'YOUR FLOWW SCORE'),
                 SizedBox(height: AppSpacing.md),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,

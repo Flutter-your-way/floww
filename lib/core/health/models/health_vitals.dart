@@ -1,3 +1,4 @@
+import 'package:floww/core/health/models/health_metric_kind.dart';
 import 'package:floww/core/health/models/health_metric_reading.dart';
 
 class HealthVitals {
@@ -28,6 +29,20 @@ class HealthVitals {
   final HealthMetricReading? bodyFat;
   final HealthMetricReading? leanMass;
   final HealthMetricReading? bodyMassIndex;
+
+  HealthMetricReading? readingOf(HealthMetricKind kind) => switch (kind) {
+    HealthMetricKind.hrv => hrv,
+    HealthMetricKind.restingHeartRate => restingHeartRate,
+    HealthMetricKind.vo2Max => vo2Max,
+    HealthMetricKind.heartRateRecovery => heartRateRecovery,
+    HealthMetricKind.oxygenSaturation => oxygenSaturation,
+    HealthMetricKind.skinTemperature => skinTemperature,
+    HealthMetricKind.respiratoryRate => respiratoryRate,
+    HealthMetricKind.weight => weight,
+    HealthMetricKind.bodyFat => bodyFat,
+    HealthMetricKind.leanMass => leanMass,
+    HealthMetricKind.bodyMassIndex => bodyMassIndex,
+  };
 
   bool get hasAnyData =>
       hrv != null ||

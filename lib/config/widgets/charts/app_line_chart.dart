@@ -5,8 +5,8 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 
-class WeightLineChart extends StatelessWidget {
-  const WeightLineChart({
+class AppLineChart extends StatelessWidget {
+  const AppLineChart({
     super.key,
     required this.samples,
     required this.axisLabels,
@@ -14,6 +14,7 @@ class WeightLineChart extends StatelessWidget {
     required this.minValue,
     required this.maxValue,
     this.plotHeight = AppSizes.s160,
+    this.showDots = true,
   });
 
   final List<double> samples;
@@ -22,6 +23,7 @@ class WeightLineChart extends StatelessWidget {
   final double minValue;
   final double maxValue;
   final double plotHeight;
+  final bool showDots;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +53,7 @@ class WeightLineChart extends StatelessWidget {
               SizedBox(width: AppSpacing.md),
               Expanded(
                 child: CustomPaint(
-                  painter: WeightLineChartPainter(
+                  painter: AppLineChartPainter(
                     samples: samples,
                     minValue: minValue,
                     maxValue: maxValue,
@@ -61,6 +63,7 @@ class WeightLineChart extends StatelessWidget {
                     lineColor: colors.primaryAlt,
                     dotColor: colors.textPrimary,
                     areaGradient: context.gradients.chartArea,
+                    showDots: showDots,
                   ),
                 ),
               ),
@@ -72,10 +75,16 @@ class WeightLineChart extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             for (final label in dateLabels)
-              Text(
-                label,
-                style: AppTypography.captionMediumSmall.copyWith(
-                  color: colors.textFaint,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: AppTypography.captionMediumSmall.copyWith(
+                      color: colors.textFaint,
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -85,8 +94,8 @@ class WeightLineChart extends StatelessWidget {
   }
 }
 
-class WeightLineChartPainter extends CustomPainter {
-  const WeightLineChartPainter({
+class AppLineChartPainter extends CustomPainter {
+  const AppLineChartPainter({
     required this.samples,
     required this.minValue,
     required this.maxValue,
@@ -96,6 +105,7 @@ class WeightLineChartPainter extends CustomPainter {
     required this.lineColor,
     required this.dotColor,
     required this.areaGradient,
+    this.showDots = true,
   });
 
   static const double _strokeWidth = 2;
@@ -111,6 +121,7 @@ class WeightLineChartPainter extends CustomPainter {
   final Color lineColor;
   final Color dotColor;
   final Gradient areaGradient;
+  final bool showDots;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -172,6 +183,7 @@ class WeightLineChartPainter extends CustomPainter {
         ..color = lineColor,
     );
 
+    if (!showDots) return;
     final fillPaint = Paint()..color = dotColor;
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
@@ -184,7 +196,7 @@ class WeightLineChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(WeightLineChartPainter oldDelegate) =>
+  bool shouldRepaint(AppLineChartPainter oldDelegate) =>
       oldDelegate.samples != samples ||
       oldDelegate.minValue != minValue ||
       oldDelegate.maxValue != maxValue ||
@@ -193,5 +205,6 @@ class WeightLineChartPainter extends CustomPainter {
       oldDelegate.gridColor != gridColor ||
       oldDelegate.lineColor != lineColor ||
       oldDelegate.dotColor != dotColor ||
-      oldDelegate.areaGradient != areaGradient;
+      oldDelegate.areaGradient != areaGradient ||
+      oldDelegate.showDots != showDots;
 }

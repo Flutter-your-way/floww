@@ -7,19 +7,23 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
-import 'package:floww/config/utils/haptics/haptic_manager.dart';
 import 'package:floww/config/widgets/animations/app_pop_reveal.dart';
 import 'package:floww/core/nutrition/models/scanned_food.dart';
 import 'package:floww/core/nutrition/models/meal_details_args.dart';
 import 'package:floww/core/nutrition/models/meal_type.dart';
-import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
+import 'package:floww/core/nutrition/services/nutrition_goal_service.dart';
+import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/nutrition/view_models/nutrition_view_model.dart';
+import 'package:floww/core/nutrition/view_models/weekly_report_view_model.dart';
+import 'package:floww/core/nutrition/widgets/weekly_summary_card.dart';
 import 'package:floww/core/nutrition/views/food_scan_result_sheet.dart';
 import 'package:floww/core/nutrition/views/log_food_sheet.dart';
 import 'package:floww/core/nutrition/views/macronutrients_sheet.dart';
 import 'package:floww/core/nutrition/views/micronutrient_sources_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_date_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
+import 'package:floww/config/widgets/sheets/app_option_sheet.dart';
+import 'package:floww/core/nutrition/views/food_log_history_view.dart';
 import 'package:floww/core/nutrition/views/water_intake_sheet.dart';
 import 'package:floww/core/nutrition/widgets/calorie_summary_card.dart';
 import 'package:floww/core/nutrition/widgets/daily_goal_card.dart';
@@ -29,14 +33,14 @@ import 'package:floww/core/nutrition/widgets/flow_points_card.dart';
 import 'package:floww/core/nutrition/widgets/macronutrients_card.dart';
 import 'package:floww/core/nutrition/widgets/meal_breakdown_card.dart';
 import 'package:floww/core/nutrition/widgets/micronutrient_tiles.dart';
+import 'package:floww/core/nutrition/widgets/micronutrients_card.dart';
+import 'package:floww/core/nutrition/widgets/nutrition_link_card.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_action_buttons.dart';
 import 'package:floww/config/widgets/cards/app_empty_state_card.dart';
 import 'package:floww/config/widgets/effects/luminosity_layer.dart';
 import 'package:floww/config/widgets/headers/screen_date_header.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
-import 'package:floww/core/nutrition/widgets/recent_food_logs_section.dart';
 import 'package:floww/core/nutrition/widgets/start_tracking_card.dart';
-import 'package:floww/core/nutrition/widgets/weekly_report_card.dart';
 import 'package:floww/navigation/app_router.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
@@ -85,13 +89,34 @@ class NutritionView extends StatelessWidget {
     );
   }
 
-  void _openRecentFood(
+  void _openWater(BuildContext context, NutritionViewModel viewModel) {
+    WaterIntakeSheet.show(
+      context,
+      date: viewModel.selectedDate,
+      goal: viewModel.goal,
+    );
+  }
+
+  Future<void> _editMealsPerDay(
     BuildContext context,
     NutritionViewModel viewModel,
-    RecentFoodItem item,
-  ) {
-    HapticManager.light();
-    _logFood(context, viewModel, item.meal, item.name);
+  ) async {
+    final picked = await AppOptionSheet.show<int>(
+      context,
+      title: 'Meals per day',
+      icon: Icons.restaurant_rounded,
+      options: [
+        for (final option in viewModel.mealCountOptions)
+          AppSheetOption(
+            icon: option.isSelected
+                ? Icons.check_circle_rounded
+                : Icons.circle_outlined,
+            label: option.label,
+            value: option.count,
+          ),
+      ],
+    );
+    if (picked != null) await viewModel.setMealsPerDay(picked);
   }
 
   void _openMeal(NutritionViewModel viewModel, MealType meal) {
@@ -153,7 +178,27 @@ class NutritionView extends StatelessWidget {
                           onPickDate: () => _pickDate(context, viewModel),
                         ),
                       ),
-                      SizedBox(height: AppSpacing.xl4),
+                      SizedBox(height: AppSpacing.xl),
+                      ChangeNotifierProvider(
+                        key: ValueKey(viewModel.weekRangeLabel),
+                        create: (_) => WeeklyReportViewModel(
+                          NutritionLogService(),
+                          viewModel.selectedDate,
+                          NutritionGoalService(),
+                        ),
+                        child: Consumer<WeeklyReportViewModel>(
+                          builder: (context, weekly, child) =>
+                              WeeklySummaryCard(
+                                summary: weekly.summaryLabel,
+                                statuses: weekly.compactDayStatuses,
+                                onTap: () => NavigationService.instance.push(
+                                  AppRouter.weeklyNutritionReport,
+                                  arguments: viewModel.selectedDate,
+                                ),
+                              ),
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.xl),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -242,14 +287,26 @@ class NutritionView extends StatelessWidget {
                                 ),
                                 AppPopReveal(
                                   trigger: revealTrigger,
-                                  child:
-                                      viewModel.showDetails &&
-                                          viewModel.showStartTracking
+                                  child: viewModel.showDetails
                                       ? Padding(
                                           padding: EdgeInsets.only(
                                             bottom: AppSpacing.lg,
                                           ),
-                                          child: const StartTrackingCard(),
+                                          child: GuideTarget(
+                                            id: GuideTargetId.nutritionCalories,
+                                            child: CalorieSummaryCard(
+                                              goalValue:
+                                                  viewModel.calorieGoalLabel,
+                                              remainingValue: viewModel
+                                                  .caloriesRemainingLabel,
+                                              consumedValue: viewModel
+                                                  .caloriesConsumedLabel,
+                                              shareLabel:
+                                                  viewModel.calorieShareLabel,
+                                              progress:
+                                                  viewModel.calorieProgress,
+                                            ),
+                                          ),
                                         )
                                       : null,
                                 ),
@@ -279,53 +336,6 @@ class NutritionView extends StatelessWidget {
                                 ),
                                 AppPopReveal(
                                   trigger: revealTrigger,
-                                  child:
-                                      viewModel.showDetails &&
-                                          viewModel.showRecentFoods
-                                      ? Padding(
-                                          padding: EdgeInsets.only(
-                                            bottom: AppSpacing.lg,
-                                          ),
-                                          child: RecentFoodLogsSection(
-                                            items: viewModel.recentFoods,
-                                            onTap: (item) => _openRecentFood(
-                                              context,
-                                              viewModel,
-                                              item,
-                                            ),
-                                            onViewAll: () =>
-                                                _logFood(context, viewModel),
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                                AppPopReveal(
-                                  trigger: revealTrigger,
-                                  child: viewModel.showDetails
-                                      ? Padding(
-                                          padding: EdgeInsets.only(
-                                            bottom: AppSpacing.lg,
-                                          ),
-                                          child: GuideTarget(
-                                            id: GuideTargetId.nutritionCalories,
-                                            child: CalorieSummaryCard(
-                                              goalValue:
-                                                  viewModel.calorieGoalLabel,
-                                              remainingValue: viewModel
-                                                  .caloriesRemainingLabel,
-                                              consumedValue: viewModel
-                                                  .caloriesConsumedLabel,
-                                              shareLabel:
-                                                  viewModel.calorieShareLabel,
-                                              progress:
-                                                  viewModel.calorieProgress,
-                                            ),
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                                AppPopReveal(
-                                  trigger: revealTrigger,
                                   child: viewModel.showDetails
                                       ? Padding(
                                           padding: EdgeInsets.only(
@@ -347,6 +357,19 @@ class NutritionView extends StatelessWidget {
                                 ),
                                 AppPopReveal(
                                   trigger: revealTrigger,
+                                  child:
+                                      viewModel.showDetails &&
+                                          viewModel.showStartTracking
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: const StartTrackingCard(),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
                                   child: viewModel.showDetails
                                       ? Padding(
                                           padding: EdgeInsets.only(
@@ -354,23 +377,19 @@ class NutritionView extends StatelessWidget {
                                           ),
                                           child: GuideTarget(
                                             id: GuideTargetId.nutritionMicros,
-                                            child: MicronutrientTiles(
+                                            child: MicronutrientsCard(
+                                              limits: viewModel.limitNutrients,
                                               items: viewModel.micronutrients,
-                                              onOpenWater: () =>
-                                                  WaterIntakeSheet.show(
-                                                    context,
-                                                    date:
-                                                        viewModel.selectedDate,
-                                                    goal: viewModel.goal,
-                                                  ),
-                                              onAddWater: viewModel.canLog
-                                                  ? () => WaterIntakeSheet.show(
-                                                      context,
-                                                      date: viewModel
-                                                          .selectedDate,
-                                                      goal: viewModel.goal,
-                                                    )
-                                                  : null,
+                                              extendedItems: viewModel
+                                                  .extendedMicronutrients,
+                                              showExtended: viewModel
+                                                  .showAllMicronutrients,
+                                              toggleLabel: viewModel
+                                                  .micronutrientsToggleLabel,
+                                              onToggle: viewModel
+                                                  .toggleMicronutrients,
+                                              note:
+                                                  viewModel.micronutrientsNote,
                                               onOpenNutrient: (kind) =>
                                                   MicronutrientSourcesSheet.show(
                                                     context,
@@ -389,10 +408,38 @@ class NutritionView extends StatelessWidget {
                                           padding: EdgeInsets.only(
                                             bottom: AppSpacing.lg,
                                           ),
+                                          child: MicronutrientTile(
+                                            item: viewModel.water,
+                                            onTap: () =>
+                                                _openWater(context, viewModel),
+                                            onAdd: viewModel.canLog
+                                                ? () => _openWater(
+                                                    context,
+                                                    viewModel,
+                                                  )
+                                                : null,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: viewModel.showDetails
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
                                           child: GuideTarget(
                                             id: GuideTargetId.nutritionMeals,
                                             child: MealBreakdownCard(
                                               items: viewModel.meals,
+                                              mealsPerDayLabel:
+                                                  viewModel.mealsPerDayLabel,
+                                              onEditMeals: () =>
+                                                  _editMealsPerDay(
+                                                    context,
+                                                    viewModel,
+                                                  ),
                                               onOpenMeal: (meal) =>
                                                   _openMeal(viewModel, meal),
                                               onAddToMeal: viewModel.canLog
@@ -412,6 +459,23 @@ class NutritionView extends StatelessWidget {
                                           ),
                                         )
                                       : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: AppSpacing.lg,
+                                    ),
+                                    child: NutritionLinkCard(
+                                      title: FoodLogHistoryView.pageTitle,
+                                      subtitle:
+                                          'Your recent foods · re-log '
+                                          'in one tap',
+                                      icon: Icons.history_rounded,
+                                      onTap: () => NavigationService.instance
+                                          .push(AppRouter.foodLogHistory),
+                                    ),
+                                  ),
                                 ),
                                 AppPopReveal(
                                   trigger: revealTrigger,
@@ -436,17 +500,6 @@ class NutritionView extends StatelessWidget {
                                           ),
                                         )
                                       : null,
-                                ),
-                                AppPopReveal(
-                                  trigger: revealTrigger,
-                                  child: WeeklyReportCard(
-                                    rangeLabel: viewModel.weekRangeLabel,
-                                    onTap: () =>
-                                        NavigationService.instance.push(
-                                          AppRouter.weeklyNutritionReport,
-                                          arguments: viewModel.selectedDate,
-                                        ),
-                                  ),
                                 ),
                               ],
                             ),

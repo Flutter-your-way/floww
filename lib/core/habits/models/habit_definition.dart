@@ -19,6 +19,7 @@ class HabitDefinition {
     this.archivedAt,
     this.description,
     this.about,
+    this.quitDays,
   });
 
   factory HabitDefinition.fromJson(Map<String, dynamic> json) {
@@ -45,6 +46,7 @@ class HabitDefinition {
           : AppDateUtils.dateOnly(DateTime.parse(archivedAt).toLocal()),
       description: json['description'] as String?,
       about: json['about'] as String?,
+      quitDays: (json['quitDays'] as num?)?.toInt(),
     );
   }
 
@@ -97,6 +99,9 @@ class HabitDefinition {
   final DateTime? archivedAt;
   final String? description;
   final String? about;
+  final int? quitDays;
+
+  bool get isQuit => quitDays != null;
 
   bool get isArchived => archivedAt != null;
 
@@ -119,6 +124,7 @@ class HabitDefinition {
     source: source,
     isDue: isDue,
     description: description,
+    quitDays: quitDays,
   );
 
   Map<String, dynamic> toJson() => {
@@ -136,5 +142,6 @@ class HabitDefinition {
     'archivedAt': archivedAt == null ? null : AppDateUtils.isoKey(archivedAt!),
     'description': description,
     'about': about,
+    'quitDays': quitDays,
   };
 }

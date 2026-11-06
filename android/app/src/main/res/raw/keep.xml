@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/floww_chime,@raw/floww_ripple,@raw/floww_pulse,@raw/floww_bell" />

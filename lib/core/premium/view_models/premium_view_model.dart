@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 
 import 'package:floww/config/constants/app_motion.dart';
-import 'package:floww/config/constants/app_subscription.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/currency_formatter.dart';
 import 'package:floww/config/utils/share/share_service.dart';
@@ -118,14 +117,16 @@ class PremiumViewModel extends ChangeNotifier {
   String get planSummaryLabel {
     final plan = subscription;
     if (plan == null) return 'Free plan';
-    return isActive
-        ? '${plan.planLabel} · $subscriptionPriceLabel'
-        : 'Access until · ${AppDateUtils.monthDayYear(plan.renewsOn)}';
+    final price = subscriptionPriceLabel;
+    if (isActive) {
+      return price.isEmpty ? plan.planLabel : '${plan.planLabel} · $price';
+    }
+    return 'Access until · ${AppDateUtils.monthDayYear(plan.renewsOn)}';
   }
 
   String get subscriptionPriceLabel {
     final plan = subscription;
-    if (plan == null) return '';
+    if (plan == null || plan.price <= 0) return '';
     return '${CurrencyFormatter.forCurrency(plan.price, plan.currency)}'
         '${plan.periodLabel}';
   }
@@ -141,8 +142,9 @@ class PremiumViewModel extends ChangeNotifier {
     if (!isActive) {
       return 'Ends on · ${AppDateUtils.monthDayYear(plan.renewsOn)}';
     }
-    return 'Renews on · ${AppDateUtils.monthDayYear(plan.renewsOn)} '
-        '· $subscriptionPriceLabel';
+    final renews = 'Renews on · ${AppDateUtils.monthDayYear(plan.renewsOn)}';
+    final price = subscriptionPriceLabel;
+    return price.isEmpty ? renews : '$renews · $price';
   }
 
   bool get showsRenewal => subscription?.hasAccess(DateTime.now()) ?? false;
@@ -170,7 +172,7 @@ class PremiumViewModel extends ChangeNotifier {
   bool get hasPayments => paymentsSummary != null;
 
   String get _paymentsCurrency =>
-      _snapshot.invoices.firstOrNull?.currency ?? AppSubscription.currency;
+      _snapshot.invoices.firstOrNull?.currency ?? '';
 
   String get totalPaidLabel => CurrencyFormatter.forCurrency(
     paymentsSummary?.totalPaid ?? 0,

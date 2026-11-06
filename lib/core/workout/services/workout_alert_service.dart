@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'package:floww/config/utils/notifications/notification_tones.dart';
 import 'package:floww/config/utils/notifications/local_notifications.dart';
 
 class WorkoutAlertService {
@@ -36,19 +37,11 @@ class WorkoutAlertService {
         title: _title,
         body: nextLabel,
         scheduledDate: tz.TZDateTime.from(endsAt.toUtc(), tz.UTC),
-        notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channelId,
-            _channelName,
-            channelDescription: _channelDescription,
-            importance: Importance.high,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentSound: true,
-            interruptionLevel: InterruptionLevel.timeSensitive,
-          ),
+        notificationDetails: NotificationTones.details(
+          channelId: _channelId,
+          channelName: _channelName,
+          channelDescription: _channelDescription,
+          interruptionLevel: InterruptionLevel.timeSensitive,
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );

@@ -17,6 +17,7 @@ class WaveActionPromptCard extends StatelessWidget {
     required this.isResolved,
     required this.onConfirm,
     required this.onCancel,
+    this.isDestructive = true,
   });
 
   final String title;
@@ -26,15 +27,19 @@ class WaveActionPromptCard extends StatelessWidget {
   final bool isResolved;
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
+  final bool isDestructive;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return WaveCard(
-      headerColor: context.colors.destructiveTint,
+      headerColor: isDestructive ? colors.destructiveTint : colors.tint,
+      borderColor: isDestructive ? null : colors.primary,
       header: Text(
         title,
         style: AppTypography.bodyLargeBold.copyWith(
-          color: context.colors.destructiveBorder,
+          color: isDestructive ? colors.destructiveBorder : colors.primary,
         ),
       ),
       sections: [

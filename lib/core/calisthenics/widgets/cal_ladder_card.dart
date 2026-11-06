@@ -6,12 +6,14 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/widgets/images/app_photo_tile.dart';
 import 'package:floww/core/calisthenics/models/cal_library_view_data.dart';
 
 class CalLadderCard extends StatelessWidget {
   const CalLadderCard({super.key, required this.ladder, required this.onOpen});
 
   static const double _levelWidth = AppSizes.s28;
+  static const double _imageSize = AppSizes.s48;
 
   final CalLadderItem ladder;
   final ValueChanged<String> onOpen;
@@ -55,6 +57,14 @@ class CalLadderCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  AppPhotoTile(
+                    url: step.imageUrl,
+                    fallbackIcon: Icons.sports_gymnastics,
+                    size: _imageSize,
+                    radius: AppRadius.sm,
+                    borderColor: step.isYourLevel ? colors.primary : null,
+                  ),
+                  SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Text(
                       step.name,

@@ -96,7 +96,6 @@ class HabitProgressRow extends StatelessWidget {
                 AppProgressBar(
                   progress: item.progress,
                   height: AppSizes.s8,
-                  color: colors.primaryAlt,
                   trackColor: colors.borderSubtle,
                   animated: true,
                 ),

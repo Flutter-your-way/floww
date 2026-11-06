@@ -11,8 +11,6 @@ class AppProgressBar extends StatelessWidget {
   const AppProgressBar({
     super.key,
     required this.progress,
-    this.color,
-    this.gradient,
     this.trackColor,
     this.height = AppSizes.s6,
     this.glowColor,
@@ -21,8 +19,6 @@ class AppProgressBar extends StatelessWidget {
   });
 
   final double progress;
-  final Color? color;
-  final Gradient? gradient;
   final Color? trackColor;
   final double height;
   final Color? glowColor;
@@ -35,8 +31,6 @@ class AppProgressBar extends StatelessWidget {
       return _AnimatedProgressBar(
         progress: progress.clamp(0.0, 1.0),
         delay: animationDelay,
-        color: color,
-        gradient: gradient,
         trackColor: trackColor,
         height: height,
         glowColor: glowColor,
@@ -44,7 +38,6 @@ class AppProgressBar extends StatelessWidget {
     }
 
     final radius = BorderRadius.circular(AppRadius.full);
-    final fillGradient = gradient;
     final fillGlowColor = glowColor;
 
     return Container(
@@ -60,10 +53,7 @@ class AppProgressBar extends StatelessWidget {
           heightFactor: 1,
           child: DecoratedBox(
             decoration: AppShapes.decoration(
-              color: fillGradient == null
-                  ? color ?? context.colors.primary
-                  : null,
-              gradient: fillGradient,
+              gradient: context.gradients.progressFill,
               borderRadius: radius,
               shadows: fillGlowColor == null
                   ? null
@@ -88,8 +78,6 @@ class _AnimatedProgressBar extends StatefulWidget {
     required this.progress,
     required this.delay,
     required this.height,
-    this.color,
-    this.gradient,
     this.trackColor,
     this.glowColor,
   });
@@ -97,8 +85,6 @@ class _AnimatedProgressBar extends StatefulWidget {
   final double progress;
   final Duration delay;
   final double height;
-  final Color? color;
-  final Gradient? gradient;
   final Color? trackColor;
   final Color? glowColor;
 
@@ -157,8 +143,6 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
       animation: _value,
       builder: (context, child) => AppProgressBar(
         progress: _value.value,
-        color: widget.color,
-        gradient: widget.gradient,
         trackColor: widget.trackColor,
         height: widget.height,
         glowColor: widget.glowColor,

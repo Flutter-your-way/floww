@@ -21,26 +21,11 @@ class MacroSegmentBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: _MacroSegment(
-              gradient: context.gradients.macroProtein,
-              filled: hasData,
-            ),
-          ),
+          Expanded(child: _MacroSegment(filled: hasData)),
           SizedBox(width: AppSpacing.xxs),
-          Expanded(
-            child: _MacroSegment(
-              gradient: context.gradients.macroCarbs,
-              filled: hasData,
-            ),
-          ),
+          Expanded(child: _MacroSegment(filled: hasData)),
           SizedBox(width: AppSpacing.xxs),
-          Expanded(
-            child: _MacroSegment(
-              gradient: context.gradients.macroFats,
-              filled: hasData,
-            ),
-          ),
+          Expanded(child: _MacroSegment(filled: hasData)),
         ],
       ),
     );
@@ -48,16 +33,15 @@ class MacroSegmentBar extends StatelessWidget {
 }
 
 class _MacroSegment extends StatelessWidget {
-  const _MacroSegment({required this.gradient, required this.filled});
+  const _MacroSegment({required this.filled});
 
-  final Gradient gradient;
   final bool filled;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: AppShapes.decoration(
-        gradient: filled ? gradient : null,
+        gradient: filled ? context.gradients.progressFill : null,
         color: filled ? null : context.colors.backgroundSurface,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),

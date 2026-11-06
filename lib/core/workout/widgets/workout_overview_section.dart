@@ -5,6 +5,8 @@ import 'package:floww/config/widgets/animations/app_pop_reveal.dart';
 import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/widgets/premium_gate.dart';
 import 'package:floww/core/premium/widgets/premium_locked_card.dart';
+import 'package:floww/core/recovery/models/muscle_body_side.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
 import 'package:floww/core/workout/widgets/heart_rate_card.dart';
 import 'package:floww/core/workout/widgets/muscle_focus_card.dart';
@@ -16,6 +18,7 @@ class WorkoutOverviewSection extends StatelessWidget {
   const WorkoutOverviewSection({
     super.key,
     required this.overview,
+    required this.muscleMapOf,
     this.showSummary = true,
     this.revealTrigger,
     this.onViewAnatomy,
@@ -25,6 +28,7 @@ class WorkoutOverviewSection extends StatelessWidget {
   });
 
   final WorkoutOverviewItem? overview;
+  final MuscleMapTemplate? Function(MuscleBodySide side) muscleMapOf;
   final bool showSummary;
   final Object? revealTrigger;
   final VoidCallback? onViewAnatomy;
@@ -84,6 +88,8 @@ class WorkoutOverviewSection extends StatelessWidget {
                   padding: spacing,
                   child: MuscleFocusCard(
                     muscles: overview.muscles,
+                    targets: overview.targets,
+                    templateOf: muscleMapOf,
                     onViewAnatomy: onViewAnatomy,
                   ),
                 )

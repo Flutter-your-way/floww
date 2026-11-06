@@ -53,7 +53,6 @@ class HabitStatusIcon extends StatelessWidget {
           progress: progress,
           size: size,
           strokeWidth: strokeWidth,
-          color: colors.primaryDeep,
           trackColor: colors.borderSubtle,
           child: const SizedBox.shrink(),
         );

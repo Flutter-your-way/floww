@@ -62,7 +62,7 @@ class FlowPointsCard extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      'Flow Points',
+                      'FLOWW Points',
                       style: AppTypography.labelSmallMedium.copyWith(
                         color: colors.primary,
                       ),

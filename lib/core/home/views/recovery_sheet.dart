@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/cards/app_bullet_card.dart';
 import 'package:floww/config/widgets/cards/app_icon_tile.dart';
+import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
 import 'package:floww/config/widgets/stats/app_stat_column.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
+import 'package:floww/core/home/services/recovery_explainer.dart';
 import 'package:floww/core/home/widgets/recovery_metric_row.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
@@ -24,6 +28,17 @@ class RecoverySheet extends StatelessWidget {
       context: context,
       builder: (_) => RecoverySheet(detail: detail),
     );
+  }
+
+  void _openInfo(BuildContext context, RecoveryInfo info) {
+    HapticManager.light();
+    AppInfoSheet.show(context, title: info.title, message: info.message);
+  }
+
+  VoidCallback? _infoTapOf(BuildContext context, RecoveryMetric metric) {
+    final info = RecoveryExplainer.infoFor(metric.accent);
+    if (info == null) return null;
+    return () => _openInfo(context, info);
   }
 
   @override
@@ -54,9 +69,19 @@ class RecoverySheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            Text(
+              RecoveryExplainer.summary,
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
+            SizedBox(height: AppSpacing.xl),
             for (var i = 0; i < metrics.length; i++) ...[
               if (i > 0) SizedBox(height: AppSpacing.xl),
-              RecoveryMetricRow(metric: metrics[i]),
+              RecoveryMetricRow(
+                metric: metrics[i],
+                onInfoTap: _infoTapOf(context, metrics[i]),
+              ),
             ],
             if (!detail.hasData) ...[
               SizedBox(height: AppSpacing.xl),
@@ -67,6 +92,13 @@ class RecoverySheet extends StatelessWidget {
                 ),
               ),
             ],
+            SizedBox(height: AppSpacing.xl2),
+            AppBulletCard(
+              title: RecoveryExplainer.howItWorksTitle,
+              icon: Icons.calculate_outlined,
+              items: RecoveryExplainer.points,
+              footnote: RecoveryExplainer.levelsNote,
+            ),
           ],
         ),
       ),

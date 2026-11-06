@@ -58,6 +58,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
       schedule: _viewModel.initialSchedule,
       source: _viewModel.initialSource,
       reminderMinutes: _viewModel.initialReminderMinutes,
+      quitDays: _viewModel.initialQuitDays,
     )..addListener(_onRulesChanged);
   }
 
@@ -102,20 +103,20 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   }
 
   void _submit() {
-    final target = _targetValue;
-    if (!_canSubmit || target == null) return;
+    if (!_canSubmit) return;
     HapticManager.success();
     final description = _description.text.trim();
     _viewModel.saveHabit(
       HabitDraft(
         title: _name.text.trim(),
-        target: target,
+        target: _rules.resolveTarget(_targetValue),
         metric: _rules.metric,
         schedule: _rules.schedule,
         goalType: _rules.goalType,
         source: _rules.source,
         reminder: _rules.reminder,
         description: description.isEmpty ? null : description,
+        quitDays: _rules.quitDays,
       ),
     );
     Navigator.of(context).maybePop();
@@ -151,19 +152,21 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 hint: _viewModel.descriptionHint,
                 onChanged: (value) => setState(() {}),
               ),
-              SizedBox(height: AppSpacing.xl),
-              AppSheetFieldLabel(label: _viewModel.targetLabel),
-              SizedBox(height: AppSpacing.md),
-              HabitTextField(
-                controller: _target,
-                hint: _viewModel.targetHint,
-                isNumeric: true,
-                onChanged: (value) => setState(() {}),
-                trailing: HabitMetricSelector(
-                  label: HabitLabels.unit(_rules.metric),
-                  onPressed: _openMetrics,
+              if (_rules.showsTarget) ...[
+                SizedBox(height: AppSpacing.xl),
+                AppSheetFieldLabel(label: _viewModel.targetLabel),
+                SizedBox(height: AppSpacing.md),
+                HabitTextField(
+                  controller: _target,
+                  hint: _viewModel.targetHint,
+                  isNumeric: true,
+                  onChanged: (value) => setState(() {}),
+                  trailing: HabitMetricSelector(
+                    label: HabitLabels.unit(_rules.metric),
+                    onPressed: _openMetrics,
+                  ),
                 ),
-              ),
+              ],
               SizedBox(height: AppSpacing.xl),
               ChangeNotifierProvider.value(
                 value: _rules,

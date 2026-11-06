@@ -10,7 +10,7 @@ import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/chips/app_status_chip.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/progress/models/strength_view_data.dart';
-import 'package:floww/core/progress/widgets/weight_line_chart.dart';
+import 'package:floww/config/widgets/charts/app_line_chart.dart';
 
 class StrengthMuscleCard extends StatelessWidget {
   const StrengthMuscleCard({
@@ -153,7 +153,7 @@ class _StrengthDetail extends StatelessWidget {
         ),
         if (chart != null) ...[
           SizedBox(height: AppSpacing.xl),
-          WeightLineChart(
+          AppLineChart(
             samples: chart.samples,
             axisLabels: chart.axisLabels,
             dateLabels: chart.dateLabels,

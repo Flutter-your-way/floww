@@ -5,8 +5,10 @@ import {usdaApiKey} from "../constants/secrets";
 import {
   FOOD_SEARCH_RESULT_LIMIT,
   USDA_DATA_TYPES,
+  USDA_MINERAL_IDS,
   USDA_NUTRIENT_IDS,
   USDA_PAGE_SIZE,
+  USDA_VITAMIN_IDS,
   USDA_SEARCH_URL,
   USDA_SERVING,
   USDA_SERVING_WEIGHT_G,
@@ -31,6 +33,8 @@ interface UsdaSearchResponse {
 }
 
 const KCAL_UNIT = "KCAL";
+const MICRO_DIGITS = 2;
+export const USDA_PROVIDER = "usda";
 
 const nutrientValue = (
   nutrients: UsdaNutrient[],
@@ -57,21 +61,51 @@ const toCatalogFood = (food: UsdaFood): CatalogFood | null => {
   if (calories === null) return null;
 
   const amountOf = (ids: readonly number[]) =>
-    toAmount(nutrientValue(nutrients, ids) ?? 0);
+    toAmount(nutrientValue(nutrients, ids) ?? 0, MICRO_DIGITS);
 
-  return {
-    id: `usda_${food.fdcId}`,
-    name,
-    serving: USDA_SERVING,
-    weightG: USDA_SERVING_WEIGHT_G,
+  const amountsOf = <K extends string>(
+    ids: Record<K, readonly number[]>,
+  ): Record<K, number> => {
+    const values = {} as Record<K, number>;
+    for (const key of Object.keys(ids) as K[]) values[key] = amountOf(ids[key]);
+    return values;
+  };
+
+  const macros = {
     calories: toAmount(calories, 0),
     proteinG: amountOf(USDA_NUTRIENT_IDS.proteinG),
     carbsG: amountOf(USDA_NUTRIENT_IDS.carbsG),
     fatG: amountOf(USDA_NUTRIENT_IDS.fatG),
     fiberG: amountOf(USDA_NUTRIENT_IDS.fiberG),
     sugarG: amountOf(USDA_NUTRIENT_IDS.sugarG),
-    sodiumMg: amountOf(USDA_NUTRIENT_IDS.sodiumMg),
+    addedSugarG: amountOf(USDA_NUTRIENT_IDS.addedSugarG),
+    saturatedFatG: amountOf(USDA_NUTRIENT_IDS.saturatedFatG),
+    transFatG: amountOf(USDA_NUTRIENT_IDS.transFatG),
+    monounsaturatedFatG: amountOf(USDA_NUTRIENT_IDS.monounsaturatedFatG),
+    polyunsaturatedFatG: amountOf(USDA_NUTRIENT_IDS.polyunsaturatedFatG),
+    cholesterolMg: amountOf(USDA_NUTRIENT_IDS.cholesterolMg),
     waterMl: amountOf(USDA_NUTRIENT_IDS.waterG),
+  };
+
+  return {
+    id: `usda_${food.fdcId}`,
+    name,
+    serving: USDA_SERVING,
+    weightG: USDA_SERVING_WEIGHT_G,
+    calories: macros.calories,
+    proteinG: macros.proteinG,
+    carbsG: macros.carbsG,
+    fatG: macros.fatG,
+    fiberG: macros.fiberG,
+    sugarG: macros.sugarG,
+    sodiumMg: amountOf(USDA_NUTRIENT_IDS.sodiumMg),
+    waterMl: macros.waterMl,
+    source: USDA_PROVIDER,
+    nutrition: {
+      macros,
+      vitamins: amountsOf(USDA_VITAMIN_IDS),
+      minerals: amountsOf(USDA_MINERAL_IDS),
+    },
   };
 };
 
