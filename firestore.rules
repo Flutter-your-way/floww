@@ -11,6 +11,7 @@ service cloud.firestore {
         'isPremium',
         'planName',
         'subscription',
+        'adminAccess',
         'onboardingCompleted',
         'answersSubmitted',
         'deletionRequestedAt'
@@ -22,6 +23,7 @@ service cloud.firestore {
           'isPremium',
           'planName',
           'subscription',
+          'adminAccess',
           'deletionRequestedAt'
         ])
         && data.get('onboardingCompleted', false) == false

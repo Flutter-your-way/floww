@@ -287,6 +287,19 @@ class NutritionView extends StatelessWidget {
                                 ),
                                 AppPopReveal(
                                   trigger: revealTrigger,
+                                  child:
+                                      viewModel.showDetails &&
+                                          viewModel.showStartTracking
+                                      ? Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: AppSpacing.lg,
+                                          ),
+                                          child: const StartTrackingCard(),
+                                        )
+                                      : null,
+                                ),
+                                AppPopReveal(
+                                  trigger: revealTrigger,
                                   child: viewModel.showDetails
                                       ? Padding(
                                           padding: EdgeInsets.only(
@@ -352,19 +365,6 @@ class NutritionView extends StatelessWidget {
                                                   ),
                                             ),
                                           ),
-                                        )
-                                      : null,
-                                ),
-                                AppPopReveal(
-                                  trigger: revealTrigger,
-                                  child:
-                                      viewModel.showDetails &&
-                                          viewModel.showStartTracking
-                                      ? Padding(
-                                          padding: EdgeInsets.only(
-                                            bottom: AppSpacing.lg,
-                                          ),
-                                          child: const StartTrackingCard(),
                                         )
                                       : null,
                                 ),

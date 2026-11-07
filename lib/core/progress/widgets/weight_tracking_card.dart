@@ -89,6 +89,7 @@ class WeightTrackingCard extends StatelessWidget {
               dateLabels: viewModel.weightDateLabels,
               minValue: viewModel.weightAxisMin,
               maxValue: viewModel.weightAxisMax,
+              pointLabels: viewModel.weightPointLabels,
             ),
           ],
         ],

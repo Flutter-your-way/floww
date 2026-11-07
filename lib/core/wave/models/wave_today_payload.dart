@@ -18,6 +18,7 @@ class WaveTodayPayload {
     final snapshot = context.snapshot;
     final nutrition = context.nutrition;
     final workout = context.workout;
+    final catchUp = context.todayCatchUp;
     final recovery = snapshot.recovery;
     final muscles = snapshot.muscleRecovery;
     final pending = snapshot.habits.where((habit) => !habit.completed);
@@ -27,15 +28,21 @@ class WaveTodayPayload {
       'mode': _label(snapshot.flowMode.mode.name),
       'modeOverride': context.flowModeOverride != null,
       'streakDays': snapshot.streakCount,
-      'workoutTitle': _label(workout?.title ?? '', max: maxTitleLength),
+      'workoutTitle': _label(
+        catchUp != null ? catchUp.name : workout?.title ?? '',
+        max: maxTitleLength,
+      ),
       'workoutDetail': _label(
-        workout == null
+        catchUp != null
+            ? _catchUpDetailOf(catchUp)
+            : workout == null
             ? ''
             : '${workout.durationLabel} · ${workout.intensityLabel}',
         max: maxTitleLength,
       ),
       'planExercises': _list(
-        context.plan?.exercises.map((entry) => entry.name) ?? const [],
+        (context.plan ?? catchUp)?.exercises.map((entry) => entry.name) ??
+            const [],
       ),
       'calories': nutrition.totalCalories,
       'calorieGoal': context.goal.calories,
@@ -114,8 +121,15 @@ class WaveTodayPayload {
         '· ${entry.targetReps} reps @ $load';
   }
 
+  static const String catchUpStatus = 'catch-up, not started';
+
+  static String _catchUpDetailOf(WorkoutPlanEntity plan) =>
+      'catch-up for ${AppDateUtils.weekdayName(plan.date)} '
+      '${AppDateUtils.dateKey(plan.date)} · ${plan.durationMinutes}m';
+
   static String _workoutStatusOf(WaveContext context) {
     if (context.hasActiveWorkout) return 'in progress';
+    if (context.todayCatchUp != null) return catchUpStatus;
     if (context.snapshot.completedWorkout != null) return 'completed today';
     if (context.plan == null) return 'no session planned';
     return 'planned, not started';

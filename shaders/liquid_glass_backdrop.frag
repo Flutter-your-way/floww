@@ -71,16 +71,31 @@ vec4 frost(vec2 q, vec2 origin, float r) {
     return tex(q, origin);
   }
   vec4 acc = tex(q, origin) * 0.12;
-  float wsum = 0.12;
-  for (int i = 0; i < 24; i++) {
-    float fi = float(i);
-    float a = fi * 2.39996323;
-    float rr = r * sqrt((fi + 0.5) / 24.0);
-    float w = exp(-2.0 * (rr * rr) / (r * r));
-    acc += tex(q + vec2(cos(a), sin(a)) * rr, origin) * w;
-    wsum += w;
-  }
-  return acc / wsum;
+  acc += tex(q + vec2(0.14433757, 0.00000000) * r, origin) * 0.95918946;
+  acc += tex(q + vec2(-0.18434222, 0.16887257) * r, origin) * 0.88249690;
+  acc += tex(q + vec2(0.02821653, -0.32151282) * r, origin) * 0.81193635;
+  acc += tex(q + vec2(0.23235143, 0.30306129) * r, origin) * 0.74701750;
+  acc += tex(q + vec2(-0.42639345, -0.07542300) * r, origin) * 0.68728928;
+  acc += tex(q + vec2(0.40391710, -0.25693899) * r, origin) * 0.63233666;
+  acc += tex(q + vec2(-0.13510236, 0.50257406) * r, origin) * 0.58177781;
+  acc += tex(q + vec2(-0.25765486, -0.49609875) * r, origin) * 0.53526143;
+  acc += tex(q + vec2(0.55900798, 0.20414882) * r, origin) * 0.49246429;
+  acc += tex(q + vec2(-0.58155466, 0.24005731) * r, origin) * 0.45308902;
+  acc += tex(q + vec2(0.28034778, -0.59908691) * r, origin) * 0.41686202;
+  acc += tex(q + vec2(0.20716987, 0.66049020) * r, origin) * 0.38353157;
+  acc += tex(q + vec2(-0.62441240, -0.36185975) * r, origin) * 0.35286608;
+  acc += tex(q + vec2(0.73250683, -0.16103957) * r, origin) * 0.32465247;
+  acc += tex(q + vec2(-0.44703752, 0.63586486) * r, origin) * 0.29869469;
+  acc += tex(q + vec2(-0.10327601, -0.79697390) * r, origin) * 0.27481238;
+  acc += tex(q + vec2(0.63401345, 0.53434721) * r, origin) * 0.25283960;
+  acc += tex(q + vec2(-0.85318337, 0.03528181) * r, origin) * 0.23262366;
+  acc += tex(q + vec2(0.62233178, -0.61930323) * r, origin) * 0.21402410;
+  acc += tex(q + vec2(-0.04163641, 0.90042568) * r, origin) * 0.19691168;
+  acc += tex(q + vec2(-0.59215068, -0.70959442) * r, origin) * 0.18116749;
+  acc += tex(q + vec2(0.93803206, 0.12621089) * r, origin) * 0.16668213;
+  acc += tex(q + vec2(-0.79479267, 0.55299603) * r, origin) * 0.15335497;
+  acc += tex(q + vec2(0.21718308, -0.96540053) * r, origin) * 0.14109338;
+  return acc * 0.09530186;
 }
 
 vec4 glassAt(vec2 q, vec2 origin) {
@@ -108,9 +123,11 @@ void main() {
   }
 
   float ps = max(uProfileScale, 0.01);
+  float g = clamp(uGlass, 0.0, 1.0);
   vec4 col = raw;
+  bool lensCovers = inLens >= 1.0 && g >= 0.002;
 
-  if (inBar > 0.0) {
+  if (inBar > 0.0 && !lensCovers) {
     vec2  nb = roundBoxNormal(p - uBar.xy, uBar.zw, uBarRadius);
     float eb = max(-dB, 0.0);
     float db = rimDisplacement(eb, nb, ps) * uBarRefraction;
@@ -118,7 +135,6 @@ void main() {
   }
 
   if (inLens > 0.0) {
-    float g = clamp(uGlass, 0.0, 1.0);
     vec2  nl = roundBoxNormal(p - uLens.xy, uLens.zw, uLensRadius);
     float el = max(-dL, 0.0);
     float dl = rimDisplacement(el, nl, ps) * uLensRefraction * g;

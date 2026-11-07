@@ -23,6 +23,7 @@ class WaveContext {
     this.activeSession,
     this.flowModeOverride,
     this.account = ProfileAccount.empty,
+    this.catchUp,
   });
 
   static const empty = WaveContext(
@@ -51,6 +52,9 @@ class WaveContext {
   final WorkoutSessionEntity? activeSession;
   final AppThemeMode? flowModeOverride;
   final ProfileAccount account;
+  final WorkoutPlanEntity? catchUp;
+
+  WorkoutPlanEntity? get todayCatchUp => plan == null ? catchUp : null;
 
   String get userName => snapshot.userName;
 

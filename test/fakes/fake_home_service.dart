@@ -20,13 +20,16 @@ class FakeHomeService implements HomeService {
     yield* _controller.stream;
   }
 
-  @override
   Future<void> saveDailyFlow(DailyFlowEntry entry) async {
     savedFlow.add(entry);
   }
 
   @override
-  Future<void> saveHabitDay(DateTime date, List<Habit> habits) async {
+  Future<void> saveHabitDay(
+    DateTime date,
+    List<Habit> habits, {
+    required Set<String> changedIds,
+  }) async {
     savedHabitDays.add(habits);
   }
 

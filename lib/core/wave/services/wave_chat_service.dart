@@ -78,6 +78,10 @@ class WaveChatService {
   late final DietPlanService _dietPlanService;
   late final WorkoutPlanService _planService;
 
+  static String _catchUpDetailOf(WorkoutPlanEntity plan) =>
+      'Catch-up for ${AppDateUtils.shortWeekday(plan.date)} · '
+      '${plan.durationMinutes}m';
+
   String greetingFor(DateTime now) {
     if (now.hour < 12) return 'Good morning';
     if (now.hour < 17) return 'Good afternoon';
@@ -93,8 +97,10 @@ class WaveChatService {
       userName: context.hasName ? context.userName : 'there',
       flowScore: context.flowScore,
       modeLabel: context.snapshot.flowMode.mode.name.toUpperCase(),
-      workoutTitle: workout?.title ?? 'Rest day',
-      workoutDetail: workout == null
+      workoutTitle: context.todayCatchUp?.name ?? workout?.title ?? 'Rest day',
+      workoutDetail: context.todayCatchUp != null
+          ? _catchUpDetailOf(context.todayCatchUp!)
+          : workout == null
           ? 'No session scheduled'
           : '${workout.durationLabel} · ${workout.intensityLabel}',
       calories: nutrition.calorieGoal,
@@ -105,6 +111,7 @@ class WaveChatService {
 
   List<WavePlanItem> planItemsOf(WaveContext context) {
     final workout = context.workout;
+    final catchUp = context.todayCatchUp;
     final nutrition = context.nutrition;
     final waterLeft = context.waterRemainingMl;
 
@@ -112,12 +119,16 @@ class WaveChatService {
       WavePlanItem(
         emoji: '💪',
         label: 'WORKOUT',
-        title: workout?.title ?? 'Rest & recover',
-        detail: workout == null
+        title: catchUp?.name ?? workout?.title ?? 'Rest & recover',
+        detail: catchUp != null
+            ? _catchUpDetailOf(catchUp)
+            : workout == null
             ? 'No session scheduled for today'
             : '${workout.durationLabel} · ${workout.intensityLabel}',
         actionLabel: context.hasActiveWorkout
             ? 'Resume Workout'
+            : catchUp != null
+            ? 'Start Catch-up'
             : workout == null
             ? 'Browse Workouts'
             : 'Start Workout',
@@ -451,15 +462,15 @@ class WaveChatService {
   }
 
   Future<String?> startWorkout(WaveContext context) async {
-    final plan = context.plan;
+    final plan = context.plan ?? context.todayCatchUp;
     if (plan == null) return null;
 
     final today = AppDateUtils.dateOnly(DateTime.now());
     final existing = await _sessionService.loadInProgressSession(today);
     if (existing != null) return existing.name;
 
-    final session = await _sessionService.startSession(plan);
-    await _planService.linkSession(today, session.id);
+    final session = await _sessionService.startSession(plan, on: today);
+    await _planService.linkSession(plan.date, session.id);
     return session.name;
   }
 

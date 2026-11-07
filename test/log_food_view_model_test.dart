@@ -7,6 +7,15 @@ import 'package:floww/core/nutrition/view_models/log_food_view_model.dart';
 
 import 'fakes/fake_nutrition_log_service.dart';
 
+extension on LogFoodViewModel {
+  Future<void> add(CatalogFood food) async {
+    if (!isAdded(food)) await savePortion(food, food);
+  }
+
+  Future<void> toggle(CatalogFood food) =>
+      isAdded(food) ? remove(food) : savePortion(food, food);
+}
+
 void main() {
   final date = DateTime(2026, 8, 3);
   final chicken = FoodCatalog.items.firstWhere(
@@ -95,10 +104,7 @@ void main() {
 
     expect(viewModel.results.map((food) => food.name), ['Greek Yogurt']);
     expect(viewModel.caloriesLabelOf(viewModel.results.first), '130 kcal');
-    expect(
-      viewModel.macrosLabelOf(chicken),
-      'P:31g · C:0g · F:3.6g',
-    );
+    expect(viewModel.macrosLabelOf(chicken), 'P:31g · C:0g · F:3.6g');
 
     viewModel.search('zzz');
     expect(viewModel.results, isEmpty);

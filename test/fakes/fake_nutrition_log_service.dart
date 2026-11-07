@@ -21,10 +21,14 @@ class FakeNutritionLogService implements NutritionLogService {
 
   NutritionLogs _between(DateTime from, DateTime to) => NutritionLogs(
     foods: foodLogs
-        .where((log) => !log.loggedAt.isBefore(from) && log.loggedAt.isBefore(to))
+        .where(
+          (log) => !log.loggedAt.isBefore(from) && log.loggedAt.isBefore(to),
+        )
         .toList(),
     waters: waterLogs
-        .where((log) => !log.loggedAt.isBefore(from) && log.loggedAt.isBefore(to))
+        .where(
+          (log) => !log.loggedAt.isBefore(from) && log.loggedAt.isBefore(to),
+        )
         .toList(),
   );
 
@@ -40,7 +44,7 @@ class FakeNutritionLogService implements NutritionLogService {
   }
 
   @override
-  Stream<List<FoodLog>> watchRecentFoodLogs() async* {
+  Stream<List<FoodLog>> watchRecentFoodLogs({int limit = 30}) async* {
     yield foodLogs.reversed.toList();
     await for (final _ in _changes.stream) {
       yield foodLogs.reversed.toList();
@@ -66,11 +70,11 @@ class FakeNutritionLogService implements NutritionLogService {
   }
 
   @override
-  Future<void> addWaterLog(double amountMl, DateTime loggedAt) async {
-    waterLogs.add(
-      WaterLog(id: 'water-${++_nextId}', amountMl: amountMl, loggedAt: loggedAt),
-    );
+  Future<String> addWaterLog(double amountMl, DateTime loggedAt) async {
+    final id = 'water-${++_nextId}';
+    waterLogs.add(WaterLog(id: id, amountMl: amountMl, loggedAt: loggedAt));
     _changes.add(null);
+    return id;
   }
 
   @override

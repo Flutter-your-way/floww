@@ -5,6 +5,7 @@ import {
 } from "../models/wave.model";
 import {PLAN_EDIT_ACTIONS, WaveAccess} from "./wave.access.helper";
 import {
+  WORKOUT_CATCH_UP,
   WORKOUT_IN_PROGRESS,
   WORKOUT_PLANNED,
   WaveFacts,
@@ -36,6 +37,7 @@ const verdictOf = (
   const habits = facts.habits.map((habit) => habit.title);
   const planEditable = facts.workoutStatus === WORKOUT_PLANNED;
   const inProgress = facts.workoutStatus === WORKOUT_IN_PROGRESS;
+  const catchUp = facts.workoutStatus === WORKOUT_CATCH_UP;
 
   switch (item.action) {
   case "completeAllHabits":
@@ -53,7 +55,7 @@ const verdictOf = (
     return matchesAny(facts.loggedFoods.map((food) => food.name),
       item.target) ? null : "notFound";
   case "startWorkout":
-    return planEditable || inProgress ? null : "notAvailable";
+    return planEditable || inProgress || catchUp ? null : "notAvailable";
   case "logSet":
     if (!inProgress) return "notAvailable";
     return item.target.length === 0 ||

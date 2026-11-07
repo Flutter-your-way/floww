@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/theme/app_theme.dart';
-import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/workout/view_models/workout_details_view_model.dart';
 import 'package:floww/core/workout/views/workout_details_view.dart';
 import 'package:floww/navigation/services/navigation_service.dart';

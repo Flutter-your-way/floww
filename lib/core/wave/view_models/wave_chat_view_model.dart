@@ -181,6 +181,14 @@ class WaveChatViewModel extends ChangeNotifier {
   static const String cancelLabel = 'Cancel';
   static const String approvePlanLabel = 'Approve plan';
   static const String notNowLabel = 'Not now';
+  static const String replacePlanTitle = 'Replace your current plan?';
+  static const String replacePlanMessage =
+      'This rebuilds your plan from today. Every upcoming session is '
+      'overwritten, including exercise swaps, moved sessions and edits you '
+      'made, and the program restarts from week 1. Workouts you already '
+      'logged stay in your history.';
+  static const String replacePlanConfirm = 'Rebuild Plan';
+  static const String replacePlanCancel = 'Keep Current Plan';
   static const String viewPlanLabel = 'View plan';
   static const String actionFailedMessage =
       'I could not save that change. Please try again.';
@@ -192,7 +200,8 @@ class WaveChatViewModel extends ChangeNotifier {
         WaveConfirmationAction.openWorkout =>
           isViewingToday && _context.hasActiveWorkout ? openWorkoutLabel : null,
         WaveConfirmationAction.openMemory => manageMemoryLabel,
-        WaveConfirmationAction.openPlan => isViewingToday ? viewPlanLabel : null,
+        WaveConfirmationAction.openPlan =>
+          isViewingToday ? viewPlanLabel : null,
         WaveConfirmationAction.undo =>
           isViewingToday && !isResolved(message.id) ? undoLabel : null,
         WaveConfirmationAction.navigate => isViewingToday ? openLabel : null,
@@ -936,6 +945,7 @@ class WaveChatViewModel extends ChangeNotifier {
       title: entry.title ?? '',
       detail: entry.detail ?? '',
       isPlanApproval: entry.pendingAction?.changesPlan ?? false,
+      replacesPlan: entry.pendingAction?.kind == WaveActionKind.regeneratePlan,
     ),
     WaveMessageKind.dietPlan => WaveDietPlanMessage(
       id: entry.id,

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
+import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/charts/app_line_chart_point_label.dart';
 
-class AppLineChart extends StatelessWidget {
+class AppLineChart extends StatefulWidget {
   const AppLineChart({
     super.key,
     required this.samples,
@@ -15,6 +18,7 @@ class AppLineChart extends StatelessWidget {
     required this.maxValue,
     this.plotHeight = AppSizes.s160,
     this.showDots = true,
+    this.pointLabels,
   });
 
   final List<double> samples;
@@ -24,16 +28,45 @@ class AppLineChart extends StatelessWidget {
   final double maxValue;
   final double plotHeight;
   final bool showDots;
+  final List<AppLineChartPointLabel>? pointLabels;
+
+  @override
+  State<AppLineChart> createState() => _AppLineChartState();
+}
+
+class _AppLineChartState extends State<AppLineChart> {
+  int? _selected;
+
+  bool get _isInteractive {
+    final labels = widget.pointLabels;
+    return labels != null &&
+        widget.samples.length > 1 &&
+        labels.length == widget.samples.length;
+  }
+
+  void _select(double dx, double width) {
+    final last = widget.samples.length - 1;
+    final index = (dx / width * last).round().clamp(0, last);
+    if (index == _selected) return;
+    HapticManager.selection();
+    setState(() => _selected = index);
+  }
+
+  void _clear() {
+    if (_selected == null) return;
+    setState(() => _selected = null);
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final selected = _isInteractive ? _selected : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
-          height: plotHeight,
+          height: widget.plotHeight,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -41,7 +74,7 @@ class AppLineChart extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  for (final label in axisLabels)
+                  for (final label in widget.axisLabels)
                     Text(
                       label,
                       style: AppTypography.captionMediumSmall.copyWith(
@@ -52,19 +85,59 @@ class AppLineChart extends StatelessWidget {
               ),
               SizedBox(width: AppSpacing.md),
               Expanded(
-                child: CustomPaint(
-                  painter: AppLineChartPainter(
-                    samples: samples,
-                    minValue: minValue,
-                    maxValue: maxValue,
-                    gridLineCount: axisLabels.length,
-                    columnCount: dateLabels.length,
-                    gridColor: colors.borderSubtle,
-                    lineColor: colors.primaryAlt,
-                    dotColor: colors.textPrimary,
-                    areaGradient: context.gradients.chartArea,
-                    showDots: showDots,
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth;
+                    final chart = Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: AppLineChartPainter(
+                              samples: widget.samples,
+                              minValue: widget.minValue,
+                              maxValue: widget.maxValue,
+                              gridLineCount: widget.axisLabels.length,
+                              columnCount: widget.dateLabels.length,
+                              gridColor: colors.borderSubtle,
+                              lineColor: colors.primaryAlt,
+                              dotColor: colors.textPrimary,
+                              guideColor: colors.textTertiary,
+                              areaGradient: context.gradients.chartArea,
+                              showDots: widget.showDots,
+                              selectedIndex: selected,
+                            ),
+                          ),
+                        ),
+                        if (selected != null)
+                          Align(
+                            alignment: Alignment(
+                              selected / (widget.samples.length - 1) * 2 - 1,
+                              -1,
+                            ),
+                            child: AppLineChartTooltip(
+                              label: widget.pointLabels![selected],
+                            ),
+                          ),
+                      ],
+                    );
+                    if (!_isInteractive) return chart;
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onHorizontalDragStart: (details) =>
+                          _select(details.localPosition.dx, width),
+                      onHorizontalDragUpdate: (details) =>
+                          _select(details.localPosition.dx, width),
+                      onHorizontalDragEnd: (_) => _clear(),
+                      onHorizontalDragCancel: _clear,
+                      onLongPressStart: (details) =>
+                          _select(details.localPosition.dx, width),
+                      onLongPressMoveUpdate: (details) =>
+                          _select(details.localPosition.dx, width),
+                      onLongPressEnd: (_) => _clear(),
+                      child: chart,
+                    );
+                  },
                 ),
               ),
             ],
@@ -74,7 +147,7 @@ class AppLineChart extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            for (final label in dateLabels)
+            for (final label in widget.dateLabels)
               Flexible(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -94,6 +167,46 @@ class AppLineChart extends StatelessWidget {
   }
 }
 
+class AppLineChartTooltip extends StatelessWidget {
+  const AppLineChartTooltip({super.key, required this.label});
+
+  final AppLineChartPointLabel label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: AppShapes.decoration(
+        color: colors.backgroundElevated,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: BorderSide(color: colors.borderGlow, width: AppSizes.s1),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label.value,
+            style: AppTypography.bodySmallBoldTight.copyWith(
+              color: colors.textPrimary,
+            ),
+          ),
+          Text(
+            label.caption,
+            style: AppTypography.captionMediumSmall.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class AppLineChartPainter extends CustomPainter {
   const AppLineChartPainter({
     required this.samples,
@@ -104,13 +217,18 @@ class AppLineChartPainter extends CustomPainter {
     required this.gridColor,
     required this.lineColor,
     required this.dotColor,
+    required this.guideColor,
     required this.areaGradient,
     this.showDots = true,
+    this.selectedIndex,
   });
 
   static const double _strokeWidth = 2;
   static const double _dotRadius = AppSizes.s4;
+  static const double _selectedDotRadius = AppSizes.s6;
   static const double _dotStroke = 1;
+  static const double _selectedDotStroke = 2;
+  static const double _minDotSpacing = AppSizes.s16;
 
   final List<double> samples;
   final double minValue;
@@ -120,8 +238,10 @@ class AppLineChartPainter extends CustomPainter {
   final Color gridColor;
   final Color lineColor;
   final Color dotColor;
+  final Color guideColor;
   final Gradient areaGradient;
   final bool showDots;
+  final int? selectedIndex;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -183,16 +303,41 @@ class AppLineChartPainter extends CustomPainter {
         ..color = lineColor,
     );
 
-    if (!showDots) return;
     final fillPaint = Paint()..color = dotColor;
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = _dotStroke
       ..color = lineColor;
-    for (final point in points) {
-      canvas.drawCircle(point, _dotRadius, fillPaint);
-      canvas.drawCircle(point, _dotRadius, borderPaint);
+
+    final selected = selectedIndex;
+    if (showDots) {
+      final dots = stepX < _minDotSpacing
+          ? [if (selected == null) points.last]
+          : points;
+      for (final point in dots) {
+        canvas.drawCircle(point, _dotRadius, fillPaint);
+        canvas.drawCircle(point, _dotRadius, borderPaint);
+      }
     }
+
+    if (selected == null || selected < 0 || selected >= points.length) return;
+    final point = points[selected];
+    canvas.drawLine(
+      Offset(point.dx, 0),
+      Offset(point.dx, size.height),
+      Paint()
+        ..color = guideColor
+        ..strokeWidth = _dotStroke,
+    );
+    canvas.drawCircle(point, _selectedDotRadius, fillPaint);
+    canvas.drawCircle(
+      point,
+      _selectedDotRadius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _selectedDotStroke
+        ..color = lineColor,
+    );
   }
 
   @override
@@ -205,6 +350,8 @@ class AppLineChartPainter extends CustomPainter {
       oldDelegate.gridColor != gridColor ||
       oldDelegate.lineColor != lineColor ||
       oldDelegate.dotColor != dotColor ||
+      oldDelegate.guideColor != guideColor ||
       oldDelegate.areaGradient != areaGradient ||
-      oldDelegate.showDots != showDots;
+      oldDelegate.showDots != showDots ||
+      oldDelegate.selectedIndex != selectedIndex;
 }

@@ -346,9 +346,9 @@ class ProgressSnapshotBuilder {
       for (final log in records.weights)
         WeightEntry(id: log.id, date: log.loggedAt, weight: log.weightKg),
     ];
-    final startWeight =
-        records.goals.startWeightKg ??
-        (entries.isEmpty ? 0 : entries.first.weight);
+    final startWeight = entries.isEmpty
+        ? records.goals.startWeightKg ?? 0
+        : entries.first.weight;
     final weekAgo = AppDateUtils.addDays(today, -_weekLength);
     final recent = [
       for (final entry in entries)

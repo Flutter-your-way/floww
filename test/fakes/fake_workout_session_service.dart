@@ -27,8 +27,7 @@ class FakeWorkoutSessionService implements WorkoutSessionService {
   Future<void> addExercise(String id, WorkoutEntryEntity entry) async {}
 
   @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class WorkoutFixtures {

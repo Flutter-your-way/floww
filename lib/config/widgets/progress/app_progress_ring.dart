@@ -101,9 +101,11 @@ class AppProgressRingPainter extends CustomPainter {
     }
 
     final tipHold = (strokeWidth / rect.width) / (2 * math.pi);
-    paint.shader = gradients
-        .progressSweep(progress, tipHold: tipHold)
-        .createShader(rect);
+    paint
+      ..color = trackColor.withValues(alpha: 1)
+      ..shader = gradients
+          .progressSweep(progress, tipHold: tipHold)
+          .createShader(rect);
     canvas.drawArc(rect, _start, sweep, false, paint);
   }
 

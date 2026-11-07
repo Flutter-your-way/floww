@@ -11,6 +11,7 @@ import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/services/app_api_client.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/config/utils/streams/shared_replay_stream.dart';
 import 'package:floww/core/health/services/health_service.dart';
 import 'package:floww/core/progress/services/flow_score_calculator.dart';
 import 'package:floww/core/workout/models/workout_completion.dart';
@@ -42,6 +43,10 @@ class WorkoutSessionService extends WorkoutFirestore {
   static const int _historyLimit = 60;
   static const int _metricsBatchSize = 400;
   static const int _heartRateBuckets = 11;
+  static const String _notFoundCode = 'NOT_FOUND';
+  static const Duration _heartRateTimeout = Duration(seconds: 4);
+  static const Duration _writeAckTimeout = Duration(seconds: 6);
+  static const Duration _localReadTimeout = Duration(seconds: 5);
 
   final HealthService _healthService;
   final AppApiClient _apiClient;
@@ -67,14 +72,25 @@ class WorkoutSessionService extends WorkoutFirestore {
         .map(_sessionsOf);
   }
 
+  static final Map<String, SharedReplayStream<List<WorkoutSessionEntity>>>
+  _recentStreams = {};
+
   Stream<List<WorkoutSessionEntity>> watchRecentSessions() {
     final uid = userId;
     if (uid == null) return Stream.value(const []);
-    return _sessions(uid)
-        .orderBy(_startedAtField, descending: true)
-        .limit(_historyLimit)
-        .snapshots()
-        .map(_sessionsOf);
+    return _recentStreams
+        .putIfAbsent(
+          uid,
+          () => SharedReplayStream(
+            () => _sessions(uid)
+                .orderBy(_startedAtField, descending: true)
+                .limit(_historyLimit)
+                .snapshots()
+                .map(_sessionsOf),
+            copy: List.of,
+          ),
+        )
+        .stream;
   }
 
   Stream<WorkoutSessionEntity?> watchSession(String id) {
@@ -84,6 +100,19 @@ class WorkoutSessionService extends WorkoutFirestore {
       final data = document.data();
       return data == null ? null : WorkoutSessionEntity.fromJson(data);
     });
+  }
+
+  Stream<WorkoutSessionEntity?> watchRemoteSession(String id) {
+    final uid = userId;
+    if (uid == null) return Stream.value(null);
+    return _sessions(uid)
+        .doc(id)
+        .snapshots()
+        .where((document) => !document.metadata.hasPendingWrites)
+        .map((document) {
+          final data = document.data();
+          return data == null ? null : WorkoutSessionEntity.fromJson(data);
+        });
   }
 
   Future<List<WorkoutSessionEntity>> loadRecentSessions() async {
@@ -193,11 +222,14 @@ class WorkoutSessionService extends WorkoutFirestore {
       isTimerPaused: true,
       isManual: true,
     );
-    await guard(
-      'logManualSession',
-      _saveFailure,
-      () => document.set(session.toJson()),
-    );
+    final write = document.set(session.toJson());
+    await guard('logManualSession', _saveFailure, () async {
+      try {
+        await write.timeout(_writeAckTimeout);
+      } on TimeoutException {
+        unawaited(write.catchError((Object _) {}));
+      }
+    });
     return completeSession(session, includeHeartRate: false);
   }
 
@@ -246,7 +278,10 @@ class WorkoutSessionService extends WorkoutFirestore {
     bool includeHeartRate = true,
   }) async {
     final heartRate = includeHeartRate
-        ? await _heartRateSamples(session.startedAt, DateTime.now())
+        ? await _heartRateSamples(session.startedAt, DateTime.now()).timeout(
+            _heartRateTimeout,
+            onTimeout: () => const _HeartRateSummary.empty(),
+          )
         : const _HeartRateSummary.empty();
     try {
       final data = await _apiClient.post(
@@ -266,7 +301,9 @@ class WorkoutSessionService extends WorkoutFirestore {
         flowScoreAfter: (data['flowScoreAfter'] as num? ?? 0).toInt(),
       );
     } on AppApiException catch (e) {
-      if (!e.isRetryableOffline) throw WorkoutException(e.message);
+      if (!e.isRetryableOffline && e.code != _notFoundCode) {
+        throw WorkoutException(e.message);
+      }
       debugPrint('completeSession saving locally: ${e.message}');
       return _completeLocally(session, heartRate);
     }
@@ -278,8 +315,17 @@ class WorkoutSessionService extends WorkoutFirestore {
   ) async {
     final uid = requireUserId;
     final totals = WorkoutMetrics.totalsOf(session.exercises);
-    final bodyWeightKg = await _bodyWeightKg(uid);
-    final history = await loadRecentSessions();
+    final reads = await Future.wait<Object>([
+      _bodyWeightKg(uid).timeout(
+        _localReadTimeout,
+        onTimeout: () => WorkoutMetrics.fallbackBodyWeightKg,
+      ),
+      loadRecentSessions()
+          .timeout(_localReadTimeout, onTimeout: () => const [])
+          .catchError((Object _) => const <WorkoutSessionEntity>[]),
+    ]);
+    final bodyWeightKg = reads[0] as double;
+    final history = reads[1] as List<WorkoutSessionEntity>;
     final previous = [
       for (final entry in history)
         if (entry.id != session.id && entry.isCompleted) entry,
@@ -295,12 +341,16 @@ class WorkoutSessionService extends WorkoutFirestore {
       exercises: session.exercises,
       previousBests: WorkoutMetrics.bestsOf(previous),
     );
-    final flow = await _estimateFlowScore(
-      uid,
-      date: session.date,
-      workout: WorkoutCredit.ofSessions([session]),
-      previousSessions: previous,
-    );
+    final flow =
+        await _estimateFlowScore(
+          uid,
+          date: session.date,
+          workout: WorkoutCredit.ofSessions([session]),
+          previousSessions: previous,
+        ).timeout(
+          _localReadTimeout,
+          onTimeout: () => const _FlowScoreChange(0, 0),
+        );
 
     final payload = <String, dynamic>{
       'status': WorkoutSessionStatus.completed.name,
@@ -334,16 +384,19 @@ class WorkoutSessionService extends WorkoutFirestore {
       'heartRateSamples': heartRate.samples,
     };
 
-    await guard(
-      'completeSession',
-      _saveFailure,
-      () =>
-          _sessions(uid).doc(session.id).set(payload, SetOptions(merge: true)),
+    final document = {...session.toJson(), ...payload};
+    unawaited(
+      guard(
+        'completeSession',
+        _saveFailure,
+        () => _sessions(
+          uid,
+        ).doc(session.id).set(document, SetOptions(merge: true)),
+      ).catchError((Object _) {}),
     );
 
-    final completed = await loadSession(session.id);
     return WorkoutCompletionResult(
-      session: completed ?? session,
+      session: WorkoutSessionEntity.fromJson(document),
       flowScoreBefore: flow.before,
       flowScoreAfter: flow.after,
     );

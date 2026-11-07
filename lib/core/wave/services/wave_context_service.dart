@@ -89,6 +89,16 @@ class WaveContextService {
                 AppDateUtils.isSameDay(session.date, today),
           )
           .firstOrNull;
+      final catchUp = records.catchUp;
+      final pendingCatchUp =
+          catchUp != null &&
+              !records.sessions.any(
+                (session) =>
+                    session.fulfillsPlanOn(catchUp.date) &&
+                    (session.isCompleted || session.isInProgress),
+              )
+          ? catchUp
+          : null;
       final waterMl = waters.fold<double>(
         0,
         (total, log) => total + log.amountMl,
@@ -111,6 +121,7 @@ class WaveContextService {
         activeSession: activeSession,
         flowModeOverride: records.flowModeOverride,
         account: records.account,
+        catchUp: pendingCatchUp,
       );
       _cached = context;
       _cachedKey = _cacheKey();

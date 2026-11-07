@@ -111,7 +111,11 @@ class WaveConfirmationCard extends StatelessWidget {
                     SizedBox(height: AppSpacing.lg),
                     Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [action, SizedBox(width: AppSpacing.md), undo],
+                      children: [
+                        action,
+                        SizedBox(width: AppSpacing.md),
+                        undo,
+                      ],
                     ),
                   ],
                 ],

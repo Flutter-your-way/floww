@@ -27,13 +27,13 @@ class ExerciseTechniqueSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ActiveWorkoutViewModel>(
       builder: (context, viewModel, child) {
-        final exercise = viewModel.session?.exercise;
-        if (exercise == null) return const SizedBox.shrink();
-        final sections = exercise.infoSections;
+        final title = viewModel.currentEntry?.name;
+        if (title == null) return const SizedBox.shrink();
+        final sections = viewModel.techniqueSections;
 
         return AppFloatingSheet(
           child: AppSheetPanel(
-            title: exercise.name,
+            title: title,
             subtitle: viewModel.techniqueSubtitle,
             icon: Icons.menu_book_rounded,
             onClose: () => Navigator.of(context).maybePop(),

@@ -11,6 +11,15 @@ import 'package:floww/core/profile/models/profile_account.dart';
 import 'package:floww/core/profile/models/profile_edit_data.dart';
 import 'package:floww/core/profile/services/profile_service.dart';
 
+const double testMonthlyPrice = 499;
+const double testYearlyPrice = 3999;
+const int testTrialDays = 7;
+
+double testPriceFor(SubscriptionTerm term) => switch (term) {
+  SubscriptionTerm.monthly => testMonthlyPrice,
+  SubscriptionTerm.yearly => testYearlyPrice,
+};
+
 ProfileAccount buildAccount({
   String? name = 'Von Doe',
   double? heightCm = 178,
@@ -44,12 +53,13 @@ ProfileAccount buildAccount({
 SubscriptionEntity buildSubscription({
   SubscriptionStatus status = SubscriptionStatus.active,
   SubscriptionTerm term = SubscriptionTerm.yearly,
-  int price = PremiumService.yearlyPrice,
+  double price = testYearlyPrice,
   String periodLabel = '/year',
   String planLabel = 'Yearly Plan',
   DateTime? startedAt,
   DateTime? renewsOn,
   DateTime? trialEndsOn,
+  String currency = '',
 }) => SubscriptionEntity(
   uid: 'test-uid',
   status: status,
@@ -63,11 +73,12 @@ SubscriptionEntity buildSubscription({
   updatedAt: startedAt ?? DateTime(2025, 8, 12),
   planId: term.planId,
   trialEndsOn: trialEndsOn,
+  currency: currency,
 );
 
 SubscriptionInvoiceEntity buildInvoice({
   required String id,
-  int amount = PremiumService.yearlyPrice,
+  double amount = testYearlyPrice,
   String planLabel = 'Yearly Plan',
   String planId = AppSubscription.yearlyPlanId,
   required DateTime paidAt,
@@ -156,21 +167,19 @@ class FakePremiumService extends PremiumService {
     final start = from ?? DateTime(2026, 1, 12);
     subscription = buildSubscription(
       term: term,
-      price: plan.price,
+      price: testPriceFor(term),
       periodLabel: plan.periodLabel,
       planLabel: plan.planLabel,
       startedAt: start,
       renewsOn: term.periodEndFrom(start),
-      trialEndsOn: start.add(const Duration(days: AppSubscription.trialDays)),
+      trialEndsOn: start.add(const Duration(days: testTrialDays)),
     );
     return subscription!;
   }
 
   @override
-  Stream<SubscriptionEntity?> watchSubscription() =>
-      Stream.value(subscription);
+  Stream<SubscriptionEntity?> watchSubscription() => Stream.value(subscription);
 
-  @override
   Future<void> cancel() async {
     didCancel = true;
     final current = subscription;

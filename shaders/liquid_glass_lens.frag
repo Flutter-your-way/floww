@@ -19,7 +19,6 @@ uniform vec4  uPillColor;
 uniform vec4  uGlassTint;
 uniform vec4  uRim;
 uniform float uIridescence;
-uniform vec2  uTexPx;
 uniform vec4  uBarRim;
 uniform vec4  uItems;
 uniform float uBlur;
@@ -49,15 +48,7 @@ vec2 roundBoxNormal(vec2 p, vec2 b, float r) {
 }
 
 vec4 sampleContent(vec2 uv) {
-  vec2 px  = uv * uTexPx - 0.5;
-  vec2 f   = fract(px);
-  vec2 i0  = floor(px);
-  vec2 inv = 1.0 / uTexPx;
-  vec4 a = texture(uContent, (i0 + vec2(0.5, 0.5)) * inv);
-  vec4 b = texture(uContent, (i0 + vec2(1.5, 0.5)) * inv);
-  vec4 c = texture(uContent, (i0 + vec2(0.5, 1.5)) * inv);
-  vec4 d = texture(uContent, (i0 + vec2(1.5, 1.5)) * inv);
-  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+  return texture(uContent, uv);
 }
 
 vec4 scene(vec2 q, vec4 fill) {

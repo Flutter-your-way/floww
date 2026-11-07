@@ -82,11 +82,13 @@ class WaveActionPromptMessage extends WaveMessage {
     required this.title,
     required this.detail,
     this.isPlanApproval = false,
+    this.replacesPlan = false,
   });
 
   final String title;
   final String detail;
   final bool isPlanApproval;
+  final bool replacesPlan;
 }
 
 class WaveCheckInMessage extends WaveMessage {

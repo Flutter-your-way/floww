@@ -132,6 +132,7 @@ class WorkoutViewModel extends ChangeNotifier {
 
   StreamSubscription<Map<String, dynamic>>? _answersSubscription;
   StreamSubscription<List<WorkoutSessionEntity>>? _sessionSubscription;
+  String? _sessionSignature;
   StreamSubscription<WorkoutStateEntity>? _stateSubscription;
   StreamSubscription<List<WorkoutProgramEntity>>? _programSubscription;
   StreamSubscription<WorkoutPlanEntity?>? _planSubscription;
@@ -357,7 +358,13 @@ class WorkoutViewModel extends ChangeNotifier {
       _isLoading = false;
       _errorMessage = null;
       notifyListeners();
-      unawaited(_refreshShiftOffer());
+      final signature = [
+        for (final session in sessions) '${session.id}:${session.status.name}',
+      ].join(',');
+      if (signature != _sessionSignature) {
+        _sessionSignature = signature;
+        unawaited(_refreshShiftOffer());
+      }
       unawaited(_refreshStaleMetrics());
       final loadedFrom = _historyFrom;
       if (loadedFrom == null || _historyStart.isBefore(loadedFrom)) {
@@ -615,6 +622,9 @@ class WorkoutViewModel extends ChangeNotifier {
 
   bool get canLogWorkout =>
       dayStatus == WorkoutDayStatus.today && _activeSession == null;
+
+  bool get isLogWorkoutPrimary =>
+      canLogWorkout && primaryAction != WorkoutPrimaryAction.start;
 
   String get logWorkoutLabel => 'Log Workout';
 
@@ -903,6 +913,23 @@ class WorkoutViewModel extends ChangeNotifier {
   }
 
   bool get isBuildingPlan => _isBuildingPlan;
+
+  bool get needsRebuildWarning => _state.activeProgram != null;
+
+  String get rebuildWarningTitle => 'Replace your current plan?';
+
+  String get rebuildWarningMessage {
+    final name = _state.activeProgram?.name;
+    return 'WAVE builds a new plan from today and replaces '
+        '${name == null || name.isEmpty ? 'your current plan' : name}. '
+        'Every upcoming session is overwritten, including exercise swaps, '
+        'moved sessions and edits you made, and the program restarts from '
+        'week 1. Workouts you already logged stay in your history.';
+  }
+
+  String get rebuildWarningConfirm => 'Rebuild Plan';
+
+  String get rebuildWarningCancel => 'Keep Current Plan';
 
   WorkoutPlanBuilderItem? get planBuilder {
     if (_isLoading) return null;

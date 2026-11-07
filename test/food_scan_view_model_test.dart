@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:floww/core/nutrition/models/food_catalog.dart';
 import 'package:floww/core/nutrition/models/food_model.dart';
 import 'package:floww/core/nutrition/services/food_camera_service.dart';
 import 'package:floww/core/nutrition/services/food_scan_service.dart';
@@ -75,6 +76,18 @@ class _FakeScanService implements FoodScanService {
     String? note,
   }) async {
     lastMimeType = mimeType;
+    if (error != null) throw error!;
+    return result!;
+  }
+
+  @override
+  Future<List<CatalogFood>> searchFoods(String query) async => const [];
+
+  @override
+  Future<String?> lookupFoodImage(String name) async => null;
+
+  @override
+  Future<FoodModel> describeFood(String text) async {
     if (error != null) throw error!;
     return result!;
   }

@@ -5,6 +5,7 @@ import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/models/habit_definition.dart';
 import 'package:floww/core/habits/models/habit_draft.dart';
+import 'package:floww/core/habits/models/habit_reminder_setting.dart';
 import 'package:floww/core/habits/models/habit_suggestion.dart';
 import 'package:floww/core/habits/services/habit_catalog_data.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
@@ -42,7 +43,12 @@ class FakeHabitService implements HabitService {
   List<HabitSuggestionGroup> get suggestionGroups => HabitCatalogData.groups;
 
   @override
-  Stream<HabitRecords> watchRecords() async* {
+  Stream<String?> watchUserId() => Stream.value(userId);
+
+  @override
+  Stream<HabitRecords> watchRecords({
+    int days = HabitService.historyDays,
+  }) async* {
     yield _records;
     yield* _controller.stream;
   }
@@ -74,7 +80,10 @@ class FakeHabitService implements HabitService {
   }
 
   @override
-  Future<void> addSuggestion(HabitSuggestion suggestion) => createHabit(
+  Future<void> addSuggestion(
+    HabitSuggestion suggestion, {
+    HabitReminderSetting reminder = const HabitReminderSetting.auto(),
+  }) => createHabit(
     HabitDraft(
       title: suggestion.title,
       target: suggestion.target,
@@ -107,6 +116,14 @@ class FakeHabitService implements HabitService {
   }
 
   @override
+  Future<void> restoreHabit(HabitDefinition definition) async {
+    _throwOnError();
+    _habits.removeWhere((habit) => habit.id == definition.id);
+    _habits.add(definition);
+    _emit();
+  }
+
+  @override
   Future<void> deleteHabit(String id) async {
     _throwOnError();
     _habits.removeWhere((habit) => habit.id == id);
@@ -114,7 +131,11 @@ class FakeHabitService implements HabitService {
   }
 
   @override
-  Future<void> saveDay(DateTime date, List<Habit> habits) async {
+  Future<void> saveDay(
+    DateTime date,
+    List<Habit> habits, {
+    Set<String>? changedIds,
+  }) async {
     _throwOnError();
     final day = AppDateUtils.dateOnly(date);
     final log = HabitDayLog(

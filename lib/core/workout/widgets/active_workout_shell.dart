@@ -4,6 +4,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
+import 'package:floww/config/widgets/animations/app_pop_reveal.dart';
 import 'package:floww/config/widgets/effects/bottom_action_scrim.dart';
 import 'package:floww/config/widgets/effects/edge_fade_mask.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
@@ -70,15 +71,17 @@ class ActiveWorkoutShell extends StatelessWidget {
                 Positioned.fill(
                   child: EdgeFadeMask(
                     topFadeEnd: contentTop,
-                    child: ListView(
-                      padding: EdgeInsets.only(
-                        top: contentTop,
-                        bottom:
-                            actionsBottom + _actionBarHeight + AppSpacing.xl3,
-                        left: horizontalPadding,
-                        right: horizontalPadding,
+                    child: AppPopRevealScope(
+                      child: ListView(
+                        padding: EdgeInsets.only(
+                          top: contentTop,
+                          bottom:
+                              actionsBottom + _actionBarHeight + AppSpacing.xl3,
+                          left: horizontalPadding,
+                          right: horizontalPadding,
+                        ),
+                        children: children,
                       ),
-                      children: children,
                     ),
                   ),
                 ),

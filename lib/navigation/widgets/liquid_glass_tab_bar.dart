@@ -660,7 +660,10 @@ _GlassFrame _tabFrame(
       (glassHalf.dy + style.dragGrowHeight / 2);
   final restHalfY = math.max(1.0, size.height / 2 - style.inset);
   final restHalf = Offset(
-    math.min(restHalfY * dragAspect, size.width / 2 - style.inset),
+    math.min(
+      math.min(restHalfY * dragAspect, size.width / 2 - style.inset),
+      (slotW + style.pillExtraWidth) / 2,
+    ),
     restHalfY,
   );
   var half = Offset.lerp(restHalf, glassHalf, g)!;
@@ -958,13 +961,21 @@ class _GlassFrame {
 
 const Offset _kLight = Offset(-0.5523, -0.8336);
 
-ui.Gradient _rimGradient(Rect rect, Color color, double opacity) {
-  const n = 96;
-  final hx = rect.width / 2;
-  final r = rect.height / 2;
+const int _kRimSteps = 96;
+
+final List<double> _rimStops = List<double>.unmodifiable([
+  for (var i = 0; i <= _kRimSteps; i++) i / _kRimSteps,
+]);
+
+int? _rimAspect;
+List<double> _rimShade = const [];
+
+List<double> _rimShadeFor(double hx, double r) {
+  final aspect = (hx / r * 1e5).round();
+  if (aspect == _rimAspect) return _rimShade;
+  const n = _kRimSteps;
   final flat = hx - r;
-  final colors = <Color>[];
-  final stops = <double>[];
+  final shade = List<double>.filled(n + 1, 0);
   for (var i = 0; i <= n; i++) {
     final th = i / n * 2 * math.pi;
     final dx = math.cos(th);
@@ -985,14 +996,23 @@ ui.Gradient _rimGradient(Rect rect, Color color, double opacity) {
     final s = math
         .pow((nx * _kLight.dx + ny * _kLight.dy).abs(), 1.5)
         .toDouble();
-    final k = (0.2 + 0.8 * s) * opacity;
-    colors.add(color.withValues(alpha: (color.a * k).clamp(0.0, 1.0)));
-    stops.add(i / n);
+    shade[i] = 0.2 + 0.8 * s;
   }
+  _rimAspect = aspect;
+  _rimShade = shade;
+  return shade;
+}
+
+ui.Gradient _rimGradient(Rect rect, Color color, double opacity) {
+  final shade = _rimShadeFor(rect.width / 2, rect.height / 2);
+  final colors = [
+    for (final k in shade)
+      color.withValues(alpha: (color.a * k * opacity).clamp(0.0, 1.0)),
+  ];
   return ui.Gradient.sweep(
     rect.center,
     colors,
-    stops,
+    _rimStops,
     ui.TileMode.clamp,
     0,
     2 * math.pi,
@@ -1088,8 +1108,6 @@ void _paintGlass(
       rim.b,
       style.rimStrength * rim.a,
       style.iridescence,
-      image.width.toDouble(),
-      image.height.toDouble(),
       bc.r,
       bc.g,
       bc.b,
@@ -1100,7 +1118,7 @@ void _paintGlass(
     for (var i = 0; i < values.length; i++) {
       shader.setFloat(i, values[i]);
     }
-    shader.setImageSampler(0, image);
+    shader.setImageSampler(0, image, filterQuality: FilterQuality.low);
     canvas.drawRect(f.lensRect.inflate(1.5), Paint()..shader = shader);
     return;
   }

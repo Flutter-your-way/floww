@@ -1,7 +1,7 @@
 enum WorkoutSectionKind {
-  warmUp('warm-up', '🔥', 'Warm Up'),
-  main('main-exercises', '⚡', 'Main Exercises'),
-  coolDown('cool-down', '🌊', 'Cool Down');
+  warmUp('warm-up', '🔥', 'Warm-up'),
+  main('main-exercises', '⚡', 'Workout'),
+  coolDown('cool-down', '🌊', 'Cool-down');
 
   const WorkoutSectionKind(this.id, this.glyph, this.title);
 

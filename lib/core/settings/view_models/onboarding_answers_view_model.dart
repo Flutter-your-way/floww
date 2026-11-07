@@ -39,8 +39,11 @@ class OnboardingAnswersViewModel extends ChangeNotifier {
   String get rebuildTitle => 'Update your training plan?';
 
   String get rebuildPrompt =>
-      'WAVE already knows your new answers. Rebuild your workout plan so '
-      'your sessions match them, starting today.';
+      'WAVE already knows your new answers. Rebuilding replaces your current '
+      'plan from today: every upcoming session is overwritten, including '
+      'exercise swaps, moved sessions and edits you made, and the program '
+      'restarts from week 1. Workouts you already logged stay in your '
+      'history.';
 
   String get rebuildConfirmLabel => 'Rebuild Plan';
 

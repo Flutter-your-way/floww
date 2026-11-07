@@ -13,6 +13,7 @@ import 'package:floww/core/recovery/services/muscle_map_service.dart';
 import 'package:floww/core/recovery/services/muscle_targeting.dart';
 import 'package:floww/core/workout/models/muscle_targets_item.dart';
 import 'package:floww/core/workout/services/workout_catalog_data.dart';
+import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/workout/models/active_workout_args.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/add_exercise_view_data.dart';
@@ -62,7 +63,8 @@ class _SetDraft {
   );
 }
 
-class ActiveWorkoutViewModel extends ChangeNotifier {
+class ActiveWorkoutViewModel extends ChangeNotifier
+    with WidgetsBindingObserver {
   ActiveWorkoutViewModel(
     this._sessionService,
     this._planService,
@@ -77,7 +79,8 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
        _launch = launch,
        _muscleMapService = muscleMapService ?? MuscleMapService();
 
-  static const Duration _tick = Duration(seconds: 1);
+  static const Duration _tick = Duration(milliseconds: 250);
+  static const Duration _persistDelay = Duration(milliseconds: 700);
   static const int _minReps = 0;
   static const int _maxReps = 100;
   static const int _minSeconds = 5;
@@ -109,6 +112,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   final StreamController<void> _restEnded = StreamController<void>.broadcast();
 
   Timer? _timer;
+  Timer? _persistTimer;
   StreamSubscription<WorkoutSessionEntity?>? _sessionSubscription;
   WorkoutSessionEntity? _session;
   WorkoutCompletionResult? _completion;
@@ -134,6 +138,15 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   _SetDraft? _draft;
   int? _editIndex;
   _SetDraft? _editDraft;
+  ActiveExerciseItem? _exerciseItem;
+  String? _workEntryId;
+  DateTime? _workEndsAt;
+  int _workRemaining = 0;
+  int _workTarget = 0;
+  int _setElapsedBase = 0;
+  int _setElapsed = 0;
+  DateTime? _setResumedAt;
+  final Map<String, List<ExerciseInfoItem>> _recordItems = {};
 
   Stream<void> get restEnded => _restEnded.stream;
 
@@ -184,18 +197,110 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   }
 
   void primaryAction() {
-    if (_isLocked || _exercise == null) return;
+    final exercise = _exercise;
+    if (_isLocked || exercise == null) return;
     if (isResting) {
       _isSetActive = true;
+      _startWork(exercise);
+      _startSetClock();
       skipRest();
       return;
     }
     if (!_isSetActive) {
       _isSetActive = true;
+      _startWork(exercise);
+      _startSetClock();
+      _scheduleRestAlert();
       notifyListeners();
       return;
     }
+    if (isTiming) {
+      finishWork();
+      return;
+    }
     completeSet();
+  }
+
+  bool get isTiming {
+    final entryId = _workEntryId;
+    return entryId != null &&
+        _isSetActive &&
+        !isResting &&
+        entryId == _exercise?.id;
+  }
+
+  int get workRemaining => isTiming ? _workRemaining : 0;
+
+  bool get _isCountingSet => _isSetActive && !isResting && !isTiming;
+
+  void _startSetClock() {
+    _setElapsedBase = 0;
+    _setElapsed = 0;
+    _setResumedAt = _isPaused ? null : DateTime.now();
+  }
+
+  int _setSecondsAt(DateTime now) {
+    final resumedAt = _setResumedAt;
+    if (resumedAt == null) return _setElapsedBase;
+    return _setElapsedBase + now.difference(resumedAt).inSeconds;
+  }
+
+  void _startWork(WorkoutEntryEntity exercise) {
+    if (!exercise.isTimed) {
+      _clearWork();
+      return;
+    }
+    final seconds = _currentDraft(exercise).seconds;
+    _workEntryId = exercise.id;
+    _workTarget = seconds;
+    _workRemaining = seconds;
+    _workEndsAt = _isPaused
+        ? null
+        : DateTime.now().add(Duration(seconds: seconds));
+  }
+
+  void _clearWork() {
+    _workEntryId = null;
+    _workEndsAt = null;
+    _workRemaining = 0;
+    _workTarget = 0;
+  }
+
+  int _workSecondsAt(DateTime now) {
+    final endsAt = _workEndsAt;
+    if (endsAt == null) return _workRemaining;
+    final remaining = (endsAt.difference(now).inMilliseconds / 1000).ceil();
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  void finishWork() {
+    if (!isTiming) return;
+    final elapsed = (_workTarget - _workSecondsAt(DateTime.now())).clamp(
+      _minSeconds,
+      _maxSeconds,
+    );
+    _clearWork();
+    completeTimedSet(elapsed);
+  }
+
+  void adjustWork(int steps) {
+    if (!isTiming || _isLocked) return;
+    final now = DateTime.now();
+    final remaining = _workSecondsAt(now) + steps * _restStepSeconds;
+    if (remaining <= 0) {
+      finishWork();
+      return;
+    }
+    _workTarget = (_workTarget + steps * _restStepSeconds).clamp(
+      _minSeconds,
+      _maxSeconds,
+    );
+    _workRemaining = remaining.clamp(0, _workTarget);
+    if (_workEndsAt != null) {
+      _workEndsAt = now.add(Duration(seconds: _workRemaining));
+    }
+    _scheduleRestAlert();
+    notifyListeners();
   }
 
   void completeTimedSet(int seconds) {
@@ -255,6 +360,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       notifyListeners();
       _watchSession(session.id);
       _startTicker();
+      WidgetsBinding.instance.addObserver(this);
       unawaited(_alertService.keepAwake(true));
       unawaited(_loadMuscleMap());
       _scheduleRestAlert();
@@ -348,7 +454,9 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
 
   void _watchSession(String id) {
     _sessionSubscription?.cancel();
-    _sessionSubscription = _sessionService.watchSession(id).listen((remote) {
+    _sessionSubscription = _sessionService.watchRemoteSession(id).listen((
+      remote,
+    ) {
       final session = _session;
       if (remote == null || session == null || !remote.isInProgress) return;
       if (remote.isTimerPaused == session.isTimerPaused &&
@@ -376,17 +484,50 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   void _onTick() {
     final session = _session;
     if (session == null || _isFinished) return;
+    final now = DateTime.now();
+    if (isTiming && _workEndsAt != null) {
+      final work = _workSecondsAt(now);
+      if (work == 0) {
+        _restEnded.add(null);
+        finishWork();
+        return;
+      }
+      if (work != _workRemaining && !_disposed) {
+        _workRemaining = work;
+        super.notifyListeners();
+      }
+      return;
+    }
+    if (_isCountingSet) {
+      final elapsed = _setSecondsAt(now);
+      if (elapsed != _setElapsed && !_disposed) {
+        _setElapsed = elapsed;
+        super.notifyListeners();
+      }
+      return;
+    }
     final previous = _restRemaining;
-    _restRemaining = session.restSecondsAt(DateTime.now());
+    _restRemaining = session.restSecondsAt(now);
     if (previous > 0 && _restRemaining == 0 && !_isPaused) {
       _restEnded.add(null);
     }
-    if (previous == _restRemaining) return;
-    notifyListeners();
+    if (previous == _restRemaining || _disposed) return;
+    super.notifyListeners();
   }
 
   void _scheduleRestAlert() {
     final session = _session;
+    final exercise = _exercise;
+    final workEndsAt = isTiming ? _workEndsAt : null;
+    if (session != null && workEndsAt != null && !isYogaClass) {
+      unawaited(
+        _alertService.scheduleRestEnd(
+          workEndsAt,
+          'Time\'s up: ${exercise?.name ?? 'set'} · Set ${_setIndex + 1}',
+        ),
+      );
+      return;
+    }
     final endsAt = session?.restEndsAt;
     if (session == null ||
         endsAt == null ||
@@ -395,7 +536,6 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       unawaited(_alertService.cancelRestEnd());
       return;
     }
-    final exercise = _exercise;
     final label = exercise == null
         ? 'Time for your next set.'
         : 'Up next: ${exercise.name} · Set ${_setIndex + 1}';
@@ -411,6 +551,17 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         : session.pausedAt(now);
     _session = updated;
     _restRemaining = updated.restSecondsAt(now);
+    if (isTiming) {
+      _workRemaining = _workSecondsAt(now);
+      _workEndsAt = updated.isTimerPaused
+          ? null
+          : now.add(Duration(seconds: _workRemaining));
+    }
+    if (_isCountingSet) {
+      _setElapsedBase = _setSecondsAt(now);
+      _setElapsed = _setElapsedBase;
+      _setResumedAt = updated.isTimerPaused ? null : now;
+    }
     _scheduleRestAlert();
     notifyListeners();
     try {
@@ -527,10 +678,11 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     _session = updated;
     _restRemaining = updated.restSecondsAt(now);
     _isSetActive = false;
+    _clearWork();
     _expandedSectionId = null;
     _scheduleRestAlert();
     notifyListeners();
-    unawaited(_persist());
+    _persist();
     _finishIfDone();
   }
 
@@ -567,7 +719,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     _expandedSectionId = null;
     _scheduleRestAlert();
     notifyListeners();
-    unawaited(_persist());
+    _persist();
   }
 
   void adjustRest(int steps) {
@@ -586,7 +738,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     _restRemaining = _session!.restSecondsAt(now);
     _scheduleRestAlert();
     notifyListeners();
-    unawaited(_persist());
+    _persist();
   }
 
   void skipExercise() {
@@ -607,7 +759,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     _restRemaining = 0;
     _scheduleRestAlert();
     notifyListeners();
-    unawaited(_persist());
+    _persist();
     _finishIfDone();
   }
 
@@ -641,7 +793,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     _draft = null;
     _scheduleRestAlert();
     notifyListeners();
-    unawaited(_persist());
+    _persist();
   }
 
   bool get canAddSet =>
@@ -672,7 +824,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       currentEntryId: exercise.id,
     );
     notifyListeners();
-    unawaited(_persist());
+    _persist();
     _finishIfDone();
   }
 
@@ -703,7 +855,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     _isSetActive = false;
     _scheduleRestAlert();
     notifyListeners();
-    unawaited(_persist());
+    _persist();
   }
 
   void reorder(int oldIndex, int newIndex) {
@@ -715,7 +867,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     exercises.insert(newIndex.clamp(0, exercises.length), moved);
     _session = session.copyWith(exercises: exercises);
     notifyListeners();
-    unawaited(_persist());
+    _persist();
   }
 
   WorkoutEntryEntity? get _nextPending {
@@ -772,7 +924,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       );
     }
     notifyListeners();
-    unawaited(_persist());
+    _persist();
   }
 
   bool get canSwap => (_exercise?.sets.isEmpty ?? false) && !_isLocked;
@@ -843,8 +995,9 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     _draft = null;
     _isSetActive = false;
     _expandedSectionId = null;
+    _scheduleRestAlert();
     notifyListeners();
-    unawaited(_persist());
+    _persist();
   }
 
   List<ActiveOptionItem> get options => [
@@ -1061,7 +1214,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     _editDraft = null;
     _draft = null;
     notifyListeners();
-    unawaited(_persist());
+    _persist();
     _finishIfDone();
   }
 
@@ -1078,9 +1231,18 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       if (entry.id == exercise.id) exercise else entry,
   ];
 
-  Future<void> _persist() async {
+  void _persist() {
+    _persistTimer?.cancel();
+    _persistTimer = Timer(_persistDelay, () => unawaited(_flush()));
+  }
+
+  Future<void> _flush() async {
+    _persistTimer?.cancel();
+    _persistTimer = null;
     final session = _session;
-    if (session == null || _isFinished || _isCancelled) return;
+    if (session == null || _isFinished || _isFinishing || _isCancelled) {
+      return;
+    }
     try {
       await _sessionService.saveProgress(session);
     } on WorkoutException catch (error) {
@@ -1107,6 +1269,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     if (session == null || _isLocked) return false;
     _isCancelled = true;
     _timer?.cancel();
+    _persistTimer?.cancel();
     await _sessionSubscription?.cancel();
     try {
       await _sessionService.cancelSession(session.id);
@@ -1129,6 +1292,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     if (session == null || _isFinishing || _isFinished) return;
     _isFinishing = true;
     _timer?.cancel();
+    _persistTimer?.cancel();
     notifyListeners();
     final minimumDisplay = Future<void>.delayed(AppMotion.workoutFinishMin);
     try {
@@ -1193,7 +1357,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       progress: _progress,
       exerciseLabel: 'Exercise ${_exerciseIndex + 1}/${_exercises.length}',
       setLabel: 'Set ${_setIndex + 1}/${exercise.targetSets}',
-      exercise: _itemOf(exercise),
+      exercise: _exerciseItem ??= _itemOf(exercise),
       isResting: isResting,
       isSetActive: _isSetActive && !isResting,
       isPaused: _isPaused,
@@ -1205,6 +1369,10 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       nextUpLabel:
           'Up next: ${exercise.name} · Set ${_setIndex + 1}/'
           '${exercise.targetSets}',
+      isTiming: isTiming,
+      workSecondsLabel: '$workRemaining',
+      canShortenWork: workRemaining > _restStepSeconds,
+      setClockLabel: NumberFormatter.clock(_isCountingSet ? _setElapsed : 0),
     );
   }
 
@@ -1232,10 +1400,13 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         title: 'Muscles Targeted',
       ),
       supersetLabel: _supersetLabelOf(exercise),
-      infoSections: [
-        for (final section in _sectionsOf(exercise)) _sectionOf(section),
-      ],
     );
+  }
+
+  List<ExerciseInfoSectionItem> get techniqueSections {
+    final exercise = _exercise;
+    if (exercise == null) return const [];
+    return [for (final section in _sectionsOf(exercise)) _sectionOf(section)];
   }
 
   AddExerciseTargetItem _primaryTarget(
@@ -1336,18 +1507,23 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     ),
   ];
 
+  List<ExerciseInfoItem> _recordItemsOf(WorkoutEntryEntity exercise) =>
+      _recordItems.putIfAbsent(
+        '${exercise.exerciseId}:${exercise.isTimed}',
+        () => ExerciseInsights.recordItemsOf(
+          history: _historyOf(exercise),
+          best: _bests[exercise.exerciseId],
+          trend: WorkoutMetrics.oneRepMaxTrendOf([
+            for (final entry in _history)
+              if (entry.id != _session?.id) entry,
+          ], exercise.exerciseId),
+          isTimed: exercise.isTimed,
+        ),
+      );
+
   List<ExerciseInfoItem> _personalBestItemsOf(WorkoutEntryEntity exercise) {
-    final trend = WorkoutMetrics.oneRepMaxTrendOf([
-      for (final entry in _history)
-        if (entry.id != _session?.id) entry,
-    ], exercise.exerciseId);
     return [
-      ...ExerciseInsights.recordItemsOf(
-        history: _historyOf(exercise),
-        best: _bests[exercise.exerciseId],
-        trend: trend,
-        isTimed: exercise.isTimed,
-      ),
+      ..._recordItemsOf(exercise),
       if (exercise.sets.isNotEmpty)
         ExerciseInfoItem(
           label: 'This session',
@@ -1383,13 +1559,22 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
 
   @override
   void notifyListeners() {
+    _exerciseItem = null;
     if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) return;
+    if (_persistTimer?.isActive ?? false) unawaited(_flush());
   }
 
   @override
   void dispose() {
     _disposed = true;
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
+    if (_persistTimer?.isActive ?? false) unawaited(_flush());
     _sessionSubscription?.cancel();
     _restEnded.close();
     unawaited(_alertService.keepAwake(false));

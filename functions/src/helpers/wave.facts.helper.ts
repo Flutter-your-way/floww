@@ -1,4 +1,7 @@
-import {DocumentData} from "firebase-admin/firestore";
+import {
+  DocumentData,
+  QueryDocumentSnapshot,
+} from "firebase-admin/firestore";
 import {
   addDaysToKey,
   dayBoundsUtc,
@@ -12,7 +15,11 @@ import {
   MAX_WAVE_LONG_LIST,
   WAVE_RECENT_FOOD_DAYS,
 } from "../constants/ai.constants";
-import {USER_COLLECTIONS, userCollection} from "../constants/collections";
+import {
+  USER_COLLECTIONS,
+  WORKOUT_STATE_DOC,
+  userCollection,
+} from "../constants/collections";
 import {CATALOG_FOOD_NAMES} from "../constants/food.catalog.constants";
 import {WaveToday, waveTodayValidator} from "../validators/wave.chat.validator";
 import {COMPLETED_STATUS} from "./flow.score.helper";
@@ -31,6 +38,7 @@ import {entriesOf as workoutEntriesOf} from "./workout.metrics.helper";
 export const WORKOUT_IN_PROGRESS = "in progress";
 export const WORKOUT_COMPLETED = "completed today";
 export const WORKOUT_PLANNED = "planned, not started";
+export const WORKOUT_CATCH_UP = "catch-up, not started";
 export const WORKOUT_NONE = "no session planned";
 
 const IN_PROGRESS_STATUS = "inProgress";
@@ -39,6 +47,7 @@ export type WaveWorkoutStatus =
   | typeof WORKOUT_IN_PROGRESS
   | typeof WORKOUT_COMPLETED
   | typeof WORKOUT_PLANNED
+  | typeof WORKOUT_CATCH_UP
   | typeof WORKOUT_NONE;
 
 export interface WaveHabitFact {
@@ -100,10 +109,12 @@ const habitFactsOf = (
 const workoutStatusOf = (
   sessions: DocumentData[],
   planExercises: string[],
+  hasCatchUp: boolean,
 ): WaveWorkoutStatus => {
   if (sessions.some((session) => session.status === IN_PROGRESS_STATUS)) {
     return WORKOUT_IN_PROGRESS;
   }
+  if (hasCatchUp) return WORKOUT_CATCH_UP;
   if (sessions.some((session) => session.status === COMPLETED_STATUS)) {
     return WORKOUT_COMPLETED;
   }
@@ -112,6 +123,25 @@ const workoutStatusOf = (
 
 const exerciseNamesOf = (value: unknown): string[] =>
   unique(workoutEntriesOf(value).map((entry) => text(entry.name)));
+
+const catchUpOf = (
+  docs: QueryDocumentSnapshot[],
+  missedDay: string,
+  activeProgramId: string,
+  sessions: DocumentData[],
+): DocumentData | undefined => {
+  if (activeProgramId.length === 0) return undefined;
+  const fulfilled = sessions.some((session) =>
+    text(session.planDate) === missedDay &&
+    (session.status === IN_PROGRESS_STATUS ||
+      session.status === COMPLETED_STATUS));
+  if (fulfilled) return undefined;
+  const doc = docs.find((item) =>
+    item.id === missedDay &&
+    item.get("isRest") !== true &&
+    text(item.get("programId")) === activeProgramId);
+  return doc?.data();
+};
 
 export const loadWaveFacts = async (
   uid: string,
@@ -134,6 +164,8 @@ export const loadWaveFacts = async (
     waters,
     customFoods,
     plan,
+    catchUps,
+    workoutState,
     sessions,
     flow,
     stats,
@@ -158,9 +190,13 @@ export const loadWaveFacts = async (
       .limit(MAX_WAVE_CUSTOM_FOODS)
       .get(),
     collection(USER_COLLECTIONS.workoutPlans).doc(today).get(),
+    collection(USER_COLLECTIONS.workoutPlans)
+      .where("rescheduledTo", "==", today)
+      .get(),
+    collection(USER_COLLECTIONS.workoutState).doc(WORKOUT_STATE_DOC).get(),
     collection(USER_COLLECTIONS.workoutSessions)
       .where("date", "==", today)
-      .select("status", "exercises")
+      .select("status", "exercises", "planDate")
       .get(),
     collection(USER_COLLECTIONS.dailyFlow).doc(today).get(),
     statsDoc(uid).get(),
@@ -185,10 +221,20 @@ export const loadWaveFacts = async (
     macros.reduce((total, item) => total + numberOf(item[field]), 0);
 
   const planData = plan.data();
-  const planExercises = planData && text(planData.rescheduledTo).length === 0 ?
-    exerciseNamesOf(planData.exercises) :
-    [];
+  const todayExercises =
+    planData && text(planData.rescheduledTo).length === 0 ?
+      exerciseNamesOf(planData.exercises) :
+      [];
   const sessionDocs = sessions.docs.map((doc) => doc.data());
+  const catchUp = todayExercises.length > 0 ? undefined : catchUpOf(
+    catchUps.docs,
+    addDaysToKey(today, -1),
+    text(recordOf(workoutState.get("activeProgram")).id),
+    sessionDocs,
+  );
+  const planExercises = catchUp ?
+    exerciseNamesOf(catchUp.exercises) :
+    todayExercises;
   const active = sessionDocs.find((session) =>
     session.status === IN_PROGRESS_STATUS);
 
@@ -206,7 +252,11 @@ export const loadWaveFacts = async (
     ]),
     planExercises,
     activeExercises: active ? exerciseNamesOf(active.exercises) : [],
-    workoutStatus: workoutStatusOf(sessionDocs, planExercises),
+    workoutStatus: workoutStatusOf(
+      sessionDocs,
+      planExercises,
+      catchUp !== undefined,
+    ),
     calories: Math.round(sum("calories")),
     proteinG: Math.round(sum("proteinG")),
     carbsG: Math.round(sum("carbsG")),

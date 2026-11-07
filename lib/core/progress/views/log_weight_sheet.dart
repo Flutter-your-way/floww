@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
@@ -7,8 +8,8 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_sheet_panel.dart';
+import 'package:floww/config/widgets/text_field/compact_text_field.dart';
 import 'package:floww/core/progress/view_models/progress_view_model.dart';
-import 'package:floww/core/progress/widgets/weight_input_field.dart';
 
 class LogWeightSheet extends StatefulWidget {
   const LogWeightSheet({super.key, required this.viewModel});
@@ -30,16 +31,9 @@ class LogWeightSheet extends StatefulWidget {
 }
 
 class _LogWeightSheetState extends State<LogWeightSheet> {
-  final TextEditingController _controller = TextEditingController();
-
+  String _weight = '';
   bool _isSaving = false;
   String? _errorMessage;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   Future<void> _save() async {
     if (_isSaving) return;
@@ -47,7 +41,7 @@ class _LogWeightSheetState extends State<LogWeightSheet> {
       _isSaving = true;
       _errorMessage = null;
     });
-    final error = await widget.viewModel.logWeight(_controller.text);
+    final error = await widget.viewModel.logWeight(_weight);
     if (!mounted) return;
     if (error != null) {
       setState(() {
@@ -62,21 +56,27 @@ class _LogWeightSheetState extends State<LogWeightSheet> {
   @override
   Widget build(BuildContext context) {
     final viewModel = widget.viewModel;
-    final canSave = !_isSaving && viewModel.canLogWeight(_controller.text);
+    final canSave = !_isSaving && viewModel.canLogWeight(_weight);
     final errorMessage = _errorMessage;
 
     return AppFloatingSheet(
       child: AppSheetPanel(
         title: viewModel.logWeightTitle,
-        titleStyle: AppTypography.heading3SemiBold,
         onClose: () => Navigator.of(context).maybePop(),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            WeightInputField(
-              controller: _controller,
-              hint: viewModel.logWeightHint,
-              onChanged: (value) => setState(() {}),
+            CompactTextField(
+              hintText: viewModel.logWeightHint,
+              icon: Icons.monitor_weight_outlined,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              onChanged: (value) => setState(() => _weight = value),
               onSubmitted: (value) => _save(),
             ),
             if (errorMessage != null) ...[
@@ -90,17 +90,12 @@ class _LogWeightSheetState extends State<LogWeightSheet> {
             ],
           ],
         ),
-        footer: Center(
-          child: IntrinsicWidth(
-            child: PillButton(
-              height: AppSizes.s52,
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl4),
-              icon: Icons.check_rounded,
-              label: viewModel.saveWeightLabel,
-              labelStyle: AppTypography.heading4SemiBold,
-              onPressed: canSave ? _save : null,
-            ),
-          ),
+        footer: PillButton(
+          height: AppSizes.s44,
+          icon: Icons.check_rounded,
+          label: viewModel.saveWeightLabel,
+          isLoading: _isSaving,
+          onPressed: canSave ? _save : null,
         ),
       ),
     );

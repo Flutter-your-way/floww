@@ -135,7 +135,6 @@ class ActiveExerciseItem {
     required this.targetLabel,
     required this.setDots,
     required this.input,
-    required this.infoSections,
     required this.muscles,
     this.imageUrl,
     this.supersetLabel,
@@ -146,7 +145,6 @@ class ActiveExerciseItem {
   final String targetLabel;
   final List<ActiveSetDotItem> setDots;
   final ActiveSetInputItem input;
-  final List<ExerciseInfoSectionItem> infoSections;
   final MuscleTargetsItem muscles;
   final String? imageUrl;
   final String? supersetLabel;
@@ -226,6 +224,10 @@ class ActiveWorkoutItem {
     required this.primaryActionLabel,
     required this.canShortenRest,
     this.nextUpLabel,
+    this.isTiming = false,
+    this.workSecondsLabel = '',
+    this.canShortenWork = false,
+    this.setClockLabel = '',
   });
 
   final double progress;
@@ -239,4 +241,8 @@ class ActiveWorkoutItem {
   final String primaryActionLabel;
   final bool canShortenRest;
   final String? nextUpLabel;
+  final bool isTiming;
+  final String workSecondsLabel;
+  final bool canShortenWork;
+  final String setClockLabel;
 }

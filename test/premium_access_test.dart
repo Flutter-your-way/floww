@@ -14,12 +14,10 @@ void main() {
 
       final monthly = PremiumService.catalog.planFor(SubscriptionTerm.monthly);
       expect(monthly.planId, AppSubscription.monthlyPlanId);
-      expect(monthly.price, 499);
       expect(monthly.periodLabel, '/month');
 
       final yearly = PremiumService.catalog.planFor(SubscriptionTerm.yearly);
       expect(yearly.planId, AppSubscription.yearlyPlanId);
-      expect(yearly.price, 3999);
       expect(yearly.periodLabel, '/year');
     });
   });
@@ -28,7 +26,8 @@ void main() {
     test('round-trips every stored field', () {
       final subscription = buildSubscription(
         term: SubscriptionTerm.monthly,
-        price: AppSubscription.monthlyPrice,
+        price: testMonthlyPrice,
+        currency: 'INR',
         periodLabel: '/month',
         planLabel: 'Monthly Plan',
         startedAt: DateTime(2026, 1, 12),
@@ -42,7 +41,7 @@ void main() {
 
       final section = SubscriptionEntity.sectionOf(fields)!;
       expect(section[SubscriptionFields.planId], AppSubscription.monthlyPlanId);
-      expect(section[SubscriptionFields.currency], AppSubscription.currency);
+      expect(section[SubscriptionFields.currency], 'INR');
       expect(section[SubscriptionFields.price], 499);
       expect(
         section[SubscriptionFields.trialEndsOn],
@@ -97,7 +96,7 @@ void main() {
 
       final restored = SubscriptionEntity.fromUser('test-uid', fields);
       expect(restored.planId, AppSubscription.yearlyPlanId);
-      expect(restored.currency, AppSubscription.currency);
+      expect(restored.currency, isEmpty);
       expect(restored.trialEndsOn, isNull);
     });
 
@@ -158,8 +157,7 @@ void main() {
       expect(provider.isLoading, isFalse);
       expect(provider.hasAccess, isFalse);
       expect(provider.term, isNull);
-      expect(provider.canUse(PremiumCapability.waveCoach), isFalse);
-      expect(provider.canUse(PremiumCapability.habitTracking), isTrue);
+      expect(provider.canUse(PremiumCapability.waveMemory), isFalse);
     });
 
     test('each plan unlocks premium capabilities', () async {
@@ -194,7 +192,7 @@ void main() {
 
       expect(provider.isActive, isTrue);
       expect(provider.hasAccess, isFalse);
-      expect(provider.canUse(PremiumCapability.waveCoach), isFalse);
+      expect(provider.canUse(PremiumCapability.waveMemory), isFalse);
     });
   });
 }

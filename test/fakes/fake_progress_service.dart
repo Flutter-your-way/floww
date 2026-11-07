@@ -48,21 +48,19 @@ class FakeProgressService implements ProgressService {
   }
 
   @override
-  Future<void> addWeightLog(double weightKg, DateTime loggedAt) async {
+  Future<String> addWeightLog(double weightKg, DateTime loggedAt) async {
     final error = addWeightError;
     if (error != null) throw error;
+    final id = 'weight-${++_nextId}';
     emit(
       _copyWith(
         weights: [
           ..._records.weights,
-          WeightLog(
-            id: 'weight-${++_nextId}',
-            weightKg: weightKg,
-            loggedAt: loggedAt,
-          ),
+          WeightLog(id: id, weightKg: weightKg, loggedAt: loggedAt),
         ],
       ),
     );
+    return id;
   }
 
   @override
@@ -77,7 +75,6 @@ class FakeProgressService implements ProgressService {
     );
   }
 
-  @override
   Future<void> saveDailyFlow(List<DailyFlowEntry> entries) async {
     savedFlow.addAll(entries);
   }

@@ -48,7 +48,7 @@ void main() {
 
       final monthly = SubscriptionInvoiceEntity(
         id: 'monthly',
-        amount: AppSubscription.monthlyPrice,
+        amount: testMonthlyPrice,
         planLabel: 'Monthly Plan',
         paidAt: DateTime(2026, 9, 16),
         isPaid: true,

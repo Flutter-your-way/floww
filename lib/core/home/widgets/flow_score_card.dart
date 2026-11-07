@@ -261,6 +261,7 @@ class _FlowScoreBar extends StatelessWidget {
 
   static const double _trackHeight = 24;
   static const double _thumbSize = 30;
+  static const double _thumbWidth = _thumbSize / 5;
   static const double _hotZoneWidth = 88;
   static const double _fillGlow = 0.3;
   static const double _thumbGlow = 0.6;
@@ -285,9 +286,9 @@ class _FlowScoreBar extends StatelessWidget {
         builder: (context, constraints) {
           final trackWidth = constraints.maxWidth;
           final fillWidth = (trackWidth * fraction.clamp(0.0, 1.0));
-          final thumbLeft = (fillWidth - _thumbSize / 5).clamp(
+          final thumbLeft = (fillWidth - _thumbWidth).clamp(
             0.0,
-            trackWidth - _thumbSize,
+            trackWidth - _thumbWidth,
           );
 
           return Stack(
@@ -322,7 +323,7 @@ class _FlowScoreBar extends StatelessWidget {
               Positioned(
                 left: thumbLeft,
                 child: Container(
-                  width: _thumbSize / 5,
+                  width: _thumbWidth,
                   height: _thumbSize,
                   decoration: AppShapes.decoration(
                     color: context.colors.primary,

@@ -17,6 +17,7 @@ class RestTimerCard extends StatelessWidget {
     required this.canShorten,
     this.nextUpLabel,
     this.title = 'REST',
+    this.skipLabel = 'Skip Rest',
   });
 
   static const double _aspectRatio = 1;
@@ -28,6 +29,7 @@ class RestTimerCard extends StatelessWidget {
   final bool canShorten;
   final String? nextUpLabel;
   final String title;
+  final String skipLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +104,7 @@ class RestTimerCard extends StatelessWidget {
             ],
             SizedBox(height: AppSpacing.xl3),
             PillButton(
-              label: 'Skip Rest',
+              label: skipLabel,
               width: AppSizes.s160,
               onPressed: onSkip,
             ),

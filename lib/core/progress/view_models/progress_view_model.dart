@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/progress_state_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/config/widgets/charts/app_line_chart_point_label.dart';
 import 'package:floww/core/achievements/models/streak_summary.dart';
 import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/progress/models/progress_view_data.dart';
@@ -214,6 +215,14 @@ class ProgressViewModel extends ChangeNotifier {
 
   List<double> get weightSamples => [
     for (final entry in weight.entries) entry.weight,
+  ];
+
+  List<AppLineChartPointLabel> get weightPointLabels => [
+    for (final entry in weight.entries)
+      AppLineChartPointLabel(
+        value: '${entry.weight.toStringAsFixed(1)} $weightUnit',
+        caption: AppDateUtils.monthDayYear(entry.date),
+      ),
   ];
 
   double get weightAxisMin {

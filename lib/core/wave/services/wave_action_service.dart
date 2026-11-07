@@ -149,9 +149,11 @@ class WaveActionService {
     ),
     WaveActionKind.regeneratePlan => const WaveActionOutcome(
       'New plan ready',
-      'WAVE built a fresh program from your onboarding answers to replace '
-          'your upcoming sessions. Logged workouts stay. Nothing changes in '
-          'Workouts until you approve.',
+      'WAVE built a fresh program from your onboarding answers. Approving '
+          'replaces your current plan from today: every upcoming session, '
+          'including swaps, moved sessions and edits, is overwritten and the '
+          'program restarts from week 1. Logged workouts stay in your '
+          'history. Nothing changes in Workouts until you approve.',
     ),
     _ => const WaveActionOutcome('Confirm this change?', ''),
   };

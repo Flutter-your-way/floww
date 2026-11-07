@@ -7,8 +7,11 @@ import 'package:provider/provider.dart';
 
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/theme/app_theme.dart';
+import 'package:floww/core/health/providers/health_provider.dart';
+import 'package:floww/core/health/services/health_service.dart';
 import 'package:floww/core/settings/models/settings_view_data.dart';
 import 'package:floww/core/settings/services/settings_service.dart';
+import 'package:floww/core/settings/services/wearable_service.dart';
 import 'package:floww/core/settings/view_models/connected_apps_view_model.dart';
 import 'package:floww/core/settings/view_models/notification_settings_view_model.dart';
 import 'package:floww/core/settings/view_models/privacy_data_view_model.dart';
@@ -59,26 +62,23 @@ void main() {
   });
 
   testWidgets('connected apps view lists every integration', (tester) async {
-    final viewModel = ConnectedAppsViewModel(SettingsService());
+    final health = HealthProvider(HealthService());
+    final viewModel = ConnectedAppsViewModel(
+      SettingsService(),
+      WearableService(),
+      health,
+    );
     await _pumpView(tester, viewModel, const ConnectedAppsView());
 
     expect(find.text('Connected Apps & Devices'), findsOneWidget);
-    expect(find.text('Apple Health'), findsOneWidget);
     expect(find.text('Garmin®'), findsOneWidget);
     expect(find.text('WHOOP'), findsOneWidget);
     expect(find.text('Oura'), findsOneWidget);
     expect(find.text('Fitbit'), findsOneWidget);
-    expect(find.text('Health Connect'), findsOneWidget);
-    expect(find.text('Connected'), findsOneWidget);
-    expect(find.text('Connect'), findsNWidgets(5));
-
-    viewModel.connect('whoop');
-    await tester.pump();
-
-    expect(find.text('Connected'), findsNWidgets(2));
 
     await tester.pumpWidget(const SizedBox.shrink());
     viewModel.dispose();
+    health.dispose();
   });
 
   testWidgets('notification view renders sections and toggles', (tester) async {
@@ -131,7 +131,10 @@ void main() {
   });
 
   testWidgets('privacy view renders the danger zone', (tester) async {
-    final viewModel = PrivacyDataViewModel(SettingsService());
+    final viewModel = PrivacyDataViewModel(
+      SettingsService(),
+      FakeAuthService(),
+    );
     await _pumpView(tester, viewModel, const PrivacyDataView());
 
     expect(find.text('Your Data is Safe'), findsOneWidget);

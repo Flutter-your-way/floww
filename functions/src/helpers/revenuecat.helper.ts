@@ -6,10 +6,14 @@ import {
   usersCollection,
 } from "../constants/collections";
 import {
+  ADMIN_SOURCE,
   PREMIUM_ENTITLEMENT,
   PremiumPlan,
   SubscriptionTerm,
+  adminAccessOf,
+  adminSubscriptionOf,
   hasPremiumAccess,
+  isGrantActive,
   planForProduct,
   termForProduct,
 } from "./premium.helper";
@@ -153,26 +157,61 @@ const premiumFieldsOf = (
   };
 };
 
+export type SyncedSubscription =
+  StoreSubscription | ReturnType<typeof adminSubscriptionOf>;
+
+/**
+ * Store state wins while it grants access. Otherwise an active admin grant
+ * keeps Premium on. An admin revoke always wins. `update` replaces the whole
+ * `subscription` map so no stale store fields survive a source switch.
+ */
 export const syncCustomer = async (
   uid: string,
   secretKey: string,
-): Promise<StoreSubscription | null | undefined> => {
+): Promise<SyncedSubscription | null | undefined> => {
   const user = await loadActiveUser(uid);
   if (!user) return undefined;
 
   const now = new Date();
+  const ref = usersCollection.doc(uid);
+  const access = adminAccessOf(user);
+
+  if (access?.mode === "revoke") {
+    if (recordOf(user.subscription).status !== "none") {
+      await ref.update({
+        isPremium: false,
+        subscription: {
+          status: "none",
+          source: ADMIN_SOURCE,
+          updatedAt: now.toISOString(),
+        },
+      });
+    }
+    return null;
+  }
+
   const subscription = subscriptionFromSubscriber(
     await fetchSubscriber(uid, secretKey),
     now,
   );
+  const storeHasAccess = subscription !== null &&
+    hasPremiumAccess({subscription}, now);
+
+  if (!storeHasAccess && access && isGrantActive(access, now)) {
+    const granted = adminSubscriptionOf(access, now);
+    await ref.update({
+      isPremium: true,
+      planName: granted.planName,
+      subscription: granted,
+    });
+    return granted;
+  }
+
   const hadSubscription = recordOf(user.subscription).status !== undefined &&
     recordOf(user.subscription).status !== "none";
   if (!subscription && !hadSubscription) return null;
 
-  await usersCollection.doc(uid).set(
-    premiumFieldsOf(subscription, now),
-    {merge: true},
-  );
+  await ref.update(premiumFieldsOf(subscription, now));
   return subscription;
 };
 

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:floww/config/entities/daily_flow_entity.dart';
 import 'package:floww/config/entities/health_day_entity.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
+import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
@@ -32,6 +33,7 @@ class HomeRecords {
     required this.flowHistory,
     this.flowModeOverride,
     this.isRestDay = false,
+    this.catchUp,
   });
 
   static const empty = HomeRecords(
@@ -53,6 +55,7 @@ class HomeRecords {
   final List<DailyFlowEntry> flowHistory;
   final AppThemeMode? flowModeOverride;
   final bool isRestDay;
+  final WorkoutPlanEntity? catchUp;
 }
 
 class HomeService {
@@ -129,6 +132,7 @@ class HomeService {
         false,
         'rest day',
       ),
+      _guarded<WorkoutPlanEntity?>(_watchCatchUp(day), null, 'catch-up'),
     ]).map(
       (values) => HomeRecords(
         account: values[0]! as ProfileAccount,
@@ -140,8 +144,27 @@ class HomeService {
         flowHistory: values[6]! as List<DailyFlowEntry>,
         flowModeOverride: values[7] as AppThemeMode?,
         isRestDay: values[8]! as bool,
+        catchUp: values[9] as WorkoutPlanEntity?,
       ),
     );
+  }
+
+  Stream<WorkoutPlanEntity?> _watchCatchUp(DateTime day) {
+    final missedDay = AppDateUtils.addDays(day, -1);
+    return combineLatest([
+      _planService.watchCatchUps(day),
+      _programService.watchState(),
+    ]).map((values) {
+      final activeId = (values[1]! as WorkoutStateEntity).activeProgram?.id;
+      for (final plan in values[0]! as List<WorkoutPlanEntity>) {
+        if (activeId != null &&
+            plan.programId == activeId &&
+            AppDateUtils.isSameDay(plan.date, missedDay)) {
+          return plan;
+        }
+      }
+      return null;
+    });
   }
 
   Future<void> saveHabitDay(

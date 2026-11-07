@@ -47,6 +47,66 @@ export const renewsOnOf = (user: DocumentData | undefined): number | null => {
   return Number.isNaN(time) ? null : time;
 };
 
+/**
+ * `users/{uid}.adminAccess` — written only by the admin console (server-owned
+ * in firestore.rules). A `grant` gives Premium without a store purchase until
+ * `until` (null = no end date). A `revoke` blocks Premium even when the store
+ * says the user paid. RevenueCat sync respects both.
+ */
+export const ADMIN_SOURCE = "admin";
+export const ADMIN_PLAN_ID = "floww_premium_admin";
+export const ADMIN_NO_END = "9999-12-31T23:59:59.000Z";
+
+export interface AdminAccess {
+  mode: "grant" | "revoke";
+  until: string | null;
+  term: SubscriptionTerm;
+  at: string;
+}
+
+export const adminAccessOf = (
+  user: DocumentData | undefined,
+): AdminAccess | null => {
+  const raw = recordOf(user?.adminAccess);
+  if (raw.mode !== "grant" && raw.mode !== "revoke") return null;
+  const until = typeof raw.until === "string" &&
+    !Number.isNaN(Date.parse(raw.until)) ? raw.until : null;
+  return {
+    mode: raw.mode,
+    until,
+    term: raw.term === "yearly" ? "yearly" : "monthly",
+    at: typeof raw.at === "string" ? raw.at : new Date().toISOString(),
+  };
+};
+
+export const isGrantActive = (
+  access: AdminAccess | null,
+  now: Date = new Date(),
+): boolean =>
+  access?.mode === "grant" &&
+  (access.until === null || now.getTime() < Date.parse(access.until));
+
+/** The `subscription` block the app parses for an admin grant. */
+export const adminSubscriptionOf = (access: AdminAccess, now: Date) => ({
+  status: "active" as const,
+  term: access.term,
+  planId: ADMIN_PLAN_ID,
+  planName: "Premium (granted)",
+  price: 0,
+  currency: "",
+  periodLabel: "",
+  startedAt: access.at,
+  renewsOn: access.until ?? ADMIN_NO_END,
+  cancelledAt: null,
+  trialEndsOn: null,
+  updatedAt: now.toISOString(),
+  isSimulated: false,
+  source: ADMIN_SOURCE,
+  store: null,
+  managementUrl: null,
+  hasBillingIssue: false,
+});
+
 export const hasPremiumAccess = (
   user: DocumentData | undefined,
   now: Date = new Date(),

@@ -5,6 +5,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/animations/app_card_swap.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
 import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/headers/custom_header.dart';
@@ -18,6 +19,7 @@ import 'package:floww/core/workout/views/swap_exercise_sheet.dart';
 import 'package:floww/core/workout/views/workout_completion_flow.dart';
 import 'package:floww/core/workout/views/workout_queue_sheet.dart';
 import 'package:floww/core/workout/widgets/active_exercise_hero_card.dart';
+import 'package:floww/core/workout/widgets/active_set_card.dart';
 import 'package:floww/core/workout/widgets/active_workout_action_bar.dart';
 import 'package:floww/core/workout/widgets/active_workout_shell.dart';
 import 'package:floww/core/workout/widgets/muscle_targets_card.dart';
@@ -167,29 +169,38 @@ class ActiveWorkoutView extends StatelessWidget {
             },
           ),
           children: [
-            if (session.isResting) ...[
-              SetTracker(sets: session.exercise.setDots),
-              SizedBox(height: AppSpacing.xl2),
-              RestTimerCard(
-                secondsLabel: session.restSecondsLabel,
-                nextUpLabel: session.nextUpLabel,
-                canShorten: session.canShortenRest,
-                onSkip: viewModel.skipRest,
-                onAdjust: (steps) {
-                  HapticManager.selection();
-                  viewModel.adjustRest(steps);
-                },
-              ),
-            ] else
-              _ExerciseContent(
-                exercise: session.exercise,
-                viewModel: viewModel,
-                onOptions: () => _openOptions(context, viewModel),
-                onEditSet: (index) {
-                  HapticManager.light();
-                  EditSetSheet.show(context, viewModel, index);
-                },
-              ),
+            AppCardSwap(
+              child: session.isResting
+                  ? Column(
+                      key: const ValueKey(_ContentKey.rest),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SetTracker(sets: session.exercise.setDots),
+                        SizedBox(height: AppSpacing.xl2),
+                        RestTimerCard(
+                          secondsLabel: session.restSecondsLabel,
+                          nextUpLabel: session.nextUpLabel,
+                          canShorten: session.canShortenRest,
+                          onSkip: viewModel.skipRest,
+                          onAdjust: (steps) {
+                            HapticManager.selection();
+                            viewModel.adjustRest(steps);
+                          },
+                        ),
+                      ],
+                    )
+                  : _ExerciseContent(
+                      key: const ValueKey(_ContentKey.exercise),
+                      exercise: session.exercise,
+                      session: session,
+                      viewModel: viewModel,
+                      onOptions: () => _openOptions(context, viewModel),
+                      onEditSet: (index) {
+                        HapticManager.light();
+                        EditSetSheet.show(context, viewModel, index);
+                      },
+                    ),
+            ),
           ],
         );
       },
@@ -197,15 +208,20 @@ class ActiveWorkoutView extends StatelessWidget {
   }
 }
 
+enum _ContentKey { rest, exercise, timer, set, hero, input, none }
+
 class _ExerciseContent extends StatelessWidget {
   const _ExerciseContent({
+    super.key,
     required this.exercise,
+    required this.session,
     required this.viewModel,
     required this.onOptions,
     required this.onEditSet,
   });
 
   final ActiveExerciseItem exercise;
+  final ActiveWorkoutItem session;
   final ActiveWorkoutViewModel viewModel;
   final VoidCallback onOptions;
   final ValueChanged<int> onEditSet;
@@ -217,25 +233,67 @@ class _ExerciseContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ActiveExerciseHeroCard(exercise: exercise, onOptions: onOptions),
+        AppCardSwap(
+          child: session.isTiming
+              ? RestTimerCard(
+                  key: const ValueKey(_ContentKey.timer),
+                  title: 'TIME LEFT',
+                  skipLabel: 'Finish Set',
+                  secondsLabel: session.workSecondsLabel,
+                  nextUpLabel: '${exercise.name} · ${session.setLabel}',
+                  canShorten: session.canShortenWork,
+                  onSkip: () {
+                    HapticManager.medium();
+                    viewModel.finishWork();
+                  },
+                  onAdjust: (steps) {
+                    HapticManager.selection();
+                    viewModel.adjustWork(steps);
+                  },
+                )
+              : session.isSetActive
+              ? ActiveSetCard(
+                  key: const ValueKey(_ContentKey.set),
+                  exercise: exercise,
+                  setLabel: session.setLabel,
+                  clockLabel: session.setClockLabel,
+                  isPaused: session.isPaused,
+                  onOptions: onOptions,
+                )
+              : ActiveExerciseHeroCard(
+                  key: ValueKey((_ContentKey.hero, exercise.name)),
+                  exercise: exercise,
+                  onOptions: onOptions,
+                ),
+        ),
         SizedBox(height: AppSpacing.xl2),
         SetTracker(sets: exercise.setDots, onTapLogged: onEditSet),
-        SizedBox(height: AppSpacing.xl2),
-        SetInputCard(
-          primary: input.primary,
-          weight: input.weight,
-          reserve: input.reserve,
-          onAdjustPrimary: viewModel.adjustPrimary,
-          onAdjustWeight: viewModel.adjustWeight,
-          onAdjustReserve: viewModel.adjustReserve,
+        AppCardSwap(
+          child: session.isTiming
+              ? const SizedBox.shrink(key: ValueKey(_ContentKey.none))
+              : Column(
+                  key: const ValueKey(_ContentKey.input),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: AppSpacing.xl2),
+                    SetInputCard(
+                      primary: input.primary,
+                      weight: input.weight,
+                      reserve: input.reserve,
+                      onAdjustPrimary: viewModel.adjustPrimary,
+                      onAdjustWeight: viewModel.adjustWeight,
+                      onAdjustReserve: viewModel.adjustReserve,
+                    ),
+                    if (!exercise.muscles.targets.isEmpty) ...[
+                      SizedBox(height: AppSpacing.lg),
+                      MuscleTargetsCard(
+                        item: exercise.muscles,
+                        templateOf: viewModel.muscleMapOf,
+                      ),
+                    ],
+                  ],
+                ),
         ),
-        if (!exercise.muscles.targets.isEmpty) ...[
-          SizedBox(height: AppSpacing.lg),
-          MuscleTargetsCard(
-            item: exercise.muscles,
-            templateOf: viewModel.muscleMapOf,
-          ),
-        ],
       ],
     );
   }

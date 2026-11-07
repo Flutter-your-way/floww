@@ -42,7 +42,8 @@ class OnboardingAnswersView extends StatelessWidget {
       message: viewModel.rebuildPrompt,
       confirmLabel: viewModel.rebuildConfirmLabel,
       alternateLabel: viewModel.rebuildLaterLabel,
-      icon: Icons.auto_awesome_rounded,
+      icon: Icons.warning_amber_rounded,
+      isDestructive: true,
     );
     if (choice != AppConfirmChoice.confirm) return;
     HapticManager.medium();

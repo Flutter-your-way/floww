@@ -13,6 +13,7 @@ import 'package:floww/config/widgets/animations/tab_content_switcher.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/config/widgets/images/image_precacher.dart';
+import 'package:floww/config/widgets/layout/visible_consumer.dart';
 import 'package:floww/config/widgets/effects/luminosity_layer.dart';
 import 'package:floww/config/widgets/headers/screen_date_header.dart';
 import 'package:floww/config/widgets/placeholders/app_error_card.dart';
@@ -132,9 +133,25 @@ class WorkoutView extends StatelessWidget {
     showWaveChatSheet(context, day: viewModel.pendingPlanDay);
   }
 
-  void _buildPlan(WorkoutViewModel viewModel) {
+  Future<void> _buildPlan(
+    BuildContext context,
+    WorkoutViewModel viewModel,
+  ) async {
+    if (viewModel.needsRebuildWarning) {
+      HapticManager.light();
+      final choice = await AppConfirmSheet.show(
+        context,
+        title: viewModel.rebuildWarningTitle,
+        message: viewModel.rebuildWarningMessage,
+        confirmLabel: viewModel.rebuildWarningConfirm,
+        alternateLabel: viewModel.rebuildWarningCancel,
+        icon: Icons.warning_amber_rounded,
+        isDestructive: true,
+      );
+      if (choice != AppConfirmChoice.confirm) return;
+    }
     HapticManager.medium();
-    viewModel.buildPlan();
+    await viewModel.buildPlan();
   }
 
   void _resumeWorkout(WorkoutViewModel viewModel) {
@@ -369,7 +386,7 @@ class WorkoutView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Consumer<WorkoutViewModel>(
+      body: VisibleConsumer<WorkoutViewModel>(
         builder: (context, viewModel, child) {
           final suggestion = viewModel.suggestion;
           final overview = viewModel.overview;
@@ -487,7 +504,8 @@ class WorkoutView extends StatelessWidget {
                                           errorMessage:
                                               planBuilder.errorMessage,
                                           isLoading: viewModel.isBuildingPlan,
-                                          onAction: () => _buildPlan(viewModel),
+                                          onAction: () =>
+                                              _buildPlan(context, viewModel),
                                         ),
                                       ),
                               ),
@@ -800,12 +818,14 @@ class WorkoutView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         if (viewModel.canLogWorkout)
-                          Flexible(
+                          Expanded(
                             flex: 5,
                             child: PillButton(
-                              variant: PillButtonVariant.neutral,
+                              variant: viewModel.isLogWorkoutPrimary
+                                  ? PillButtonVariant.accent
+                                  : PillButtonVariant.neutral,
                               label: viewModel.logWorkoutLabel,
-                              icon: Icons.edit_note_rounded,
+                              icon: Icons.add_rounded,
                               padding: EdgeInsets.symmetric(
                                 horizontal: AppSpacing.xl,
                               ),
@@ -818,7 +838,7 @@ class WorkoutView extends StatelessWidget {
                           SizedBox(width: AppSpacing.md),
                         if (viewModel.primaryAction ==
                             WorkoutPrimaryAction.start)
-                          Flexible(
+                          Expanded(
                             flex: 6,
                             child: GuideTarget(
                               id: GuideTargetId.workoutStart,

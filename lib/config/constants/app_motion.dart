@@ -55,6 +55,14 @@ class AppMotion {
   static const double stepperPressScale = 0.86;
   static const Duration stepperRepeat = Duration(milliseconds: 90);
 
+  static const Duration cardSwap = Duration(milliseconds: 520);
+  static const Duration cardSwapOut = Duration(milliseconds: 220);
+  static const Curve cardSwapCurve = Cubic(0.2, 1, 0.3, 1);
+  static const Curve cardSwapOutCurve = Curves.easeIn;
+  static const double cardSwapScale = 0.94;
+  static const double cardSwapRise = 0.04;
+  static const double pausedOpacity = 0.45;
+
   static const Duration segment = Duration(milliseconds: 460);
   static const Duration segmentLabel = Duration(milliseconds: 320);
   static const Curve segmentCurve = Cubic(0.2, 1, 0.3, 1);

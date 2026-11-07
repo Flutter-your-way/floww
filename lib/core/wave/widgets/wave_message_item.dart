@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/haptics/haptic_manager.dart';
+import 'package:floww/config/widgets/sheets/app_confirm_sheet.dart';
 import 'package:floww/core/wave/models/wave_card_data.dart';
 import 'package:floww/core/wave/models/wave_message.dart';
 import 'package:floww/core/wave/models/wave_quick_action.dart';
@@ -104,19 +105,9 @@ class WaveMessageItem extends StatelessWidget {
         onKeep: () => viewModel.keepOriginal(message),
       ),
       WaveConfirmationMessage() => _confirmationOf(message),
-      WaveActionPromptMessage() => WaveActionPromptCard(
-        title: message.title,
-        detail: message.detail,
-        isDestructive: !message.isPlanApproval,
-        confirmLabel: message.isPlanApproval
-            ? WaveChatViewModel.approvePlanLabel
-            : WaveChatViewModel.confirmLabel,
-        cancelLabel: message.isPlanApproval
-            ? WaveChatViewModel.notNowLabel
-            : WaveChatViewModel.cancelLabel,
-        isResolved: viewModel.isResolved(message.id),
-        onConfirm: () => viewModel.confirmPending(message.id),
-        onCancel: () => viewModel.dismissPending(message.id),
+      WaveActionPromptMessage() => _ActionPrompt(
+        message: message,
+        viewModel: viewModel,
       ),
       WaveCheckInMessage() => WaveCheckInCard(
         title: message.title,
@@ -216,6 +207,49 @@ class _TimeLabel extends StatelessWidget {
       style: context.textTheme.labelSmall?.copyWith(
         color: context.colors.textQuiet,
       ),
+    );
+  }
+}
+
+class _ActionPrompt extends StatelessWidget {
+  const _ActionPrompt({required this.message, required this.viewModel});
+
+  final WaveActionPromptMessage message;
+  final WaveChatViewModel viewModel;
+
+  Future<void> _confirm(BuildContext context) async {
+    if (message.replacesPlan) {
+      HapticManager.light();
+      final choice = await AppConfirmSheet.show(
+        context,
+        title: WaveChatViewModel.replacePlanTitle,
+        message: WaveChatViewModel.replacePlanMessage,
+        confirmLabel: WaveChatViewModel.replacePlanConfirm,
+        alternateLabel: WaveChatViewModel.replacePlanCancel,
+        icon: Icons.warning_amber_rounded,
+        isDestructive: true,
+      );
+      if (choice != AppConfirmChoice.confirm) return;
+      HapticManager.medium();
+    }
+    await viewModel.confirmPending(message.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WaveActionPromptCard(
+      title: message.title,
+      detail: message.detail,
+      isDestructive: !message.isPlanApproval,
+      confirmLabel: message.isPlanApproval
+          ? WaveChatViewModel.approvePlanLabel
+          : WaveChatViewModel.confirmLabel,
+      cancelLabel: message.isPlanApproval
+          ? WaveChatViewModel.notNowLabel
+          : WaveChatViewModel.cancelLabel,
+      isResolved: viewModel.isResolved(message.id),
+      onConfirm: () => _confirm(context),
+      onCancel: () => viewModel.dismissPending(message.id),
     );
   }
 }
