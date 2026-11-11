@@ -90,7 +90,8 @@ class AppGlass {
   static const double tabRimStrength = 0.95;
   static const double tabIridescence = 0.85;
   static const double tabBarHeight = AppSizes.s60;
-  static const double tabOrbSize = AppSizes.s48;
+  static const double tabOrbSize = AppSizes.s60;
+  static const double tabOrbGap = AppSpacing.md;
   static const double tabIconSize = 22;
   static const double tabSideInset = AppSpacing.lg;
   static const double tabLensOverhang = AppSizes.s6;
@@ -107,7 +108,6 @@ class AppGlass {
   static const double tabFrost = 5.5;
   static const double tabSaturation = 1.25;
   static const double tabBarRefraction = 0.8;
-  static const double tabTrailingExtent = AppSizes.s56;
   static const double tabDragGrowWidth = 0.12;
   static const double tabDragGrowHeight = AppSizes.s6;
 }

@@ -613,6 +613,11 @@ class WorkoutViewModel extends ChangeNotifier {
 
   String? get overviewWorkoutId => _selectedSession?.id;
 
+  bool get isOverviewActive {
+    final active = _activeSession;
+    return active != null && _selectedSession?.id == active.id;
+  }
+
   WorkoutPrimaryAction? get primaryAction {
     if (dayStatus != WorkoutDayStatus.today) return null;
     if (_activeSession != null) return WorkoutPrimaryAction.resume;

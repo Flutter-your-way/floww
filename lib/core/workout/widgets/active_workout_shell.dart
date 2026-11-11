@@ -52,8 +52,8 @@ class ActiveWorkoutShell extends StatelessWidget {
     final horizontalPadding = context.sizes.screenHorizontalPadding;
     final viewPadding = MediaQuery.viewPaddingOf(context);
     final actionsBottom = viewPadding.bottom + AppSpacing.xl;
-    final contentTop =
-        viewPadding.top + kToolbarHeight + _headerBlockHeight + AppSpacing.xl;
+    final headerBottom = viewPadding.top + kToolbarHeight + _headerBlockHeight;
+    final contentTop = headerBottom + AppSpacing.lg;
 
     return RestEndListener(
       events: alertEvents,
@@ -71,6 +71,7 @@ class ActiveWorkoutShell extends StatelessWidget {
                 Positioned.fill(
                   child: EdgeFadeMask(
                     topFadeEnd: contentTop,
+                    topFadeLength: contentTop - headerBottom,
                     child: AppPopRevealScope(
                       child: ListView(
                         padding: EdgeInsets.only(

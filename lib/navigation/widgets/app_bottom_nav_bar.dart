@@ -105,20 +105,25 @@ class AppBottomNavBar extends StatelessWidget {
       ),
     ];
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return LiquidGlassTabBar(
+      final glassBar = LiquidGlassTabBar(
         height: height,
         currentIndex: selectedIndex,
         onChanged: onTabSelected,
         style: iosGlassStyle(context),
-        trailing: trailing,
-        onTrailingSelected: onTrailingSelected,
-        trailingExtent: trailing == null ? 0 : AppGlass.tabTrailingExtent,
         items: [
           for (final item in items)
             LiquidGlassTabItem(
               iconAsset: item.iconAsset,
               label: item.semanticLabel,
             ),
+        ],
+      );
+      if (trailing == null) return glassBar;
+      return Row(
+        children: [
+          Expanded(child: glassBar),
+          const SizedBox(width: AppGlass.tabOrbGap),
+          trailing,
         ],
       );
     }

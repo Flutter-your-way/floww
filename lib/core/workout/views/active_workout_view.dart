@@ -239,6 +239,9 @@ class _ExerciseContent extends StatelessWidget {
                   key: const ValueKey(_ContentKey.timer),
                   title: 'TIME LEFT',
                   skipLabel: 'Finish Set',
+                  video: exercise.video,
+                  imageUrl: exercise.imageUrl,
+                  isVideoLoading: exercise.isVideoLoading,
                   secondsLabel: session.workSecondsLabel,
                   nextUpLabel: '${exercise.name} · ${session.setLabel}',
                   canShorten: session.canShortenWork,
@@ -275,15 +278,17 @@ class _ExerciseContent extends StatelessWidget {
                   key: const ValueKey(_ContentKey.input),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(height: AppSpacing.xl2),
-                    SetInputCard(
-                      primary: input.primary,
-                      weight: input.weight,
-                      reserve: input.reserve,
-                      onAdjustPrimary: viewModel.adjustPrimary,
-                      onAdjustWeight: viewModel.adjustWeight,
-                      onAdjustReserve: viewModel.adjustReserve,
-                    ),
+                    if (!session.isSetActive) ...[
+                      SizedBox(height: AppSpacing.xl2),
+                      SetInputCard(
+                        primary: input.primary,
+                        weight: input.weight,
+                        reserve: input.reserve,
+                        onAdjustPrimary: viewModel.adjustPrimary,
+                        onAdjustWeight: viewModel.adjustWeight,
+                        onAdjustReserve: viewModel.adjustReserve,
+                      ),
+                    ],
                     if (!exercise.muscles.targets.isEmpty) ...[
                       SizedBox(height: AppSpacing.lg),
                       MuscleTargetsCard(

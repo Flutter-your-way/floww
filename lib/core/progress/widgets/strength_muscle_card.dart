@@ -11,6 +11,8 @@ import 'package:floww/config/widgets/chips/app_status_chip.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/progress/models/strength_view_data.dart';
 import 'package:floww/config/widgets/charts/app_line_chart.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
+import 'package:floww/core/recovery/widgets/muscle_thumbnail.dart';
 
 class StrengthMuscleCard extends StatelessWidget {
   const StrengthMuscleCard({
@@ -20,9 +22,13 @@ class StrengthMuscleCard extends StatelessWidget {
     required this.addLabel,
     required this.logAgainLabel,
     required this.onTap,
+    this.muscleMap,
+    this.muscleFocus,
   });
 
   final StrengthMuscleView muscle;
+  final MuscleMapTemplate? muscleMap;
+  final Rect? muscleFocus;
   final String emptyValueLabel;
   final String addLabel;
   final String logAgainLabel;
@@ -30,6 +36,8 @@ class StrengthMuscleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muscleMap = this.muscleMap;
+
     return PressScale(
       onTap: onTap,
       child: AppCard(
@@ -39,6 +47,14 @@ class StrengthMuscleCard extends StatelessWidget {
             CardHeader(
               title: muscle.title,
               icon: Icons.fitness_center_rounded,
+              leading: muscleMap == null
+                  ? null
+                  : MuscleThumbnail(
+                      group: muscle.group,
+                      color: context.colors.primaryAlt,
+                      template: muscleMap,
+                      focus: muscleFocus,
+                    ),
               trailing: muscle.hasData
                   ? AppStatusChip(
                       label: muscle.levelLabel,

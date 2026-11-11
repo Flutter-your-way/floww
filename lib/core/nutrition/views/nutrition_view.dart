@@ -19,7 +19,7 @@ import 'package:floww/core/nutrition/widgets/weekly_summary_card.dart';
 import 'package:floww/core/nutrition/views/food_scan_result_sheet.dart';
 import 'package:floww/core/nutrition/views/log_food_sheet.dart';
 import 'package:floww/core/nutrition/views/macronutrients_sheet.dart';
-import 'package:floww/core/nutrition/views/micronutrient_sources_sheet.dart';
+import 'package:floww/core/nutrition/views/micronutrients_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_date_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_info_sheet.dart';
 import 'package:floww/config/widgets/sheets/app_option_sheet.dart';
@@ -379,22 +379,12 @@ class NutritionView extends StatelessWidget {
                                             id: GuideTargetId.nutritionMicros,
                                             child: MicronutrientsCard(
                                               limits: viewModel.limitNutrients,
-                                              items: viewModel.micronutrients,
-                                              extendedItems: viewModel
-                                                  .extendedMicronutrients,
-                                              showExtended: viewModel
-                                                  .showAllMicronutrients,
-                                              toggleLabel: viewModel
-                                                  .micronutrientsToggleLabel,
-                                              onToggle: viewModel
-                                                  .toggleMicronutrients,
-                                              note:
-                                                  viewModel.micronutrientsNote,
-                                              onOpenNutrient: (kind) =>
-                                                  MicronutrientSourcesSheet.show(
+                                              summaryLabel: viewModel
+                                                  .micronutrientsSummaryLabel,
+                                              onTap: () =>
+                                                  MicronutrientsSheet.show(
                                                     context,
-                                                    day: viewModel.day,
-                                                    kind: kind,
+                                                    viewModel: viewModel,
                                                   ),
                                             ),
                                           ),

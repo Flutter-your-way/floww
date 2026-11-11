@@ -33,7 +33,7 @@ import 'package:floww/core/home/views/recovery_sheet.dart';
 import 'package:floww/core/home/services/daily_metrics_presenter.dart';
 import 'package:floww/core/home/widgets/daily_metrics_card.dart';
 import 'package:floww/core/home/widgets/daily_metrics_prompt_card.dart';
-import 'package:floww/core/home/widgets/health_sync_card.dart';
+import 'package:floww/core/home/widgets/health_source_badge.dart';
 import 'package:floww/core/home/widgets/flow_score_boost_card.dart';
 import 'package:floww/core/home/widgets/flow_score_card.dart';
 import 'package:floww/core/home/widgets/daily_quote_card.dart';
@@ -59,6 +59,14 @@ class HomeView extends StatelessWidget {
 
   void _startWorkout(BuildContext context, HomeProvider home) {
     HapticManager.light();
+    final resumeArgs = home.resumeArgs;
+    if (resumeArgs != null) {
+      NavigationService.instance.push(
+        AppRouter.activeWorkout,
+        arguments: resumeArgs,
+      );
+      return;
+    }
     final controller = context.read<MainTabController?>();
     if (home.workout == null && controller != null) {
       controller.select(MainTabController.workoutTab);
@@ -173,9 +181,17 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  void _openHealthApp(HealthProvider health) {
+  void _openHealthBadge(HealthProvider health) {
     HapticManager.light();
-    health.openSource();
+    if (!health.isConnected) {
+      health.connect();
+      return;
+    }
+    if (health.canOpenSource) {
+      health.openSource();
+      return;
+    }
+    health.refresh();
   }
 
   void _openBodyComposition(BuildContext context, HealthProvider health) {
@@ -233,6 +249,15 @@ class HomeView extends StatelessWidget {
                     onAvatarTap: _openProfile,
                     onStreakTap: () => _openStreak(context, home),
                     action: const GuideReplayButton(),
+                    accessory: GuideTarget(
+                      id: GuideTargetId.homeHealth,
+                      child: HealthSourceBadge(
+                        iconAsset: health.sourceIcon,
+                        connected: health.isConnected,
+                        semanticLabel: health.badgeLabel,
+                        onTap: () => _openHealthBadge(health),
+                      ),
+                    ),
                   ),
                   SizedBox(height: AppSpacing.xl2),
                   GuideTarget(
@@ -258,25 +283,7 @@ class HomeView extends StatelessWidget {
                         ? const SizedBox.shrink()
                         : DailyQuoteCard(quote: home.dailyQuote!),
                   ),
-                  AppCollapsibleSection(
-                    visible: !home.hasActivityToday,
-                    gap: AppSpacing.xl2,
-                    child: FlowScoreBoostCard(
-                      boosts: home.flowScoreBoosts,
-                      onBoostTap: (boost) => _openBoost(context, boost),
-                    ),
-                  ),
-                  SizedBox(height: AppSpacing.xl2),
-                  GuideTarget(
-                    id: GuideTargetId.homeHabits,
-                    child: TodayHabitCard(
-                      habits: home.habits,
-                      onCreateFirstHabit: () => _createFirstHabit(context),
-                      onTap: () => _openHabits(context),
-                      onToggleHabit: (habit) => _toggleHabit(context, habit),
-                    ),
-                  ),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.lg),
                   GuideTarget(
                     id: GuideTargetId.homeWorkout,
                     child: TodayWorkoutCard(
@@ -287,7 +294,17 @@ class HomeView extends StatelessWidget {
                           _openWorkoutSummary(home.completedWorkout),
                     ),
                   ),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.lg),
+                  GuideTarget(
+                    id: GuideTargetId.homeHabits,
+                    child: TodayHabitCard(
+                      habits: home.habits,
+                      onCreateFirstHabit: () => _createFirstHabit(context),
+                      onTap: () => _openHabits(context),
+                      onToggleHabit: (habit) => _toggleHabit(context, habit),
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.lg),
                   GuideTarget(
                     id: GuideTargetId.homeNutrition,
                     child: NutritionSummaryCard(
@@ -295,23 +312,15 @@ class HomeView extends StatelessWidget {
                       onTap: () => _openNutrition(context),
                     ),
                   ),
-                  SizedBox(height: AppSpacing.xl2),
-                  GuideTarget(
-                    id: GuideTargetId.homeHealth,
-                    child: HealthSyncCard(
-                      iconAsset: health.sourceIcon,
-                      connected: health.isConnected,
-                      title: health.cardTitle,
-                      subtitle: health.cardSubtitle,
-                      connectLabel: health.connectLabel,
-                      viewMoreLabel: health.canOpenSource
-                          ? health.viewMoreLabel
-                          : null,
-                      onConnect: health.connect,
-                      onViewMore: () => _openHealthApp(health),
+                  AppCollapsibleSection(
+                    visible: !home.hasActivityToday,
+                    gap: AppSpacing.lg,
+                    child: FlowScoreBoostCard(
+                      boosts: home.flowScoreBoosts,
+                      onBoostTap: (boost) => _openBoost(context, boost),
                     ),
                   ),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.lg),
                   if (health.hasAllPermissions || metrics.hasData)
                     DailyMetricsCard(
                       data: metrics,
@@ -326,9 +335,9 @@ class HomeView extends StatelessWidget {
                       data: metrics,
                       onAllow: _openHealthPermissions,
                     ),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.lg),
                   TodayProgressCard(progress: home.todayProgress),
-                  SizedBox(height: AppSpacing.xl2),
+                  SizedBox(height: AppSpacing.lg),
                   MuscleRecoveryCard(
                     data: home.muscleRecovery,
                     frontTemplate: home.muscleMapOf(MuscleBodySide.front),
@@ -338,7 +347,7 @@ class HomeView extends StatelessWidget {
                     ),
                   ),
                   if (home.waveInsight != null) ...[
-                    SizedBox(height: AppSpacing.xl2),
+                    SizedBox(height: AppSpacing.lg),
                     PremiumGate(
                       capability: PremiumCapability.personalizedRecommendations,
                       placeholder: const SizedBox.shrink(),

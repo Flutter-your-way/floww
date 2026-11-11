@@ -5,7 +5,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
-import 'package:floww/core/habits/widgets/habit_progress_row.dart';
+import 'package:floww/core/habits/widgets/habit_progress_tile.dart';
 
 class TodayHabitsCard extends StatelessWidget {
   const TodayHabitsCard({
@@ -23,24 +23,13 @@ class TodayHabitsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onToggle = this.onToggle;
-    final onOpen = this.onOpen;
-
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           CardHeader(title: title, titleStyle: AppTypography.heading4SemiBold),
           SizedBox(height: AppSpacing.xl),
-          for (var index = 0; index < items.length; index++) ...[
-            if (index > 0) SizedBox(height: AppSpacing.xl),
-            HabitProgressRow(
-              key: ValueKey(items[index].id),
-              item: items[index],
-              onToggle: onToggle == null ? null : () => onToggle(items[index]),
-              onOpen: onOpen == null ? null : () => onOpen(items[index]),
-            ),
-          ],
+          HabitProgressGrid(items: items, onToggle: onToggle, onOpen: onOpen),
         ],
       ),
     );

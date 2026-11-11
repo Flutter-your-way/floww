@@ -21,18 +21,22 @@ class MacroShare {
 
 class MacroProgressItem {
   const MacroProgressItem({
-    required this.macro,
+    required this.label,
+    required this.emoji,
     required this.amountLabel,
     required this.goalLabel,
     required this.percentLabel,
     required this.progress,
+    this.isOverLimit = false,
   });
 
-  final MacroNutrient macro;
+  final String label;
+  final String emoji;
   final String amountLabel;
   final String goalLabel;
   final String percentLabel;
   final double progress;
+  final bool isOverLimit;
 }
 
 class MicronutrientTileItem {

@@ -10,24 +10,37 @@ import 'package:floww/core/workout/models/active_workout_view_data.dart';
 class SetTracker extends StatelessWidget {
   const SetTracker({super.key, required this.sets, this.onTapLogged});
 
+  static const double _maxChipWidth = AppSizes.s56;
+
   final List<ActiveSetDotItem> sets;
   final ValueChanged<int>? onTapLogged;
 
   @override
   Widget build(BuildContext context) {
     final onTapLogged = this.onTapLogged;
+    final colors = context.colors;
 
     return Row(
       children: [
+        Text(
+          'SETS',
+          style: AppTypography.bodySmallSemiBold.copyWith(
+            color: colors.textSecondary,
+          ),
+        ),
+        SizedBox(width: AppSpacing.lg),
         for (var i = 0; i < sets.length; i++) ...[
           if (i > 0) SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: sets[i].loggedIndex == null || onTapLogged == null
-                  ? null
-                  : () => onTapLogged(sets[i].loggedIndex!),
-              child: _SetChip(item: sets[i]),
+          Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: _maxChipWidth),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: sets[i].loggedIndex == null || onTapLogged == null
+                    ? null
+                    : () => onTapLogged(sets[i].loggedIndex!),
+                child: _SetChip(item: sets[i]),
+              ),
             ),
           ),
         ],

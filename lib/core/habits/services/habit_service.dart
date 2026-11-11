@@ -56,6 +56,15 @@ class HabitService {
     }
   }
 
+  DateTime? get accountCreatedAt {
+    try {
+      return _auth.currentUser?.metadata.creationTime;
+    } catch (e) {
+      debugPrint('Firebase unavailable, skipping account date: $e');
+      return null;
+    }
+  }
+
   String get _requireUserId {
     final uid = userId;
     if (uid == null) throw HabitException(signedOutMessage);

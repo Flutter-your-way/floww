@@ -27,4 +27,7 @@ class AppOpacity {
   static const double orbHaloMin = 0.38;
   static const double orbHaloMax = 0.62;
   static const double muscleSecondary = 0.45;
+  static const double heatmapLow = 0.28;
+  static const double heatmapMedium = 0.52;
+  static const double heatmapHigh = 0.76;
 }

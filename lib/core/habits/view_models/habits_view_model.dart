@@ -13,6 +13,7 @@ import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/models/habit_reminder_setting.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
 import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
+import 'package:floww/core/habits/view_models/habit_heatmap_builder.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
 
 enum HabitDateStatus { past, today, future }
@@ -36,9 +37,12 @@ class HabitsViewModel extends ChangeNotifier {
   StreamSubscription<HabitRecords>? _subscription;
   HabitRecords _records = HabitRecords.empty;
   HabitSnapshot _snapshot = HabitSnapshot.empty;
+  HabitHeatmapData? _heatmap;
   DateTime _selectedDate;
   DateChangeDirection _dateDirection = DateChangeDirection.forward;
   List<Habit> _habits = const [];
+  List<String> _rowOrder = const [];
+  DateTime? _orderDate;
   bool _isLoading = true;
   String? _errorMessage;
   String? _actionMessage;
@@ -69,6 +73,7 @@ class HabitsViewModel extends ChangeNotifier {
   void _onRecords(HabitRecords records) {
     _records = records;
     _snapshot = HabitSnapshot.of(records);
+    _heatmap = null;
     _habits = _snapshot.habitsFor(_selectedDate);
     _isLoading = false;
     _errorMessage = null;
@@ -238,23 +243,67 @@ class HabitsViewModel extends ChangeNotifier {
         'Consistency is your superpower.';
   }
 
-  List<HabitRowItem> get habits => [for (final habit in _habits) _rowOf(habit)];
+  List<HabitRowItem> get habits {
+    final rows = [for (final habit in _habits) _rowOf(habit)];
+    final ids = {for (final row in rows) row.id};
+    final isSameDay =
+        _orderDate != null &&
+        AppDateUtils.isSameDay(_orderDate!, _selectedDate);
+    final isSameSet =
+        ids.length == _rowOrder.length && _rowOrder.every(ids.contains);
+    if (!isSameDay || !isSameSet) {
+      _rowOrder = [for (final row in _sorted(rows)) row.id];
+      _orderDate = _selectedDate;
+    }
+    final position = {
+      for (var i = 0; i < _rowOrder.length; i++) _rowOrder[i]: i,
+    };
+    return rows..sort((a, b) => position[a.id]!.compareTo(position[b.id]!));
+  }
+
+  List<HabitRowItem> _sorted(List<HabitRowItem> source) {
+    final rows = [...source];
+    final order = {for (var i = 0; i < rows.length; i++) rows[i].id: i};
+    return rows..sort((a, b) {
+      final byRank = _rankOf(a).compareTo(_rankOf(b));
+      if (byRank != 0) return byRank;
+      if (!a.isCompleted && !a.isRest) {
+        final byProgress = b.progress.compareTo(a.progress);
+        if (byProgress != 0) return byProgress;
+      }
+      return order[a.id]!.compareTo(order[b.id]!);
+    });
+  }
+
+  int _rankOf(HabitRowItem item) {
+    if (item.isCompleted) return 2;
+    return item.isRest ? 1 : 0;
+  }
 
   HabitRowItem _rowOf(Habit habit) {
     final isRest = !habit.isDue && !habit.isCompleted;
-    final schedule = _snapshot.definitionOf(habit.id)?.schedule;
+    final definition = _snapshot.definitionOf(habit.id);
+    final schedule = definition?.schedule;
     final quit = habit.isQuit ? _snapshot.quitProgressOf(habit.id) : null;
+    final quitDays = quit?.dayCount.clamp(0, quit.targetDays);
+    final targetCaption = quit == null
+        ? HabitLabels.targetCaption(habit)
+        : HabitLabels.quitCaption(quit.targetDays);
     return HabitRowItem(
       id: habit.id,
       title: habit.title,
-      progressLabel: quit == null
-          ? HabitLabels.progress(habit)
-          : HabitLabels.quitDay(quit.dayCount, quit.targetDays),
+      icon: definition?.icon ?? HabitIconKind.clipboard,
+      valueLabel: quitDays == null ? HabitLabels.value(habit) : '$quitDays',
+      unitLabel: quitDays == null
+          ? HabitLabels.valueUnit(habit)
+          : HabitLabels.quitUnit(quitDays),
+      captionLabel: isRest && schedule != null
+          ? HabitLabels.restTag(schedule)
+          : targetCaption,
       progress: quit?.progress ?? habit.progress,
       isCompleted: habit.isCompleted,
-      tagLabel: isRest && schedule != null
-          ? HabitLabels.restTag(schedule)
-          : HabitLabels.sourceTag(habit.source),
+      bonusLabel: HabitLabels.bonus(habit),
+      sourceLabel: HabitLabels.sourceShort(habit.source),
       isRest: isRest,
       isAuto: habit.isAuto,
     );
@@ -292,6 +341,13 @@ class HabitsViewModel extends ChangeNotifier {
         status: day.status,
       ),
   ];
+
+  String get heatmapTitle => 'Consistency';
+
+  HabitHeatmapData get heatmap => _heatmap ??= HabitHeatmapBuilder.build(
+    _snapshot,
+    accountCreatedAt: _service.accountCreatedAt,
+  );
 
   String get weekRangeLabel {
     final start = AppDateUtils.startOfWeek(_selectedDate);

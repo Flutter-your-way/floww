@@ -5,20 +5,28 @@ class HabitRowItem {
   const HabitRowItem({
     required this.id,
     required this.title,
-    required this.progressLabel,
+    required this.icon,
+    required this.valueLabel,
+    required this.unitLabel,
+    required this.captionLabel,
     required this.progress,
     required this.isCompleted,
-    this.tagLabel,
+    this.bonusLabel,
+    this.sourceLabel,
     this.isRest = false,
     this.isAuto = false,
   });
 
   final String id;
   final String title;
-  final String progressLabel;
+  final HabitIconKind icon;
+  final String valueLabel;
+  final String unitLabel;
+  final String captionLabel;
   final double progress;
   final bool isCompleted;
-  final String? tagLabel;
+  final String? bonusLabel;
+  final String? sourceLabel;
   final bool isRest;
   final bool isAuto;
 }
@@ -98,4 +106,77 @@ class HabitOptionItem {
 
   final String id;
   final String label;
+}
+
+enum HabitHeatmapLevel { empty, low, medium, high, full }
+
+class HabitHeatmapEntry {
+  const HabitHeatmapEntry({
+    required this.title,
+    required this.detail,
+    required this.status,
+    required this.progress,
+    required this.percentLabel,
+  });
+
+  final String title;
+  final String detail;
+  final HabitDayStatus status;
+  final double progress;
+  final String percentLabel;
+}
+
+class HabitHeatmapCell {
+  const HabitHeatmapCell({
+    required this.date,
+    required this.level,
+    required this.isToday,
+    required this.weekdayLabel,
+    required this.dateLabel,
+    required this.summaryLabel,
+    required this.completion,
+    required this.percentLabel,
+    required this.entries,
+  });
+
+  final DateTime date;
+  final HabitHeatmapLevel level;
+  final bool isToday;
+  final String weekdayLabel;
+  final String dateLabel;
+  final String summaryLabel;
+  final double completion;
+  final String percentLabel;
+  final List<HabitHeatmapEntry> entries;
+
+  int countOf(HabitDayStatus status) =>
+      entries.where((entry) => entry.status == status).length;
+}
+
+class HabitHeatmapMonth {
+  const HabitHeatmapMonth({required this.weekIndex, required this.label});
+
+  final int weekIndex;
+  final String label;
+}
+
+class HabitHeatmapData {
+  const HabitHeatmapData({
+    required this.weeks,
+    required this.months,
+    required this.weekdayLabels,
+    required this.summaryLabel,
+  });
+
+  static const empty = HabitHeatmapData(
+    weeks: [],
+    months: [],
+    weekdayLabels: [],
+    summaryLabel: '',
+  );
+
+  final List<List<HabitHeatmapCell?>> weeks;
+  final List<HabitHeatmapMonth> months;
+  final List<String?> weekdayLabels;
+  final String summaryLabel;
 }

@@ -23,6 +23,7 @@ class WorkoutOverviewSection extends StatelessWidget {
     this.revealTrigger,
     this.onViewAnatomy,
     this.onViewDetails,
+    this.onSummaryTap,
     this.onSummaryInfo,
     this.onTrainingEffectInfo,
   });
@@ -33,6 +34,7 @@ class WorkoutOverviewSection extends StatelessWidget {
   final Object? revealTrigger;
   final VoidCallback? onViewAnatomy;
   final VoidCallback? onViewDetails;
+  final VoidCallback? onSummaryTap;
   final VoidCallback? onSummaryInfo;
   final VoidCallback? onTrainingEffectInfo;
 
@@ -55,7 +57,7 @@ class WorkoutOverviewSection extends StatelessWidget {
                   child: WorkoutSummaryCard(
                     summary: overview.summary,
                     onInfo: onSummaryInfo,
-                    onTap: onViewDetails,
+                    onTap: onSummaryTap ?? onViewDetails,
                   ),
                 )
               : null,

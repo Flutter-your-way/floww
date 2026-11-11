@@ -6,6 +6,8 @@ class AppMotion {
   AppMotion._();
 
   static const Duration press = Duration(milliseconds: 120);
+  static const Duration scrubHold = Duration(milliseconds: 160);
+  static const double tooltipStartScale = 0.94;
   static const Duration expand = Duration(milliseconds: 280);
   static const Duration expandSoft = Duration(milliseconds: 460);
   static const Duration fast = Duration(milliseconds: 480);

@@ -12,9 +12,11 @@ class HomeHeader extends StatelessWidget {
     this.onAvatarTap,
     this.onStreakTap,
     this.action,
+    this.accessory,
   });
 
   final Widget? action;
+  final Widget? accessory;
 
   final String greeting;
   final String userName;
@@ -35,6 +37,7 @@ class HomeHeader extends StatelessWidget {
       onAvatarTap: onAvatarTap,
       onStreakTap: onStreakTap,
       action: action,
+      accessory: accessory,
     );
   }
 }

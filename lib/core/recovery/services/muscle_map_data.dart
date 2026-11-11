@@ -186,4 +186,22 @@ class MuscleMapData {
       ),
     ],
   };
+
+  static const Map<MuscleBodySide, Map<MuscleGroup, Rect>> focusRegions = {
+    MuscleBodySide.front: {
+      MuscleGroup.chest: Rect.fromLTRB(21, 16, 62, 57),
+      MuscleGroup.shoulders: Rect.fromLTRB(15.5, 8.5, 67.5, 60.5),
+      MuscleGroup.biceps: Rect.fromLTRB(6.5, 18.5, 76.5, 88.5),
+      MuscleGroup.quadriceps: Rect.fromLTRB(16.5, 64.5, 66.5, 114.5),
+    },
+    MuscleBodySide.back: {
+      MuscleGroup.back: Rect.fromLTRB(17.5, 26.5, 65.5, 74.5),
+      MuscleGroup.shoulders: Rect.fromLTRB(16, 9, 67, 60),
+      MuscleGroup.triceps: Rect.fromLTRB(5.5, 18.5, 77.5, 90.5),
+      MuscleGroup.hamstrings: Rect.fromLTRB(16.5, 73.5, 66.5, 123.5),
+    },
+  };
+
+  static Rect? focusOf(MuscleGroup group) =>
+      focusRegions[group.primarySide]?[group];
 }

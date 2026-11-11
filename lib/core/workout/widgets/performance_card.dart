@@ -147,18 +147,56 @@ class _PersonalRecordsPanel extends StatelessWidget {
               color: colors.tint,
               padding: EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
+                vertical: AppSpacing.sm,
               ),
-              child: Text(
-                'PERSONAL RECORDS',
-                style: AppTypography.captionSemiBold.copyWith(
-                  color: colors.primary,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.emoji_events_outlined,
+                    size: AppSizes.s14,
+                    color: colors.primary,
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'PERSONAL RECORDS',
+                    style: AppTypography.captionSemiBold.copyWith(
+                      color: colors.primary,
+                    ),
+                  ),
+                ],
               ),
             ),
-            for (var i = 0; i < records.length; i++)
-              _PersonalRecordRow(record: records[i], showDivider: i > 0),
+            if (records.isEmpty)
+              const _PersonalRecordsEmpty()
+            else
+              for (var i = 0; i < records.length; i++)
+                _PersonalRecordRow(record: records[i], showDivider: i > 0),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PersonalRecordsEmpty extends StatelessWidget {
+  const _PersonalRecordsEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Container(
+      color: colors.backgroundSurface,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
+      child: Text(
+        'No new PRs this time. Keep pushing.',
+        textAlign: TextAlign.center,
+        style: AppTypography.bodySmallRegularTight.copyWith(
+          color: colors.textSecondary,
         ),
       ),
     );
@@ -178,7 +216,7 @@ class _PersonalRecordRow extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
-        vertical: AppSizes.s10,
+        vertical: AppSpacing.md,
       ),
       decoration: BoxDecoration(
         color: colors.backgroundSurface,

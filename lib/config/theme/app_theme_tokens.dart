@@ -136,6 +136,30 @@ class _OverlayGradients {
     end: Alignment.bottomCenter,
   );
 
+  static const mediaScrim = LinearGradient(
+    colors: [
+      Color(0x000A0A0A),
+      Color(0x000A0A0A),
+      Color(0xB30A0A0A),
+      _AppPalette.backgroundPrimary,
+    ],
+    stops: [0.0, 0.55, 0.85, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const timerScrim = LinearGradient(
+    colors: [
+      Color(0x000A0A0A),
+      Color(0x000A0A0A),
+      Color(0xCC0A0A0A),
+      Color(0xF20A0A0A),
+    ],
+    stops: [0.0, 0.4, 0.7, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
   static const cardSheen = RadialGradient(
     colors: [Color(0xFF1D1D1D), Color(0x001D1D1D)],
     center: Alignment.topRight,
@@ -590,6 +614,8 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     this.macroCarbs = _MacroGradients.carbs,
     this.macroFats = _MacroGradients.fats,
     this.cameraScrim = _OverlayGradients.cameraScrim,
+    this.mediaScrim = _OverlayGradients.mediaScrim,
+    this.timerScrim = _OverlayGradients.timerScrim,
     this.cardSheen = _OverlayGradients.cardSheen,
     this.actionScrim = _OverlayGradients.actionScrim,
     this.topFade = _OverlayGradients.topFade,
@@ -623,6 +649,8 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient macroCarbs;
   final Gradient macroFats;
   final Gradient cameraScrim;
+  final Gradient mediaScrim;
+  final Gradient timerScrim;
   final Gradient cardSheen;
   final Gradient actionScrim;
   final Gradient topFade;
@@ -693,28 +721,42 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   );
 
   static const double topFadeExtent = 0.08;
+  static const Color _maskSoft = Color(0x26FFFFFF);
+  static const Color _maskMid = Color(0x8CFFFFFF);
   static const double bottomFadeExtent = 0.06;
 
   static LinearGradient edgeFadeMask({
     double topEdge = 0,
     double bottomEdge = 1,
     bool fadeBottom = false,
+    double topExtent = topFadeExtent,
   }) {
-    final topSolid = math.min(topEdge + topFadeExtent, bottomEdge);
+    final topSolid = math.min(topEdge + topExtent, bottomEdge);
     final bottomSolid = fadeBottom
         ? math.max(bottomEdge - bottomFadeExtent, topSolid)
         : bottomEdge;
+
+    final topSpan = topSolid - topEdge;
 
     return LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
         Colors.transparent,
+        _maskSoft,
+        _maskMid,
         Colors.white,
         Colors.white,
         fadeBottom ? Colors.transparent : Colors.white,
       ],
-      stops: [topEdge, topSolid, bottomSolid, bottomEdge],
+      stops: [
+        topEdge,
+        topEdge + topSpan * 0.35,
+        topEdge + topSpan * 0.65,
+        topSolid,
+        bottomSolid,
+        bottomEdge,
+      ],
     );
   }
 
@@ -916,6 +958,8 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? macroCarbs,
     Gradient? macroFats,
     Gradient? cameraScrim,
+    Gradient? mediaScrim,
+    Gradient? timerScrim,
     Gradient? cardSheen,
     Gradient? actionScrim,
     Gradient? topFade,
@@ -949,6 +993,8 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       macroCarbs: macroCarbs ?? this.macroCarbs,
       macroFats: macroFats ?? this.macroFats,
       cameraScrim: cameraScrim ?? this.cameraScrim,
+      mediaScrim: mediaScrim ?? this.mediaScrim,
+      timerScrim: timerScrim ?? this.timerScrim,
       cardSheen: cardSheen ?? this.cardSheen,
       actionScrim: actionScrim ?? this.actionScrim,
       topFade: topFade ?? this.topFade,
@@ -991,6 +1037,8 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       macroCarbs: Gradient.lerp(macroCarbs, other.macroCarbs, t)!,
       macroFats: Gradient.lerp(macroFats, other.macroFats, t)!,
       cameraScrim: Gradient.lerp(cameraScrim, other.cameraScrim, t)!,
+      mediaScrim: Gradient.lerp(mediaScrim, other.mediaScrim, t)!,
+      timerScrim: Gradient.lerp(timerScrim, other.timerScrim, t)!,
       cardSheen: Gradient.lerp(cardSheen, other.cardSheen, t)!,
       actionScrim: Gradient.lerp(actionScrim, other.actionScrim, t)!,
       topFade: Gradient.lerp(topFade, other.topFade, t)!,

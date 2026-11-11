@@ -13,12 +13,6 @@ extension MacroNutrientStyle on MacroNutrient {
     MacroNutrient.carbs => context.colors.carbsAccent,
     MacroNutrient.fats => context.colors.fatAccent,
   };
-
-  String get emoji => switch (this) {
-    MacroNutrient.protein => '🥚',
-    MacroNutrient.carbs => '🌾',
-    MacroNutrient.fats => '🥑',
-  };
 }
 
 extension MealTypeStyle on MealType {

@@ -34,8 +34,8 @@ class DailyMetricsPresenter {
       hasData: vitals.hasAnyData,
       canCustomize: available.length > 1,
       promptMessage:
-          'Allow $source access to see your HRV, resting heart rate, VO2 max, '
-          'blood oxygen, temperature and body composition here.',
+          'Allow $source access to see your steps, sleep, HRV, resting heart '
+          'rate, VO2 max, blood oxygen and body composition here.',
       allowLabel: 'Allow Access',
       tiles: [
         for (final kind in selection.visibleOf(available))

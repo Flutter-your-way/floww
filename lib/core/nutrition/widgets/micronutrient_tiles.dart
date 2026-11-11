@@ -6,6 +6,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
+import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/nutrition/models/nutrition_view_data.dart';
 import 'package:floww/core/nutrition/widgets/nutrition_colors.dart';
@@ -32,28 +33,16 @@ class MicronutrientTile extends StatelessWidget {
     return PressScale(
       onTap: onTap,
       child: AppCard(
-        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodyMediumRegular.copyWith(
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ),
-                SvgPicture.asset(
-                  item.kind.iconAsset,
-                  width: AppSizes.s20,
-                  height: AppSizes.s20,
-                ),
-              ],
+            CardHeader(
+              title: item.label,
+              trailing: SvgPicture.asset(
+                item.kind.iconAsset,
+                width: AppSizes.s20,
+                height: AppSizes.s20,
+              ),
             ),
             SizedBox(height: AppSpacing.lg),
             Row(

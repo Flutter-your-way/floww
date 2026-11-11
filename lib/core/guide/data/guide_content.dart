@@ -117,8 +117,8 @@ class GuideContent {
         targets: [GuideTargetId.nutritionMicros],
         title: 'Micronutrients',
         body:
-            'Fibre, sugar, sodium plus vitamins and minerals. Tap fibre, sugar '
-            'or sodium to see which foods they came from.',
+            'Fibre, sugar, sodium plus vitamins and minerals. Tap the card '
+            'for the full breakdown and which foods they came from.',
       ),
       GuideStep(
         icon: Icons.add_circle_outline_rounded,

@@ -14,6 +14,8 @@ class MacronutrientsCard extends StatelessWidget {
   final List<MacroProgressItem> items;
   final VoidCallback? onLearnMore;
 
+  static const _columns = 3;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -35,14 +37,21 @@ class MacronutrientsCard extends StatelessWidget {
               ),
             ),
             SizedBox(height: AppSpacing.xl),
-            Row(
-              children: [
-                for (var i = 0; i < items.length; i++) ...[
-                  if (i > 0) SizedBox(width: AppSpacing.lg),
-                  Expanded(child: _MacroColumn(item: items[i])),
+            for (var row = 0; row < items.length; row += _columns) ...[
+              if (row > 0) SizedBox(height: AppSpacing.xl),
+              Row(
+                children: [
+                  for (
+                    var i = row;
+                    i < row + _columns && i < items.length;
+                    i++
+                  ) ...[
+                    if (i > row) SizedBox(width: AppSpacing.lg),
+                    Expanded(child: _MacroColumn(item: items[i])),
+                  ],
                 ],
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
@@ -66,9 +75,9 @@ class _MacroColumn extends StatelessWidget {
       children: [
         Row(
           children: [
-            MacroEmoji(macro: item.macro, size: AppSizes.s12),
+            MacroEmoji(emoji: item.emoji, size: AppSizes.s12),
             SizedBox(width: AppSpacing.xs),
-            Text(item.macro.label, style: captionStyle),
+            Text(item.label, style: captionStyle),
           ],
         ),
         SizedBox(height: AppSpacing.xs),
@@ -80,6 +89,9 @@ class _MacroColumn extends StatelessWidget {
               item.amountLabel,
               style: context.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
+                color: item.isOverLimit
+                    ? context.colors.destructiveBorder
+                    : null,
               ),
             ),
             Expanded(

@@ -18,13 +18,24 @@ class MuscleMapTemplate {
   final Map<int, MuscleGroup> groupOfShape;
   final Map<String, String> _painted = {};
 
-  String paint(Map<MuscleGroup, Color> palette) {
-    final key = _paletteKey(palette);
+  String paint(Map<MuscleGroup, Color> palette, {Rect? focus}) {
+    final key = '${_paletteKey(palette)}|$focus';
     final cached = _painted[key];
     if (cached != null) return cached;
 
     if (_painted.length >= _paintCacheLimit) _painted.clear();
-    return _painted[key] = _render(palette);
+    return _painted[key] = _render(palette, focus);
+  }
+
+  String _headerOf(Rect? focus) {
+    if (focus == null) return header;
+    return header
+        .replaceFirst(RegExp(r'\swidth="[^"]*"'), ' width="${focus.width}"')
+        .replaceFirst(RegExp(r'\sheight="[^"]*"'), ' height="${focus.height}"')
+        .replaceFirst(
+          RegExp(r'viewBox="[^"]*"'),
+          'viewBox="${focus.left} ${focus.top} ${focus.width} ${focus.height}"',
+        );
   }
 
   static String _paletteKey(Map<MuscleGroup, Color> palette) {
@@ -35,8 +46,8 @@ class MuscleMapTemplate {
     return entries.join(',');
   }
 
-  String _render(Map<MuscleGroup, Color> palette) {
-    final buffer = StringBuffer(header);
+  String _render(Map<MuscleGroup, Color> palette, Rect? focus) {
+    final buffer = StringBuffer(_headerOf(focus));
     for (var i = 0; i < shapes.length; i++) {
       final shape = shapes[i];
       final color = palette[groupOfShape[i]];

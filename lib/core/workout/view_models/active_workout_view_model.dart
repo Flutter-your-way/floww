@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_motion.dart';
+import 'package:floww/config/entities/exercise_video_entity.dart';
+import 'package:floww/config/services/exercise_video_service.dart';
 import 'package:floww/config/entities/workout_exercise_entity.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
@@ -75,9 +77,11 @@ class ActiveWorkoutViewModel extends ChangeNotifier
     this._access,
     ActiveWorkoutArgs launch, {
     MuscleMapService? muscleMapService,
+    ExerciseVideoService? videoService,
   }) : _date = AppDateUtils.dateOnly(launch.date),
        _launch = launch,
-       _muscleMapService = muscleMapService ?? MuscleMapService();
+       _muscleMapService = muscleMapService ?? MuscleMapService(),
+       _videoService = videoService ?? ExerciseVideoService();
 
   static const Duration _tick = Duration(milliseconds: 250);
   static const Duration _persistDelay = Duration(milliseconds: 700);
@@ -107,6 +111,9 @@ class ActiveWorkoutViewModel extends ChangeNotifier
   final PremiumAccessProvider _access;
   final WorkoutAlertService _alertService;
   final MuscleMapService _muscleMapService;
+  final ExerciseVideoService _videoService;
+  final Map<String, ExerciseVideo?> _videos = {};
+  final Set<String> _loadingVideos = {};
   final DateTime _date;
   final ActiveWorkoutArgs _launch;
   final StreamController<void> _restEnded = StreamController<void>.broadcast();
@@ -1387,7 +1394,9 @@ class ActiveWorkoutViewModel extends ChangeNotifier
       name: exercise.name,
       imageUrl:
           exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
-      targetValue: '${exercise.targetReps}',
+      video: _videoOf(exercise.name),
+      isVideoLoading: _loadingVideos.contains(exercise.name),
+      targetValue: '${exercise.isTimed ? draft.seconds : draft.reps}',
       targetLabel: '$unit · $weightLabel',
       setDots: _dotsOf(exercise),
       input: ActiveSetInputItem(
@@ -1401,6 +1410,36 @@ class ActiveWorkoutViewModel extends ChangeNotifier
       ),
       supersetLabel: _supersetLabelOf(exercise),
     );
+  }
+
+  ExerciseVideo? _videoOf(String name) {
+    if (_videos.containsKey(name)) return _videos[name];
+    _videos[name] = null;
+    _loadingVideos.add(name);
+    unawaited(_loadVideo(name));
+    return null;
+  }
+
+  Future<void> _loadVideo(String name) async {
+    final video = await _videoService.find(
+      kind: ExerciseVideoKind.gym,
+      queries: _videoQueriesOf(name),
+    );
+    _loadingVideos.remove(name);
+    if (_disposed) return;
+    _videos[name] = video;
+    notifyListeners();
+  }
+
+  static const int _maxVideoQueries = 3;
+  static const int _minVideoQueryLength = 2;
+
+  List<String> _videoQueriesOf(String name) {
+    final parts = name
+        .split(RegExp(r'[/,()&+]'))
+        .map((part) => part.trim())
+        .where((part) => part.length >= _minVideoQueryLength);
+    return {name.trim(), ...parts}.take(_maxVideoQueries).toList();
   }
 
   List<ExerciseInfoSectionItem> get techniqueSections {

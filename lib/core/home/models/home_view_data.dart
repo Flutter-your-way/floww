@@ -170,6 +170,7 @@ class WorkoutRecommendation {
     required this.intensityLabel,
     required this.reasons,
     this.imageUrl,
+    this.active,
   });
 
   final String title;
@@ -177,6 +178,31 @@ class WorkoutRecommendation {
   final String intensityLabel;
   final List<String> reasons;
   final String? imageUrl;
+  final ActiveWorkoutSummary? active;
+
+  bool get isActive => active != null;
+}
+
+class ActiveWorkoutSummary {
+  const ActiveWorkoutSummary({
+    required this.statusLabel,
+    required this.isPaused,
+    required this.positionLabel,
+    required this.progress,
+    required this.progressLabel,
+    required this.percentLabel,
+    this.nextTitle,
+    this.nextDetail,
+  });
+
+  final String statusLabel;
+  final bool isPaused;
+  final String positionLabel;
+  final double progress;
+  final String progressLabel;
+  final String percentLabel;
+  final String? nextTitle;
+  final String? nextDetail;
 }
 
 class CompletedWorkoutStat {

@@ -12,6 +12,7 @@ import 'package:floww/core/habits/models/habit_schedule.dart';
 import 'package:floww/core/habits/models/habits_view_data.dart';
 import 'package:floww/core/habits/services/habit_service.dart';
 import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
+import 'package:floww/core/habits/view_models/habit_heatmap_builder.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
 
 class HabitDetailsViewModel extends ChangeNotifier {
@@ -24,6 +25,7 @@ class HabitDetailsViewModel extends ChangeNotifier {
 
   StreamSubscription<HabitRecords>? _subscription;
   HabitSnapshot _snapshot = HabitSnapshot.empty;
+  HabitHeatmapData? _heatmap;
   HabitPeriod _period = HabitPeriod.thisMonth;
   bool _isLoading = true;
   String? _errorMessage;
@@ -43,6 +45,7 @@ class HabitDetailsViewModel extends ChangeNotifier {
     _subscription = _service.watchRecords().listen(
       (records) {
         _snapshot = HabitSnapshot.of(records);
+        _heatmap = null;
         _isLoading = false;
         _errorMessage = null;
         notifyListeners();
@@ -143,6 +146,14 @@ class HabitDetailsViewModel extends ChangeNotifier {
   String get logLabel => 'Log Progress';
 
   String get progressTitle => 'Habit Progress';
+
+  String get heatmapTitle => 'Consistency';
+
+  HabitHeatmapData get heatmap => _heatmap ??= HabitHeatmapBuilder.build(
+    _snapshot,
+    habitId: _habitId,
+    accountCreatedAt: _service.accountCreatedAt,
+  );
 
   String get aboutTitle => 'About This Habit';
 

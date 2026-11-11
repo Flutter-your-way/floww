@@ -15,6 +15,7 @@ import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/home/widgets/home_card_empty_state.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/theme/app_shapes.dart';
+import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 
 class TodayWorkoutCard extends StatelessWidget {
   const TodayWorkoutCard({
@@ -34,20 +35,29 @@ class TodayWorkoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final workout = this.workout;
     final completed = this.completed;
+    final activeStatus = completed == null
+        ? workout?.active?.statusLabel
+        : null;
 
-    return AppCard(
+    final card = AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CardHeader(
             title: "Today's Workout",
-            trailing: completed == null
-                ? null
-                : const AppStatusChip(
+            trailing: completed != null
+                ? const AppStatusChip(
                     label: 'COMPLETED',
                     icon: Icons.check,
                     variant: AppStatusChipVariant.outlined,
-                  ),
+                  )
+                : activeStatus != null
+                ? AppStatusChip(
+                    label: activeStatus,
+                    icon: Icons.timelapse_rounded,
+                    variant: AppStatusChipVariant.outlined,
+                  )
+                : null,
           ),
           SizedBox(height: AppSpacing.xl),
           if (completed != null)
@@ -63,6 +73,12 @@ class TodayWorkoutCard extends StatelessWidget {
               buttonIcon: Icons.play_arrow_rounded,
               onPressed: onStartWorkout,
             )
+          else if (workout.active case final active?)
+            _ActiveWorkoutBody(
+              workout: workout,
+              active: active,
+              onResume: onStartWorkout,
+            )
           else
             _PlannedWorkoutBody(
               workout: workout,
@@ -70,6 +86,13 @@ class TodayWorkoutCard extends StatelessWidget {
             ),
         ],
       ),
+    );
+
+    if (activeStatus == null) return card;
+    return GestureDetector(
+      onTap: onStartWorkout,
+      behavior: HitTestBehavior.opaque,
+      child: card,
     );
   }
 }
@@ -109,6 +132,146 @@ class _PlannedWorkoutBody extends StatelessWidget {
           label: 'START WORKOUT',
           icon: Icons.play_arrow_rounded,
           onPressed: onStartWorkout,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActiveWorkoutBody extends StatelessWidget {
+  const _ActiveWorkoutBody({
+    required this.workout,
+    required this.active,
+    this.onResume,
+  });
+
+  final WorkoutRecommendation workout;
+  final ActiveWorkoutSummary active;
+  final VoidCallback? onResume;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final nextTitle = active.nextTitle;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _WorkoutIdentityRow(
+          icon: Icons.fitness_center,
+          iconColor: colors.textPrimary,
+          iconBackground: colors.backgroundElevated,
+          imageUrl: workout.imageUrl,
+          title: workout.title,
+          metrics: [
+            _WorkoutMetric(
+              icon: active.isPaused
+                  ? Icons.pause_circle_filled_rounded
+                  : Icons.play_circle_fill_rounded,
+              label: active.positionLabel,
+              color: active.isPaused ? colors.textSecondary : colors.primary,
+            ),
+          ],
+        ),
+        SizedBox(height: AppSpacing.lg),
+        _ActiveProgressRow(active: active),
+        if (nextTitle != null) ...[
+          SizedBox(height: AppSpacing.md),
+          _UpNextLine(title: nextTitle, detail: active.nextDetail),
+        ],
+        SizedBox(height: AppSpacing.lg),
+        BrightActionButton(
+          label: 'RESUME WORKOUT',
+          icon: Icons.play_arrow_rounded,
+          onPressed: onResume,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActiveProgressRow extends StatelessWidget {
+  const _ActiveProgressRow({required this.active});
+
+  final ActiveWorkoutSummary active;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                active.progressLabel,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
+            ),
+            Text(
+              active.percentLabel,
+              style: AppTypography.bodySmallSemiBold.copyWith(
+                color: colors.primary,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppSpacing.sm),
+        AppProgressBar(
+          progress: active.progress,
+          height: AppSizes.s8,
+          trackColor: colors.borderSubtle,
+          animated: true,
+        ),
+      ],
+    );
+  }
+}
+
+class _UpNextLine extends StatelessWidget {
+  const _UpNextLine({required this.title, this.detail});
+
+  final String title;
+  final String? detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final detail = this.detail;
+    final secondary = context.textTheme.bodySmall?.copyWith(
+      color: colors.textSecondary,
+    );
+
+    return Row(
+      children: [
+        Icon(
+          Icons.skip_next_rounded,
+          size: AppSizes.s16,
+          color: colors.primary,
+        ),
+        SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: 'Up next  ', style: secondary),
+                TextSpan(
+                  text: title,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: colors.textPrimary,
+                  ),
+                ),
+                if (detail != null)
+                  TextSpan(text: '  ·  $detail', style: secondary),
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/progress/models/strength_view_data.dart';
@@ -9,10 +10,14 @@ import 'package:floww/core/progress/services/progress_service.dart';
 import 'package:floww/core/progress/services/strength_level_calculator.dart';
 import 'package:floww/core/progress/services/strength_service.dart';
 import 'package:floww/core/recovery/models/muscle_group.dart';
+import 'package:floww/core/recovery/services/muscle_map_data.dart';
+import 'package:floww/core/recovery/services/muscle_map_service.dart';
 import 'package:floww/core/workout/services/workout_metrics.dart';
 
 class StrengthLevelViewModel extends ChangeNotifier {
-  StrengthLevelViewModel(this._service) {
+  StrengthLevelViewModel(this._service, {MuscleMapService? muscleMapService})
+    : _muscleMapService = muscleMapService ?? MuscleMapService() {
+    _loadMuscleMap();
     _subscription = _service.watch().listen(
       _apply,
       onError: (Object error) {
@@ -30,6 +35,7 @@ class StrengthLevelViewModel extends ChangeNotifier {
   static const double _chartMinSpanKg = 5;
 
   final StrengthService _service;
+  final MuscleMapService _muscleMapService;
   StreamSubscription<StrengthRecords>? _subscription;
   List<StrengthMuscleSummary> _summaries = [
     for (final group in StrengthLevelCalculator.trackedGroups)
@@ -91,6 +97,18 @@ class StrengthLevelViewModel extends ChangeNotifier {
   List<StrengthMuscleView> get muscles => [
     for (final summary in _summaries) _viewOf(summary),
   ];
+
+  MuscleMapTemplate? muscleMapOf(MuscleGroup group) =>
+      _muscleMapService.templateOf(group.primarySide);
+
+  Rect? muscleFocusOf(MuscleGroup group) => MuscleMapData.focusOf(group);
+
+  Future<void> _loadMuscleMap() async {
+    try {
+      await _muscleMapService.load();
+      notifyListeners();
+    } catch (_) {}
+  }
 
   String benchmarkTitleOf(MuscleGroup group) => 'Log ${group.label} Benchmark';
 

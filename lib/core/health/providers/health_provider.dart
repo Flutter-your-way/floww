@@ -65,6 +65,8 @@ class HealthProvider extends ChangeNotifier {
 
   String get viewMoreLabel => 'View more in $sourceName';
 
+  String get badgeLabel => isConnected ? viewMoreLabel : connectTitle;
+
   Future<void> openSource() => _service.openSourceApp();
 
   String get syncSubtitle =>
@@ -185,9 +187,14 @@ class HealthProvider extends ChangeNotifier {
       _snapshot = await _service.fetchTodaySnapshot();
       _errorMessage = null;
       unawaited(_logService.saveSnapshot(_snapshot));
-      _vitals = await _service.fetchVitals();
     } on HealthServiceException catch (e) {
       _errorMessage = e.message;
+    }
+
+    try {
+      _vitals = await _service.fetchVitals();
+    } catch (e, stackTrace) {
+      debugPrint('fetch vitals failed: $e\n$stackTrace');
     } finally {
       _isSyncing = false;
       notifyListeners();

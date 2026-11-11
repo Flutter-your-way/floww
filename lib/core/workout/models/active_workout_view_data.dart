@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/entities/exercise_video_entity.dart';
 import 'package:floww/core/workout/models/add_exercise_view_data.dart';
 import 'package:floww/core/workout/models/exercise_info.dart';
 import 'package:floww/core/workout/models/muscle_targets_item.dart';
@@ -137,6 +138,8 @@ class ActiveExerciseItem {
     required this.input,
     required this.muscles,
     this.imageUrl,
+    this.video,
+    this.isVideoLoading = false,
     this.supersetLabel,
   });
 
@@ -147,6 +150,8 @@ class ActiveExerciseItem {
   final ActiveSetInputItem input;
   final MuscleTargetsItem muscles;
   final String? imageUrl;
+  final ExerciseVideo? video;
+  final bool isVideoLoading;
   final String? supersetLabel;
 }
 

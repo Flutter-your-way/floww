@@ -17,6 +17,7 @@ import 'package:floww/core/habits/views/edit_habit_sheet.dart';
 import 'package:floww/core/habits/views/habit_option_sheet.dart';
 import 'package:floww/core/habits/views/log_habit_sheet.dart';
 import 'package:floww/core/habits/widgets/habit_detail_header_card.dart';
+import 'package:floww/core/habits/widgets/habit_heatmap_card.dart';
 import 'package:floww/core/habits/widgets/habit_progress_calendar_card.dart';
 import 'package:floww/core/habits/widgets/habit_quit_card.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
@@ -137,6 +138,11 @@ class HabitDetailsView extends StatelessWidget {
                 days: viewModel.days,
                 legend: viewModel.legend,
                 onSelectPeriod: () => _openPeriods(context, viewModel),
+              ),
+              SizedBox(height: AppSpacing.lg),
+              HabitHeatmapCard(
+                title: viewModel.heatmapTitle,
+                data: viewModel.heatmap,
               ),
               SizedBox(height: AppSpacing.lg),
               TipCard.wave(

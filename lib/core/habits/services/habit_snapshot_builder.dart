@@ -334,6 +334,8 @@ class HabitSnapshot {
     }
   }
 
+  DateTime firstTrackedDay({String? habitId}) => _firstTrackedDay(habitId);
+
   DateTime _firstTrackedDay(String? habitId) {
     final today = _today;
     final definition = habitId == null ? null : definitionOf(habitId);

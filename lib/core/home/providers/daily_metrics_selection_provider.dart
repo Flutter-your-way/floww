@@ -5,6 +5,8 @@ import 'package:floww/core/health/models/health_metric_kind.dart';
 
 class DailyMetricsSelectionProvider extends ChangeNotifier {
   static const String selectionKey = 'daily_metrics_selection';
+  static const String selectionVersionKey = 'daily_metrics_selection_version';
+  static const int selectionVersion = 2;
 
   List<HealthMetricKind>? _selected;
 
@@ -60,11 +62,16 @@ class DailyMetricsSelectionProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final names = prefs.getStringList(selectionKey);
       if (names == null) return;
+      final version = prefs.getInt(selectionVersionKey) ?? 1;
+      final upgrade = version < selectionVersion;
       _selected = [
         for (final kind in HealthMetricKindX.daily)
-          if (names.contains(kind.name)) kind,
+          if (names.contains(kind.name) ||
+              (upgrade && HealthMetricKindX.addedInV2.contains(kind)))
+            kind,
       ];
       notifyListeners();
+      if (upgrade) await _persist();
     } catch (e, stackTrace) {
       debugPrint('restore daily metrics selection failed: $e\n$stackTrace');
     }
@@ -78,6 +85,7 @@ class DailyMetricsSelectionProvider extends ChangeNotifier {
       await prefs.setStringList(selectionKey, [
         for (final kind in selected) kind.name,
       ]);
+      await prefs.setInt(selectionVersionKey, selectionVersion);
     } catch (e, stackTrace) {
       debugPrint('persist daily metrics selection failed: $e\n$stackTrace');
     }

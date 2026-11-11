@@ -21,6 +21,7 @@ class ProfileTitleHeader extends StatelessWidget {
     this.onAvatarTap,
     this.onStreakTap,
     this.action,
+    this.accessory,
   });
 
   final String eyebrow;
@@ -31,10 +32,12 @@ class ProfileTitleHeader extends StatelessWidget {
   final VoidCallback? onAvatarTap;
   final VoidCallback? onStreakTap;
   final Widget? action;
+  final Widget? accessory;
 
   @override
   Widget build(BuildContext context) {
     final action = this.action;
+    final accessory = this.accessory;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,6 +47,7 @@ class ProfileTitleHeader extends StatelessWidget {
         ),
         SizedBox(width: AppSpacing.lg),
         if (action != null) ...[action, SizedBox(width: AppSpacing.md)],
+        if (accessory != null) ...[accessory, SizedBox(width: AppSpacing.md)],
         PressScale(
           onTap: onStreakTap,
           child: _StreakBadge(count: streakCount),

@@ -68,6 +68,8 @@ class StrengthLevelView extends StatelessWidget {
             SizedBox(height: AppSpacing.xl),
             StrengthMuscleCard(
               muscle: muscle,
+              muscleMap: viewModel.muscleMapOf(muscle.group),
+              muscleFocus: viewModel.muscleFocusOf(muscle.group),
               emptyValueLabel: viewModel.emptyValueLabel,
               addLabel: viewModel.addLabel,
               logAgainLabel: viewModel.logAgainLabel,

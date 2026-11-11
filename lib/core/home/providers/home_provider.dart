@@ -16,6 +16,7 @@ import 'package:floww/core/home/services/home_service.dart';
 import 'package:floww/core/home/services/home_snapshot_builder.dart';
 import 'package:floww/core/recovery/models/muscle_body_side.dart';
 import 'package:floww/core/recovery/services/muscle_map_service.dart';
+import 'package:floww/core/workout/models/active_workout_args.dart';
 
 class HomeProvider extends ChangeNotifier {
   HomeProvider(
@@ -102,6 +103,20 @@ class HomeProvider extends ChangeNotifier {
 
   CompletedWorkout? get completedWorkout => _snapshot.completedWorkout;
 
+  ActiveWorkoutArgs? get resumeArgs {
+    final session = HomeSnapshotBuilder.activeSessionOn(
+      _records.sessions,
+      _date,
+    );
+    if (session == null) return null;
+    return ActiveWorkoutArgs(
+      date: _date,
+      plan: _records.plan,
+      history: _records.sessions,
+      session: session,
+    );
+  }
+
   NutritionSummary get nutrition => _snapshot.nutrition;
 
   TodayProgress get todayProgress => _snapshot.todayProgress;
@@ -144,7 +159,7 @@ class HomeProvider extends ChangeNotifier {
 
   void _apply(HomeRecords records) {
     _records = records;
-    _snapshot = _builder.build(records, date: _date);
+    _snapshot = _builder.build(records, date: DateTime.now());
     _isReady = true;
     notifyListeners();
     _flowModeController.reportScore(

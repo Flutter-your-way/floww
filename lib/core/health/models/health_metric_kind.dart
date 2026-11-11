@@ -15,6 +15,8 @@ extension HealthMetricRangeX on HealthMetricRange {
 }
 
 enum HealthMetricKind {
+  steps,
+  sleep,
   hrv,
   restingHeartRate,
   vo2Max,
@@ -30,6 +32,8 @@ enum HealthMetricKind {
 
 extension HealthMetricKindX on HealthMetricKind {
   static const List<HealthMetricKind> daily = [
+    HealthMetricKind.steps,
+    HealthMetricKind.sleep,
     HealthMetricKind.hrv,
     HealthMetricKind.restingHeartRate,
     HealthMetricKind.vo2Max,
@@ -47,13 +51,22 @@ extension HealthMetricKindX on HealthMetricKind {
   ];
 
   static const List<HealthMetricKind> defaultDaily = [
+    HealthMetricKind.steps,
+    HealthMetricKind.sleep,
     HealthMetricKind.hrv,
     HealthMetricKind.restingHeartRate,
     HealthMetricKind.vo2Max,
     HealthMetricKind.oxygenSaturation,
   ];
 
+  static const List<HealthMetricKind> addedInV2 = [
+    HealthMetricKind.steps,
+    HealthMetricKind.sleep,
+  ];
+
   String get label => switch (this) {
+    HealthMetricKind.steps => 'Steps',
+    HealthMetricKind.sleep => 'Sleep',
     HealthMetricKind.hrv => 'HRV',
     HealthMetricKind.restingHeartRate => 'Resting HR',
     HealthMetricKind.vo2Max => 'VO2 Max',
@@ -68,6 +81,7 @@ extension HealthMetricKindX on HealthMetricKind {
   };
 
   String get title => switch (this) {
+    HealthMetricKind.sleep => 'Time Asleep',
     HealthMetricKind.hrv => 'Heart Rate Variability',
     HealthMetricKind.restingHeartRate => 'Resting Heart Rate',
     HealthMetricKind.heartRateRecovery => 'Heart Rate Recovery',
@@ -77,6 +91,8 @@ extension HealthMetricKindX on HealthMetricKind {
   };
 
   String get unit => switch (this) {
+    HealthMetricKind.steps => 'steps',
+    HealthMetricKind.sleep => '',
     HealthMetricKind.hrv => 'ms',
     HealthMetricKind.restingHeartRate => 'bpm',
     HealthMetricKind.vo2Max => 'ml/kg/min',
@@ -91,6 +107,7 @@ extension HealthMetricKindX on HealthMetricKind {
   };
 
   int get digits => switch (this) {
+    HealthMetricKind.steps ||
     HealthMetricKind.hrv ||
     HealthMetricKind.restingHeartRate ||
     HealthMetricKind.heartRateRecovery => 0,
@@ -107,7 +124,30 @@ extension HealthMetricKindX on HealthMetricKind {
     _ => null,
   };
 
-  String format(double value) => value.toStringAsFixed(digits);
+  String format(double value) => switch (this) {
+    HealthMetricKind.steps => _grouped(value.round()),
+    HealthMetricKind.sleep => _duration(value),
+    _ => value.toStringAsFixed(digits),
+  };
+
+  static String _grouped(int value) {
+    final digits = value.abs().toString();
+    final buffer = StringBuffer(value < 0 ? '-' : '');
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(digits[i]);
+    }
+    return buffer.toString();
+  }
+
+  static String _duration(double hours) {
+    final totalMinutes = (hours * 60).round();
+    final h = totalMinutes ~/ 60;
+    final m = totalMinutes % 60;
+    if (h == 0) return '${m}m';
+    if (m == 0) return '${h}h';
+    return '${h}h ${m}m';
+  }
 
   String formatWithUnit(double value) =>
       unit.isEmpty ? format(value) : '${format(value)} $unit';
@@ -119,6 +159,12 @@ extension HealthMetricKindX on HealthMetricKind {
       : const [HealthMetricRange.week, HealthMetricRange.month];
 
   String get about => switch (this) {
+    HealthMetricKind.steps =>
+      'Your total steps for the day from your phone and watch. Today\'s '
+          'count keeps climbing until midnight.',
+    HealthMetricKind.sleep =>
+      'Total time asleep for the night, including core, deep and REM '
+          'sleep. Most adults recover best with 7 to 9 hours.',
     HealthMetricKind.hrv =>
       'The variation in time between heartbeats. A higher HRV than your '
           'usual usually means you have recovered well and are ready to push.',

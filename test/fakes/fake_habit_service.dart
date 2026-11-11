@@ -15,12 +15,16 @@ class FakeHabitService implements HabitService {
     List<HabitDefinition> habits = const [],
     List<HabitDayLog> days = const [],
     this.userId = 'user-1',
+    this.accountCreatedAt,
     this.writeError,
   }) : _habits = [...habits],
        _days = {for (final day in days) AppDateUtils.dateKey(day.date): day};
 
   @override
   final String? userId;
+
+  @override
+  final DateTime? accountCreatedAt;
 
   final HabitException? writeError;
 

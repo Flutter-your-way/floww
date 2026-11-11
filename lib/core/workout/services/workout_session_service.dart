@@ -341,16 +341,12 @@ class WorkoutSessionService extends WorkoutFirestore {
       exercises: session.exercises,
       previousBests: WorkoutMetrics.bestsOf(previous),
     );
-    final flow =
-        await _estimateFlowScore(
-          uid,
-          date: session.date,
-          workout: WorkoutCredit.ofSessions([session]),
-          previousSessions: previous,
-        ).timeout(
-          _localReadTimeout,
-          onTimeout: () => const _FlowScoreChange(0, 0),
-        );
+    final flow = await _estimateFlowScore(
+      uid,
+      date: session.date,
+      workout: WorkoutCredit.ofSessions([session]),
+      previousSessions: previous,
+    ).timeout(_localReadTimeout, onTimeout: () => const _FlowScoreChange(0, 0));
 
     final payload = <String, dynamic>{
       'status': WorkoutSessionStatus.completed.name,

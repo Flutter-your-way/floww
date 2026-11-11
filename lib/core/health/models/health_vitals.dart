@@ -3,6 +3,8 @@ import 'package:floww/core/health/models/health_metric_reading.dart';
 
 class HealthVitals {
   const HealthVitals({
+    this.steps,
+    this.sleep,
     this.hrv,
     this.restingHeartRate,
     this.vo2Max,
@@ -18,6 +20,8 @@ class HealthVitals {
 
   static const HealthVitals empty = HealthVitals();
 
+  final HealthMetricReading? steps;
+  final HealthMetricReading? sleep;
   final HealthMetricReading? hrv;
   final HealthMetricReading? restingHeartRate;
   final HealthMetricReading? vo2Max;
@@ -31,6 +35,8 @@ class HealthVitals {
   final HealthMetricReading? bodyMassIndex;
 
   HealthMetricReading? readingOf(HealthMetricKind kind) => switch (kind) {
+    HealthMetricKind.steps => steps,
+    HealthMetricKind.sleep => sleep,
     HealthMetricKind.hrv => hrv,
     HealthMetricKind.restingHeartRate => restingHeartRate,
     HealthMetricKind.vo2Max => vo2Max,
@@ -45,6 +51,8 @@ class HealthVitals {
   };
 
   bool get hasAnyData =>
+      steps != null ||
+      sleep != null ||
       hrv != null ||
       restingHeartRate != null ||
       vo2Max != null ||

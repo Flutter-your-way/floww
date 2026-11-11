@@ -96,7 +96,7 @@ class MacroDetailCard extends StatelessWidget {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: MacroEmoji(macro: macro, size: AppSizes.s20),
+                child: MacroEmoji(emoji: macro.emoji, size: AppSizes.s20),
               ),
               SizedBox(width: AppSpacing.md),
               Expanded(

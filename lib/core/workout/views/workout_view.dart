@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:floww/core/guide/models/guide_step.dart';
 import 'package:floww/core/guide/widgets/guide_target.dart';
 import 'package:floww/config/constants/app_sizes.dart';
+import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/utils/backgrounds/app_background.dart';
@@ -612,6 +613,10 @@ class WorkoutView extends StatelessWidget {
                                               : () => _openWorkoutDetails(
                                                   overviewWorkoutId,
                                                 ),
+                                          onSummaryTap:
+                                              viewModel.isOverviewActive
+                                              ? () => _resumeWorkout(viewModel)
+                                              : null,
                                           onSummaryInfo: () => _showInfo(
                                             context,
                                             title: 'Workout Summary',
@@ -817,7 +822,9 @@ class WorkoutView extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        if (viewModel.canLogWorkout)
+                        if (viewModel.canLogWorkout &&
+                            viewModel.primaryAction ==
+                                WorkoutPrimaryAction.start)
                           Expanded(
                             flex: 5,
                             child: PillButton(
@@ -831,6 +838,23 @@ class WorkoutView extends StatelessWidget {
                               ),
                               onPressed: () => _logWorkout(context, viewModel),
                             ),
+                          ),
+                        if (viewModel.canLogWorkout &&
+                            viewModel.primaryAction !=
+                                WorkoutPrimaryAction.start)
+                          PillButton(
+                            variant: viewModel.isLogWorkoutPrimary
+                                ? PillButtonVariant.accent
+                                : PillButtonVariant.neutral,
+                            height: AppSizes.s46,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xl2,
+                              vertical: AppSpacing.lg,
+                            ),
+                            icon: Icons.add_rounded,
+                            label: viewModel.logWorkoutLabel,
+                            labelStyle: AppTypography.labelMediumSemiBold,
+                            onPressed: () => _logWorkout(context, viewModel),
                           ),
                         if (viewModel.canLogWorkout &&
                             viewModel.primaryAction ==

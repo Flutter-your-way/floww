@@ -26,7 +26,7 @@ class HealthService {
     : _health = client ?? Health(),
       _healthKit = healthKit ?? const HealthKitChannel();
 
-  static const int permissionsVersion = 2;
+  static const int permissionsVersion = 3;
   static const Duration _vitalsWindow = Duration(days: 30);
   static const Duration _bodyWindow = Duration(days: 365);
   static const Duration _readTimeout = Duration(seconds: 8);
@@ -55,8 +55,20 @@ class HealthService {
       ? HealthDataType.SLEEP_WRIST_TEMPERATURE
       : HealthDataType.SKIN_TEMPERATURE;
 
+  static const List<HealthDataType> _sleepStageTypes = <HealthDataType>[
+    HealthDataType.SLEEP_LIGHT,
+    HealthDataType.SLEEP_DEEP,
+    HealthDataType.SLEEP_REM,
+  ];
+
+  static const List<HealthDataType> _sleepTypes = <HealthDataType>[
+    HealthDataType.SLEEP_ASLEEP,
+    ..._sleepStageTypes,
+  ];
+
   static List<HealthDataType> get readTypes => <HealthDataType>[
     ..._coreTypes,
+    ..._sleepStageTypes,
     ..._vitalTypes,
     ..._bodyTypes,
   ];
@@ -189,7 +201,7 @@ class HealthService {
       );
 
       final sleepPoints = await _health.getHealthDataFromTypes(
-        types: const [HealthDataType.SLEEP_ASLEEP],
+        types: _sleepTypes,
         startTime: sleepWindowStart,
         endTime: now,
       );
@@ -201,7 +213,6 @@ class HealthService {
       );
 
       var activeCalories = 0.0;
-      var sleepMinutes = 0.0;
       var workoutCount = 0;
       int? restingHeartRate;
 
@@ -215,13 +226,6 @@ class HealthService {
           } else if (point.type == HealthDataType.RESTING_HEART_RATE) {
             restingHeartRate = value.numericValue.round();
           }
-        }
-      }
-
-      for (final point in sleepPoints) {
-        final value = point.value;
-        if (value is NumericHealthValue) {
-          sleepMinutes += value.numericValue;
         }
       }
 
@@ -239,7 +243,7 @@ class HealthService {
         steps: steps,
         activeCaloriesKcal: activeCalories.round(),
         restingHeartRate: restingHeartRate,
-        sleepMinutes: sleepMinutes.round(),
+        sleepMinutes: _sleepMinutesOf(sleepPoints).round(),
         workoutCount: workoutCount,
         syncedAt: now,
         hrvMs: hrvCount == 0 ? null : hrvTotal / hrvCount,
@@ -257,6 +261,8 @@ class HealthService {
     final bodyStart = now.subtract(_bodyWindow);
 
     final results = await Future.wait([
+      _stepsReading(vitalsStart, now),
+      _sleepReading(vitalsStart, now),
       _readingOf(hrvType, vitalsStart, now),
       _readingOf(HealthDataType.RESTING_HEART_RATE, vitalsStart, now),
       _kitReadingOf(HealthKitMetric.vo2Max, bodyStart, now),
@@ -284,18 +290,111 @@ class HealthService {
     ]);
 
     return HealthVitals(
-      hrv: results[0],
-      restingHeartRate: results[1],
-      vo2Max: results[2],
-      heartRateRecovery: results[3],
-      oxygenSaturation: results[4],
-      skinTemperature: results[5],
-      respiratoryRate: results[6],
-      weight: results[7],
-      bodyFat: results[8],
-      leanMass: results[9],
-      bodyMassIndex: results[10],
+      steps: results[0],
+      sleep: results[1],
+      hrv: results[2],
+      restingHeartRate: results[3],
+      vo2Max: results[4],
+      heartRateRecovery: results[5],
+      oxygenSaturation: results[6],
+      skinTemperature: results[7],
+      respiratoryRate: results[8],
+      weight: results[9],
+      bodyFat: results[10],
+      leanMass: results[11],
+      bodyMassIndex: results[12],
     );
+  }
+
+  static double _sleepMinutesOf(List<HealthDataPoint> points) {
+    var staged = 0.0;
+    var unspecified = 0.0;
+    for (final point in points) {
+      final value = point.value;
+      if (value is! NumericHealthValue) continue;
+      if (_sleepStageTypes.contains(point.type)) {
+        staged += value.numericValue;
+      } else if (point.type == HealthDataType.SLEEP_ASLEEP) {
+        unspecified += value.numericValue;
+      }
+    }
+    return staged > 0 ? staged : unspecified;
+  }
+
+  Future<HealthMetricReading?> _stepsReading(DateTime from, DateTime to) async {
+    try {
+      final today = DateTime(to.year, to.month, to.day);
+      final days = [
+        for (
+          var day = DateTime(from.year, from.month, from.day);
+          !day.isAfter(today);
+          day = DateTime(day.year, day.month, day.day + 1)
+        )
+          day,
+      ];
+      final totals = await Future.wait([
+        for (final day in days)
+          _health
+              .getTotalStepsInInterval(
+                day,
+                day == today
+                    ? to
+                    : DateTime(day.year, day.month, day.day + 1),
+              )
+              .timeout(_readTimeout, onTimeout: () => null),
+      ]);
+      final samples = <HealthSample>[
+        for (var i = 0; i < days.length; i++)
+          if ((totals[i] ?? 0) > 0 || days[i] == today)
+            HealthSample(
+              value: (totals[i] ?? 0).toDouble(),
+              at: days[i] == today ? to : days[i],
+            ),
+      ];
+      if (samples.every((sample) => sample.value == 0)) return null;
+      return HealthMetricReading.latestOf(samples);
+    } catch (e, stackTrace) {
+      debugPrint('read steps failed: $e\n$stackTrace');
+      return null;
+    }
+  }
+
+  Future<HealthMetricReading?> _sleepReading(DateTime from, DateTime to) async {
+    try {
+      final points = await _health
+          .getHealthDataFromTypes(
+            types: _sleepTypes,
+            startTime: from,
+            endTime: to,
+          )
+          .timeout(_readTimeout);
+      final nights = <DateTime, List<HealthDataPoint>>{};
+      final wokeAt = <DateTime, DateTime>{};
+      for (final point in points) {
+        final night = DateTime(
+          point.dateTo.year,
+          point.dateTo.month,
+          point.dateTo.day,
+        );
+        nights.putIfAbsent(night, () => []).add(point);
+        final seen = wokeAt[night];
+        if (seen == null || point.dateTo.isAfter(seen)) {
+          wokeAt[night] = point.dateTo;
+        }
+      }
+      final samples = <HealthSample>[
+        for (final entry in nights.entries)
+          if (_sleepMinutesOf(entry.value) > 0)
+            HealthSample(
+              value: _sleepMinutesOf(entry.value) / 60,
+              at: wokeAt[entry.key]!,
+            ),
+      ];
+      return HealthMetricReading.latestOf(samples);
+    } catch (e, stackTrace) {
+      debugPrint('read sleep failed: $e\n$stackTrace');
+      return null;
+    }
   }
 
   static double _asPercent(double value) => value <= 1 ? value * 100 : value;

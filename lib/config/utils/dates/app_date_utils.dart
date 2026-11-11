@@ -113,6 +113,8 @@ class AppDateUtils {
   static String monthYear(DateTime date) =>
       '${_months[date.month - 1]} ${date.year}';
 
+  static String shortMonth(DateTime date) => _shortMonths[date.month - 1];
+
   static String shortMonthYear(DateTime date) =>
       '${_shortMonths[date.month - 1]} ${date.year}';
 

@@ -52,6 +52,37 @@ class HabitLabels {
     };
   }
 
+  static String value(Habit habit) => habit.metric == HabitMetric.steps
+      ? NumberFormatter.grouped(habit.value.round())
+      : decimal(habit.value);
+
+  static String valueUnit(Habit habit) => switch (habit.metric) {
+    HabitMetric.sessions => habit.value == 1 ? 'session' : 'sessions',
+    _ => unit(habit.metric),
+  };
+
+  static String targetCaption(Habit habit) => habit.isLimit
+      ? 'max ${amount(habit.target, habit.metric)}'
+      : 'of ${amount(habit.target, habit.metric)}';
+
+  static String? bonus(Habit habit) {
+    if (habit.isQuit || habit.isLimit || habit.target <= 0) return null;
+    final extra = (habit.value - habit.target) / habit.target;
+    final rounded = (extra * 100).round();
+    return rounded > 0 ? '+$rounded%' : null;
+  }
+
+  static String quitUnit(int dayCount) => dayCount == 1 ? 'day' : 'days';
+
+  static String quitCaption(int targetDays) => 'of ${days(targetDays)}';
+
+  static String? sourceShort(HabitSource source) => switch (source) {
+    HabitSource.manual => null,
+    HabitSource.water => 'Nutrition',
+    HabitSource.workout => 'Workouts',
+    HabitSource.steps || HabitSource.sleep => 'Health',
+  };
+
   static String _valueOf(double value, HabitMetric metric) => switch (metric) {
     HabitMetric.steps => NumberFormatter.grouped(value.round()),
     HabitMetric.liters => '${decimal(value)}L',

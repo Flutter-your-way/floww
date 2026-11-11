@@ -26,7 +26,11 @@ class MuscleRecoveryRow extends StatelessWidget {
 
     return Row(
       children: [
-        MuscleThumbnail(item: item, template: template),
+        MuscleThumbnail(
+          group: item.group,
+          color: item.status.mapColor(colors),
+          template: template,
+        ),
         SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(

@@ -22,6 +22,7 @@ import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/sheets/app_date_sheet.dart';
 import 'package:floww/core/habits/view_models/habits_view_model.dart';
 import 'package:floww/core/habits/views/add_habit_sheet.dart';
+import 'package:floww/core/habits/widgets/habit_heatmap_card.dart';
 import 'package:floww/core/habits/widgets/habit_score_card.dart';
 import 'package:floww/core/habits/widgets/habits_empty_state_card.dart';
 import 'package:floww/core/habits/widgets/popular_habits_card.dart';
@@ -375,6 +376,22 @@ class _HabitsViewState extends State<HabitsView> {
                                                             .selectedDate,
                                                       ),
                                                 ),
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    AppPopReveal(
+                                      trigger: revealTrigger,
+                                      child: showCurrentHabits
+                                          ? Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: AppSpacing.lg,
+                                              ),
+                                              child: HabitHeatmapCard(
+                                                title: viewModel.heatmapTitle,
+                                                data: viewModel.heatmap,
+                                                selectedDate:
+                                                    viewModel.selectedDate,
                                               ),
                                             )
                                           : null,

@@ -405,7 +405,7 @@ class HomeSnapshotBuilder {
       }
     }
 
-    final lastWorkout = _lastCompletedSession(records.sessions);
+    final lastWorkout = _lastCompletedSession(records.sessions, today);
     if (lastWorkout != null) {
       reasons.add(
         'Last workout ${AppDateUtils.relativeDay(lastWorkout.completedAt, now: today).toLowerCase()}',
@@ -433,13 +433,13 @@ class HomeSnapshotBuilder {
       reasons.add('Recovery is ${recovery.levelLabel}');
     }
 
-    final lastWorkout = _lastCompletedSession(records.sessions);
+    final lastWorkout = _lastCompletedSession(records.sessions, today);
     if (lastWorkout != null) {
-      final hours = today
+      final days = today
           .difference(AppDateUtils.dateOnly(lastWorkout.completedAt))
           .inDays;
       reasons.add(
-        hours == 0 ? 'Trained earlier today' : 'Last workout ${hours}d ago',
+        days == 0 ? 'Trained earlier today' : 'Last workout ${days}d ago',
       );
     } else {
       reasons.add('Your first logged session');
@@ -447,12 +447,44 @@ class HomeSnapshotBuilder {
 
     if (plan.programLabel.isNotEmpty) reasons.add(plan.programLabel);
 
+    final active = activeSessionOn(records.sessions, today);
     return WorkoutRecommendation(
       title: plan.name,
       durationLabel: '${plan.durationMinutes}m',
       intensityLabel: _intensityOf(plan.totalSets),
       reasons: reasons,
       imageUrl: ProgramArtwork.ofPlan(plan),
+      active: active == null ? null : _activeSummaryOf(active),
+    );
+  }
+
+  static ActiveWorkoutSummary _activeSummaryOf(WorkoutSessionEntity session) {
+    final exercises = session.exercises;
+    var logged = 0;
+    var done = 0;
+    for (final exercise in exercises) {
+      logged += exercise.workingSetCount;
+      if (exercise.isDone) done++;
+    }
+    final planned = session.plannedSets;
+    final progress = planned == 0 ? 0.0 : (logged / planned).clamp(0.0, 1.0);
+    final current =
+        exercises.where((e) => e.id == session.currentEntryId).firstOrNull ??
+        exercises.where((e) => !e.isDone).firstOrNull;
+    final position = current == null ? done : exercises.indexOf(current) + 1;
+
+    return ActiveWorkoutSummary(
+      statusLabel: session.isTimerPaused ? 'PAUSED' : 'IN PROGRESS',
+      isPaused: session.isTimerPaused,
+      positionLabel: 'Exercise $position of ${exercises.length}',
+      progress: progress,
+      progressLabel:
+          '$logged/$planned sets · ${_minutesOf(session.activeSeconds)} min',
+      percentLabel: '${(progress * 100).round()}%',
+      nextTitle: current?.name,
+      nextDetail: current == null
+          ? null
+          : '${current.targetReps} ${current.isTimed ? 'sec' : 'reps'}',
     );
   }
 
@@ -661,12 +693,26 @@ class HomeSnapshotBuilder {
     return null;
   }
 
+  static WorkoutSessionEntity? activeSessionOn(
+    List<WorkoutSessionEntity> sessions,
+    DateTime day,
+  ) {
+    for (final session in sessions) {
+      if (session.isInProgress && AppDateUtils.isSameDay(session.date, day)) {
+        return session;
+      }
+    }
+    return null;
+  }
+
   static WorkoutSessionEntity? _lastCompletedSession(
     List<WorkoutSessionEntity> sessions,
+    DateTime today,
   ) {
     WorkoutSessionEntity? latest;
     for (final session in sessions) {
       if (session.status != WorkoutSessionStatus.completed) continue;
+      if (AppDateUtils.dateOnly(session.completedAt).isAfter(today)) continue;
       if (latest == null || session.completedAt.isAfter(latest.completedAt)) {
         latest = session;
       }

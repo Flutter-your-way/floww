@@ -59,7 +59,6 @@ class NutritionViewModel extends ChangeNotifier {
   StreamSubscription<NutritionGoal>? _goalSubscription;
   late final DayRolloverTimer _dayRollover;
   bool _disposed = false;
-  bool _showAllMicronutrients = false;
 
   NutritionGoal get goal => _goal;
 
@@ -195,12 +194,30 @@ class NutritionViewModel extends ChangeNotifier {
   List<MacroProgressItem> get macros => [
     for (final macro in MacroNutrient.values)
       MacroProgressItem(
-        macro: macro,
+        label: macro.label,
+        emoji: macro.emoji,
         amountLabel: NutritionLabels.number(_day.macroSplit.gramsOf(macro)),
         goalLabel: '/${_day.goalGramsOf(macro)}g',
         percentLabel: NutritionLabels.percent(_macroProgress(macro)),
         progress: _macroProgress(macro),
       ),
+    MacroProgressItem(
+      label: 'Fiber',
+      emoji: '🥦',
+      amountLabel: NutritionLabels.number(_day.fiberG),
+      goalLabel: '/${goal.fiberG}g',
+      percentLabel: NutritionLabels.percent(_day.fiberG / goal.fiberG),
+      progress: _day.fiberG / goal.fiberG,
+    ),
+    MacroProgressItem(
+      label: 'Sugar',
+      emoji: '🍬',
+      amountLabel: NutritionLabels.number(_day.sugarG),
+      goalLabel: '/${goal.sugarG}g max',
+      percentLabel: NutritionLabels.percent(_day.sugarG / goal.sugarG),
+      progress: _day.sugarG / goal.sugarG,
+      isOverLimit: _day.sugarG > goal.sugarG,
+    ),
   ];
 
   double _macroProgress(MacroNutrient macro) =>
@@ -217,21 +234,6 @@ class NutritionViewModel extends ChangeNotifier {
 
   List<MicronutrientRowItem> get limitNutrients => [
     MicronutrientRowItem(
-      kind: MicronutrientKind.fiber,
-      label: 'Fiber',
-      amountLabel: NutritionLabels.preciseGrams(_day.fiberG),
-      goalLabel: '${goal.fiberG}g',
-      progress: _day.fiberG / goal.fiberG,
-    ),
-    MicronutrientRowItem(
-      kind: MicronutrientKind.sugar,
-      label: 'Sugar',
-      amountLabel: NutritionLabels.preciseGrams(_day.sugarG),
-      goalLabel: '${goal.sugarG}g max',
-      progress: _day.sugarG / goal.sugarG,
-      isOverLimit: _day.sugarG > goal.sugarG,
-    ),
-    MicronutrientRowItem(
       kind: MicronutrientKind.sodium,
       label: 'Sodium',
       amountLabel: NutritionLabels.milligrams(_day.sodiumMg),
@@ -241,19 +243,16 @@ class NutritionViewModel extends ChangeNotifier {
     ),
   ];
 
-  bool get showAllMicronutrients => _showAllMicronutrients;
-
   List<MicronutrientRowItem> get micronutrients => [
-    for (final nutrient in Micronutrient.featured) _micronutrientRow(nutrient),
+    for (final nutrient in Micronutrient.values) _micronutrientRow(nutrient),
   ];
 
-  List<MicronutrientRowItem> get extendedMicronutrients => [
-    for (final nutrient in Micronutrient.extended) _micronutrientRow(nutrient),
-  ];
-
-  String get micronutrientsToggleLabel => _showAllMicronutrients
-      ? 'Show fewer'
-      : 'Show all ${Micronutrient.values.length} vitamins & minerals';
+  String get micronutrientsSummaryLabel {
+    final met = Micronutrient.values
+        .where((n) => _day.micronutrientTotal(n) >= n.dailyValue)
+        .length;
+    return '$met of ${Micronutrient.values.length} vitamins & minerals met';
+  }
 
   String? get micronutrientsNote {
     final missing = _day.foodsWithoutMicronutrients;
@@ -272,11 +271,6 @@ class NutritionViewModel extends ChangeNotifier {
       goalLabel: '${NutritionLabels.micro(nutrient.dailyValue)}$unit',
       progress: amount / nutrient.dailyValue,
     );
-  }
-
-  void toggleMicronutrients() {
-    _showAllMicronutrients = !_showAllMicronutrients;
-    notifyListeners();
   }
 
   MealSchedule get _schedule => _scheduleService.current;

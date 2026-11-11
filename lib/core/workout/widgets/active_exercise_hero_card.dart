@@ -7,7 +7,7 @@ import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
-import 'package:floww/config/widgets/images/remote_image.dart';
+import 'package:floww/config/widgets/images/exercise_video_surface.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/widgets/active_metric_pill.dart';
 
@@ -40,14 +40,16 @@ class ActiveExerciseHeroCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              RemoteImage(
-                url: exercise.imageUrl,
+              ExerciseVideoSurface(
+                imageUrl: exercise.imageUrl,
+                video: exercise.video,
+                isLoading: exercise.isVideoLoading,
                 fallbackIcon: Icons.fitness_center,
                 fallbackIconSize: AppSizes.s64,
               ),
               DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: context.gradients.cameraScrim,
+                  gradient: context.gradients.mediaScrim,
                 ),
               ),
               Positioned(

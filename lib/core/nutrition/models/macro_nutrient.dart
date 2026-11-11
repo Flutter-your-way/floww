@@ -1,6 +1,7 @@
 enum MacroNutrient {
   protein(
     label: 'Protein',
+    emoji: '🥚',
     tabLabel: 'Protein',
     tagline: 'BUILD & REPAIR',
     kcalPerGram: 4,
@@ -18,6 +19,7 @@ enum MacroNutrient {
   ),
   carbs(
     label: 'Carbs',
+    emoji: '🌾',
     tabLabel: 'Carbohydrates',
     tagline: 'PRIMARY FUEL',
     kcalPerGram: 4,
@@ -35,6 +37,7 @@ enum MacroNutrient {
   ),
   fats(
     label: 'Fats',
+    emoji: '🥑',
     tabLabel: 'Fats',
     tagline: 'HORMONES & ABSORPTION',
     kcalPerGram: 9,
@@ -54,6 +57,7 @@ enum MacroNutrient {
 
   const MacroNutrient({
     required this.label,
+    required this.emoji,
     required this.tabLabel,
     required this.tagline,
     required this.kcalPerGram,
@@ -63,6 +67,7 @@ enum MacroNutrient {
   });
 
   final String label;
+  final String emoji;
   final String tabLabel;
   final String tagline;
   final int kcalPerGram;
