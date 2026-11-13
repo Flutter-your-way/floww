@@ -6,6 +6,7 @@ import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/cards/app_icon_tile.dart';
+import 'package:floww/core/workout/widgets/wave_logo_tile.dart';
 import 'package:floww/core/workout/widgets/workout_chip.dart';
 
 class ChangeProgramCard extends StatelessWidget {
@@ -15,9 +16,11 @@ class ChangeProgramCard extends StatelessWidget {
     required this.programName,
     required this.actionLabel,
     required this.onTap,
+    this.isWave = false,
   });
 
   final IconData icon;
+  final bool isWave;
   final String programName;
   final String actionLabel;
   final VoidCallback onTap;
@@ -32,11 +35,14 @@ class ChangeProgramCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           children: [
-            AppIconTile(
-              icon: icon,
-              backgroundColor: colors.bgTinted,
-              iconColor: colors.primaryAlt,
-            ),
+            if (isWave)
+              const WaveLogoTile()
+            else
+              AppIconTile(
+                icon: icon,
+                backgroundColor: colors.bgTinted,
+                iconColor: colors.primaryAlt,
+              ),
             SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(

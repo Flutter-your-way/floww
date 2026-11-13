@@ -133,12 +133,17 @@ class HealthProvider extends ChangeNotifier {
       await _persist(true);
       await _persistPermissionsVersion();
       notifyListeners();
-      unawaited(refresh());
+      unawaited(_requestExtendedThenRefresh());
     } on HealthServiceException catch (e) {
       _status = HealthConnectionStatus.disconnected;
       _errorMessage = e.message;
       notifyListeners();
     }
+  }
+
+  Future<void> _requestExtendedThenRefresh() async {
+    await _service.requestExtendedPermissions();
+    await refresh();
   }
 
   Future<bool> requestAllPermissions() async {
@@ -158,7 +163,7 @@ class HealthProvider extends ChangeNotifier {
       }
       await _persistPermissionsVersion();
       notifyListeners();
-      unawaited(refresh());
+      unawaited(_requestExtendedThenRefresh());
       return true;
     } on HealthServiceException catch (e) {
       _errorMessage = e.message;
@@ -211,6 +216,7 @@ class HealthProvider extends ChangeNotifier {
         return;
       }
       if (!await _service.requestPermissions()) return;
+      await _service.requestExtendedPermissions();
       await prefs.setInt(
         permissionsVersionKey,
         HealthService.permissionsVersion,

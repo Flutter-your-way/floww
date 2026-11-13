@@ -20,6 +20,7 @@ class WorkoutOverviewSection extends StatelessWidget {
     required this.overview,
     required this.muscleMapOf,
     this.showSummary = true,
+    this.showInsights = true,
     this.revealTrigger,
     this.onViewAnatomy,
     this.onViewDetails,
@@ -31,6 +32,7 @@ class WorkoutOverviewSection extends StatelessWidget {
   final WorkoutOverviewItem? overview;
   final MuscleMapTemplate? Function(MuscleBodySide side) muscleMapOf;
   final bool showSummary;
+  final bool showInsights;
   final Object? revealTrigger;
   final VoidCallback? onViewAnatomy;
   final VoidCallback? onViewDetails;
@@ -41,8 +43,9 @@ class WorkoutOverviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overview = this.overview;
-    final heartRate = overview?.heartRate;
-    final trainingEffect = overview?.trainingEffect;
+    final insights = showInsights ? overview : null;
+    final heartRate = insights?.heartRate;
+    final trainingEffect = insights?.trainingEffect;
     final spacing = EdgeInsets.only(bottom: AppSpacing.lg);
 
     return Column(
@@ -85,12 +88,12 @@ class WorkoutOverviewSection extends StatelessWidget {
         AppPopReveal(
           trigger: revealTrigger,
           appearOnMount: true,
-          child: overview != null && overview.muscles.isNotEmpty
+          child: insights != null && insights.muscles.isNotEmpty
               ? Padding(
                   padding: spacing,
                   child: MuscleFocusCard(
-                    muscles: overview.muscles,
-                    targets: overview.targets,
+                    muscles: insights.muscles,
+                    targets: insights.targets,
                     templateOf: muscleMapOf,
                     onViewAnatomy: onViewAnatomy,
                   ),
@@ -110,13 +113,13 @@ class WorkoutOverviewSection extends StatelessWidget {
         AppPopReveal(
           trigger: revealTrigger,
           appearOnMount: true,
-          child: overview != null
+          child: insights != null
               ? PremiumGate(
                   capability: PremiumCapability.advancedAnalytics,
                   placeholder: const SizedBox.shrink(),
                   locked: const SizedBox.shrink(),
                   child: PerformanceCard(
-                    performance: overview.performance,
+                    performance: insights.performance,
                     onViewDetails: onViewDetails,
                   ),
                 )

@@ -155,7 +155,7 @@ class _ConsistencyGrid extends StatelessWidget {
           ],
         ),
         for (var row = 0; row < days.length; row += DateTime.daysPerWeek) ...[
-          SizedBox(height: AppSpacing.md),
+          SizedBox(height: AppSpacing.xl),
           Row(
             children: [
               for (var column = 0; column < DateTime.daysPerWeek; column++)

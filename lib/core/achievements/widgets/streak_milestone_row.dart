@@ -4,6 +4,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/achievements/models/streak_milestone.dart';
+import 'package:floww/core/achievements/widgets/achievement_badge.dart';
 
 class StreakMilestoneRow extends StatelessWidget {
   const StreakMilestoneRow({super.key, required this.milestone});
@@ -16,7 +17,13 @@ class StreakMilestoneRow extends StatelessWidget {
 
     return Row(
       children: [
-        _MilestoneBadge(emoji: milestone.emoji),
+        AchievementBadge(
+          rarity: milestone.tier.rarity,
+          isEarned: milestone.isReached,
+          icon: Icons.local_fire_department_rounded,
+          label: milestone.tier.daysLabel,
+          size: AppSizes.s36,
+        ),
         SizedBox(width: AppSpacing.lg),
         Expanded(
           child: Column(
@@ -44,26 +51,6 @@ class StreakMilestoneRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MilestoneBadge extends StatelessWidget {
-  const _MilestoneBadge({required this.emoji});
-
-  final String emoji;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: AppSizes.s36,
-      width: AppSizes.s36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: context.colors.backgroundSurface,
-        shape: BoxShape.circle,
-      ),
-      child: Text(emoji, style: context.textTheme.bodyLarge),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'package:floww/core/recovery/services/muscle_targeting.dart';
+import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 
 class WorkoutEmptyState {
@@ -19,19 +20,19 @@ class WorkoutEmptyState {
 
 class WorkoutSuggestionItem {
   const WorkoutSuggestionItem({
+    required this.eyebrow,
     required this.title,
-    required this.durationLabel,
-    required this.intensityLabel,
-    required this.reasons,
+    required this.metaLabels,
+    this.contextLabel,
     this.imageUrl,
-    this.actionLabel = 'START WORKOUT',
+    this.actionLabel,
   });
 
+  final String eyebrow;
   final String title;
-  final String durationLabel;
-  final String intensityLabel;
-  final List<String> reasons;
-  final String actionLabel;
+  final List<String> metaLabels;
+  final String? contextLabel;
+  final String? actionLabel;
   final String? imageUrl;
 }
 
@@ -563,6 +564,41 @@ class ProgramItem {
   final bool isActive;
   final bool isPremium;
   final bool isWave;
+}
+
+class ProgramGoalCardItem {
+  const ProgramGoalCardItem({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.imageUrl,
+    this.isLocked = false,
+  });
+
+  final String id;
+  final String title;
+  final String subtitle;
+  final String imageUrl;
+  final bool isLocked;
+}
+
+class ProgramLevelCardItem {
+  const ProgramLevelCardItem({
+    required this.level,
+    required this.title,
+    required this.imageUrl,
+  });
+
+  final ProgramLevel level;
+  final String title;
+  final String imageUrl;
+}
+
+class ProgramCollectionItem {
+  const ProgramCollectionItem({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
 }
 
 class ProgramFilterItem<T> {

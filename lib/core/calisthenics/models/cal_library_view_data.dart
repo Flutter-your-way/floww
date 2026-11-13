@@ -6,6 +6,7 @@ class CalLadderStepItem {
     required this.standard,
     required this.isYourLevel,
     this.imageUrl,
+    this.isImageLoading = false,
   });
 
   final String moveId;
@@ -14,6 +15,7 @@ class CalLadderStepItem {
   final String standard;
   final bool isYourLevel;
   final String? imageUrl;
+  final bool isImageLoading;
 }
 
 class CalLadderItem {

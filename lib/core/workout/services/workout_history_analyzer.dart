@@ -8,7 +8,7 @@ import 'package:floww/core/workout/models/workout_section_kind.dart';
 class WorkoutHistoryAnalyzer {
   WorkoutHistoryAnalyzer._();
 
-  static const int consistencyWeeks = 4;
+  static const int consistencyWeeks = 2;
   static const int catchUpWindowDays = 1;
   static const int prioritizeWindowDays = 7;
   static const int patternThreshold = 2;
@@ -75,7 +75,14 @@ class WorkoutHistoryAnalyzer {
       AppDateUtils.startOfWeek(today),
       -DateTime.daysPerWeek * (consistencyWeeks - 1),
     );
+    final firstDay = days.isEmpty ? end : days.first.date;
     final consistencyDays = [
+      for (
+        var date = windowStart;
+        date.isBefore(firstDay);
+        date = AppDateUtils.addDays(date, 1)
+      )
+        WorkoutHistoryDay(date: date, outcome: WorkoutDayOutcome.rest),
       for (final day in days)
         if (!day.date.isBefore(windowStart)) day,
     ];

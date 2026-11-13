@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_opacity.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/cards/tip_card.dart';
 import 'package:floww/config/widgets/chips/app_status_chip.dart';
+import 'package:floww/config/widgets/images/app_photo_tile.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/widgets/workout_stat_tile.dart';
 
@@ -51,20 +51,7 @@ class _IdentityRow extends StatelessWidget {
 
     return Row(
       children: [
-        Container(
-          width: AppSizes.s48,
-          height: AppSizes.s48,
-          alignment: Alignment.center,
-          decoration: AppShapes.decoration(
-            color: colors.bgTinted,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          child: Icon(
-            workout.icon,
-            size: AppSizes.s24,
-            color: colors.primaryAlt,
-          ),
-        ),
+        AppPhotoTile(url: workout.imageUrl, fallbackIcon: workout.icon),
         SizedBox(width: AppSpacing.lg),
         Expanded(
           child: Column(

@@ -52,6 +52,7 @@ class ExerciseDetailSheet extends StatelessWidget {
                 ExerciseMediaFrame(
                   imageUrl: detail.imageUrl,
                   video: detail.video,
+                  isLoading: detail.isVideoLoading,
                   fallbackIcon: Icons.fitness_center,
                 ),
                 SizedBox(height: AppSpacing.lg),

@@ -63,6 +63,7 @@ class ExerciseDetailItem {
     required this.isCustom,
     this.imageUrl,
     this.video,
+    this.isVideoLoading = false,
   });
 
   final String id;
@@ -76,4 +77,5 @@ class ExerciseDetailItem {
   final bool isCustom;
   final String? imageUrl;
   final ExerciseVideo? video;
+  final bool isVideoLoading;
 }

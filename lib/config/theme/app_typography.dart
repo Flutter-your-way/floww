@@ -33,6 +33,22 @@ class AppTypography {
     letterSpacing: 1.2,
   );
 
+  static const TextStyle photoCardTitle = TextStyle(
+    fontFamily: _fontDisplay,
+    fontSize: 26,
+    fontWeight: FontWeight.w800,
+    height: 1.1,
+    letterSpacing: -0.4,
+  );
+
+  static const TextStyle photoTileTitle = TextStyle(
+    fontFamily: _fontDisplay,
+    fontSize: 15,
+    fontWeight: FontWeight.w800,
+    height: 1.15,
+    letterSpacing: -0.2,
+  );
+
   static const TextStyle modeCardBody = TextStyle(
     fontFamily: _fontHeading,
     fontSize: 14,

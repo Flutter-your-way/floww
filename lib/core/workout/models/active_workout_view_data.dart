@@ -55,10 +55,12 @@ class TodayWorkoutItem {
     required this.muscles,
     this.statusLabel,
     this.statusIcon,
+    this.imageUrl,
   });
 
   final String? statusLabel;
   final IconData? statusIcon;
+  final String? imageUrl;
   final String name;
   final IconData icon;
   final String programLabel;

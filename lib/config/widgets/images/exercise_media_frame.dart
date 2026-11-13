@@ -11,6 +11,7 @@ class ExerciseMediaFrame extends StatelessWidget {
     required this.imageUrl,
     required this.fallbackIcon,
     this.video,
+    this.isLoading = false,
   });
 
   static const double _landscapeAspectRatio = 16 / 9;
@@ -19,6 +20,7 @@ class ExerciseMediaFrame extends StatelessWidget {
   final String? imageUrl;
   final IconData fallbackIcon;
   final ExerciseVideo? video;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +39,7 @@ class ExerciseMediaFrame extends StatelessWidget {
         child: ExerciseVideoSurface(
           imageUrl: imageUrl,
           video: video,
+          isLoading: isLoading,
           fallbackIcon: fallbackIcon,
           fallbackIconSize: AppSizes.s40,
         ),

@@ -8,7 +8,7 @@ import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
-import 'package:floww/core/workout/widgets/workout_agenda_row.dart';
+import 'package:floww/core/workout/widgets/workout_agenda_hero_card.dart';
 
 class WorkoutAgendaCard extends StatelessWidget {
   const WorkoutAgendaCard({
@@ -21,6 +21,30 @@ class WorkoutAgendaCard extends StatelessWidget {
   final WorkoutAgendaItem agenda;
   final ValueChanged<WorkoutAgendaEntryItem> onAction;
   final ValueChanged<WorkoutAgendaEntryItem> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AgendaHeader(agenda: agenda),
+        for (final entry in agenda.entries) ...[
+          SizedBox(height: AppSpacing.lg),
+          WorkoutAgendaHeroCard(
+            entry: entry,
+            onAction: () => onAction(entry),
+            onRemove: () => onRemove(entry),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AgendaHeader extends StatelessWidget {
+  const _AgendaHeader({required this.agenda});
+
+  final WorkoutAgendaItem agenda;
 
   @override
   Widget build(BuildContext context) {
@@ -50,15 +74,6 @@ class WorkoutAgendaCard extends StatelessWidget {
               progress: planProgress,
               trackColor: colors.borderSubtle,
               height: AppSizes.s6,
-            ),
-          ],
-          SizedBox(height: AppSpacing.xl),
-          for (var i = 0; i < agenda.entries.length; i++) ...[
-            if (i > 0) SizedBox(height: AppSpacing.md),
-            WorkoutAgendaRow(
-              entry: agenda.entries[i],
-              onAction: () => onAction(agenda.entries[i]),
-              onRemove: () => onRemove(agenda.entries[i]),
             ),
           ],
         ],

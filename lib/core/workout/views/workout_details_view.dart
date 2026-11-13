@@ -80,7 +80,7 @@ class WorkoutDetailsView extends StatelessWidget {
               ? () => _confirmUnlog(context, viewModel)
               : _placeholderAction,
           children: [
-            if (viewModel.isLoading)
+            if (viewModel.isLoading || viewModel.isUnlogging)
               const AppSectionLoader()
             else if (viewModel.errorMessage != null)
               AppErrorCard(message: viewModel.errorMessage!)

@@ -31,6 +31,7 @@ class HealthService {
   static const Duration _bodyWindow = Duration(days: 365);
   static const Duration _readTimeout = Duration(seconds: 8);
   static const Duration _authorizationTimeout = Duration(seconds: 90);
+  static const Duration _sheetDismissDelay = Duration(milliseconds: 800);
 
   final Health _health;
   final HealthKitChannel _healthKit;
@@ -159,18 +160,14 @@ class HealthService {
   Future<bool> requestPermissions() async {
     await configure();
     try {
+      debugPrint('HealthService: requesting core authorization');
       final granted = await _health
           .requestAuthorization(
             readTypes,
             permissions: _readAccessOf(readTypes),
           )
           .timeout(_authorizationTimeout);
-      if (granted) {
-        await _healthKit.requestAuthorization().timeout(
-          _authorizationTimeout,
-          onTimeout: () => false,
-        );
-      }
+      debugPrint('HealthService: core authorization returned $granted');
       return granted;
     } on TimeoutException catch (e, stackTrace) {
       debugPrint('requestPermissions timed out: $e\n$stackTrace');
@@ -183,6 +180,16 @@ class HealthService {
         'Could not open $sourceName. Please try again.',
       );
     }
+  }
+
+  Future<void> requestExtendedPermissions() async {
+    await Future<void>.delayed(_sheetDismissDelay);
+    debugPrint('HealthService: requesting extended authorization');
+    final granted = await _healthKit.requestAuthorization().timeout(
+      _authorizationTimeout,
+      onTimeout: () => false,
+    );
+    debugPrint('HealthService: extended authorization returned $granted');
   }
 
   Future<HealthSnapshot> fetchTodaySnapshot() async {

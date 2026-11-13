@@ -57,7 +57,9 @@ const matchScore = (query: string, title: string): number => {
   const titleTokens = new Set(tokensOf(title));
   if (queryTokens.length === 0 || titleTokens.size === 0) return 0;
   const shared = queryTokens.filter((token) => titleTokens.has(token)).length;
-  return shared / Math.max(queryTokens.length, titleTokens.size);
+  const overlap = shared / Math.max(queryTokens.length, titleTokens.size);
+  if (shared < queryTokens.length) return overlap;
+  return MIN_MATCH_SCORE + overlap * (1 - MIN_MATCH_SCORE);
 };
 
 const ymoveGet = async <T>(path: string, params: Record<string, string>) => {

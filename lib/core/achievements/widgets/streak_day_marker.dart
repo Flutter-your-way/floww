@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/core/achievements/models/streak_day_status.dart';
+import 'package:floww/config/widgets/painters/medal_painter.dart';
 
 class StreakDayMarker extends StatelessWidget {
   const StreakDayMarker({
@@ -14,74 +15,90 @@ class StreakDayMarker extends StatelessWidget {
   final StreakDayStatus status;
   final double size;
 
+  static const double _solidIconRatio = 0.5;
+  static const double _facedIconRatio = 0.4;
+  static const double _faceScale = 0.7;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final iconSize = size / 2;
+    final gradients = context.gradients;
 
     return switch (status) {
-      StreakDayStatus.completed => _MarkerDot(
+      StreakDayStatus.completed => _MarkerMedal(
         size: size,
-        color: colors.primary,
-        child: Icon(
-          Icons.check_rounded,
-          size: iconSize,
-          color: colors.backgroundPrimary,
+        painter: MedalPainter(
+          shape: MedalShape.hexagon,
+          rimGradient: gradients.ramp,
         ),
+        icon: Icons.local_fire_department_rounded,
+        iconSize: size * _solidIconRatio,
+        iconColor: colors.backgroundPrimary,
       ),
-      StreakDayStatus.partial => _MarkerDot(
+      StreakDayStatus.partial => _MarkerMedal(
         size: size,
-        color: Colors.transparent,
-        borderColor: colors.primary,
-      ),
-      StreakDayStatus.missed => _MarkerDot(
-        size: size,
-        color: colors.destructive,
-        child: Icon(
-          Icons.close_rounded,
-          size: iconSize,
-          color: colors.textPrimary,
+        painter: MedalPainter(
+          shape: MedalShape.hexagon,
+          rimGradient: gradients.ramp,
+          face: colors.backgroundSecondary,
+          faceScale: _faceScale,
         ),
+        icon: Icons.local_fire_department_outlined,
+        iconSize: size * _facedIconRatio,
+        iconColor: colors.primary,
       ),
-      StreakDayStatus.upcoming => _MarkerDot(
+      StreakDayStatus.missed => _MarkerMedal(
         size: size,
-        color: colors.backgroundSurface,
+        painter: MedalPainter(
+          shape: MedalShape.hexagon,
+          rimColor: colors.destructive,
+          face: colors.backgroundSecondary,
+          faceScale: _faceScale,
+        ),
+        icon: Icons.close_rounded,
+        iconSize: size * _facedIconRatio,
+        iconColor: colors.destructiveBorder,
+      ),
+      StreakDayStatus.upcoming => _MarkerMedal(
+        size: size,
+        painter: MedalPainter(
+          shape: MedalShape.hexagon,
+          rimColor: colors.backgroundSurface,
+        ),
       ),
     };
   }
 }
 
-class _MarkerDot extends StatelessWidget {
-  const _MarkerDot({
+class _MarkerMedal extends StatelessWidget {
+  const _MarkerMedal({
     required this.size,
-    required this.color,
-    this.borderColor,
-    this.child,
+    required this.painter,
+    this.icon,
+    this.iconSize,
+    this.iconColor,
   });
 
-  static const double _borderWidth = 2;
-
   final double size;
-  final Color color;
-  final Color? borderColor;
-  final Widget? child;
+  final CustomPainter painter;
+  final IconData? icon;
+  final double? iconSize;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = this.borderColor;
+    final icon = this.icon;
 
-    return Container(
-      height: size,
-      width: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: borderColor == null
+    return SizedBox.square(
+      dimension: size,
+      child: CustomPaint(
+        painter: painter,
+        child: icon == null
             ? null
-            : Border.all(color: borderColor, width: _borderWidth),
+            : Center(
+                child: Icon(icon, size: iconSize, color: iconColor),
+              ),
       ),
-      child: child,
     );
   }
 }

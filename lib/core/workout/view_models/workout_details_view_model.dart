@@ -254,7 +254,11 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool get canUnlog => kDebugMode && _session != null;
+  bool _isUnlogging = false;
+
+  bool get isUnlogging => _isUnlogging;
+
+  bool get canUnlog => kDebugMode && _session != null && !_isUnlogging;
 
   String get unlogTitle => 'Unlog Workout?';
 
@@ -268,12 +272,15 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
 
   Future<bool> unlog() async {
     final session = _session;
-    if (session == null) return false;
+    if (session == null || _isUnlogging) return false;
+    _isUnlogging = true;
+    notifyListeners();
     try {
       await _subscription?.cancel();
       await _service.unlogSession(session);
       return true;
     } on WorkoutException catch (error) {
+      _isUnlogging = false;
       _onError(error);
       return false;
     }

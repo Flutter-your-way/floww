@@ -30,4 +30,6 @@ class AppOpacity {
   static const double heatmapLow = 0.28;
   static const double heatmapMedium = 0.52;
   static const double heatmapHigh = 0.76;
+  static const double dayFireGlowMin = 0.3;
+  static const double dayFireGlowMax = 0.65;
 }

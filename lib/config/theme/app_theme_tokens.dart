@@ -86,6 +86,80 @@ class _MacroGradients {
   );
 }
 
+class _BadgeGradients {
+  const _BadgeGradients._();
+
+  static const _begin = Alignment.topLeft;
+  static const _end = Alignment.bottomRight;
+  static const _stops = [0.0, 0.5, 1.0];
+
+  static const bronze = LinearGradient(
+    colors: [Color(0xFFF2B98A), Color(0xFFC07842), Color(0xFF7A3F1D)],
+    stops: _stops,
+    begin: _begin,
+    end: _end,
+  );
+
+  static const silver = LinearGradient(
+    colors: [Color(0xFFF8FAFC), Color(0xFFB9C2CC), Color(0xFF5E6873)],
+    stops: _stops,
+    begin: _begin,
+    end: _end,
+  );
+
+  static const gold = LinearGradient(
+    colors: [Color(0xFFFFF0A8), Color(0xFFF5B82E), Color(0xFFA16207)],
+    stops: _stops,
+    begin: _begin,
+    end: _end,
+  );
+
+  static const dayFire = LinearGradient(
+    colors: [Color(0xFFDC2626), Color(0xFFEF4444), Color(0xFFF97316)],
+    stops: [0.0, 0.4, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const dayFireMiddle = LinearGradient(
+    colors: [Color(0xFFF97316), Color(0xFFFB923C), Color(0xFFFACC15)],
+    stops: [0.0, 0.45, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const dayFireCore = LinearGradient(
+    colors: [Color(0xFFFDE047), Color(0xFFFEF08A)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const ember = LinearGradient(
+    colors: [Color(0xFFFFD27A), Color(0xFFF97316), Color(0xFFB91C1C)],
+    stops: _stops,
+    begin: _begin,
+    end: _end,
+  );
+
+  static const prism = LinearGradient(
+    colors: [Color(0xFFF0E4FF), Color(0xFFA78BFA), Color(0xFF5B21B6)],
+    stops: _stops,
+    begin: _begin,
+    end: _end,
+  );
+
+  static const locked = LinearGradient(
+    colors: [
+      _AppPalette.backgroundElevated,
+      _AppPalette.backgroundSurface,
+      _AppPalette.backgroundSecondary,
+    ],
+    stops: _stops,
+    begin: _begin,
+    end: _end,
+  );
+}
+
 class _BackgroundGradients {
   const _BackgroundGradients._();
 
@@ -144,6 +218,18 @@ class _OverlayGradients {
       _AppPalette.backgroundPrimary,
     ],
     stops: [0.0, 0.55, 0.85, 1.0],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const photoScrim = LinearGradient(
+    colors: [
+      Color(0x4D0A0A0A),
+      Color(0x330A0A0A),
+      Color(0xD90A0A0A),
+      Color(0xF50A0A0A),
+    ],
+    stops: [0.0, 0.35, 0.75, 1.0],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
@@ -615,6 +701,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     this.macroFats = _MacroGradients.fats,
     this.cameraScrim = _OverlayGradients.cameraScrim,
     this.mediaScrim = _OverlayGradients.mediaScrim,
+    this.photoScrim = _OverlayGradients.photoScrim,
     this.timerScrim = _OverlayGradients.timerScrim,
     this.cardSheen = _OverlayGradients.cardSheen,
     this.actionScrim = _OverlayGradients.actionScrim,
@@ -626,6 +713,15 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     this.glassIndicator = _OverlayGradients.glassIndicator,
     this.glassLens = _OverlayGradients.glassLens,
     this.waveShimmer = _OverlayGradients.waveShimmer,
+    this.badgeBronze = _BadgeGradients.bronze,
+    this.badgeSilver = _BadgeGradients.silver,
+    this.badgeGold = _BadgeGradients.gold,
+    this.badgeEmber = _BadgeGradients.ember,
+    this.badgePrism = _BadgeGradients.prism,
+    this.badgeLocked = _BadgeGradients.locked,
+    this.dayFire = _BadgeGradients.dayFire,
+    this.dayFireMiddle = _BadgeGradients.dayFireMiddle,
+    this.dayFireCore = _BadgeGradients.dayFireCore,
   });
 
   final Gradient primaryButton;
@@ -650,6 +746,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient macroFats;
   final Gradient cameraScrim;
   final Gradient mediaScrim;
+  final Gradient photoScrim;
   final Gradient timerScrim;
   final Gradient cardSheen;
   final Gradient actionScrim;
@@ -661,6 +758,15 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
   final Gradient glassIndicator;
   final Gradient glassLens;
   final Gradient waveShimmer;
+  final Gradient badgeBronze;
+  final Gradient badgeSilver;
+  final Gradient badgeGold;
+  final Gradient badgeEmber;
+  final Gradient badgePrism;
+  final Gradient badgeLocked;
+  final Gradient dayFire;
+  final Gradient dayFireMiddle;
+  final Gradient dayFireCore;
 
   List<Color> get progressColors => barFill.colors.reversed.toList();
 
@@ -959,6 +1065,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? macroFats,
     Gradient? cameraScrim,
     Gradient? mediaScrim,
+    Gradient? photoScrim,
     Gradient? timerScrim,
     Gradient? cardSheen,
     Gradient? actionScrim,
@@ -970,6 +1077,15 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
     Gradient? glassIndicator,
     Gradient? glassLens,
     Gradient? waveShimmer,
+    Gradient? badgeBronze,
+    Gradient? badgeSilver,
+    Gradient? badgeGold,
+    Gradient? badgeEmber,
+    Gradient? badgePrism,
+    Gradient? badgeLocked,
+    Gradient? dayFire,
+    Gradient? dayFireMiddle,
+    Gradient? dayFireCore,
   }) {
     return AppGradientTokens(
       primaryButton: primaryButton ?? this.primaryButton,
@@ -994,6 +1110,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       macroFats: macroFats ?? this.macroFats,
       cameraScrim: cameraScrim ?? this.cameraScrim,
       mediaScrim: mediaScrim ?? this.mediaScrim,
+      photoScrim: photoScrim ?? this.photoScrim,
       timerScrim: timerScrim ?? this.timerScrim,
       cardSheen: cardSheen ?? this.cardSheen,
       actionScrim: actionScrim ?? this.actionScrim,
@@ -1005,6 +1122,15 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       glassIndicator: glassIndicator ?? this.glassIndicator,
       glassLens: glassLens ?? this.glassLens,
       waveShimmer: waveShimmer ?? this.waveShimmer,
+      badgeBronze: badgeBronze ?? this.badgeBronze,
+      badgeSilver: badgeSilver ?? this.badgeSilver,
+      badgeGold: badgeGold ?? this.badgeGold,
+      badgeEmber: badgeEmber ?? this.badgeEmber,
+      badgePrism: badgePrism ?? this.badgePrism,
+      badgeLocked: badgeLocked ?? this.badgeLocked,
+      dayFire: dayFire ?? this.dayFire,
+      dayFireMiddle: dayFireMiddle ?? this.dayFireMiddle,
+      dayFireCore: dayFireCore ?? this.dayFireCore,
     );
   }
 
@@ -1038,6 +1164,7 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       macroFats: Gradient.lerp(macroFats, other.macroFats, t)!,
       cameraScrim: Gradient.lerp(cameraScrim, other.cameraScrim, t)!,
       mediaScrim: Gradient.lerp(mediaScrim, other.mediaScrim, t)!,
+      photoScrim: Gradient.lerp(photoScrim, other.photoScrim, t)!,
       timerScrim: Gradient.lerp(timerScrim, other.timerScrim, t)!,
       cardSheen: Gradient.lerp(cardSheen, other.cardSheen, t)!,
       actionScrim: Gradient.lerp(actionScrim, other.actionScrim, t)!,
@@ -1049,6 +1176,15 @@ class AppGradientTokens extends ThemeExtension<AppGradientTokens> {
       glassIndicator: Gradient.lerp(glassIndicator, other.glassIndicator, t)!,
       glassLens: Gradient.lerp(glassLens, other.glassLens, t)!,
       waveShimmer: Gradient.lerp(waveShimmer, other.waveShimmer, t)!,
+      badgeBronze: Gradient.lerp(badgeBronze, other.badgeBronze, t)!,
+      badgeSilver: Gradient.lerp(badgeSilver, other.badgeSilver, t)!,
+      badgeGold: Gradient.lerp(badgeGold, other.badgeGold, t)!,
+      badgeEmber: Gradient.lerp(badgeEmber, other.badgeEmber, t)!,
+      badgePrism: Gradient.lerp(badgePrism, other.badgePrism, t)!,
+      badgeLocked: Gradient.lerp(badgeLocked, other.badgeLocked, t)!,
+      dayFire: Gradient.lerp(dayFire, other.dayFire, t)!,
+      dayFireMiddle: Gradient.lerp(dayFireMiddle, other.dayFireMiddle, t)!,
+      dayFireCore: Gradient.lerp(dayFireCore, other.dayFireCore, t)!,
     );
   }
 }

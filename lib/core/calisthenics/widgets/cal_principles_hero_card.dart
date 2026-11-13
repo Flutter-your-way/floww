@@ -7,8 +7,8 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
-import 'package:floww/config/widgets/cards/app_icon_tile.dart';
 import 'package:floww/config/widgets/chips/app_status_chip.dart';
+import 'package:floww/config/widgets/painters/medal_painter.dart';
 
 class CalPrinciplesHeroCard extends StatelessWidget {
   const CalPrinciplesHeroCard({
@@ -37,14 +37,7 @@ class CalPrinciplesHeroCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Row(
           children: [
-            AppIconTile(
-              icon: Icons.health_and_safety_outlined,
-              size: AppSizes.s56,
-              iconSize: AppSizes.s28,
-              backgroundColor: colors.bgTinted,
-              borderColor: colors.borderAccent,
-              iconColor: colors.primary,
-            ),
+            const _PrinciplesEmblem(),
             SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
@@ -87,6 +80,39 @@ class CalPrinciplesHeroCard extends StatelessWidget {
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrinciplesEmblem extends StatelessWidget {
+  const _PrinciplesEmblem();
+
+  static const double _size = AppSizes.s56;
+  static const double _iconSize = AppSizes.s24;
+  static const double _faceScale = 0.78;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return SizedBox.square(
+      dimension: _size,
+      child: CustomPaint(
+        painter: MedalPainter(
+          shape: MedalShape.shield,
+          rimGradient: context.gradients.badgeEmber,
+          face: colors.backgroundSecondary,
+          faceScale: _faceScale,
+          glow: colors.primary,
+        ),
+        child: Center(
+          child: ShaderMask(
+            blendMode: BlendMode.srcIn,
+            shaderCallback: context.gradients.badgeEmber.createShader,
+            child: const Icon(Icons.check_rounded, size: _iconSize),
+          ),
         ),
       ),
     );

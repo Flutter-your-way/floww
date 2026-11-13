@@ -51,7 +51,8 @@ import 'package:floww/core/workout/widgets/workout_empty_state_card.dart';
 import 'package:floww/core/workout/widgets/workout_tab_bar.dart';
 import 'package:floww/core/workout/widgets/exercise_library_section.dart';
 import 'package:floww/core/workout/widgets/program_list_section.dart';
-import 'package:floww/core/workout/widgets/suggested_workout_card.dart';
+import 'package:floww/core/workout/widgets/program_explore_section.dart';
+import 'package:floww/core/workout/widgets/today_workout_hero_card.dart';
 import 'package:floww/core/workout/widgets/workout_history_section.dart';
 import 'package:floww/core/workout/widgets/workout_overview_section.dart';
 import 'package:floww/core/workout/widgets/workout_shift_card.dart';
@@ -121,12 +122,24 @@ class WorkoutView extends StatelessWidget {
     }
   }
 
-  void _removeCatchUp(
+  Future<void> _removeCatchUp(
+    BuildContext context,
     WorkoutViewModel viewModel,
     WorkoutAgendaEntryItem entry,
-  ) {
+  ) async {
     HapticManager.light();
-    viewModel.removeCatchUp(entry.id);
+    final choice = await AppConfirmSheet.show(
+      context,
+      title: viewModel.removeCatchUpTitle(entry),
+      message: viewModel.removeCatchUpMessage(entry),
+      confirmLabel: viewModel.removeCatchUpConfirmLabel,
+      alternateLabel: viewModel.removeCatchUpCancelLabel,
+      icon: Icons.event_busy_rounded,
+      isDestructive: true,
+    );
+    if (choice != AppConfirmChoice.confirm) return;
+    HapticManager.medium();
+    await viewModel.removeCatchUp(entry.id);
   }
 
   void _reviewPendingPlan(BuildContext context, WorkoutViewModel viewModel) {
@@ -401,6 +414,9 @@ class WorkoutView extends StatelessWidget {
           final course = viewModel.course;
           final history = viewModel.showHistory ? viewModel.history : null;
           final revealTrigger = viewModel.selectedDate;
+          final isProgramsUnlocked = context
+              .watch<PremiumAccessProvider>()
+              .canUse(PremiumCapability.multiModeWorkouts);
 
           return ImagePrecacher(
             urls: viewModel.planImageUrls,
@@ -574,6 +590,7 @@ class WorkoutView extends StatelessWidget {
                                                         ),
                                                     onRemove: (entry) =>
                                                         _removeCatchUp(
+                                                          context,
                                                           viewModel,
                                                           entry,
                                                         ),
@@ -605,6 +622,8 @@ class WorkoutView extends StatelessWidget {
                                           muscleMapOf: viewModel.muscleMapOf,
                                           revealTrigger: revealTrigger,
                                           showSummary: !viewModel.isReadOnly,
+                                          showInsights:
+                                              viewModel.showOverviewInsights,
                                           onViewAnatomy: () =>
                                               _openAnatomy(context, viewModel),
                                           onViewDetails:
@@ -691,10 +710,9 @@ class WorkoutView extends StatelessWidget {
                                         ),
                                         child: GuideTarget(
                                           id: GuideTargetId.workoutToday,
-                                          child: SuggestedWorkoutCard(
-                                            title: viewModel.suggestionTitle,
-                                            suggestion: suggestion,
-                                            onStartWorkout: () =>
+                                          child: TodayWorkoutHeroCard(
+                                            workout: suggestion,
+                                            onTap: () =>
                                                 _startWorkout(viewModel),
                                           ),
                                         ),
@@ -722,6 +740,7 @@ class WorkoutView extends StatelessWidget {
                               if (viewModel.showExercises) ...[
                                 ChangeProgramCard(
                                   icon: viewModel.discipline.icon,
+                                  isWave: viewModel.isCurrentProgramWave,
                                   programName: viewModel.currentProgramName,
                                   actionLabel: viewModel.changeProgramLabel,
                                   onTap: () => _openProgramSwitcher(viewModel),
@@ -763,7 +782,8 @@ class WorkoutView extends StatelessWidget {
                               ],
                               if (viewModel.showPrograms) ...[
                                 if (activeProgram != null &&
-                                    activeProgramId != null) ...[
+                                    activeProgramId != null &&
+                                    !viewModel.canReturnToExplore) ...[
                                   AppPopReveal(
                                     appearOnMount: true,
                                     child: ActiveProgramCard(
@@ -777,31 +797,51 @@ class WorkoutView extends StatelessWidget {
                                   ),
                                   SizedBox(height: AppSpacing.xl3),
                                 ],
-                                ProgramListSection(
-                                  programs: viewModel.programs,
-                                  goalFilters: viewModel.goalFilters,
-                                  levelFilters: viewModel.levelFilters,
-                                  countLabel: viewModel.programsCountLabel,
-                                  emptyMessage: viewModel.programsEmptyMessage,
-                                  onSelectGoal: viewModel.selectGoalFilter,
-                                  onSelectLevel: viewModel.selectLevelFilter,
-                                  onOpen: (program) => _openProgram(
-                                    context,
-                                    viewModel,
-                                    program.id,
+                                if (viewModel.showProgramExplore)
+                                  ProgramExploreSection(
+                                    goals: viewModel.programGoalCards(
+                                      isUnlocked: isProgramsUnlocked,
+                                    ),
+                                    levels: viewModel.programLevelCards,
+                                    collection: viewModel.programCollection,
+                                    onSelectGoal: viewModel.exploreGoal,
+                                    onSelectLevel: viewModel.exploreLevel,
+                                    onOpenCollection: () {
+                                      HapticManager.light();
+                                      viewModel.showMyPrograms();
+                                    },
+                                    onCreate: viewModel.canCreateProgram
+                                        ? () => _openEditor(
+                                            viewModel,
+                                            const ProgramEditorArgs(),
+                                          )
+                                        : null,
+                                  )
+                                else
+                                  ProgramListSection(
+                                    title: viewModel.programListTitle,
+                                    programs: viewModel.programs,
+                                    countLabel: viewModel.programsCountLabel,
+                                    emptyMessage:
+                                        viewModel.programsEmptyMessage,
+                                    onBack: viewModel.canReturnToExplore
+                                        ? viewModel.backToExplore
+                                        : null,
+                                    onOpen: (program) => _openProgram(
+                                      context,
+                                      viewModel,
+                                      program.id,
+                                    ),
+                                    onCreate:
+                                        viewModel.canCreateProgram &&
+                                            !viewModel.canReturnToExplore
+                                        ? () => _openEditor(
+                                            viewModel,
+                                            const ProgramEditorArgs(),
+                                          )
+                                        : null,
+                                    isPremiumUnlocked: isProgramsUnlocked,
                                   ),
-                                  onCreate: viewModel.canCreateProgram
-                                      ? () => _openEditor(
-                                          viewModel,
-                                          const ProgramEditorArgs(),
-                                        )
-                                      : null,
-                                  isPremiumUnlocked: context
-                                      .watch<PremiumAccessProvider>()
-                                      .canUse(
-                                        PremiumCapability.multiModeWorkouts,
-                                      ),
-                                ),
                               ],
                             ],
                           ),
@@ -826,7 +866,6 @@ class WorkoutView extends StatelessWidget {
                             viewModel.primaryAction ==
                                 WorkoutPrimaryAction.start)
                           Expanded(
-                            flex: 5,
                             child: PillButton(
                               variant: viewModel.isLogWorkoutPrimary
                                   ? PillButtonVariant.accent
@@ -863,7 +902,6 @@ class WorkoutView extends StatelessWidget {
                         if (viewModel.primaryAction ==
                             WorkoutPrimaryAction.start)
                           Expanded(
-                            flex: 6,
                             child: GuideTarget(
                               id: GuideTargetId.workoutStart,
                               radius: AppRadius.full,

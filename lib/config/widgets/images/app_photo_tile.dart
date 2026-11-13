@@ -13,6 +13,8 @@ class AppPhotoTile extends StatelessWidget {
     this.size = AppSizes.s48,
     this.radius = AppRadius.md,
     this.borderColor,
+    this.isLoading = false,
+    this.showLoader = false,
   });
 
   final String? url;
@@ -20,6 +22,8 @@ class AppPhotoTile extends StatelessWidget {
   final double size;
   final double radius;
   final Color? borderColor;
+  final bool isLoading;
+  final bool showLoader;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +48,8 @@ class AppPhotoTile extends StatelessWidget {
         url: url,
         fallbackIcon: fallbackIcon,
         fallbackIconSize: size / 2,
+        isLoading: isLoading,
+        showLoader: showLoader,
       ),
     );
   }

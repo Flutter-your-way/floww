@@ -1,18 +1,25 @@
+import 'package:flutter/widgets.dart';
+
 import 'package:floww/core/achievements/models/achievement_category.dart';
+import 'package:floww/core/achievements/models/badge_rarity.dart';
 
 class Achievement {
   const Achievement({
     required this.id,
-    required this.emoji,
+    required this.icon,
+    required this.rarity,
     required this.title,
     required this.description,
     required this.xp,
     required this.category,
     required this.isUnlocked,
+    this.badgeLabel,
   });
 
   final String id;
-  final String emoji;
+  final IconData icon;
+  final BadgeRarity rarity;
+  final String? badgeLabel;
   final String title;
   final String description;
   final int xp;
@@ -23,7 +30,9 @@ class Achievement {
 
   Achievement unlocked(bool value) => Achievement(
     id: id,
-    emoji: emoji,
+    icon: icon,
+    rarity: rarity,
+    badgeLabel: badgeLabel,
     title: title,
     description: description,
     xp: xp,

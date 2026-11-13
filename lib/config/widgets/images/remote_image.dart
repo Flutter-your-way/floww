@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
+import 'package:floww/config/widgets/placeholders/app_spinner.dart';
 
 class RemoteImage extends StatelessWidget {
   const RemoteImage({
@@ -11,12 +12,16 @@ class RemoteImage extends StatelessWidget {
     required this.fallbackIcon,
     required this.fallbackIconSize,
     this.fit = BoxFit.cover,
+    this.isLoading = false,
+    this.showLoader = false,
   });
 
   final String? url;
   final IconData fallbackIcon;
   final double fallbackIconSize;
   final BoxFit fit;
+  final bool isLoading;
+  final bool showLoader;
 
   static const double _thumbnailExtent = AppSizes.s96;
   static const double _thumbnailHeadroom = 2;
@@ -58,6 +63,8 @@ class RemoteImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = this.url;
 
+    if (isLoading) return const _Loader();
+
     if (url == null) {
       return _Fallback(icon: fallbackIcon, size: fallbackIconSize);
     }
@@ -73,9 +80,25 @@ class RemoteImage extends StatelessWidget {
         gaplessPlayback: true,
         loadingBuilder: (context, child, progress) => progress == null
             ? child
+            : showLoader
+            ? const _Loader()
             : _Fallback(icon: fallbackIcon, size: fallbackIconSize),
         errorBuilder: (context, error, stackTrace) =>
             _Fallback(icon: fallbackIcon, size: fallbackIconSize),
+      ),
+    );
+  }
+}
+
+class _Loader extends StatelessWidget {
+  const _Loader();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: context.colors.backgroundElevated,
+      child: const Center(
+        child: AppSpinner(size: AppSizes.s18, strokeWidth: AppSizes.s2),
       ),
     );
   }

@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_images.dart';
 
+import 'package:floww/config/entities/exercise_video_entity.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
+import 'package:floww/config/services/exercise_video_service.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
@@ -64,8 +66,10 @@ class WorkoutViewModel extends ChangeNotifier {
     CalisthenicsPrinciplesService? principlesService,
     MuscleMapService? muscleMapService,
     WavePlanApprovalService? approvalService,
+    ExerciseVideoService? videoService,
   }) : _selectedDate = AppDateUtils.dateOnly(DateTime.now()),
        _approvalService = approvalService ?? WavePlanApprovalService(),
+       _videoService = videoService ?? ExerciseVideoService(),
        _muscleMapService = muscleMapService ?? MuscleMapService(),
        _answersService = answersService ?? OnboardingAnswersService(),
        _principlesService =
@@ -118,6 +122,7 @@ class WorkoutViewModel extends ChangeNotifier {
   static const int _agendaMinEntries = 2;
   static const String _allFilter = 'all';
   static const String _mineFilter = 'mine';
+  static const int _calThumbnailBatch = 4;
 
   final WorkoutSessionService _sessionService;
   final WorkoutPlanService _planService;
@@ -128,6 +133,10 @@ class WorkoutViewModel extends ChangeNotifier {
   final OnboardingAnswersService _answersService;
   final CalisthenicsPrinciplesService _principlesService;
   final MuscleMapService _muscleMapService;
+  final ExerciseVideoService _videoService;
+  final Map<String, String> _calThumbnails = {};
+  final Set<String> _calThumbnailsLoading = {};
+  bool _calThumbnailsRequested = false;
   bool? _calPrinciplesRead;
 
   StreamSubscription<Map<String, dynamic>>? _answersSubscription;
@@ -161,6 +170,7 @@ class WorkoutViewModel extends ChangeNotifier {
   int _shiftRequest = 0;
   String _goalFilter = _allFilter;
   ProgramLevel? _levelFilter;
+  bool _isBrowsingPrograms = true;
   List<WorkoutPlanEntity> _historyPlans = const [];
   List<Object?>? _historyCacheInputs;
   WorkoutHistoryOverviewItem? _historyCache;
@@ -199,6 +209,7 @@ class WorkoutViewModel extends ChangeNotifier {
 
   WorkoutCourseItem? get course {
     if (!isOverviewTab || dayStatus == WorkoutDayStatus.past) return null;
+    if (showSuggestion) return null;
     final active = _state.activeProgram;
     if (active == null) return null;
     final level = _courseLevel;
@@ -232,8 +243,43 @@ class WorkoutViewModel extends ChangeNotifier {
 
   String get calLevelLabel => calLevel.fullTitle;
 
-  List<CalLadderItem> get calLadders =>
-      CalisthenicsLibraryPresenter.laddersOf(calLevel);
+  List<CalLadderItem> get calLadders {
+    unawaited(_loadCalThumbnails());
+    return CalisthenicsLibraryPresenter.laddersOf(
+      calLevel,
+      thumbnails: _calThumbnails,
+      loadingIds: _calThumbnailsLoading,
+    );
+  }
+
+  Future<void> _loadCalThumbnails() async {
+    if (_calThumbnailsRequested) return;
+    _calThumbnailsRequested = true;
+    final pending = CalisthenicsLibraryPresenter.ladderMoveIds
+        .toSet()
+        .toList();
+    _calThumbnailsLoading.addAll(pending);
+    for (var i = 0; i < pending.length; i += _calThumbnailBatch) {
+      final batch = pending.skip(i).take(_calThumbnailBatch);
+      final results = await Future.wait([
+        for (final id in batch) _calThumbnailOf(id),
+      ]);
+      if (_disposed) return;
+      for (final (id, url) in results) {
+        _calThumbnailsLoading.remove(id);
+        if (url != null) _calThumbnails[id] = url;
+      }
+      notifyListeners();
+    }
+  }
+
+  Future<(String, String?)> _calThumbnailOf(String moveId) async {
+    final video = await _videoService.find(
+      kind: ExerciseVideoKind.gym,
+      queries: CalisthenicsLibraryPresenter.searchQueriesOf(moveId),
+    );
+    return (moveId, video?.thumbnailUrl);
+  }
 
   List<CalRoutineItem> get calWarmUp => CalisthenicsLibraryPresenter.warmUp;
 
@@ -268,6 +314,11 @@ class WorkoutViewModel extends ChangeNotifier {
 
   String get currentProgramName =>
       _state.activeProgram?.name ?? 'No program yet';
+
+  bool get isCurrentProgramWave {
+    final active = _state.activeProgram;
+    return active != null && active.id == _state.generatedProgramId;
+  }
 
   String get changeProgramLabel =>
       _state.activeProgram == null ? 'Choose program' : 'Change program';
@@ -345,6 +396,7 @@ class WorkoutViewModel extends ChangeNotifier {
         _discipline = discipline;
         _goalFilter = _allFilter;
         _levelFilter = null;
+        _isBrowsingPrograms = true;
         _shiftOffer = null;
         unawaited(_refreshShiftOffer());
       }
@@ -771,8 +823,7 @@ class WorkoutViewModel extends ChangeNotifier {
       id: workout.id,
       name: session?.name ?? plan?.name ?? '',
       tagLabel: workout.isCatchUp
-          ? 'Catch-up · ${AppDateUtils.shortWeekday(workout.planDate)} '
-                '${workout.planDate.day}'
+          ? 'Catch-up · ${AppDateUtils.relativeDay(workout.planDate)}'
           : plan == null
           ? 'Logged'
           : 'Scheduled',
@@ -858,6 +909,22 @@ class WorkoutViewModel extends ChangeNotifier {
     _focusedSessionId = session.id;
     notifyListeners();
   }
+
+  String removeCatchUpTitle(WorkoutAgendaEntryItem entry) =>
+      'Skip ${entry.name}?';
+
+  String removeCatchUpMessage(WorkoutAgendaEntryItem entry) {
+    final planDate = _workoutById(entry.id)?.planDate;
+    final day = planDate == null
+        ? 'its original day'
+        : AppDateUtils.relativeDay(planDate).toLowerCase();
+    return 'This takes it off today\'s plan. It stays marked as missed for '
+        '$day, and you can add it back from the missed workout card.';
+  }
+
+  String get removeCatchUpConfirmLabel => 'Remove';
+
+  String get removeCatchUpCancelLabel => 'Keep it';
 
   Future<void> removeCatchUp(String id) async {
     final workout = _workoutById(id);
@@ -1173,6 +1240,8 @@ class WorkoutViewModel extends ChangeNotifier {
 
   bool get showOverview =>
       _selectedTab == WorkoutTab.overview && overview != null;
+
+  bool get showOverviewInsights => _selectedSession?.isCompleted ?? false;
 
   bool get isHistoryLoading =>
       _selectedTab == WorkoutTab.history && !_historyLoaded && !_isLoading;
@@ -2060,30 +2129,25 @@ class WorkoutViewModel extends ChangeNotifier {
     final active = _state.activeProgram;
     final kind = WorkoutDiscipline.ofPlan(plan);
     return WorkoutSuggestionItem(
+      eyebrow: suggestionTitle.toUpperCase(),
       title: plan.name,
-      durationLabel: '${plan.durationMinutes}m',
-      intensityLabel: plan.focus,
-      reasons: [
-        if (next.isCatchUp)
-          'Missed on ${AppDateUtils.weekdayName(plan.date)}, '
-              '${AppDateUtils.dayMonth(plan.date)}',
-        if (kind != WorkoutDiscipline.gym && plan.programLabel.isNotEmpty)
-          plan.programLabel
-        else if (active != null)
-          _programProgressLabel(active, plan.date),
-        kind == WorkoutDiscipline.yoga
-            ? '${kind.countLabel(plan.exercises.length)} · '
-                  '${plan.durationMinutes} min class'
-            : '${kind.countLabel(plan.exercises.length)} · '
-                  '${plan.totalSets} sets',
-        if (plan.goal.isNotEmpty) plan.goal,
+      metaLabels: [
+        '${plan.durationMinutes} min',
+        kind.countLabel(plan.exercises.length),
+        if (plan.focus.isNotEmpty) plan.focus,
       ],
+      contextLabel: next.isCatchUp
+          ? 'Missed on ${AppDateUtils.weekdayName(plan.date)}, '
+                '${AppDateUtils.dayMonth(plan.date)}'
+          : kind != WorkoutDiscipline.gym && plan.programLabel.isNotEmpty
+          ? plan.programLabel
+          : active == null
+          ? null
+          : _programProgressLabel(active, plan.date),
       imageUrl: _suggestionImageOf(plan),
       actionLabel: dayStatus == WorkoutDayStatus.future
           ? 'PREVIEW ${kind.sessionNoun.toUpperCase()}'
-          : next.isCatchUp
-          ? 'START CATCH-UP'
-          : kind.startLabel.toUpperCase(),
+          : null,
     );
   }
 
@@ -2132,57 +2196,101 @@ class WorkoutViewModel extends ChangeNotifier {
 
   String? get activeProgramId => _state.activeProgram?.id;
 
-  List<ProgramFilterItem<String>> get goalFilters => [
-    ProgramFilterItem(
-      value: _allFilter,
-      label: 'All',
-      isSelected: _goalFilter == _allFilter,
-    ),
-    if (_programs.any((program) => program.isCustom))
-      ProgramFilterItem(
-        value: _mineFilter,
-        label: 'My programs',
-        isSelected: _goalFilter == _mineFilter,
-      ),
+  static const int _exploreMinGoals = 2;
+
+  static const List<ProgramLevel> _exploreLevels = [
+    ProgramLevel.allLevels,
+    ProgramLevel.beginner,
+    ProgramLevel.intermediate,
+    ProgramLevel.advanced,
+  ];
+
+  bool get _hasCustomPrograms => _programs.any((program) => program.isCustom);
+
+  List<ProgramGoalCardItem> programGoalCards({required bool isUnlocked}) => [
     for (final goal in ProgramGoal.values)
-      if (_programs.any((program) => program.goal == goal))
-        ProgramFilterItem(
-          value: goal.id,
-          label: goal.label,
-          isSelected: _goalFilter == goal.id,
+      if (_programs.any((program) => program.goal == goal && !program.isCustom))
+        ProgramGoalCardItem(
+          id: goal.id,
+          title: goal.headline,
+          subtitle: goal.tagline,
+          imageUrl: ProgramArtwork.ofGoal(goal),
+          isLocked: goal.isPremium && !isUnlocked,
         ),
   ];
 
-  List<ProgramFilterItem<ProgramLevel?>> get levelFilters => [
-    ProgramFilterItem(
-      value: null,
-      label: 'Any level',
-      isSelected: _levelFilter == null,
-    ),
-    for (final level in ProgramLevel.values)
-      if (level != ProgramLevel.allLevels)
-        ProgramFilterItem(
-          value: level,
-          label: level.label,
-          isSelected: _levelFilter == level,
+  List<ProgramLevelCardItem> get programLevelCards => [
+    for (final level in _exploreLevels)
+      if (level == ProgramLevel.allLevels ||
+          _programs.any(
+            (program) => ProgramLevel.fromLabel(program.level) == level,
+          ))
+        ProgramLevelCardItem(
+          level: level,
+          title: level.label,
+          imageUrl: ProgramArtwork.ofLevel(level),
         ),
   ];
 
-  void selectGoalFilter(String value) {
-    if (value == _goalFilter) return;
-    _goalFilter = value;
+  ProgramCollectionItem? get programCollection {
+    if (!_hasCustomPrograms) return null;
+    final count = _programs.where((program) => program.isCustom).length;
+    return ProgramCollectionItem(
+      title: 'My programs',
+      subtitle:
+          '$count ${count == 1 ? 'program' : 'programs'} you built, ready to '
+          'run or tweak.',
+    );
+  }
+
+  bool get _canExplorePrograms {
+    final goals = <ProgramGoal>{
+      for (final program in _programs)
+        if (!program.isCustom) program.goal,
+    };
+    return goals.length >= _exploreMinGoals;
+  }
+
+  bool get showProgramExplore => _isBrowsingPrograms && _canExplorePrograms;
+
+  bool get canReturnToExplore => !_isBrowsingPrograms && _canExplorePrograms;
+
+  String get programListTitle {
+    if (_isBrowsingPrograms) return 'All programs';
+    if (_goalFilter == _mineFilter) return 'My programs';
+    if (_goalFilter != _allFilter) return ProgramGoal.fromId(_goalFilter).label;
+    final level = _levelFilter;
+    if (level == null || level == ProgramLevel.allLevels) {
+      return 'All programs';
+    }
+    return '${level.label} programs';
+  }
+
+  void exploreGoal(String goalId) {
+    _goalFilter = goalId;
+    _levelFilter = null;
+    _isBrowsingPrograms = false;
     notifyListeners();
   }
 
-  void selectLevelFilter(ProgramLevel? value) {
-    if (value == _levelFilter) return;
-    _levelFilter = value;
+  void exploreLevel(ProgramLevel level) {
+    _goalFilter = _allFilter;
+    _levelFilter = level == ProgramLevel.allLevels ? null : level;
+    _isBrowsingPrograms = false;
+    notifyListeners();
+  }
+
+  void backToExplore() {
+    _goalFilter = _allFilter;
+    _levelFilter = null;
+    _isBrowsingPrograms = true;
     notifyListeners();
   }
 
   void showMyPrograms() {
     _goalFilter = _mineFilter;
     _levelFilter = null;
+    _isBrowsingPrograms = false;
     notifyListeners();
   }
 
@@ -2381,6 +2489,9 @@ class WorkoutViewModel extends ChangeNotifier {
         from: _today,
         saveActive: true,
       );
+      _goalFilter = _allFilter;
+      _levelFilter = null;
+      _isBrowsingPrograms = true;
       _setDate(_today);
       selectTab(WorkoutTab.overview);
     } on WorkoutException catch (error) {

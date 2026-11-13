@@ -8,6 +8,7 @@ import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
 import 'package:floww/config/services/exercise_video_service.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_library_presenter.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
 import 'package:floww/core/workout/models/exercise.dart';
 import 'package:floww/core/workout/models/exercise_view_data.dart';
@@ -52,6 +53,7 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
   MuscleGroup? _expandedGroup = MuscleGroup.chest;
   String? _detailId;
   ExerciseVideo? _detailVideo;
+  bool _isDetailVideoLoading = false;
   String? _expandedSectionId = ExerciseInsights.personalBestId;
   bool _isLoading = true;
   bool _disposed = false;
@@ -304,6 +306,7 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
   void openDetail(String id) {
     _detailId = id;
     _detailVideo = null;
+    _isDetailVideoLoading = true;
     _expandedSectionId = ExerciseInsights.personalBestId;
     notifyListeners();
     _loadDetailVideo(id);
@@ -311,13 +314,27 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
 
   Future<void> _loadDetailVideo(String id) async {
     final exercise = _exerciseOf(id);
-    if (exercise == null || exercise.isCustom) return;
+    if (exercise == null || exercise.isCustom) {
+      debugPrint('ExerciseLibrary detail video skipped: $id custom');
+      _isDetailVideoLoading = false;
+      notifyListeners();
+      return;
+    }
     final video = await _videoService.find(
       kind: ExerciseVideoKind.gym,
-      queries: [exercise.name],
+      queries: CalisthenicsLibraryPresenter.searchQueriesOf(
+        exercise.id,
+        name: exercise.name,
+      ),
     );
-    if (_detailId != id || video == null) return;
+    debugPrint(
+      'ExerciseLibrary detail video: ${exercise.id} "${exercise.name}" '
+      'custom=${exercise.isCustom} video=${video?.videoUrl != null} '
+      'thumb=${video?.thumbnailUrl != null} expired=${video?.isExpired}',
+    );
+    if (_detailId != id) return;
     _detailVideo = video;
+    _isDetailVideoLoading = false;
     notifyListeners();
   }
 
@@ -353,6 +370,7 @@ class ExerciseLibraryViewModel extends ChangeNotifier {
       subtitle: '${exercise.group.label} · ${exercise.equipment.label}',
       imageUrl: _imageOf(exercise),
       video: _detailVideo,
+      isVideoLoading: _isDetailVideoLoading,
       stats: _statsOf(exercise, best),
       targetLabel: _targetLabelOf(exercise),
       muscles: _musclesOf(exercise),

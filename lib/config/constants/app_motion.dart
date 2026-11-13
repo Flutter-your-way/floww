@@ -266,6 +266,9 @@ class AppMotion {
   static const double workoutFinishLoadingFill = 0.86;
   static const double workoutFinishRowRise = 0.4;
 
+  static const Duration dayFireGlow = Duration(milliseconds: 1800);
+  static const Curve dayFireGlowCurve = Curves.easeInOutSine;
+
   static const Duration goalChartReveal = Duration(milliseconds: 1100);
   static const Duration goalChartMorph = Duration(milliseconds: 420);
   static const Duration goalDotPulse = Duration(milliseconds: 1600);

@@ -190,9 +190,11 @@ class AchievementsService {
       if (entry?.hasActivity ?? false) monthCompleted++;
     }
 
+    final bestDays = longestStreakOf(flow);
+
     return StreakSummary(
       currentDays: currentStreakOf(flow, today),
-      bestDays: longestStreakOf(flow),
+      bestDays: bestDays,
       monthCompletedDays: monthCompleted,
       monthTotalDays: today.day - trackedStart.day + 1,
       days: [
@@ -204,7 +206,10 @@ class AchievementsService {
             joined,
           ),
       ],
-      milestones: AchievementsData.milestones,
+      milestones: [
+        for (final milestone in AchievementsData.milestones)
+          milestone.reached(bestDays),
+      ],
     );
   }
 

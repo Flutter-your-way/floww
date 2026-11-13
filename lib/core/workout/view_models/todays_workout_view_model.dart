@@ -17,6 +17,7 @@ import 'package:floww/core/settings/services/onboarding_answers_service.dart';
 import 'package:floww/core/workout/services/workout_catalog_data.dart';
 import 'package:floww/core/workout/models/active_workout_args.dart';
 import 'package:floww/core/workout/models/active_workout_view_data.dart';
+import 'package:floww/core/workout/models/program_artwork.dart';
 import 'package:floww/core/workout/models/todays_workout_args.dart';
 import 'package:floww/core/workout/models/workout_shift_offer.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
@@ -433,6 +434,7 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
       },
       name: plan.name,
       icon: _workoutIcon,
+      imageUrl: ProgramArtwork.ofPlan(plan),
       programLabel: isCatchUp
           ? 'Missed ${AppDateUtils.weekdayName(plan.date)}, '
                 '${AppDateUtils.dayMonth(plan.date)} · Catch-up'

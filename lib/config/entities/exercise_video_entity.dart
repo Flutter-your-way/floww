@@ -36,4 +36,11 @@ class ExerciseVideo {
   final DateTime expiresAt;
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);
+
+  Map<String, dynamic> toJson() => {
+    'videoUrl': videoUrl,
+    'thumbnailUrl': thumbnailUrl,
+    'isPortrait': isPortrait,
+    'expiresAt': expiresAt.toIso8601String(),
+  };
 }

@@ -63,6 +63,8 @@ class CalLadderCard extends StatelessWidget {
                     size: _imageSize,
                     radius: AppRadius.sm,
                     borderColor: step.isYourLevel ? colors.primary : null,
+                    isLoading: step.isImageLoading,
+                    showLoader: true,
                   ),
                   SizedBox(width: AppSpacing.lg),
                   Expanded(

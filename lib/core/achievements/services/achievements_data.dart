@@ -1,5 +1,9 @@
+import 'package:flutter/material.dart';
+
 import 'package:floww/core/achievements/models/achievement.dart';
 import 'package:floww/core/achievements/models/achievement_category.dart';
+import 'package:floww/core/achievements/models/badge_rarity.dart';
+import 'package:floww/core/achievements/models/streak_badge_tier.dart';
 import 'package:floww/core/achievements/models/streak_milestone.dart';
 
 class AchievementsData {
@@ -8,7 +12,9 @@ class AchievementsData {
   static const List<Achievement> achievements = [
     Achievement(
       id: 'first_flame',
-      emoji: '🔥',
+      icon: Icons.local_fire_department_rounded,
+      rarity: BadgeRarity.bronze,
+      badgeLabel: '3',
       title: 'First Flame',
       description: 'Complete a 3-day streak',
       xp: 50,
@@ -17,7 +23,9 @@ class AchievementsData {
     ),
     Achievement(
       id: 'week_warrior',
-      emoji: '⚡',
+      icon: Icons.local_fire_department_rounded,
+      rarity: BadgeRarity.silver,
+      badgeLabel: '7',
       title: 'Week Warrior',
       description: '7-day streak',
       xp: 150,
@@ -26,7 +34,9 @@ class AchievementsData {
     ),
     Achievement(
       id: 'fortnight_force',
-      emoji: '🏆',
+      icon: Icons.local_fire_department_rounded,
+      rarity: BadgeRarity.gold,
+      badgeLabel: '14',
       title: 'Fortnight Force',
       description: '14-day streak',
       xp: 350,
@@ -35,7 +45,9 @@ class AchievementsData {
     ),
     Achievement(
       id: 'monthly_master',
-      emoji: '🌟',
+      icon: Icons.local_fire_department_rounded,
+      rarity: BadgeRarity.ember,
+      badgeLabel: '30',
       title: 'Monthly Master',
       description: '30-day streak',
       xp: 1000,
@@ -44,7 +56,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'first_sweat',
-      emoji: '💪',
+      icon: Icons.fitness_center_rounded,
+      rarity: BadgeRarity.bronze,
       title: 'First Sweat',
       description: 'Complete your first workout',
       xp: 25,
@@ -53,7 +66,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'consistent',
-      emoji: '🎯',
+      icon: Icons.track_changes_rounded,
+      rarity: BadgeRarity.gold,
       title: 'Consistent',
       description: 'Complete 10 workouts',
       xp: 200,
@@ -62,7 +76,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'iron_will',
-      emoji: '🏋️',
+      icon: Icons.sports_martial_arts_rounded,
+      rarity: BadgeRarity.ember,
       title: 'Iron Will',
       description: 'Complete 50 workouts',
       xp: 500,
@@ -71,7 +86,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'century_lifter',
-      emoji: '🥇',
+      icon: Icons.workspace_premium_rounded,
+      rarity: BadgeRarity.prism,
       title: 'Century Lifter',
       description: 'Complete 100 workouts',
       xp: 1200,
@@ -80,7 +96,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'habit_starter',
-      emoji: '🌱',
+      icon: Icons.eco_rounded,
+      rarity: BadgeRarity.bronze,
       title: 'Habit Starter',
       description: 'Create your first habit',
       xp: 50,
@@ -89,7 +106,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'daily_driver',
-      emoji: '📅',
+      icon: Icons.event_available_rounded,
+      rarity: BadgeRarity.silver,
       title: 'Daily Driver',
       description: 'Log habits 7 days in a row',
       xp: 100,
@@ -98,7 +116,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'habit_stack',
-      emoji: '🧱',
+      icon: Icons.layers_rounded,
+      rarity: BadgeRarity.silver,
       title: 'Habit Stack',
       description: 'Track 5 habits in one day',
       xp: 150,
@@ -107,7 +126,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'routine_master',
-      emoji: '⚙️',
+      icon: Icons.all_inclusive_rounded,
+      rarity: BadgeRarity.ember,
       title: 'Routine Master',
       description: 'Complete 100 habit logs',
       xp: 600,
@@ -116,7 +136,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'personal_best',
-      emoji: '📈',
+      icon: Icons.trending_up_rounded,
+      rarity: BadgeRarity.silver,
       title: 'Personal Best',
       description: 'Set your first personal record',
       xp: 150,
@@ -125,7 +146,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'volume_up',
-      emoji: '🛞',
+      icon: Icons.speed_rounded,
+      rarity: BadgeRarity.gold,
       title: 'Volume Up',
       description: 'Lift 10,000 kg in a week',
       xp: 250,
@@ -134,7 +156,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'peak_flow',
-      emoji: '🌊',
+      icon: Icons.waves_rounded,
+      rarity: BadgeRarity.gold,
       title: 'Peak FLOWW',
       description: 'Reach a 100 FLOWW Score',
       xp: 300,
@@ -143,7 +166,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'recovery_pro',
-      emoji: '🧘',
+      icon: Icons.self_improvement_rounded,
+      rarity: BadgeRarity.gold,
       title: 'Recovery Pro',
       description: 'Reach full recovery on every muscle',
       xp: 200,
@@ -152,7 +176,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'clean_plate',
-      emoji: '🥗',
+      icon: Icons.restaurant_rounded,
+      rarity: BadgeRarity.bronze,
       title: 'Clean Plate',
       description: 'Log your first meal',
       xp: 50,
@@ -161,7 +186,8 @@ class AchievementsData {
     ),
     Achievement(
       id: 'hydrated',
-      emoji: '💧',
+      icon: Icons.water_drop_rounded,
+      rarity: BadgeRarity.silver,
       title: 'Hydrated',
       description: 'Hit your water goal 7 days',
       xp: 125,
@@ -172,22 +198,22 @@ class AchievementsData {
 
   static const List<StreakMilestone> milestones = [
     StreakMilestone(
-      emoji: '⚡',
+      tier: StreakBadgeTier.week,
       title: '1 Week Warrior',
       description: '7-day streak',
     ),
     StreakMilestone(
-      emoji: '🏆',
+      tier: StreakBadgeTier.fortnight,
       title: '2 Week Champion',
       description: '14-day streak',
     ),
     StreakMilestone(
-      emoji: '🔥',
+      tier: StreakBadgeTier.month,
       title: '30-Day Legend',
       description: '30-day streak',
     ),
     StreakMilestone(
-      emoji: '🌟',
+      tier: StreakBadgeTier.century,
       title: 'Century Club',
       description: '100-day streak',
     ),

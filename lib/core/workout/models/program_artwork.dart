@@ -31,6 +31,19 @@ class ProgramArtwork {
     ProgramGoal.mobility: AppImages.programMobilityPhoto,
   };
 
+  static const Map<ProgramLevel, String> _byLevel = {
+    ProgramLevel.allLevels: AppImages.programConditioningPhoto,
+    ProgramLevel.beginner: AppImages.programFullBodyPhoto,
+    ProgramLevel.intermediate: AppImages.programSplitPhoto,
+    ProgramLevel.advanced: AppImages.programLegsPhoto,
+  };
+
+  static String ofGoal(ProgramGoal goal) =>
+      _byGoal[goal] ?? AppImages.programStrengthPhoto;
+
+  static String ofLevel(ProgramLevel level) =>
+      _byLevel[level] ?? AppImages.programFullBodyPhoto;
+
   static String of(WorkoutProgramEntity program) =>
       _byProgram[program.id] ??
       _byProgram[program.basedOn] ??

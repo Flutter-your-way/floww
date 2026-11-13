@@ -8,6 +8,7 @@ import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/core/achievements/models/achievement.dart';
+import 'package:floww/core/achievements/widgets/achievement_badge.dart';
 
 class AchievementCard extends StatelessWidget {
   const AchievementCard({super.key, required this.achievement});
@@ -33,8 +34,14 @@ class AchievementCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _AchievementEmoji(
-                  emoji: isUnlocked ? achievement.emoji : _lockedEmoji,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AchievementBadge(
+                    rarity: achievement.rarity,
+                    isEarned: isUnlocked,
+                    icon: achievement.icon,
+                    label: achievement.badgeLabel,
+                  ),
                 ),
               ),
               if (isUnlocked) const _UnlockedCheck(),
@@ -61,31 +68,6 @@ class AchievementCard extends StatelessWidget {
           SizedBox(height: AppSpacing.lg),
           _XpPill(label: achievement.xpLabel, isUnlocked: isUnlocked),
         ],
-      ),
-    );
-  }
-
-  static const String _lockedEmoji = '🔒';
-}
-
-class _AchievementEmoji extends StatelessWidget {
-  const _AchievementEmoji({required this.emoji});
-
-  final String emoji;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        height: AppSizes.s52,
-        width: AppSizes.s52,
-        alignment: Alignment.center,
-        decoration: AppShapes.decoration(
-          color: context.colors.backgroundSurface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        child: Text(emoji, style: AppTypography.heading3Bold),
       ),
     );
   }
