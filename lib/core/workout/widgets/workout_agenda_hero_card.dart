@@ -18,8 +18,10 @@ class WorkoutAgendaHeroCard extends StatelessWidget {
     required this.entry,
     this.onAction,
     this.onRemove,
+    this.fillHeight = false,
   });
 
+  final bool fillHeight;
   final WorkoutAgendaEntryItem entry;
   final VoidCallback? onAction;
   final VoidCallback? onRemove;
@@ -29,6 +31,28 @@ class WorkoutAgendaHeroCard extends StatelessWidget {
     final colors = context.colors;
     final borderRadius = BorderRadius.circular(AppRadius.xl);
     final canRemove = entry.canRemove && onRemove != null;
+    final photo = Stack(
+      fit: fillHeight ? StackFit.expand : StackFit.passthrough,
+      children: [
+        WorkoutHeroPhoto(imageUrl: entry.imageUrl, fill: fillHeight),
+        Positioned(
+          top: AppSpacing.lg,
+          left: AppSpacing.lg,
+          child: AppStatusChip(
+            label: entry.tagLabel.toUpperCase(),
+            variant: entry.isCatchUp
+                ? AppStatusChipVariant.outlined
+                : AppStatusChipVariant.solid,
+          ),
+        ),
+        if (canRemove)
+          Positioned(
+            top: AppSpacing.lg,
+            right: AppSpacing.lg,
+            child: _RemoveButton(onTap: onRemove),
+          ),
+      ],
+    );
 
     return PressScale(
       onTap: entry.action == null ? null : onAction,
@@ -48,28 +72,7 @@ class WorkoutAgendaHeroCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Stack(
-              fit: StackFit.passthrough,
-              children: [
-                WorkoutHeroPhoto(imageUrl: entry.imageUrl),
-                Positioned(
-                  top: AppSpacing.lg,
-                  left: AppSpacing.lg,
-                  child: AppStatusChip(
-                    label: entry.tagLabel.toUpperCase(),
-                    variant: entry.isCatchUp
-                        ? AppStatusChipVariant.outlined
-                        : AppStatusChipVariant.solid,
-                  ),
-                ),
-                if (canRemove)
-                  Positioned(
-                    top: AppSpacing.lg,
-                    right: AppSpacing.lg,
-                    child: _RemoveButton(onTap: onRemove),
-                  ),
-              ],
-            ),
+            if (fillHeight) Expanded(child: photo) else photo,
             Padding(
               padding: EdgeInsets.fromLTRB(
                 AppSpacing.xl2,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:floww/config/widgets/images/app_photo_tile.dart';
 import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
-import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
@@ -71,19 +71,10 @@ class _IdentityRow extends StatelessWidget {
 
     return Row(
       children: [
-        Container(
-          width: AppSizes.s56,
-          height: AppSizes.s56,
-          alignment: Alignment.center,
-          decoration: AppShapes.decoration(
-            color: colors.bgTinted,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          child: Icon(
-            Icons.fitness_center,
-            size: AppSizes.s28,
-            color: colors.primaryAlt,
-          ),
+        AppPhotoTile(
+          url: detail.imageUrl,
+          fallbackIcon: Icons.fitness_center,
+          size: AppSizes.s56,
         ),
         SizedBox(width: AppSpacing.lg),
         Expanded(

@@ -98,6 +98,7 @@ class _ExerciseVideoSurfaceState extends State<ExerciseVideoSurface> {
           fallbackIconSize: widget.fallbackIconSize,
           isLoading: widget.isLoading,
           showLoader: true,
+          showSpinner: !showsLoader,
         ),
         if (controller != null)
           AnimatedOpacity(

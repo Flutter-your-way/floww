@@ -6,19 +6,48 @@ import '../models/onboarding_models.dart';
 
 class OnboardingData {
   static List<OnboardingPhase> activePhasesFor(Map<String, dynamic> answers) {
-    final trainingType = answers['training_type'];
-    final type = switch (trainingType) {
-      List(isNotEmpty: true) => trainingType.first.toString().toLowerCase(),
-      String() => trainingType.toLowerCase(),
-      _ => null,
-    };
     return [
       ...corePhases,
-      if (type == 'gym') gymPhase,
-      if (type == 'calisthenics') calisthenicsPhaseFor(answers),
-      if (type == 'yoga') yogaPhase,
+      for (final type in trainingTypesOf(answers))
+        switch (type) {
+          gymType => gymPhase,
+          calisthenicsType => calisthenicsPhaseFor(answers),
+          _ => yogaPhase,
+        },
       ...finalPhases,
     ];
+  }
+
+  static const String trainingTypeId = 'training_type';
+  static const String gymPlanLengthId = 'gym_plan_length';
+  static const String gymType = 'Gym';
+  static const String calisthenicsType = 'Calisthenics';
+  static const String yogaType = 'Yoga';
+  static const String oneMonthPlan = '1 month';
+  static const String threeMonthPlan = '3 months';
+  static const List<String> trainingTypes = [
+    gymType,
+    calisthenicsType,
+    yogaType,
+  ];
+
+  static List<String> trainingTypesOf(Map<String, dynamic> answers) {
+    final value = answers[trainingTypeId];
+    final chosen = switch (value) {
+      List() => [for (final item in value) item.toString()],
+      String() => [value],
+      _ => const <String>[],
+    };
+    final types = <String>[];
+    for (final item in chosen) {
+      for (final type in trainingTypes) {
+        if (type.toLowerCase() == item.trim().toLowerCase() &&
+            !types.contains(type)) {
+          types.add(type);
+        }
+      }
+    }
+    return types;
   }
 
   static const List<OnboardingPhase> corePhases = [
@@ -323,10 +352,12 @@ class OnboardingData {
           ],
         ),
         OnboardingQuestion(
-          id: 'training_type',
+          id: trainingTypeId,
           title: 'Training Type',
-          subtitle: 'How do you prefer to train?',
-          inputType: InputType.singleSelect,
+          subtitle:
+              'Pick one or more. The first one you pick becomes your main '
+              'plan; the others stay open to add sessions from.',
+          inputType: InputType.multiSelect,
           options: [
             QuestionOption(
               title: 'Gym',
@@ -489,6 +520,22 @@ class OnboardingData {
           QuestionOption(title: 'Legs'),
           QuestionOption(title: 'Glutes'),
           QuestionOption(title: 'Core'),
+        ],
+      ),
+      OnboardingQuestion(
+        id: gymPlanLengthId,
+        title: 'Plan Length',
+        subtitle: 'How long should your gym plan run?',
+        inputType: InputType.singleSelect,
+        options: [
+          QuestionOption(
+            title: oneMonthPlan,
+            description: 'A focused 30-day block to build the habit',
+          ),
+          QuestionOption(
+            title: threeMonthPlan,
+            description: 'A 90-day plan with repeating build and peak weeks',
+          ),
         ],
       ),
     ],

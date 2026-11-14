@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show StringCharacters;
 
+import 'package:floww/config/constants/app_constants.dart';
 import 'package:floww/config/theme/app_mode.dart';
 import 'package:floww/core/flow_mode/providers/flow_mode_controller.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
@@ -73,7 +75,13 @@ class HomeProvider extends ChangeNotifier {
 
   bool get isReady => _isReady;
 
-  String get userName => _snapshot.userName;
+  String get userName {
+    final firstName = _snapshot.userName.trim().split(RegExp(r'\s+')).first;
+    final characters = firstName.characters;
+    if (characters.length <= AppLimits.headerNameMaxLength) return firstName;
+    return '${characters.take(AppLimits.headerNameMaxLength)}'
+        '${AppLimits.headerNameOverflowSuffix}';
+  }
 
   int get streakCount => _snapshot.streakCount;
 

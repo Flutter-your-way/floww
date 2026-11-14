@@ -199,6 +199,38 @@ class WorkoutSessionService extends WorkoutFirestore {
     return session;
   }
 
+  Future<WorkoutSessionEntity> startExtraSession(WorkoutPlanEntity plan) async {
+    final uid = requireUserId;
+    final now = DateTime.now();
+    final document = _sessions(uid).doc();
+    final session = WorkoutSessionEntity(
+      id: document.id,
+      workoutId: document.id,
+      name: plan.name,
+      date: AppDateUtils.dateOnly(now),
+      status: WorkoutSessionStatus.inProgress,
+      startedAt: now,
+      completedAt: now,
+      durationSeconds: 0,
+      exercises: plan.exercises,
+      focus: plan.focus,
+      goal: plan.goal,
+      insight: plan.insight,
+      programId: plan.programId,
+      programLabel: plan.programLabel,
+      isManual: true,
+    );
+    final write = document.set(session.toJson());
+    await guard('startExtraSession', _saveFailure, () async {
+      try {
+        await write.timeout(_writeAckTimeout);
+      } on TimeoutException {
+        unawaited(write.catchError((Object _) {}));
+      }
+    });
+    return session;
+  }
+
   Future<WorkoutCompletionResult> logManualSession({
     required String name,
     required List<WorkoutEntryEntity> exercises,

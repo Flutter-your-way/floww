@@ -13,6 +13,7 @@ import 'package:floww/core/habits/services/habit_log_service.dart';
 import 'package:floww/core/nutrition/services/nutrition_log_service.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
 import 'package:floww/core/recovery/services/muscle_recovery_service.dart';
+import 'package:floww/core/workout/services/workout_extras_data.dart';
 import 'package:floww/core/workout/services/workout_session_service.dart';
 import 'package:floww/core/progress/services/flow_streak.dart';
 
@@ -53,6 +54,7 @@ class AchievementsService {
        _injectedRecoveryService = recoveryService;
 
   static const int historyDays = 365;
+  static const int challengeRegularCount = 5;
   static const int completedFloor = 70;
   static const int weeklyVolumeTargetKg = 10000;
   static const double waterGoalMl = 2500;
@@ -134,6 +136,16 @@ class AchievementsService {
         .where((session) => session.status == WorkoutSessionStatus.completed)
         .toList();
 
+    final challenges = completed
+        .where(
+          (session) =>
+              session.programId?.startsWith(
+                WorkoutExtrasData.challengePrefix,
+              ) ??
+              false,
+        )
+        .length;
+
     final unlocks = <String, bool>{
       'first_flame': longestStreak >= 3,
       'week_warrior': longestStreak >= 7,
@@ -143,6 +155,8 @@ class AchievementsService {
       'consistent': completed.length >= 10,
       'iron_will': completed.length >= 50,
       'century_lifter': completed.length >= 100,
+      'challenger': challenges >= 1,
+      'challenge_regular': challenges >= challengeRegularCount,
       'habit_starter': records.habitDays.any((day) => day.entries.isNotEmpty),
       'daily_driver':
           _habitStreakOf(records.habitDays, today) >= dailyDriverDays,

@@ -14,6 +14,7 @@ class RemoteImage extends StatelessWidget {
     this.fit = BoxFit.cover,
     this.isLoading = false,
     this.showLoader = false,
+    this.showSpinner = true,
   });
 
   final String? url;
@@ -22,6 +23,7 @@ class RemoteImage extends StatelessWidget {
   final BoxFit fit;
   final bool isLoading;
   final bool showLoader;
+  final bool showSpinner;
 
   static const double _thumbnailExtent = AppSizes.s96;
   static const double _thumbnailHeadroom = 2;
@@ -63,7 +65,7 @@ class RemoteImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = this.url;
 
-    if (isLoading) return const _Loader();
+    if (isLoading) return _Loader(showSpinner: showSpinner);
 
     if (url == null) {
       return _Fallback(icon: fallbackIcon, size: fallbackIconSize);
@@ -81,7 +83,7 @@ class RemoteImage extends StatelessWidget {
         loadingBuilder: (context, child, progress) => progress == null
             ? child
             : showLoader
-            ? const _Loader()
+            ? _Loader(showSpinner: showSpinner)
             : _Fallback(icon: fallbackIcon, size: fallbackIconSize),
         errorBuilder: (context, error, stackTrace) =>
             _Fallback(icon: fallbackIcon, size: fallbackIconSize),
@@ -91,15 +93,19 @@ class RemoteImage extends StatelessWidget {
 }
 
 class _Loader extends StatelessWidget {
-  const _Loader();
+  const _Loader({required this.showSpinner});
+
+  final bool showSpinner;
 
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
       color: context.colors.backgroundElevated,
-      child: const Center(
-        child: AppSpinner(size: AppSizes.s18, strokeWidth: AppSizes.s2),
-      ),
+      child: showSpinner
+          ? const Center(
+              child: AppSpinner(size: AppSizes.s18, strokeWidth: AppSizes.s2),
+            )
+          : null,
     );
   }
 }

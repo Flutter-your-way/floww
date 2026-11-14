@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(firebase login:list)"
+      "Bash(firebase login:list)",
+      "Bash(node tools/beat.js)"
     ]
   }
 }

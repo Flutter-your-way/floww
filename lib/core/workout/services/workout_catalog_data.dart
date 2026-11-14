@@ -1,6 +1,8 @@
 import 'package:floww/config/constants/app_images.dart';
+import 'package:floww/core/calisthenics/data/calisthenics_images_data.dart';
 import 'package:floww/config/entities/workout_exercise_entity.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
+import 'package:floww/core/workout/services/workout_extras_data.dart';
 import 'package:floww/core/workout/models/exercise.dart';
 import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/models/set_type.dart';
@@ -12,14 +14,15 @@ import 'package:floww/core/yoga/services/yoga_catalog.dart';
 class WorkoutCatalogData {
   WorkoutCatalogData._();
 
-  static const int version = 8;
+  static const int version = 10;
 
   static final Map<String, String> _imageById = {
     for (final exercise in exercises)
       if (exercise.imageUrl != null) exercise.id: exercise.imageUrl!,
   };
 
-  static String? imageFor(String exerciseId) => _imageById[exerciseId];
+  static String? imageFor(String exerciseId) =>
+      _imageById[exerciseId] ?? CalisthenicsImagesData.of(exerciseId);
 
   static final Set<String> _poolIds = {
     for (final exercise in exercises)
@@ -2492,5 +2495,7 @@ class WorkoutCatalogData {
       ],
     ),
     ...CalisthenicsCatalog.programs,
+    ...WorkoutExtrasData.skills,
+    ...WorkoutExtrasData.challenges,
   ];
 }

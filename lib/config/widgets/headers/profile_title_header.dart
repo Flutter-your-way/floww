@@ -22,10 +22,12 @@ class ProfileTitleHeader extends StatelessWidget {
     this.onStreakTap,
     this.action,
     this.accessory,
+    this.scaleTitleToFit = false,
   });
 
   final String eyebrow;
   final String title;
+  final bool scaleTitleToFit;
   final int streakCount;
   final String? avatarUrl;
   final String? avatarInitial;
@@ -43,7 +45,11 @@ class ProfileTitleHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: ScreenTitle(eyebrow: eyebrow, title: title),
+          child: ScreenTitle(
+            eyebrow: eyebrow,
+            title: title,
+            scaleTitleToFit: scaleTitleToFit,
+          ),
         ),
         SizedBox(width: AppSpacing.lg),
         if (action != null) ...[action, SizedBox(width: AppSpacing.md)],

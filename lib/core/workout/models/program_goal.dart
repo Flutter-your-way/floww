@@ -70,6 +70,21 @@ enum ProgramGoal {
   );
 }
 
+enum ProgramKind {
+  standard('standard'),
+  skill('skill'),
+  challenge('challenge');
+
+  const ProgramKind(this.id);
+
+  final String id;
+
+  static ProgramKind fromId(String? id) => values.firstWhere(
+    (kind) => kind.id == id,
+    orElse: () => ProgramKind.standard,
+  );
+}
+
 enum ProgramLevel {
   beginner('Beginner'),
   intermediate('Intermediate'),

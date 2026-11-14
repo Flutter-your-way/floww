@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
 import 'package:floww/core/recovery/services/muscle_targeting.dart';
-import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 
 class WorkoutEmptyState {
@@ -125,6 +124,7 @@ class WorkoutSummaryItem {
     required this.isCompleted,
     required this.stats,
     this.imageUrl,
+    this.sessionId,
   });
 
   final String name;
@@ -134,6 +134,7 @@ class WorkoutSummaryItem {
   final bool isCompleted;
   final List<WorkoutStatItem> stats;
   final String? imageUrl;
+  final String? sessionId;
 }
 
 class TrainingEffectItem {
@@ -393,9 +394,13 @@ class WorkoutOverviewItem {
     required this.targets,
     required this.heartRate,
     required this.performance,
+    this.summaries = const [],
+    this.summaryIndex = 0,
   });
 
   final WorkoutSummaryItem summary;
+  final List<WorkoutSummaryItem> summaries;
+  final int summaryIndex;
   final TrainingEffectItem? trainingEffect;
   final List<MuscleFocusEntry> muscles;
   final MuscleTargets targets;
@@ -455,6 +460,7 @@ class WorkoutDetailItem {
     required this.insightTitle,
     required this.insightMessage,
     required this.notes,
+    this.imageUrl,
   });
 
   final String name;
@@ -467,6 +473,7 @@ class WorkoutDetailItem {
   final String insightTitle;
   final String insightMessage;
   final String notes;
+  final String? imageUrl;
 }
 
 class ActiveProgramItem {
@@ -491,11 +498,13 @@ class ActiveProgramItem {
 
 class ProgramScheduleItem {
   const ProgramScheduleItem({
+    required this.dayIndex,
     required this.weekdayLabel,
     required this.name,
     required this.detail,
   });
 
+  final int dayIndex;
   final String weekdayLabel;
   final String name;
   final String detail;
@@ -515,6 +524,11 @@ class ProgramDetailItem {
     this.isPremium = false,
     this.isWave = false,
     this.isCourse = false,
+    this.canStart = true,
+    this.canCustomize = true,
+    this.canAddToday = false,
+    this.scheduleLabel = 'Weekly schedule',
+    this.addTodayNote,
   });
 
   final String id;
@@ -524,6 +538,11 @@ class ProgramDetailItem {
   final List<WorkoutStatItem> stats;
   final List<ProgramScheduleItem> schedule;
   final bool isCourse;
+  final bool canStart;
+  final bool canCustomize;
+  final bool canAddToday;
+  final String scheduleLabel;
+  final String? addTodayNote;
   final String? warning;
   final bool isActive;
   final bool isCustom;
@@ -584,14 +603,84 @@ class ProgramGoalCardItem {
 
 class ProgramLevelCardItem {
   const ProgramLevelCardItem({
-    required this.level,
+    required this.id,
     required this.title,
     required this.imageUrl,
+    this.programId,
+    this.isCurrent = false,
   });
 
-  final ProgramLevel level;
+  final String id;
   final String title;
   final String imageUrl;
+  final String? programId;
+  final bool isCurrent;
+}
+
+class ChallengeItem {
+  const ChallengeItem({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.metaLabel,
+    required this.imageUrl,
+    required this.isDone,
+  });
+
+  final String id;
+  final String title;
+  final String subtitle;
+  final String metaLabel;
+  final String imageUrl;
+  final bool isDone;
+}
+
+class ChallengeBoardItem {
+  const ChallengeBoardItem({
+    required this.weekly,
+    required this.others,
+    required this.progressLabel,
+    required this.rewardLabel,
+  });
+
+  final ChallengeItem weekly;
+  final List<ProgramItem> others;
+  final String progressLabel;
+  final String rewardLabel;
+}
+
+class WorkoutLevelPeriodItem {
+  const WorkoutLevelPeriodItem({
+    required this.label,
+    required this.sessionsLabel,
+    required this.volumeLabel,
+    required this.effortLabel,
+    required this.progress,
+  });
+
+  final String label;
+  final String sessionsLabel;
+  final String volumeLabel;
+  final String effortLabel;
+  final double? progress;
+}
+
+class WorkoutLevelReportItem {
+  const WorkoutLevelReportItem({
+    required this.levelLabel,
+    required this.verdictTitle,
+    required this.verdictMessage,
+    required this.isReady,
+    required this.periods,
+    this.actionLabel,
+  });
+
+  final String levelLabel;
+  final String verdictTitle;
+  final String verdictMessage;
+  final bool isReady;
+  final List<WorkoutLevelPeriodItem> periods;
+  final String? actionLabel;
 }
 
 class ProgramCollectionItem {

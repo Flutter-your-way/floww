@@ -70,6 +70,9 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
 
   int get _flowScoreGain => _result.flowScoreAfter - _result.flowScoreBefore;
 
+  bool get _hasMaxedWorkoutPoints =>
+      _flowScoreGain <= 0 && _session.creditedSets > 0;
+
   List<String> get _muscleTags {
     final muscles = _session.muscleActivation;
     final count = muscles.length < _maxMuscleTags
@@ -102,12 +105,15 @@ class WorkoutCompletionViewModel extends ChangeNotifier {
   WorkoutCompleteItem get summary => WorkoutCompleteItem(
     glyph: '🎉',
     title: 'Workout Complete!',
-    message: 'Outstanding effort. Your FLOWW Score has been updated.',
+    message: _hasMaxedWorkoutPoints
+        ? 'Outstanding effort. You have already earned the maximum FLOWW '
+              'points from workouts for today.'
+        : 'Outstanding effort. Your FLOWW Score has been updated.',
     scoreLabel: 'FLOWW Score',
     previousScoreLabel: '${_result.flowScoreBefore}',
     newScoreLabel: '${_result.flowScoreAfter}',
-    gainLabel: '+$_flowScoreGain pts',
-    gainCaption: 'from workout',
+    gainLabel: _hasMaxedWorkoutPoints ? 'Max' : '+$_flowScoreGain pts',
+    gainCaption: _hasMaxedWorkoutPoints ? 'reached today' : 'from workout',
     stats: [
       WorkoutStatItem(
         icon: Icons.schedule,

@@ -124,6 +124,7 @@ class WorkoutProgramEntity {
     this.lengthDays = 0,
     this.isGenerated = false,
     this.course,
+    this.kind = ProgramKind.standard,
   });
 
   factory WorkoutProgramEntity.fromJson(Map<String, dynamic> json) =>
@@ -144,6 +145,7 @@ class WorkoutProgramEntity {
         lengthDays: (json['lengthDays'] as num? ?? 0).toInt(),
         isGenerated: json['isGenerated'] as bool? ?? false,
         course: json['course'] as String?,
+        kind: ProgramKind.fromId(json['kind'] as String?),
       );
 
   final String id;
@@ -159,6 +161,13 @@ class WorkoutProgramEntity {
   final int lengthDays;
   final bool isGenerated;
   final String? course;
+  final ProgramKind kind;
+
+  bool get isSkill => kind == ProgramKind.skill;
+
+  bool get isChallenge => kind == ProgramKind.challenge;
+
+  bool get isStandard => kind == ProgramKind.standard;
 
   static const String generatedName = 'Your Workout Plan';
 
@@ -207,6 +216,7 @@ class WorkoutProgramEntity {
     ProgramGoal? goal,
     bool? isCustom,
     String? basedOn,
+    int? lengthDays,
   }) => WorkoutProgramEntity(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -218,9 +228,10 @@ class WorkoutProgramEntity {
     goal: goal ?? this.goal,
     isCustom: isCustom ?? this.isCustom,
     basedOn: basedOn ?? this.basedOn,
-    lengthDays: lengthDays,
+    lengthDays: lengthDays ?? this.lengthDays,
     isGenerated: isGenerated,
     course: course,
+    kind: kind,
   );
 
   Map<String, dynamic> toJson() => {
@@ -237,6 +248,7 @@ class WorkoutProgramEntity {
     if (lengthDays > 0) 'lengthDays': lengthDays,
     if (isGenerated) 'isGenerated': isGenerated,
     if (course != null) 'course': course,
+    if (kind != ProgramKind.standard) 'kind': kind.id,
   };
 }
 

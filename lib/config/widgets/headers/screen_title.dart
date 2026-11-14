@@ -12,15 +12,25 @@ class ScreenTitle extends StatelessWidget {
     required this.eyebrow,
     required this.title,
     this.eyebrowDirection,
+    this.scaleTitleToFit = false,
   });
 
   final String eyebrow;
   final String title;
   final DateChangeDirection? eyebrowDirection;
+  final bool scaleTitleToFit;
 
   @override
   Widget build(BuildContext context) {
     final direction = eyebrowDirection;
+    final titleText = Text(
+      title,
+      maxLines: AppLimits.displayNameMaxLines,
+      overflow: TextOverflow.ellipsis,
+      style: AppTypography.heading3ExtraBoldItalic.copyWith(
+        color: context.colors.textPrimary,
+      ),
+    );
     final eyebrowText = Text(
       eyebrow,
       style: AppTypography.heading4SemiBold.copyWith(
@@ -42,14 +52,14 @@ class ScreenTitle extends StatelessWidget {
             distance: AppMotion.slideDistanceSmall,
             child: eyebrowText,
           ),
-        Text(
-          title,
-          maxLines: AppLimits.displayNameMaxLines,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.heading3ExtraBoldItalic.copyWith(
-            color: context.colors.textPrimary,
-          ),
-        ),
+        if (scaleTitleToFit)
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: titleText,
+          )
+        else
+          titleText,
       ],
     );
   }

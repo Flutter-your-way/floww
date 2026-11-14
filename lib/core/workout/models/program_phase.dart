@@ -23,6 +23,9 @@ enum ProgramPhase {
   static ProgramPhase of(int week, int totalWeeks) {
     if (totalWeeks >= _deloadFromWeeks && week >= totalWeeks) return deload;
     if (week <= 1) return foundation;
+    if (totalWeeks > _deloadFromWeeks) {
+      return week % _peakWeek == 0 ? peak : build;
+    }
     if (week >= _peakWeek) return peak;
     return build;
   }
@@ -46,7 +49,8 @@ enum ProgramPhase {
       'Day $day of $totalDays — Peak week. WAVE added a set to your first '
           'two main lifts. Push hard, but stop each set with clean form.',
     ProgramPhase.deload =>
-      'Day $day of $totalDays — Deload to finish your 30 days. Volume drops '
+      'Day $day of $totalDays — Deload to finish your $totalDays days. Volume '
+          'drops '
           'to about 60% so your body absorbs the block. Move well and leave '
           'fresh.',
   };

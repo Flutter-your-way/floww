@@ -1,4 +1,5 @@
 import 'package:floww/config/entities/workout_exercise_entity.dart';
+import 'package:floww/core/calisthenics/data/calisthenics_images_data.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/core/calisthenics/data/calisthenics_moves_data.dart';
 import 'package:floww/core/calisthenics/data/calisthenics_program_data.dart';
@@ -102,6 +103,7 @@ class CalisthenicsCatalog {
     defaultRestSeconds: _defaultRest,
     defaultRepsInReserve: _defaultReserve,
     trackingMode: move.isTimed ? TrackingMode.duration : TrackingMode.reps,
+    imageUrl: CalisthenicsImagesData.of(move.id),
     isPool: true,
     mistakes: [for (final text in move.mistakes) ExerciseCueEntry(text: text)],
     guidelines: [

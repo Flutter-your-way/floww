@@ -5,6 +5,7 @@ import 'package:floww/config/constants/app_sizes.dart';
 import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/circular_header_button.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/cards/app_card.dart';
 
@@ -19,6 +20,7 @@ class WorkoutShiftCard extends StatelessWidget {
     this.icon = Icons.event_repeat_rounded,
     this.byWave = false,
     this.errorMessage,
+    this.onDismiss,
   });
 
   final String title;
@@ -29,11 +31,13 @@ class WorkoutShiftCard extends StatelessWidget {
   final IconData icon;
   final bool byWave;
   final String? errorMessage;
+  final VoidCallback? onDismiss;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final errorMessage = this.errorMessage;
+    final onDismiss = this.onDismiss;
 
     return AppCard(
       padding: EdgeInsets.symmetric(
@@ -57,6 +61,15 @@ class WorkoutShiftCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onDismiss != null) ...[
+                SizedBox(width: AppSpacing.md),
+                CircularHeaderButton(
+                  icon: Icons.close_rounded,
+                  size: AppSizes.s28,
+                  iconSize: AppSizes.s16,
+                  onPressed: onDismiss,
+                ),
+              ],
             ],
           ),
           SizedBox(height: AppSpacing.md),

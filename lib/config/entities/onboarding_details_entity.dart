@@ -1,5 +1,6 @@
 import 'package:floww/core/calisthenics/data/calisthenics_gates_data.dart';
 import 'package:floww/core/calisthenics/services/calisthenics_placement.dart';
+import 'package:floww/core/onboarding/data/onboarding_data.dart';
 
 String _hhmm(DateTime time) {
   final hour = time.hour.toString().padLeft(2, '0');
@@ -129,23 +130,27 @@ class OnboardingTrainingSetupDetails {
   const OnboardingTrainingSetupDetails({
     required this.wantsPersonalizedPlan,
     required this.trainingType,
+    this.trainingTypes = const [],
     this.experienceLevel,
   });
 
   final bool wantsPersonalizedPlan;
   final String trainingType;
+  final List<String> trainingTypes;
   final String? experienceLevel;
 
   factory OnboardingTrainingSetupDetails.fromJson(Map<String, dynamic> json) =>
       OnboardingTrainingSetupDetails(
         wantsPersonalizedPlan: json['wantsPersonalizedPlan'] as bool,
         trainingType: json['trainingType'] as String,
+        trainingTypes: _stringList(json['trainingTypes']),
         experienceLevel: json['experienceLevel'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
     'wantsPersonalizedPlan': wantsPersonalizedPlan,
     'trainingType': trainingType,
+    'trainingTypes': trainingTypes.isEmpty ? [trainingType] : trainingTypes,
     'experienceLevel': experienceLevel,
   };
 }
@@ -159,8 +164,10 @@ class OnboardingGymDetails {
     required this.equipment,
     required this.preferredSplit,
     required this.targetMuscleGroups,
+    this.planLength = OnboardingData.oneMonthPlan,
   });
 
+  final String planLength;
   final String experienceLevel;
   final List<String> goals;
   final List<String> trainingDays;
@@ -178,6 +185,8 @@ class OnboardingGymDetails {
         equipment: json['equipment'] as String,
         preferredSplit: json['preferredSplit'] as String,
         targetMuscleGroups: _stringList(json['targetMuscleGroups']),
+        planLength:
+            json['planLength'] as String? ?? OnboardingData.oneMonthPlan,
       );
 
   Map<String, dynamic> toJson() => {
@@ -188,6 +197,7 @@ class OnboardingGymDetails {
     'equipment': equipment,
     'preferredSplit': preferredSplit,
     'targetMuscleGroups': targetMuscleGroups,
+    'planLength': planLength,
   };
 }
 
@@ -496,11 +506,13 @@ class OnboardingDetailsEntity {
     }
 
     OnboardingTrainingSetupDetails? trainingSetup;
-    if (answers['training_type'] != null) {
+    final trainingTypes = OnboardingData.trainingTypesOf(answers);
+    if (trainingTypes.isNotEmpty) {
       trainingSetup = OnboardingTrainingSetupDetails(
         wantsPersonalizedPlan: answers['create_plan'] == 'Yes',
-        trainingType: answers['training_type'] as String,
-        experienceLevel: switch (answers['training_type']) {
+        trainingType: trainingTypes.first,
+        trainingTypes: trainingTypes,
+        experienceLevel: switch (trainingTypes.first) {
           'Gym' => answers['gym_experience'] as String?,
           'Calisthenics' => CalisthenicsPlacement.levelFor(
             CalisthenicsPlacement.resultsOf(answers),
@@ -514,34 +526,36 @@ class OnboardingDetailsEntity {
     OnboardingGymDetails? gymDetails;
     OnboardingCalisthenicsDetails? calisthenicsDetails;
     OnboardingYogaDetails? yogaDetails;
-    switch (trainingSetup?.trainingType) {
-      case 'Gym':
-        gymDetails = OnboardingGymDetails(
-          experienceLevel: answers['gym_experience'] as String,
-          goals: _stringList(answers['gym_goals']),
-          trainingDays: _stringList(answers['gym_days']),
-          workoutDuration: answers['gym_duration'] as String,
-          equipment: answers['gym_equipment'] as String,
-          preferredSplit: answers['gym_split'] as String,
-          targetMuscleGroups: _stringList(answers['gym_muscle_groups']),
-        );
-      case 'Calisthenics':
-        calisthenicsDetails = OnboardingCalisthenicsDetails.fromAnswers(
-          answers,
-        );
-      case 'Yoga':
-        yogaDetails = OnboardingYogaDetails(
-          experienceLevel: answers['yoga_experience'] as String,
-          preferredStyle: answers['yoga_style'] as String,
-          primaryGoal: answers['yoga_goal'] as String,
-          wantsMeditation: answers['yoga_meditation'] == 'Yes',
-          flexibilityLevel: answers['yoga_flexibility'] as String,
-          practiceDuration: answers['yoga_duration'] as String,
-          practiceDays: _stringList(answers['yoga_days']),
-          preferredPracticeTime: answers['yoga_workout_time'] as String,
-          equipment: _stringList(answers['yoga_equipment']),
-          injuries: _stringList(answers['yoga_injuries']),
-        );
+    if (trainingTypes.contains(OnboardingData.gymType)) {
+      gymDetails = OnboardingGymDetails(
+        experienceLevel: answers['gym_experience'] as String,
+        goals: _stringList(answers['gym_goals']),
+        trainingDays: _stringList(answers['gym_days']),
+        workoutDuration: answers['gym_duration'] as String,
+        equipment: answers['gym_equipment'] as String,
+        preferredSplit: answers['gym_split'] as String,
+        targetMuscleGroups: _stringList(answers['gym_muscle_groups']),
+        planLength:
+            answers[OnboardingData.gymPlanLengthId] as String? ??
+            OnboardingData.oneMonthPlan,
+      );
+    }
+    if (trainingTypes.contains(OnboardingData.calisthenicsType)) {
+      calisthenicsDetails = OnboardingCalisthenicsDetails.fromAnswers(answers);
+    }
+    if (trainingTypes.contains(OnboardingData.yogaType)) {
+      yogaDetails = OnboardingYogaDetails(
+        experienceLevel: answers['yoga_experience'] as String,
+        preferredStyle: answers['yoga_style'] as String,
+        primaryGoal: answers['yoga_goal'] as String,
+        wantsMeditation: answers['yoga_meditation'] == 'Yes',
+        flexibilityLevel: answers['yoga_flexibility'] as String,
+        practiceDuration: answers['yoga_duration'] as String,
+        practiceDays: _stringList(answers['yoga_days']),
+        preferredPracticeTime: answers['yoga_workout_time'] as String,
+        equipment: _stringList(answers['yoga_equipment']),
+        injuries: _stringList(answers['yoga_injuries']),
+      );
     }
 
     OnboardingTargetsPermissionsDetails? targetsPermissions;

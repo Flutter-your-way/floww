@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:floww/config/constants/app_motion.dart';
 import 'package:floww/config/entities/exercise_video_entity.dart';
 import 'package:floww/config/services/exercise_video_service.dart';
+import 'package:floww/core/calisthenics/services/calisthenics_library_presenter.dart';
 import 'package:floww/config/entities/workout_exercise_entity.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
@@ -325,8 +326,14 @@ class ActiveWorkoutViewModel extends ChangeNotifier
       notifyListeners();
     }
     try {
-      final plan = isSeeded ? seededPlan : await _preparePlan();
+      final prepared = isSeeded ? seededPlan : await _preparePlan();
       if (isSeeded) _history = seededHistory;
+      final resumed =
+          _launch.session ??
+          (prepared == null
+              ? await _sessionService.loadInProgressSession(_date)
+              : null);
+      final plan = prepared ?? (resumed == null ? null : _planOf(resumed));
       if (plan == null) {
         _errorMessage =
             'There is no workout scheduled for this day. Start a program to '
@@ -335,7 +342,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier
         notifyListeners();
         return;
       }
-      final lockReason = _launch.session == null ? _lockReasonOf(plan) : null;
+      final lockReason = resumed == null ? _lockReasonOf(plan) : null;
       if (lockReason != null) {
         _errorMessage = lockReason;
         _isLoading = false;
@@ -343,13 +350,15 @@ class ActiveWorkoutViewModel extends ChangeNotifier
         return;
       }
       final session =
-          _launch.session ??
+          resumed ??
           await _sessionService.startSession(
             plan,
             on: _date,
             lookupExisting: !isSeeded,
           );
-      if (plan.sessionId != session.id &&
+      if (prepared != null &&
+          !session.isManual &&
+          plan.sessionId != session.id &&
           AppDateUtils.isSameDay(plan.date, session.scheduledDate)) {
         unawaited(
           _planService
@@ -381,6 +390,19 @@ class ActiveWorkoutViewModel extends ChangeNotifier
       notifyListeners();
     }
   }
+
+  WorkoutPlanEntity _planOf(WorkoutSessionEntity session) => WorkoutPlanEntity(
+    id: session.workoutId,
+    date: session.scheduledDate,
+    name: session.name,
+    focus: session.focus,
+    goal: session.goal,
+    insight: session.insight,
+    durationMinutes: 0,
+    exercises: session.exercises,
+    programId: session.programId,
+    programLabel: session.programLabel,
+  );
 
   String? _lockReasonOf(WorkoutPlanEntity plan) {
     final today = AppDateUtils.dateOnly(DateTime.now());
@@ -1280,7 +1302,9 @@ class ActiveWorkoutViewModel extends ChangeNotifier
     await _sessionSubscription?.cancel();
     try {
       await _sessionService.cancelSession(session.id);
-      await _planService.unlinkSession(session.scheduledDate);
+      if (!session.isManual) {
+        await _planService.unlinkSession(session.scheduledDate);
+      }
       unawaited(_alertService.cancelRestEnd());
       unawaited(_alertService.keepAwake(false));
       return true;
@@ -1394,7 +1418,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier
       name: exercise.name,
       imageUrl:
           exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId),
-      video: _videoOf(exercise.name),
+      video: _videoOf(exercise),
       isVideoLoading: _loadingVideos.contains(exercise.name),
       targetValue: '${exercise.isTimed ? draft.seconds : draft.reps}',
       targetLabel: '$unit · $weightLabel',
@@ -1412,18 +1436,20 @@ class ActiveWorkoutViewModel extends ChangeNotifier
     );
   }
 
-  ExerciseVideo? _videoOf(String name) {
+  ExerciseVideo? _videoOf(WorkoutEntryEntity exercise) {
+    final name = exercise.name;
     if (_videos.containsKey(name)) return _videos[name];
     _videos[name] = null;
     _loadingVideos.add(name);
-    unawaited(_loadVideo(name));
+    unawaited(_loadVideo(exercise));
     return null;
   }
 
-  Future<void> _loadVideo(String name) async {
+  Future<void> _loadVideo(WorkoutEntryEntity exercise) async {
+    final name = exercise.name;
     final video = await _videoService.find(
       kind: ExerciseVideoKind.gym,
-      queries: _videoQueriesOf(name),
+      queries: _videoQueriesOf(exercise),
     );
     _loadingVideos.remove(name);
     if (_disposed) return;
@@ -1434,12 +1460,19 @@ class ActiveWorkoutViewModel extends ChangeNotifier
   static const int _maxVideoQueries = 3;
   static const int _minVideoQueryLength = 2;
 
-  List<String> _videoQueriesOf(String name) {
+  List<String> _videoQueriesOf(WorkoutEntryEntity exercise) {
+    final name = exercise.name.trim();
     final parts = name
         .split(RegExp(r'[/,()&+]'))
         .map((part) => part.trim())
         .where((part) => part.length >= _minVideoQueryLength);
-    return {name.trim(), ...parts}.take(_maxVideoQueries).toList();
+    return {
+      ...CalisthenicsLibraryPresenter.searchQueriesOf(
+        exercise.exerciseId,
+        name: name,
+      ),
+      ...parts,
+    }.take(_maxVideoQueries).toList();
   }
 
   List<ExerciseInfoSectionItem> get techniqueSections {

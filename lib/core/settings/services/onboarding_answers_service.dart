@@ -105,7 +105,16 @@ class OnboardingAnswersService {
     final training = _section(details, 'trainingSetup');
     final wantsPlan = training?['wantsPersonalizedPlan'];
     put('create_plan', wantsPlan is bool ? (wantsPlan ? _yes : _later) : null);
-    put('training_type', training?['trainingType']);
+    final trainingTypes = _list(training?['trainingTypes']);
+    final trainingType = training?['trainingType'];
+    put(
+      'training_type',
+      trainingTypes != null && trainingTypes.isNotEmpty
+          ? trainingTypes
+          : trainingType is String
+          ? [trainingType]
+          : null,
+    );
 
     final gym = _section(details, 'gymDetails');
     put('gym_experience', gym?['experienceLevel']);
@@ -115,6 +124,7 @@ class OnboardingAnswersService {
     put('gym_equipment', gym?['equipment']);
     put('gym_split', gym?['preferredSplit']);
     put('gym_muscle_groups', _list(gym?['targetMuscleGroups']));
+    put('gym_plan_length', gym?['planLength']);
 
     final cal = _section(details, 'calisthenicsDetails');
     put('cal_bodyweight', _number(cal?['bodyweightKg']));

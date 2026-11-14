@@ -8,7 +8,7 @@ import 'package:floww/config/widgets/cards/app_card.dart';
 import 'package:floww/config/widgets/headers/card_header.dart';
 import 'package:floww/config/widgets/progress/app_progress_bar.dart';
 import 'package:floww/core/workout/models/workout_view_data.dart';
-import 'package:floww/core/workout/widgets/workout_agenda_hero_card.dart';
+import 'package:floww/core/workout/widgets/workout_agenda_carousel.dart';
 
 class WorkoutAgendaCard extends StatelessWidget {
   const WorkoutAgendaCard({
@@ -28,14 +28,13 @@ class WorkoutAgendaCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _AgendaHeader(agenda: agenda),
-        for (final entry in agenda.entries) ...[
-          SizedBox(height: AppSpacing.lg),
-          WorkoutAgendaHeroCard(
-            entry: entry,
-            onAction: () => onAction(entry),
-            onRemove: () => onRemove(entry),
-          ),
-        ],
+        SizedBox(height: AppSpacing.lg),
+        WorkoutAgendaCarousel(
+          key: ValueKey(agenda.entries.length),
+          entries: agenda.entries,
+          onAction: onAction,
+          onRemove: onRemove,
+        ),
       ],
     );
   }

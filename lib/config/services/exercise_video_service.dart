@@ -30,11 +30,9 @@ class ExerciseVideoService {
     final key = '${kind.value}:${queries.join('|').toLowerCase()}';
     final cached = _cache[key];
     if (cached != null && cached.isFresh) return cached.video;
-    return _inFlight[key] ??= _fetch(
-      key,
-      kind,
-      queries,
-    ).whenComplete(() => _inFlight.remove(key));
+    return _inFlight[key] ??= _fetch(key, kind, queries).whenComplete(() {
+      _inFlight.remove(key);
+    });
   }
 
   Future<ExerciseVideo?> _fetch(

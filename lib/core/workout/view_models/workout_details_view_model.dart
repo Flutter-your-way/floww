@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:floww/core/workout/models/program_artwork.dart';
 import 'package:flutter/material.dart';
 
 import 'package:floww/config/entities/workout_plan_entity.dart';
@@ -97,6 +97,7 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
           '${AppDateUtils.time(session.startedAt)}',
       statusLabel: session.isCompleted ? 'Completed' : 'In Progress',
       isCompleted: session.isCompleted,
+      imageUrl: ProgramArtwork.ofSession(session),
       stats: [
         WorkoutStatItem(
           icon: Icons.schedule,
@@ -258,13 +259,13 @@ class WorkoutDetailsViewModel extends ChangeNotifier {
 
   bool get isUnlogging => _isUnlogging;
 
-  bool get canUnlog => kDebugMode && _session != null && !_isUnlogging;
+  bool get canUnlog => _session != null && !_isUnlogging;
 
   String get unlogTitle => 'Unlog Workout?';
 
   String get unlogMessage =>
       'This deletes the session and its sets, and today\'s plan goes back to '
-      'not started. Debug builds only.';
+      'not started.';
 
   String get unlogConfirmLabel => 'Unlog';
 

@@ -31,6 +31,7 @@ class HomeHeader extends StatelessWidget {
     return ProfileTitleHeader(
       eyebrow: '$greeting,',
       title: userName,
+      scaleTitleToFit: true,
       streakCount: streakCount,
       avatarUrl: avatarUrl,
       avatarInitial: avatarInitial,

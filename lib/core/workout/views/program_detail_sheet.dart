@@ -5,6 +5,7 @@ import 'package:floww/config/constants/app_spacing.dart';
 import 'package:floww/config/theme/app_shapes.dart';
 import 'package:floww/config/theme/app_theme_tokens.dart';
 import 'package:floww/config/theme/app_typography.dart';
+import 'package:floww/config/widgets/animations/press_scale.dart';
 import 'package:floww/config/widgets/buttons/custom_buttons/pill_button.dart';
 import 'package:floww/config/widgets/headers/section_label.dart';
 import 'package:floww/config/widgets/sheets/app_floating_sheet.dart';
@@ -22,6 +23,7 @@ class ProgramDetailSheet extends StatelessWidget {
     this.onDelete,
     this.onStop,
     this.onCourse,
+    this.onAddToday,
     this.isLocked = false,
   });
 
@@ -38,6 +40,7 @@ class ProgramDetailSheet extends StatelessWidget {
     VoidCallback? onDelete,
     VoidCallback? onStop,
     VoidCallback? onCourse,
+    ValueChanged<int>? onAddToday,
   }) {
     return showAppFloatingSheet<void>(
       context: context,
@@ -48,6 +51,7 @@ class ProgramDetailSheet extends StatelessWidget {
         onDelete: onDelete,
         onStop: onStop,
         onCourse: onCourse,
+        onAddToday: onAddToday,
         isLocked: isLocked,
       ),
     );
@@ -59,6 +63,7 @@ class ProgramDetailSheet extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onStop;
   final VoidCallback? onCourse;
+  final ValueChanged<int>? onAddToday;
   final bool isLocked;
 
   @override
@@ -68,6 +73,8 @@ class ProgramDetailSheet extends StatelessWidget {
     final onDelete = this.onDelete;
     final onStop = this.onStop;
     final onCourse = this.onCourse;
+    final onAddToday = detail.canAddToday ? this.onAddToday : null;
+    final addTodayNote = detail.addTodayNote;
 
     return AppFloatingSheet(
       child: AppSheetPanel(
@@ -92,11 +99,25 @@ class ProgramDetailSheet extends StatelessWidget {
               _ProgramWarningBox(message: warning),
             ],
             SizedBox(height: AppSpacing.xl2),
-            const SectionLabel(label: 'Weekly schedule'),
+            SectionLabel(label: detail.scheduleLabel),
+            if (addTodayNote != null) ...[
+              SizedBox(height: AppSpacing.xs),
+              Text(
+                addTodayNote,
+                style: AppTypography.bodySmallRegularTight.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
+            ],
             SizedBox(height: AppSpacing.md),
             for (var i = 0; i < detail.schedule.length; i++) ...[
               if (i > 0) SizedBox(height: AppSpacing.md),
-              _ScheduleRow(item: detail.schedule[i]),
+              _ScheduleRow(
+                item: detail.schedule[i],
+                onAddToday: onAddToday == null
+                    ? null
+                    : () => onAddToday(detail.schedule[i].dayIndex),
+              ),
             ],
             if (onCourse != null) ...[
               SizedBox(height: AppSpacing.xl),
@@ -109,119 +130,147 @@ class ProgramDetailSheet extends StatelessWidget {
             ],
           ],
         ),
-        footer: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (!detail.isActive)
-              PillButton(
-                label: isLocked ? unlockLabel : startLabel,
-                icon: isLocked ? Icons.lock_rounded : Icons.play_arrow_rounded,
-                onPressed: onStart,
+        footer: !detail.canStart
+            ? null
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!detail.isActive)
+                    PillButton(
+                      label: isLocked ? unlockLabel : startLabel,
+                      icon: isLocked
+                          ? Icons.lock_rounded
+                          : Icons.play_arrow_rounded,
+                      onPressed: onStart,
+                    ),
+                  if (!detail.isActive) SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      if (detail.canCustomize)
+                        Expanded(
+                          child: PillButton(
+                            variant: PillButtonVariant.outline,
+                            height: AppSizes.s44,
+                            label: detail.isCustom ? 'Edit' : 'Customize',
+                            icon: Icons.tune_rounded,
+                            onPressed: onCustomize,
+                          ),
+                        ),
+                      if (detail.isActive && onStop != null) ...[
+                        if (detail.canCustomize) SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: PillButton(
+                            variant: PillButtonVariant.outline,
+                            height: AppSizes.s44,
+                            label: 'Stop',
+                            icon: Icons.stop_rounded,
+                            labelColor: colors.destructiveBorder,
+                            iconColor: colors.destructiveBorder,
+                            onPressed: onStop,
+                          ),
+                        ),
+                      ],
+                      if (detail.isCustom && onDelete != null) ...[
+                        if (detail.canCustomize || detail.isActive)
+                          SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: PillButton(
+                            variant: PillButtonVariant.outline,
+                            height: AppSizes.s44,
+                            label: 'Delete',
+                            icon: Icons.delete_outline_rounded,
+                            labelColor: colors.destructiveBorder,
+                            iconColor: colors.destructiveBorder,
+                            onPressed: onDelete,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
-            if (!detail.isActive) SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: PillButton(
-                    variant: PillButtonVariant.outline,
-                    height: AppSizes.s44,
-                    label: detail.isCustom ? 'Edit' : 'Customize',
-                    icon: Icons.tune_rounded,
-                    onPressed: onCustomize,
-                  ),
-                ),
-                if (detail.isActive && onStop != null) ...[
-                  SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: PillButton(
-                      variant: PillButtonVariant.outline,
-                      height: AppSizes.s44,
-                      label: 'Stop',
-                      icon: Icons.stop_rounded,
-                      labelColor: colors.destructiveBorder,
-                      iconColor: colors.destructiveBorder,
-                      onPressed: onStop,
-                    ),
-                  ),
-                ],
-                if (detail.isCustom && onDelete != null) ...[
-                  SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: PillButton(
-                      variant: PillButtonVariant.outline,
-                      height: AppSizes.s44,
-                      label: 'Delete',
-                      icon: Icons.delete_outline_rounded,
-                      labelColor: colors.destructiveBorder,
-                      iconColor: colors.destructiveBorder,
-                      onPressed: onDelete,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
 }
 
 class _ScheduleRow extends StatelessWidget {
-  const _ScheduleRow({required this.item});
+  const _ScheduleRow({required this.item, this.onAddToday});
+
+  static const String _addLabel = 'Today';
 
   final ProgramScheduleItem item;
+  final VoidCallback? onAddToday;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final onAddToday = this.onAddToday;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppShapes.decoration(
-        color: colors.backgroundPrimary,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: colors.borderSubtle, width: AppSizes.s1),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: AppSizes.s40,
-            child: Text(
-              item.weekdayLabel,
-              style: AppTypography.captionSemiBold.copyWith(
-                color: colors.primaryAlt,
+    return PressScale(
+      onTap: onAddToday,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: AppShapes.decoration(
+          color: colors.backgroundPrimary,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: colors.borderSubtle, width: AppSizes.s1),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: AppSizes.s40,
+              child: Text(
+                item.weekdayLabel,
+                style: AppTypography.captionSemiBold.copyWith(
+                  color: colors.primaryAlt,
+                ),
               ),
             ),
-          ),
-          SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  item.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.labelLargeSemiBold.copyWith(
-                    color: colors.textPrimary,
+            SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelLargeSemiBold.copyWith(
+                      color: colors.textPrimary,
+                    ),
                   ),
-                ),
-                SizedBox(height: AppSpacing.xxs),
-                Text(
-                  item.detail,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySmallRegularTight.copyWith(
-                    color: colors.textSecondary,
+                  SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    item.detail,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySmallRegularTight.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            if (onAddToday != null) ...[
+              SizedBox(width: AppSpacing.md),
+              Icon(
+                Icons.add_circle_outline_rounded,
+                size: AppSizes.s20,
+                color: colors.primaryAlt,
+              ),
+              SizedBox(width: AppSpacing.xs),
+              Text(
+                _addLabel,
+                style: AppTypography.captionSemiBold.copyWith(
+                  color: colors.primaryAlt,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

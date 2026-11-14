@@ -9,6 +9,7 @@ import 'package:floww/core/yoga/services/yoga_plan_mapper.dart';
 enum WorkoutDiscipline {
   gym(
     'gym',
+    label: 'Gym',
     startLabel: 'Start Workout',
     titleNoun: 'Workout',
     sessionNoun: 'workout',
@@ -20,6 +21,7 @@ enum WorkoutDiscipline {
   ),
   calisthenics(
     'calisthenics',
+    label: 'Calisthenics',
     startLabel: 'Start Session',
     titleNoun: 'Training',
     sessionNoun: 'session',
@@ -31,6 +33,7 @@ enum WorkoutDiscipline {
   ),
   yoga(
     'yoga',
+    label: 'Yoga',
     startLabel: 'Start Class',
     titleNoun: 'Practice',
     sessionNoun: 'class',
@@ -43,6 +46,7 @@ enum WorkoutDiscipline {
 
   const WorkoutDiscipline(
     this.id, {
+    required this.label,
     required this.startLabel,
     required this.titleNoun,
     required this.sessionNoun,
@@ -56,6 +60,7 @@ enum WorkoutDiscipline {
   static const String _answerKey = 'training_type';
 
   final String id;
+  final String label;
   final String startLabel;
   final String titleNoun;
   final String sessionNoun;
@@ -70,13 +75,13 @@ enum WorkoutDiscipline {
   bool matches(WorkoutProgramEntity program) => switch (this) {
     WorkoutDiscipline.yoga => YogaPlanMapper.isCourse(program.course),
     WorkoutDiscipline.calisthenics =>
-      CalLevel.fromCourse(program.course) != null,
-    WorkoutDiscipline.gym => program.course == null,
+      program.isSkill || CalLevel.fromCourse(program.course) != null,
+    WorkoutDiscipline.gym => program.course == null && program.isStandard,
   };
 
   static WorkoutDiscipline ofProgram(WorkoutProgramEntity program) {
     if (YogaPlanMapper.isCourse(program.course)) return WorkoutDiscipline.yoga;
-    if (CalLevel.fromCourse(program.course) != null) {
+    if (program.isSkill || CalLevel.fromCourse(program.course) != null) {
       return WorkoutDiscipline.calisthenics;
     }
     return WorkoutDiscipline.gym;

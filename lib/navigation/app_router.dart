@@ -22,6 +22,7 @@ class AppRouter {
   static const String todaysWorkout = '/todays_workout';
   static const String activeWorkout = '/active_workout';
   static const String programEditor = '/program_editor';
+  static const String programList = '/program_list';
   static const String muscleRecovery = '/muscle_recovery';
   static const String strengthLevel = '/strength_level';
   static const String workoutVolume = '/workout_volume';

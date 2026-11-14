@@ -50,8 +50,10 @@ import 'package:floww/core/workout/widgets/workout_agenda_card.dart';
 import 'package:floww/core/workout/widgets/workout_empty_state_card.dart';
 import 'package:floww/core/workout/widgets/workout_tab_bar.dart';
 import 'package:floww/core/workout/widgets/exercise_library_section.dart';
-import 'package:floww/core/workout/widgets/program_list_section.dart';
+import 'package:floww/core/workout/models/program_list_args.dart';
 import 'package:floww/core/workout/widgets/program_explore_section.dart';
+import 'package:floww/core/workout/widgets/program_section_heading.dart';
+import 'package:floww/core/workout/widgets/workout_level_report_card.dart';
 import 'package:floww/core/workout/widgets/today_workout_hero_card.dart';
 import 'package:floww/core/workout/widgets/workout_history_section.dart';
 import 'package:floww/core/workout/widgets/workout_overview_section.dart';
@@ -115,8 +117,9 @@ class WorkoutView extends StatelessWidget {
           arguments: args,
         );
       case WorkoutAgendaAction.focus:
-        HapticManager.selection();
+        final sessionId = viewModel.sessionIdOf(entry.id);
         viewModel.focusEntry(entry.id);
+        if (sessionId != null) _openWorkoutDetails(sessionId);
       case null:
         return;
     }
@@ -280,7 +283,62 @@ class WorkoutView extends StatelessWidget {
               NavigationService.instance.push(AppRouter.yogaCourse);
             }
           : null,
+      onAddToday: (dayIndex) {
+        Navigator.of(context).maybePop();
+        if (isLocked) {
+          access.openUpgrade();
+          return;
+        }
+        _startExtraSession(viewModel, id, dayIndex);
+      },
     );
+  }
+
+  Future<void> _startExtraSession(
+    WorkoutViewModel viewModel,
+    String programId,
+    int dayIndex,
+  ) async {
+    HapticManager.medium();
+    final args = await viewModel.startExtraSession(programId, dayIndex);
+    if (args == null) return;
+    NavigationService.instance.push(AppRouter.activeWorkout, arguments: args);
+  }
+
+  Future<void> _levelUp(
+    BuildContext context,
+    WorkoutViewModel viewModel,
+  ) async {
+    HapticManager.light();
+    final programId = viewModel.levelUpProgramId;
+    if (programId != null) {
+      _openProgram(context, viewModel, programId);
+      return;
+    }
+    final choice = await AppConfirmSheet.show(
+      context,
+      title: viewModel.levelUpTitle,
+      message: viewModel.levelUpMessage,
+      confirmLabel: viewModel.levelUpConfirmLabel,
+      alternateLabel: viewModel.levelUpCancelLabel,
+      icon: Icons.trending_up_rounded,
+    );
+    if (choice != AppConfirmChoice.confirm) return;
+    HapticManager.medium();
+    await viewModel.levelUp();
+  }
+
+  void _openLevel(
+    BuildContext context,
+    WorkoutViewModel viewModel,
+    ProgramLevelCardItem level,
+  ) {
+    final programId = level.programId;
+    if (programId == null) {
+      _showProgramList(viewModel, () => viewModel.exploreLevel(level.id));
+      return;
+    }
+    _openProgram(context, viewModel, programId);
   }
 
   void _setUpProgram(
@@ -347,7 +405,20 @@ class WorkoutView extends StatelessWidget {
       AppRouter.programEditor,
       arguments: args,
     );
-    if (result is String) viewModel.showMyPrograms();
+    if (result is String) _showProgramList(viewModel, viewModel.showMyPrograms);
+  }
+
+  void _showProgramList(WorkoutViewModel viewModel, VoidCallback applyFilter) {
+    final isOpen = !viewModel.showProgramExplore;
+    applyFilter();
+    if (isOpen) return;
+    NavigationService.instance.push(
+      AppRouter.programList,
+      arguments: ProgramListArgs(
+        viewModel: viewModel,
+        onOpenProgram: (context, id) => _openProgram(context, viewModel, id),
+      ),
+    );
   }
 
   Future<void> _confirmDelete(
@@ -393,7 +464,7 @@ class WorkoutView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
-    final actionsBottom = bottomInset + AppSizes.s64 + AppSpacing.xl2;
+    final actionsBottom = bottomInset + AppSizes.s64 + AppSpacing.sm;
     final horizontalPadding = EdgeInsets.symmetric(
       horizontal: context.sizes.screenHorizontalPadding,
     );
@@ -410,6 +481,8 @@ class WorkoutView extends StatelessWidget {
           final shiftOffer = viewModel.shiftOffer;
           final agenda = viewModel.agenda;
           final planBuilder = viewModel.planBuilder;
+          final planRebuildLabel = viewModel.planRebuildLabel;
+          final levelReport = viewModel.levelReport;
           final pendingPlan = viewModel.pendingPlanBanner;
           final course = viewModel.course;
           final history = viewModel.showHistory ? viewModel.history : null;
@@ -523,6 +596,13 @@ class WorkoutView extends StatelessWidget {
                                           isLoading: viewModel.isBuildingPlan,
                                           onAction: () =>
                                               _buildPlan(context, viewModel),
+                                          onDismiss:
+                                              viewModel.canDismissPlanBanner
+                                              ? () {
+                                                  HapticManager.selection();
+                                                  viewModel.dismissPlanBanner();
+                                                }
+                                              : null,
                                         ),
                                       ),
                               ),
@@ -636,6 +716,12 @@ class WorkoutView extends StatelessWidget {
                                               viewModel.isOverviewActive
                                               ? () => _resumeWorkout(viewModel)
                                               : null,
+                                          onSelectSummary:
+                                              viewModel.focusSession,
+                                          onOpenSummary: (id) =>
+                                              viewModel.isSessionActive(id)
+                                              ? _resumeWorkout(viewModel)
+                                              : _openWorkoutDetails(id),
                                           onSummaryInfo: () => _showInfo(
                                             context,
                                             title: 'Workout Summary',
@@ -781,9 +867,16 @@ class WorkoutView extends StatelessWidget {
                                 },
                               ],
                               if (viewModel.showPrograms) ...[
+                                if ((activeProgram != null &&
+                                        activeProgramId != null) ||
+                                    planRebuildLabel != null) ...[
+                                  const ProgramSectionHeading(
+                                    label: 'Your plan',
+                                  ),
+                                  SizedBox(height: AppSpacing.lg),
+                                ],
                                 if (activeProgram != null &&
-                                    activeProgramId != null &&
-                                    !viewModel.canReturnToExplore) ...[
+                                    activeProgramId != null) ...[
                                   AppPopReveal(
                                     appearOnMount: true,
                                     child: ActiveProgramCard(
@@ -796,52 +889,61 @@ class WorkoutView extends StatelessWidget {
                                     ),
                                   ),
                                   SizedBox(height: AppSpacing.xl3),
+                                  if (levelReport != null) ...[
+                                    WorkoutLevelReportCard(
+                                      report: levelReport,
+                                      onLevelUp: () =>
+                                          _levelUp(context, viewModel),
+                                    ),
+                                    SizedBox(height: AppSpacing.xl3),
+                                  ],
                                 ],
-                                if (viewModel.showProgramExplore)
-                                  ProgramExploreSection(
-                                    goals: viewModel.programGoalCards(
-                                      isUnlocked: isProgramsUnlocked,
-                                    ),
-                                    levels: viewModel.programLevelCards,
-                                    collection: viewModel.programCollection,
-                                    onSelectGoal: viewModel.exploreGoal,
-                                    onSelectLevel: viewModel.exploreLevel,
-                                    onOpenCollection: () {
-                                      HapticManager.light();
-                                      viewModel.showMyPrograms();
-                                    },
-                                    onCreate: viewModel.canCreateProgram
-                                        ? () => _openEditor(
-                                            viewModel,
-                                            const ProgramEditorArgs(),
-                                          )
-                                        : null,
-                                  )
-                                else
-                                  ProgramListSection(
-                                    title: viewModel.programListTitle,
-                                    programs: viewModel.programs,
-                                    countLabel: viewModel.programsCountLabel,
-                                    emptyMessage:
-                                        viewModel.programsEmptyMessage,
-                                    onBack: viewModel.canReturnToExplore
-                                        ? viewModel.backToExplore
-                                        : null,
-                                    onOpen: (program) => _openProgram(
-                                      context,
-                                      viewModel,
-                                      program.id,
-                                    ),
-                                    onCreate:
-                                        viewModel.canCreateProgram &&
-                                            !viewModel.canReturnToExplore
-                                        ? () => _openEditor(
-                                            viewModel,
-                                            const ProgramEditorArgs(),
-                                          )
-                                        : null,
-                                    isPremiumUnlocked: isProgramsUnlocked,
+                                if (planRebuildLabel != null) ...[
+                                  PillButton(
+                                    variant: PillButtonVariant.outline,
+                                    height: AppSizes.s44,
+                                    label: planRebuildLabel,
+                                    icon: Icons.autorenew_rounded,
+                                    onPressed: () =>
+                                        _buildPlan(context, viewModel),
                                   ),
+                                  SizedBox(height: AppSpacing.xl3),
+                                ],
+                                ProgramExploreSection(
+                                  heading: viewModel.catalogHeading,
+                                  disciplines: viewModel.catalogDisciplines,
+                                  onSelectDiscipline:
+                                      viewModel.selectCatalogDiscipline,
+                                  goals: viewModel.programGoalCards(
+                                    isUnlocked: isProgramsUnlocked,
+                                  ),
+                                  levels: viewModel.programLevelCards,
+                                  collection: viewModel.programCollection,
+                                  onSelectGoal: (goalId) => _showProgramList(
+                                    viewModel,
+                                    () => viewModel.exploreGoal(goalId),
+                                  ),
+                                  onSelectLevel: (level) =>
+                                      _openLevel(context, viewModel, level),
+                                  onOpenProgram: (id) =>
+                                      _openProgram(context, viewModel, id),
+                                  skills: viewModel.skillPrograms,
+                                  challenges: viewModel.challengeBoard,
+                                  isPremiumUnlocked: isProgramsUnlocked,
+                                  onOpenCollection: () {
+                                    HapticManager.light();
+                                    _showProgramList(
+                                      viewModel,
+                                      viewModel.showMyPrograms,
+                                    );
+                                  },
+                                  onCreate: viewModel.canCreateProgram
+                                      ? () => _openEditor(
+                                          viewModel,
+                                          const ProgramEditorArgs(),
+                                        )
+                                      : null,
+                                ),
                               ],
                             ],
                           ),

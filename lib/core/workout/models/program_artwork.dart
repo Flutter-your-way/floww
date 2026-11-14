@@ -2,6 +2,8 @@ import 'package:floww/config/constants/app_images.dart';
 import 'package:floww/config/entities/workout_plan_entity.dart';
 import 'package:floww/config/entities/workout_program_entity.dart';
 import 'package:floww/config/entities/workout_session_entity.dart';
+import 'package:floww/core/calisthenics/data/calisthenics_images_data.dart';
+import 'package:floww/core/calisthenics/models/cal_level.dart';
 import 'package:floww/core/workout/models/program_goal.dart';
 import 'package:floww/core/workout/services/workout_catalog_data.dart';
 
@@ -38,6 +40,16 @@ class ProgramArtwork {
     ProgramLevel.advanced: AppImages.programLegsPhoto,
   };
 
+  static const List<String> _byCalLevel = [
+    AppImages.programHomePhoto,
+    AppImages.programFullBodyPhoto,
+    AppImages.programSplitPhoto,
+    AppImages.programStrengthPhoto,
+  ];
+
+  static String ofCalLevel(CalLevel level) =>
+      _byCalLevel[(level.number - 1).clamp(0, _byCalLevel.length - 1)];
+
   static String ofGoal(ProgramGoal goal) =>
       _byGoal[goal] ?? AppImages.programStrengthPhoto;
 
@@ -60,11 +72,19 @@ class ProgramArtwork {
     List<WorkoutEntryEntity> entries,
     String? programId,
   ) {
+    final byProgram = programId == null ? null : _byProgram[programId];
+    for (final exercise in entries) {
+      if (CalisthenicsImagesData.isStandIn(exercise.exerciseId)) continue;
+      final image =
+          exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId);
+      if (image != null) return image;
+    }
+    if (byProgram != null) return byProgram;
     for (final exercise in entries) {
       final image =
           exercise.imageUrl ?? WorkoutCatalogData.imageFor(exercise.exerciseId);
       if (image != null) return image;
     }
-    return programId == null ? null : _byProgram[programId];
+    return null;
   }
 }

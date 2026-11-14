@@ -5,6 +5,8 @@ import 'package:floww/core/workout/models/todays_workout_args.dart';
 import 'package:floww/core/workout/models/program_start_config.dart';
 import 'package:floww/core/workout/view_models/program_editor_view_model.dart';
 import 'package:floww/core/workout/views/program_editor_view.dart';
+import 'package:floww/core/workout/models/program_list_args.dart';
+import 'package:floww/core/workout/views/program_list_view.dart';
 
 import 'package:floww/core/achievements/services/achievements_service.dart';
 import 'package:floww/core/achievements/view_models/achievements_view_model.dart';
@@ -341,6 +343,9 @@ class AppRouterConfig {
             child: const ProgramEditorView(),
           ),
         );
+      case AppRouter.programList:
+        final args = settings.arguments as ProgramListArgs;
+        return MaterialPageRoute(builder: (_) => ProgramListView(args: args));
       case AppRouter.muscleRecovery:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
