@@ -235,18 +235,19 @@ class WorkoutView extends StatelessWidget {
     );
   }
 
-  void _openProgram(
+  Future<void> _openProgram(
     BuildContext context,
     WorkoutViewModel viewModel,
     String id,
-  ) {
+  ) async {
     final detail = viewModel.programDetailFor(id);
     if (detail == null) return;
     final access = context.read<PremiumAccessProvider>();
     final isLocked =
         detail.isPremium &&
         !detail.isActive &&
-        !access.canUse(PremiumCapability.multiModeWorkouts);
+        !await access.canUseResolved(PremiumCapability.multiModeWorkouts);
+    if (!context.mounted) return;
     HapticManager.light();
     ProgramDetailSheet.show(
       context: context,

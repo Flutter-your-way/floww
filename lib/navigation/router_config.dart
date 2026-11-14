@@ -401,7 +401,11 @@ class AppRouterConfig {
       case AppRouter.profile:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => ProfileViewModel(ProfileService(), AuthService()),
+            create: (context) => ProfileViewModel(
+              ProfileService(),
+              AuthService(),
+              context.read<PremiumAccessProvider>(),
+            ),
             child: const ProfileView(),
           ),
         );
@@ -512,7 +516,10 @@ class AppRouterConfig {
       case AppRouter.premiumUpgrade:
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => PremiumUpgradeViewModel(PremiumService()),
+            create: (context) => PremiumUpgradeViewModel(
+              PremiumService(),
+              context.read<PremiumAccessProvider>(),
+            ),
             child: const PremiumUpgradeView(),
           ),
         );

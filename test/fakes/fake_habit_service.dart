@@ -128,6 +128,14 @@ class FakeHabitService implements HabitService {
   }
 
   @override
+  Future<void> addMissing(List<HabitSuggestion> suggestions) async {
+    for (final suggestion in suggestions) {
+      if (_habits.any((habit) => habit.id == suggestion.id)) continue;
+      await addSuggestion(suggestion);
+    }
+  }
+
+  @override
   Future<void> deleteHabit(String id) async {
     _throwOnError();
     _habits.removeWhere((habit) => habit.id == id);

@@ -64,6 +64,7 @@ class ProgressRecords {
     required this.goals,
     this.healthDays = const [],
     this.restDays = const {},
+    this.memberSince,
   });
 
   static const empty = ProgressRecords(
@@ -85,6 +86,7 @@ class ProgressRecords {
   final ProgressGoals goals;
   final List<HealthDayLog> healthDays;
   final Set<String> restDays;
+  final DateTime? memberSince;
 }
 
 class ProgressService {
@@ -120,6 +122,14 @@ class ProgressService {
       _programService ??= WorkoutProgramService();
 
   FirebaseAuth get _auth => FirebaseAuth.instance;
+
+  DateTime? get _memberSince {
+    try {
+      return _auth.currentUser?.metadata.creationTime;
+    } catch (_) {
+      return null;
+    }
+  }
 
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
@@ -208,6 +218,7 @@ class ProgressService {
         goals: values[6]! as ProgressGoals,
         healthDays: values[7]! as List<HealthDayLog>,
         restDays: values[8]! as Set<String>,
+        memberSince: _memberSince,
       ),
     );
   }

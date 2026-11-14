@@ -157,6 +157,20 @@ class HabitService {
     about: suggestion.about,
   );
 
+  Future<void> addMissing(List<HabitSuggestion> suggestions) => _guard(
+    'addMissing',
+    'Could not add your starter habits.',
+    () async {
+      final uid = _requireUserId;
+      final existing = await _habits(uid).get();
+      final ids = {for (final doc in existing.docs) doc.id};
+      for (final suggestion in suggestions) {
+        if (ids.contains(suggestion.id)) continue;
+        await addSuggestion(suggestion);
+      }
+    },
+  );
+
   Future<void> updateHabit(String id, HabitDraft draft) => _guard(
     'updateHabit',
     'Could not save your changes. Please try again.',

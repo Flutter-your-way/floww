@@ -19,6 +19,8 @@ import 'package:floww/core/home/services/home_snapshot_builder.dart';
 import 'package:floww/core/recovery/models/muscle_body_side.dart';
 import 'package:floww/core/recovery/services/muscle_map_service.dart';
 import 'package:floww/core/workout/models/active_workout_args.dart';
+import 'package:floww/core/workout/services/workout_firestore.dart';
+import 'package:floww/core/workout/services/workout_plan_build_service.dart';
 
 class HomeProvider extends ChangeNotifier {
   HomeProvider(
@@ -28,13 +30,16 @@ class HomeProvider extends ChangeNotifier {
     this._flowModeController, {
     MuscleMapService? muscleMapService,
     DailyQuoteService? quoteService,
+    WorkoutPlanBuildService? planBuildService,
   }) : _muscleMapService = muscleMapService ?? MuscleMapService(),
-       _quoteService = quoteService ?? DailyQuoteService() {
+       _quoteService = quoteService ?? DailyQuoteService(),
+       _planBuildService = planBuildService ?? WorkoutPlanBuildService() {
     _flowModeController.resetSession();
     _greeting = _greetingForHour(DateTime.now().hour);
     _watchToday();
     _loadMuscleMap();
     _loadDailyQuote();
+    unawaited(_renewPlanIfEnded());
     _dayRollover = DayRolloverTimer(_onNewDay);
   }
 
@@ -50,6 +55,7 @@ class HomeProvider extends ChangeNotifier {
   final FlowModeController _flowModeController;
   final MuscleMapService _muscleMapService;
   final DailyQuoteService _quoteService;
+  final WorkoutPlanBuildService _planBuildService;
   DailyQuote? _dailyQuote;
 
   late final DayRolloverTimer _dayRollover;
@@ -152,6 +158,15 @@ class HomeProvider extends ChangeNotifier {
     _greeting = _greetingForHour(DateTime.now().hour);
     _watchToday();
     _loadDailyQuote();
+    unawaited(_renewPlanIfEnded());
+  }
+
+  Future<void> _renewPlanIfEnded() async {
+    try {
+      await _planBuildService.renewIfEnded();
+    } on WorkoutException catch (e) {
+      debugPrint('plan renewal failed: ${e.message}');
+    }
   }
 
   void _watchToday() {
@@ -171,7 +186,7 @@ class HomeProvider extends ChangeNotifier {
     _isReady = true;
     notifyListeners();
     _flowModeController.reportScore(
-      _snapshot.displayFlowScorePercent,
+      _snapshot.modeScore,
       override: records.flowModeOverride,
     );
   }

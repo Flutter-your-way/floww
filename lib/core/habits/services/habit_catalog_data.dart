@@ -1,8 +1,61 @@
 import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/models/habit_suggestion.dart';
+import 'package:floww/config/utils/formatters/number_formatter.dart';
 
 class HabitCatalogData {
   HabitCatalogData._();
+
+  static const List<String> starterIds = [
+    'water_intake',
+    'sleep',
+    'outdoor_walk',
+  ];
+
+  static List<HabitSuggestion> starterSuggestions({
+    double? waterLiters,
+    double? sleepHours,
+    double? steps,
+  }) => [
+    for (final id in starterIds)
+      for (final suggestion in suggestions)
+        if (suggestion.id == id)
+          switch (suggestion.source) {
+            HabitSource.water when waterLiters != null && waterLiters > 0 =>
+              _withTarget(
+                suggestion,
+                waterLiters,
+                '${NumberFormatter.trimmed(waterLiters)}L of water daily',
+              ),
+            HabitSource.sleep when sleepHours != null && sleepHours > 0 =>
+              _withTarget(
+                suggestion,
+                sleepHours,
+                '${NumberFormatter.trimmed(sleepHours)} hours of sleep',
+              ),
+            HabitSource.steps when steps != null && steps > 0 => _withTarget(
+              suggestion,
+              steps,
+              '${NumberFormatter.grouped(steps.round())} steps a day',
+            ),
+            _ => suggestion,
+          },
+  ];
+
+  static HabitSuggestion _withTarget(
+    HabitSuggestion suggestion,
+    double target,
+    String description,
+  ) => HabitSuggestion(
+    id: suggestion.id,
+    title: suggestion.title,
+    target: target,
+    metric: suggestion.metric,
+    icon: suggestion.icon,
+    goalType: suggestion.goalType,
+    source: suggestion.source,
+    description: description,
+    about: suggestion.about,
+  );
 
   static const String fallbackAbout =
       'Consistency is what turns a habit into an identity. Keep the target '

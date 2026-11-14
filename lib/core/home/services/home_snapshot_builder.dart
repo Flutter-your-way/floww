@@ -10,7 +10,7 @@ import 'package:floww/core/habits/models/habit.dart';
 import 'package:floww/core/habits/services/habit_snapshot_builder.dart';
 import 'package:floww/core/habits/view_models/habit_labels.dart';
 import 'package:floww/core/home/models/home_view_data.dart';
-import 'package:floww/core/home/services/flow_score_handover.dart';
+import 'package:floww/core/progress/services/flow_score_handover.dart';
 import 'package:floww/core/home/services/home_service.dart';
 import 'package:floww/core/home/services/recovery_calculator.dart';
 import 'package:floww/core/nutrition/models/nutrition_day.dart';
@@ -42,6 +42,8 @@ class HomeSnapshotBuilder {
   static const String _autoStatus = 'Active today · Set by WAVE AI';
   static const String _overrideStatus = 'Active today · Set by you with WAVE';
   static const String _overrideReason = 'You asked WAVE for this mode today';
+  static const String _morningModeReason =
+      'Set from your recovery and recent days until you log today';
   static const int _moderateIntensitySets = 12;
 
   static const int _highRecoveryFloor = 75;
@@ -138,6 +140,12 @@ class HomeSnapshotBuilder {
       memberSince: account.memberSince,
       today: today,
     );
+    final modeScore = _modeScoreOf(
+      entry: todayEntry,
+      displayScore: displayScore,
+      records: records,
+      today: today,
+    );
 
     return HomeSnapshot(
       userName: (account.name ?? '').trim(),
@@ -147,6 +155,7 @@ class HomeSnapshotBuilder {
       ),
       flowScorePercent: todayEntry.score,
       displayFlowScorePercent: displayScore,
+      modeScore: modeScore,
       flowScoreBreakdown: FlowScoreBreakdown(
         weeklyAveragePercent: _weeklyAverageOf(flowHistory, today),
         components: _componentsOf(
@@ -164,6 +173,7 @@ class HomeSnapshotBuilder {
       recovery: recovery,
       flowMode: _flowModeOf(
         score: displayScore,
+        modeScore: modeScore,
         readiness: todayEntry.readinessScore,
         recovery: recovery,
         records: records,
@@ -380,18 +390,35 @@ class HomeSnapshotBuilder {
     ),
   ];
 
+  int _modeScoreOf({
+    required DailyFlowEntry entry,
+    required int displayScore,
+    required HomeRecords records,
+    required DateTime today,
+  }) {
+    if (entry.hasActivity) return displayScore;
+    if (_hasRecoveryInputs(records, today)) return entry.readinessScore;
+    final recent = _weeklyAverageOf(records.flowHistory, today);
+    if (recent > 0) return recent;
+    return displayScore > entry.readinessScore
+        ? displayScore
+        : entry.readinessScore;
+  }
+
   FlowModeDetail _flowModeOf({
     required int score,
+    required int modeScore,
     required int readiness,
     required RecoveryDetail recovery,
     required HomeRecords records,
     required DateTime today,
   }) {
     final override = records.flowModeOverride;
-    final mode = override ?? AppThemeMode.fromFlowScore(score);
+    final mode = override ?? AppThemeMode.fromFlowScore(modeScore);
     final reasons = <String>[
       if (override != null) _overrideReason,
       'FLOWW Score is $score%',
+      if (override == null && modeScore != score) _morningModeReason,
       if (readiness > 0) 'Recovery readiness is $readiness%',
     ];
 

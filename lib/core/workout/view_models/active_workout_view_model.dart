@@ -432,7 +432,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier
       activeProgram: state.activeProgram,
       history: _history,
       readiness: () => _readinessService.assess(_history),
-      adaptive: _access.canUse(PremiumCapability.adaptiveEngine),
+      adaptive: await _access.canUseResolved(PremiumCapability.adaptiveEngine),
     );
   }
 

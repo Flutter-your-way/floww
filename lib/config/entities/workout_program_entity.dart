@@ -342,6 +342,9 @@ class ActiveProgramEntry {
     return totalWeeks <= 0 || programDate.isBefore(endDate);
   }
 
+  bool hasEndedBy(DateTime date) =>
+      totalWeeks > 0 && !programDateOf(date).isBefore(endDate);
+
   int weekAt(DateTime date) {
     if (hasFixedLength) {
       return (dayNumberAt(date) - 1) ~/ DateTime.daysPerWeek + 1;

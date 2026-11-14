@@ -12,12 +12,16 @@ class PremiumAccessProvider extends ChangeNotifier {
   PremiumAccessProvider(this._service);
 
   static const String _cancelNote = 'Cancel anytime';
+  static const Duration _confirmationHold = Duration(minutes: 5);
 
   final PremiumService _service;
 
   StreamSubscription<SubscriptionEntity?>? _watch;
   StreamSubscription<String?>? _userWatch;
   SubscriptionEntity? _subscription;
+  SubscriptionEntity? _confirmed;
+  DateTime? _confirmedAt;
+  Completer<void> _resolved = Completer<void>();
   String? _freeTrialLabel;
   bool _isLoading = true;
   bool _disposed = false;
@@ -58,12 +62,56 @@ class PremiumAccessProvider extends ChangeNotifier {
   bool canUse(PremiumCapability capability) =>
       !capability.requiresPremium || hasAccess;
 
-  void runOrUpgrade(PremiumCapability capability, VoidCallback action) {
-    if (canUse(capability)) {
+  Future<bool> canUseResolved(PremiumCapability capability) async {
+    if (!capability.requiresPremium) return true;
+    if (_isLoading) await _resolved.future;
+    return canUse(capability);
+  }
+
+  Future<void> runOrUpgrade(
+    PremiumCapability capability,
+    VoidCallback action,
+  ) async {
+    if (await canUseResolved(capability)) {
       action();
       return;
     }
     openUpgrade();
+  }
+
+  void apply(SubscriptionEntity subscription) {
+    if (!subscription.hasAccess(DateTime.now())) return;
+    _confirmed = subscription;
+    _confirmedAt = DateTime.now();
+    _setSubscription(subscription);
+  }
+
+  SubscriptionEntity? _merged(SubscriptionEntity? incoming) {
+    final confirmed = _confirmed;
+    final confirmedAt = _confirmedAt;
+    final now = DateTime.now();
+    if (incoming?.hasAccess(now) ?? false) {
+      _confirmed = null;
+      _confirmedAt = null;
+      return incoming;
+    }
+    if (confirmed == null ||
+        confirmedAt == null ||
+        confirmed.uid != _service.userId ||
+        now.difference(confirmedAt) > _confirmationHold ||
+        !confirmed.hasAccess(now)) {
+      _confirmed = null;
+      _confirmedAt = null;
+      return incoming;
+    }
+    return confirmed;
+  }
+
+  void _setSubscription(SubscriptionEntity? subscription) {
+    _subscription = subscription;
+    _isLoading = false;
+    if (!_resolved.isCompleted) _resolved.complete();
+    _notify();
   }
 
   Future<void> _loadFreeTrial() async {
@@ -86,16 +134,10 @@ class PremiumAccessProvider extends ChangeNotifier {
     _userWatch = _service.watchUserId().listen(_service.identify);
     _watch?.cancel();
     _watch = _service.watchSubscription().listen(
-      (subscription) {
-        _subscription = subscription;
-        _isLoading = false;
-        _notify();
-      },
+      (subscription) => _setSubscription(_merged(subscription)),
       onError: (Object error) {
         debugPrint('premium access watch failed: $error');
-        _subscription = null;
-        _isLoading = false;
-        _notify();
+        _setSubscription(_merged(null));
       },
     );
   }
@@ -103,9 +145,10 @@ class PremiumAccessProvider extends ChangeNotifier {
   void clear() {
     _watch?.cancel();
     _watch = null;
-    _subscription = null;
-    _isLoading = false;
-    _notify();
+    _confirmed = null;
+    _confirmedAt = null;
+    _resolved = Completer<void>();
+    _setSubscription(null);
   }
 
   void _notify() {

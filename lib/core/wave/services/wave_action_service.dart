@@ -19,6 +19,7 @@ import 'package:floww/core/wave/services/wave_chat_service.dart';
 import 'package:floww/core/workout/models/workout_section_kind.dart';
 import 'package:floww/core/workout/models/workout_shift_offer.dart';
 import 'package:floww/core/workout/services/workout_catalog_service.dart';
+import 'package:floww/core/workout/services/workout_plan_build_service.dart';
 import 'package:floww/core/workout/services/workout_plan_generator_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
@@ -558,14 +559,12 @@ class WaveActionService {
 
   Future<WaveActionOutcome> _regeneratePlan() async {
     final previous = (await _programService.loadState()).activeProgram;
-    final program = await _generatorService.generate();
-    final active = _programService.activeEntryFor(program, startDate: _today);
-    await _planService.scheduleProgram(
-      program,
-      active,
-      from: _today,
-      saveActive: true,
-    );
+    final program = await WorkoutPlanBuildService(
+      generatorService: _generatorService,
+      programService: _programService,
+      catalogService: _catalogService,
+      planService: _planService,
+    ).build();
     return WaveActionOutcome(
       planUpdatedTitle,
       '${program.name} starts today',

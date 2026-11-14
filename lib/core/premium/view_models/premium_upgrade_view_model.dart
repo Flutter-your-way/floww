@@ -4,10 +4,11 @@ import 'package:floww/config/constants/app_subscription.dart';
 import 'package:floww/config/utils/formatters/currency_formatter.dart';
 import 'package:floww/core/premium/models/premium_view_data.dart';
 import 'package:floww/core/premium/models/store_offer.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/premium/services/premium_service.dart';
 
 class PremiumUpgradeViewModel extends ChangeNotifier {
-  PremiumUpgradeViewModel(this._service) {
+  PremiumUpgradeViewModel(this._service, [this._access]) {
     loadOffers();
   }
 
@@ -23,6 +24,7 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
       'store right now. Try another plan or check back shortly.';
 
   final PremiumService _service;
+  final PremiumAccessProvider? _access;
 
   SubscriptionTerm _term = SubscriptionTerm.monthly;
   Map<SubscriptionTerm, StoreOffer> _offers = const {};
@@ -186,8 +188,10 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
     _notify();
 
     try {
-      _purchased = await _service.subscribe(_term);
-      return _purchased;
+      final purchased = await _service.subscribe(_term);
+      _purchased = purchased;
+      _access?.apply(purchased);
+      return purchased;
     } on PremiumException catch (e) {
       if (!e.isCancelled) _errorMessage = e.message;
       return null;
@@ -208,6 +212,7 @@ class PremiumUpgradeViewModel extends ChangeNotifier {
       final restored = await _service.restore();
       if (restored != null && restored.hasAccess(DateTime.now())) {
         _purchased = restored;
+        _access?.apply(restored);
         return restored;
       }
       _noticeMessage =

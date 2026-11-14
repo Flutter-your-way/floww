@@ -8,6 +8,7 @@ import 'package:floww/config/widgets/placeholders/app_section_loader.dart';
 import 'package:floww/config/widgets/scaffolds/inner_page_scaffold.dart';
 import 'package:floww/core/nutrition/view_models/diet_plan_view_model.dart';
 import 'package:floww/core/nutrition/widgets/diet_plan_widgets.dart';
+import 'package:floww/config/widgets/buttons/custom_buttons/custom_button.dart';
 import 'package:floww/config/widgets/cards/app_empty_state_card.dart';
 import 'package:floww/navigation/services/navigation_service.dart';
 
@@ -51,6 +52,20 @@ class DietPlanView extends StatelessWidget {
                 ],
               ),
               SizedBox(height: AppSpacing.lg),
+              if (viewModel.isFinished) ...[
+                AppEmptyStateCard(
+                  title: viewModel.finishedTitle,
+                  message: viewModel.finishedMessage,
+                  icon: Icons.emoji_events_rounded,
+                ),
+                SizedBox(height: AppSpacing.md),
+                CustomButton(
+                  text: viewModel.restartLabel,
+                  isLoading: viewModel.isRestarting,
+                  onPressed: viewModel.restart,
+                ),
+                SizedBox(height: AppSpacing.lg),
+              ],
               DietPlanProgressCard(
                 progressLabel: viewModel.progressLabel,
                 percentLabel: viewModel.percentLabel,

@@ -60,7 +60,7 @@ class WaveContext {
 
   bool get hasName => userName.isNotEmpty;
 
-  int get flowScore => snapshot.flowScorePercent;
+  int get flowScore => snapshot.displayFlowScorePercent;
 
   WorkoutRecommendation? get workout => snapshot.workout;
 

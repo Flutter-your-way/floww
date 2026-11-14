@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:floww/config/constants/app_api.dart';
 import 'package:floww/config/entities/onboarding_details_entity.dart';
 import 'package:floww/config/services/app_api_client.dart';
+import 'package:floww/core/habits/services/habit_catalog_data.dart';
+import 'package:floww/core/habits/services/habit_service.dart';
+import 'package:floww/core/profile/services/profile_service.dart';
 
 import '../models/onboarding_analysis.dart';
 
@@ -77,6 +80,22 @@ class OnboardingService {
     } catch (e, stackTrace) {
       debugPrint('markWearablesStepDone failed: $e\n$stackTrace');
       throw OnboardingException('Something went wrong. Please try again.');
+    }
+    await _addStarterHabits();
+  }
+
+  Future<void> _addStarterHabits() async {
+    try {
+      final account = await ProfileService().loadAccount();
+      await HabitService().addMissing(
+        HabitCatalogData.starterSuggestions(
+          waterLiters: account.waterTargetLiters,
+          sleepHours: account.sleepTargetHours,
+          steps: account.stepsTarget,
+        ),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('starter habits failed: $e\n$stackTrace');
     }
   }
 }

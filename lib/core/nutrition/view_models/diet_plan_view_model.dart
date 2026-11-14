@@ -21,10 +21,24 @@ class DietPlanViewModel extends ChangeNotifier {
   String? _errorMessage;
   int? _expandedDay;
   bool _disposed = false;
+  bool _isRestarting = false;
 
   bool get isLoading => _isLoading;
 
   bool get hasPlan => _progress != null;
+
+  bool get isFinished => _progress?.isFinished ?? false;
+
+  bool get isRestarting => _isRestarting;
+
+  String get finishedTitle => 'You finished your 30-day plan';
+
+  String get finishedMessage =>
+      _errorMessage ??
+      'WAVE builds a fresh 30 days from your current calorie target. '
+      'Your logged meals stay in your history.';
+
+  String get restartLabel => 'Start a new 30 days';
 
   String get emptyMessage =>
       _errorMessage ?? 'Sign in to get your 30-day WAVE diet plan.';
@@ -92,6 +106,23 @@ class DietPlanViewModel extends ChangeNotifier {
       _errorMessage = 'Could not load your diet plan. Please try again.';
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> restart() async {
+    if (_isRestarting) return;
+    _isRestarting = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      _progress = await _planService.restart(targetCalories: _goal.calories);
+      _expandedDay = _progress?.currentDayNumber;
+    } catch (e) {
+      debugPrint('restart diet plan failed: $e');
+      _errorMessage = 'Could not start a new plan. Please try again.';
+    } finally {
+      _isRestarting = false;
       notifyListeners();
     }
   }

@@ -17,7 +17,6 @@ import 'package:floww/core/calisthenics/services/calisthenics_placement.dart';
 import 'package:floww/core/calisthenics/models/cal_library_view_data.dart';
 import 'package:floww/core/calisthenics/services/calisthenics_library_presenter.dart';
 import 'package:floww/core/calisthenics/services/calisthenics_principles_service.dart';
-import 'package:floww/core/onboarding/data/onboarding_data.dart';
 import 'package:floww/core/recovery/models/muscle_body_side.dart';
 import 'package:floww/core/recovery/services/muscle_map_service.dart';
 import 'package:floww/core/recovery/services/muscle_targeting.dart';
@@ -42,6 +41,7 @@ import 'package:floww/core/workout/services/workout_course_presenter.dart';
 import 'package:floww/core/workout/services/workout_firestore.dart';
 import 'package:floww/core/workout/services/workout_history_analyzer.dart';
 import 'package:floww/core/workout/services/workout_metrics.dart';
+import 'package:floww/core/workout/services/workout_plan_build_service.dart';
 import 'package:floww/core/workout/services/workout_plan_generator_service.dart';
 import 'package:floww/core/workout/services/workout_plan_service.dart';
 import 'package:floww/core/workout/services/workout_program_service.dart';
@@ -65,7 +65,7 @@ class WorkoutViewModel extends ChangeNotifier {
     this._planService,
     this._programService,
     this._catalogService,
-    this._generatorService, {
+    WorkoutPlanGeneratorService generatorService, {
     OnboardingAnswersService? answersService,
     CalisthenicsPrinciplesService? principlesService,
     MuscleMapService? muscleMapService,
@@ -78,7 +78,14 @@ class WorkoutViewModel extends ChangeNotifier {
        _answersService = answersService ?? OnboardingAnswersService(),
        _principlesService =
            principlesService ?? CalisthenicsPrinciplesService(),
-       _shiftService = WorkoutShiftService(_planService) {
+       _shiftService = WorkoutShiftService(_planService),
+       _buildService = WorkoutPlanBuildService(
+         generatorService: generatorService,
+         programService: _programService,
+         catalogService: _catalogService,
+         planService: _planService,
+         answersService: answersService,
+       ) {
     _dayRollover = DayRolloverTimer(_onNewDay);
     unawaited(_loadCalPrinciplesRead());
     unawaited(_loadPlanBannerDismissed());
@@ -125,7 +132,6 @@ class WorkoutViewModel extends ChangeNotifier {
   static const double _strongAdherence = 0.8;
   static const int _strongAdherenceMinPlanned = 3;
   static const int _agendaMinEntries = 2;
-  static const int _longPlanDays = 90;
   static const int _reportWeeks = 4;
   static const double _readyAdherence = 0.8;
   static const double _steadyAdherence = 0.6;
@@ -141,7 +147,7 @@ class WorkoutViewModel extends ChangeNotifier {
   final WorkoutPlanService _planService;
   final WorkoutProgramService _programService;
   final WorkoutCatalogService _catalogService;
-  final WorkoutPlanGeneratorService _generatorService;
+  final WorkoutPlanBuildService _buildService;
   final WorkoutShiftService _shiftService;
   final OnboardingAnswersService _answersService;
   final CalisthenicsPrinciplesService _principlesService;
@@ -180,6 +186,7 @@ class WorkoutViewModel extends ChangeNotifier {
   bool _isPlanBannerDismissed = false;
   bool _isRenamingPlan = false;
   bool _autoBuildTried = false;
+  bool _renewTried = false;
   String? _planBuildError;
   WorkoutShiftOffer? _shiftOffer;
   bool _isShifting = false;
@@ -454,6 +461,12 @@ class WorkoutViewModel extends ChangeNotifier {
       if (!_autoBuildTried && !state.hasGeneratedPlan) {
         _autoBuildTried = true;
         unawaited(buildPlan(showResult: false));
+      }
+      if (!_renewTried &&
+          WorkoutPlanBuildService.isGeneratedActive(state) &&
+          WorkoutPlanBuildService.hasEnded(state, _today)) {
+        _renewTried = true;
+        unawaited(_renewPlan());
       }
       unawaited(_ensurePlan());
       unawaited(_refreshShiftOffer());
@@ -1013,7 +1026,8 @@ class WorkoutViewModel extends ChangeNotifier {
 
   bool get isBuildingPlan => _isBuildingPlan;
 
-  bool get needsRebuildWarning => _state.activeProgram != null;
+  bool get needsRebuildWarning =>
+      _state.activeProgram != null && !_hasActiveEnded;
 
   String get rebuildWarningTitle => 'Replace your current plan?';
 
@@ -1031,7 +1045,14 @@ class WorkoutViewModel extends ChangeNotifier {
   String get rebuildWarningCancel => 'Keep Current Plan';
 
   bool get _isPlanBannerHidden =>
-      _isPlanBannerDismissed && !_isBuildingPlan && _planBuildError == null;
+      _isPlanBannerDismissed &&
+      !_isBuildingPlan &&
+      _planBuildError == null &&
+      !_hasActiveEnded;
+
+  bool get _hasActiveEnded =>
+      dayStatus != WorkoutDayStatus.past &&
+      (_state.activeProgram?.hasEndedBy(_selectedDate) ?? false);
 
   bool get canDismissPlanBanner => !_isBuildingPlan;
 
@@ -1065,10 +1086,12 @@ class WorkoutViewModel extends ChangeNotifier {
     final isVisible = switch (_selectedTab) {
       WorkoutTab.overview =>
         _isBuildingPlan ||
+            _hasActiveEnded ||
             ((active == null || !_activeMatchesDiscipline) &&
                 dayStatus != WorkoutDayStatus.past),
       WorkoutTab.programs =>
         _isBuildingPlan ||
+            _hasActiveEnded ||
             _planBuildError != null ||
             !isGeneratedActive ||
             !_activeMatchesDiscipline,
@@ -1082,6 +1105,17 @@ class WorkoutViewModel extends ChangeNotifier {
             'Reading your onboarding answers and picking exercises from your '
             'library. This takes a few seconds.',
         actionLabel: 'Building…',
+      );
+    }
+    if (active != null && _hasActiveEnded) {
+      return WorkoutPlanBuilderItem(
+        title: '${active.name} is complete',
+        message:
+            'You finished every scheduled day of this plan. WAVE builds your '
+            'next $_planLengthLabel block from your onboarding answers and '
+            'recent training. Logged workouts stay in your history.',
+        actionLabel: 'Build my next plan',
+        errorMessage: _planBuildError,
       );
     }
     final generated = generatedId == null ? null : _programById(generatedId);
@@ -1163,14 +1197,7 @@ class WorkoutViewModel extends ChangeNotifier {
     _planBuildError = null;
     notifyListeners();
     try {
-      final program = await _sizedPlanOf(await _generatorService.generate());
-      final active = _programService.activeEntryFor(program, startDate: _today);
-      await _planService.scheduleProgram(
-        program,
-        active,
-        from: _today,
-        saveActive: true,
-      );
+      await _buildService.build(answers: _answers.isEmpty ? null : _answers);
       _isBuildingPlan = false;
       if (showResult) {
         _setDate(_today);
@@ -1183,32 +1210,23 @@ class WorkoutViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool get _wantsLongPlan =>
-      _discipline == WorkoutDiscipline.gym &&
-      _answers[OnboardingData.gymPlanLengthId] == OnboardingData.threeMonthPlan;
+  Future<void> _renewPlan() async {
+    if (_isBuildingPlan) return;
+    _isBuildingPlan = true;
+    _planBuildError = null;
+    notifyListeners();
+    try {
+      await _buildService.renewIfEnded();
+    } on WorkoutException catch (error) {
+      _planBuildError = error.message;
+    }
+    _isBuildingPlan = false;
+    notifyListeners();
+  }
+
+  bool get _wantsLongPlan => WorkoutPlanBuildService.wantsLongPlan(_answers);
 
   String get _planLengthLabel => _wantsLongPlan ? '90-day' : '30-day';
-
-  Future<WorkoutProgramEntity> _sizedPlanOf(
-    WorkoutProgramEntity program,
-  ) async {
-    if (_answers.isEmpty) {
-      try {
-        _answers = await _answersService.loadAnswers();
-        _discipline = WorkoutDiscipline.fromAnswers(_answers);
-      } on OnboardingAnswersException catch (_) {
-        return program;
-      }
-    }
-    if (!_wantsLongPlan || program.course != null) return program;
-    if (program.lengthDays == _longPlanDays) return program;
-    final sized = program.copyWith(
-      lengthDays: _longPlanDays,
-      weeks: (_longPlanDays / DateTime.daysPerWeek).ceil(),
-    );
-    await _catalogService.saveProgram(sized);
-    return sized;
-  }
 
   Future<void> _refreshShiftOffer() async {
     final request = ++_shiftRequest;
@@ -1255,6 +1273,7 @@ class WorkoutViewModel extends ChangeNotifier {
 
   bool get _isRestDay =>
       _state.activeProgram != null &&
+      !_hasActiveEnded &&
       _activeMatchesDiscipline &&
       _plan == null &&
       _catchUps.isEmpty &&
@@ -2789,7 +2808,8 @@ class WorkoutViewModel extends ChangeNotifier {
     final active = _state.activeProgram;
     if (active == null || !_activeMatchesDiscipline) return null;
     final today = _today;
-    final daysOnPlan = AppDateUtils.daysBetween(active.startDate, today) + 1;
+    final daysOnPlan =
+        AppDateUtils.daysBetween(_levelTrackingStart(active), today) + 1;
     if (daysOnPlan < 1) return null;
     final week = _periodOf(
       label: 'This week',
@@ -2872,6 +2892,16 @@ class WorkoutViewModel extends ChangeNotifier {
       isReady: false,
       periods: periods,
     );
+  }
+
+  DateTime _levelTrackingStart(ActiveProgramEntry active) {
+    var start = active.startDate;
+    for (final session in _sessions) {
+      if (!session.isCompleted || session.isManual) continue;
+      final day = AppDateUtils.dateOnly(session.date);
+      if (day.isBefore(start)) start = day;
+    }
+    return start;
   }
 
   ({WorkoutLevelPeriodItem item, double? reserve}) _periodOf({
@@ -3115,6 +3145,11 @@ class WorkoutViewModel extends ChangeNotifier {
   void selectDate(DateTime date) => _setDate(AppDateUtils.dateOnly(date));
 
   void _onNewDay() {
+    if (WorkoutPlanBuildService.isGeneratedActive(_state) &&
+        WorkoutPlanBuildService.hasEnded(_state, _today)) {
+      _renewTried = true;
+      unawaited(_renewPlan());
+    }
     final previousDay = AppDateUtils.addDays(_today, -1);
     if (AppDateUtils.isSameDay(_selectedDate, previousDay)) {
       _setDate(_today);

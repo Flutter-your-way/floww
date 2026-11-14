@@ -285,7 +285,7 @@ export const mergeWaveToday = (
 
   return {
     ...base,
-    flowScore: Math.min(facts.flowScore, 100),
+    flowScore: Math.min(Math.max(facts.flowScore, base.flowScore), 100),
     streakDays: facts.streakDays,
     planExercises: facts.planExercises.slice(0, MAX_WAVE_LIST_ITEMS),
     calories: facts.calories,

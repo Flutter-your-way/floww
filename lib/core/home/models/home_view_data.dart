@@ -314,6 +314,7 @@ class HomeSnapshot {
     required this.streakCount,
     required this.flowScorePercent,
     required this.displayFlowScorePercent,
+    required this.modeScore,
     required this.flowScoreBreakdown,
     required this.flowScoreBoosts,
     required this.recovery,
@@ -333,6 +334,7 @@ class HomeSnapshot {
     streakCount: 0,
     flowScorePercent: 0,
     displayFlowScorePercent: 0,
+    modeScore: 0,
     flowScoreBreakdown: FlowScoreBreakdown.empty,
     flowScoreBoosts: [],
     recovery: RecoveryDetail.empty,
@@ -357,6 +359,7 @@ class HomeSnapshot {
   final int streakCount;
   final int flowScorePercent;
   final int displayFlowScorePercent;
+  final int modeScore;
   final FlowScoreBreakdown flowScoreBreakdown;
   final List<FlowScoreBoost> flowScoreBoosts;
   final RecoveryDetail recovery;

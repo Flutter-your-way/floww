@@ -4,6 +4,7 @@ import 'package:floww/config/entities/workout_session_log_entity.dart';
 import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/core/progress/models/progress_view_data.dart';
 import 'package:floww/core/progress/services/flow_readiness_calculator.dart';
+import 'package:floww/core/progress/services/flow_score_handover.dart';
 import 'package:floww/core/progress/services/flow_score_calculator.dart';
 import 'package:floww/core/progress/services/flow_streak.dart';
 import 'package:floww/core/progress/services/progress_service.dart';
@@ -61,6 +62,8 @@ class ProgressSnapshotBuilder {
   ];
 
   final FlowScoreCalculator _calculator;
+
+  static const FlowScoreHandover _handover = FlowScoreHandover();
 
   ProgressSnapshotResult build(ProgressRecords records, {DateTime? now}) {
     final today = AppDateUtils.dateOnly(now ?? DateTime.now());
@@ -133,10 +136,12 @@ class ProgressSnapshotBuilder {
       for (var index = 0; index < _weekLength; index++)
         AppDateUtils.addDays(weekStart, index),
     ];
+    final displayFlow = _withDisplayToday(flow, records, today);
     final weekScores = [
       for (final date in weekDays)
         if (!date.isAfter(today))
-          flow[AppDateUtils.dateKey(date)] ?? DailyFlowEntry.empty(date),
+          displayFlow[AppDateUtils.dateKey(date)] ??
+              DailyFlowEntry.empty(date),
     ];
     final activeWeekScores = [
       for (final entry in weekScores)
@@ -154,7 +159,7 @@ class ProgressSnapshotBuilder {
             .where((session) => session.isCompleted)
             .length,
         flowScore: _flowSummary(
-          flow: flow,
+          flow: displayFlow,
           today: today,
           weekDays: weekDays,
           activeWeekScores: activeWeekScores,
@@ -176,6 +181,35 @@ class ProgressSnapshotBuilder {
       ),
       flowHistory: flow.values.toList(),
     );
+  }
+
+  Map<String, DailyFlowEntry> _withDisplayToday(
+    Map<String, DailyFlowEntry> flow,
+    ProgressRecords records,
+    DateTime today,
+  ) {
+    final key = AppDateUtils.dateKey(today);
+    final entry = flow[key] ?? DailyFlowEntry.empty(today);
+    final display = _handover.displayOf(
+      entry: entry,
+      baseline: records.goals.flowBaseline,
+      memberSince: records.memberSince,
+      today: today,
+    );
+    if (display == entry.score) return flow;
+    return {
+      ...flow,
+      key: DailyFlowEntry(
+        date: entry.date,
+        score: display,
+        workoutScore: entry.workoutScore,
+        habitScore: entry.habitScore,
+        nutritionScore: entry.nutritionScore,
+        readinessScore: entry.readinessScore,
+        isActive: true,
+        isRestDay: entry.isRestDay,
+      ),
+    };
   }
 
   Map<String, int> _setsByDay(List<WorkoutSessionLog> sessions) {

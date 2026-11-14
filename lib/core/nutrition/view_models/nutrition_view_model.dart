@@ -413,7 +413,7 @@ class NutritionViewModel extends ChangeNotifier {
   String get dietPlanNextLabel {
     final plan = _dietPlan;
     if (plan == null) return 'Start your 30-day plan';
-    if (plan.isFinished) return 'Plan complete';
+    if (plan.isFinished) return 'Plan complete · Start a new 30 days';
     return 'Next: Day ${plan.currentDayNumber.clamp(1, DietPlan.lengthDays)}';
   }
 

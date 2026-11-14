@@ -540,6 +540,7 @@ class WaveChatService {
     final progress = await _dietPlanService.loadProgress(
       targetCalories: context.goal.calories,
       startIfMissing: true,
+      restartIfFinished: true,
     );
     if (progress == null) return null;
 

@@ -315,7 +315,9 @@ class TodaysWorkoutViewModel extends ChangeNotifier {
               activeProgram: state.activeProgram,
               history: history,
               readiness: () => _readinessService.assess(history),
-              adaptive: _access.canUse(PremiumCapability.adaptiveEngine),
+              adaptive: await _access.canUseResolved(
+                PremiumCapability.adaptiveEngine,
+              ),
             );
       _shiftOffer = catchUpFrom != null
           ? null

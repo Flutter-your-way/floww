@@ -8,6 +8,7 @@ import 'package:floww/config/utils/dates/app_date_utils.dart';
 import 'package:floww/config/utils/formatters/measurement_converter.dart';
 import 'package:floww/config/utils/formatters/number_formatter.dart';
 import 'package:floww/core/auth/services/auth_service.dart';
+import 'package:floww/core/premium/providers/premium_access_provider.dart';
 import 'package:floww/core/profile/models/profile_account.dart';
 import 'package:floww/core/profile/models/profile_photo_args.dart';
 import 'package:floww/core/profile/models/profile_view_data.dart';
@@ -15,7 +16,8 @@ import 'package:floww/core/profile/services/profile_service.dart';
 import 'package:floww/navigation/app_router.dart';
 
 class ProfileViewModel extends ChangeNotifier {
-  ProfileViewModel(this._service, this._authService) {
+  ProfileViewModel(this._service, this._authService, [this._access]) {
+    _access?.addListener(_notify);
     _subscription = _service.watchAccount().listen(
       (account) {
         _account = account;
@@ -36,6 +38,7 @@ class ProfileViewModel extends ChangeNotifier {
 
   final ProfileService _service;
   final AuthService _authService;
+  final PremiumAccessProvider? _access;
 
   ProfileAccount _account = ProfileAccount.empty;
   StreamSubscription<ProfileAccount>? _subscription;
@@ -58,7 +61,7 @@ class ProfileViewModel extends ChangeNotifier {
     initial: _initial,
     name: _account.name ?? 'Your Profile',
     subtitle: _identitySubtitle,
-    isPremium: _account.isPremium,
+    isPremium: (_access?.hasAccess ?? false) || _account.isPremium,
     avatarUrl: _account.avatarUrl,
   );
 
@@ -298,6 +301,7 @@ class ProfileViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _access?.removeListener(_notify);
     _subscription?.cancel();
     super.dispose();
   }

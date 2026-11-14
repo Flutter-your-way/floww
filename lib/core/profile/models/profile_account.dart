@@ -50,7 +50,7 @@ class ProfileAccount {
   final DateTime? memberSince;
   final SubscriptionEntity? subscription;
 
-  bool get isPremium => subscription?.isActive ?? false;
+  bool get isPremium => subscription?.hasAccess(DateTime.now()) ?? false;
 
   int? get ageYears {
     final birth = dateOfBirth;

@@ -36,6 +36,7 @@ class DietPlanService {
   Future<DietPlanProgress?> loadProgress({
     required int targetCalories,
     bool startIfMissing = false,
+    bool restartIfFinished = false,
   }) async {
     final uid = _logService.userId;
     if (uid == null) {
@@ -50,6 +51,10 @@ class DietPlanService {
         _cachedProgress = null;
         return null;
       }
+      startedAt = today;
+      await _settingsService.setDietPlanStartedAt(today);
+    } else if (restartIfFinished &&
+        AppDateUtils.daysBetween(startedAt, today) >= DietPlan.lengthDays) {
       startedAt = today;
       await _settingsService.setDietPlanStartedAt(today);
     }
@@ -85,5 +90,13 @@ class DietPlanService {
     );
     _cachedProgress = progress;
     return progress;
+  }
+
+  Future<DietPlanProgress?> restart({required int targetCalories}) async {
+    if (_logService.userId == null) return null;
+    await _settingsService.setDietPlanStartedAt(
+      AppDateUtils.dateOnly(DateTime.now()),
+    );
+    return loadProgress(targetCalories: targetCalories);
   }
 }
